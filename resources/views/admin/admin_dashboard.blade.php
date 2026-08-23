@@ -54,6 +54,33 @@
             </div>
         </div>
 
+        <!-- Time-Range Filter -->
+        <div class="dash-card p-3.5 mb-4" x-data="{ showCustom: {{ $range === 'custom' ? 'true' : 'false' }} }">
+            <form method="GET" action="{{ route('dashboard') }}" class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-semibold text-slate-400 mr-1">Showing:</span>
+                <button type="submit" name="range" value="today"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === 'today' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                        @click="showCustom = false">Today</button>
+                <button type="submit" name="range" value="3days"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === '3days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                        @click="showCustom = false">3 Days</button>
+                <button type="submit" name="range" value="7days"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === '7days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                        @click="showCustom = false">7 Days</button>
+                <button type="button" @click="showCustom = !showCustom"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === 'custom' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">Custom</button>
+
+                <div x-show="showCustom" x-cloak class="flex flex-wrap items-center gap-2 ml-1">
+                    <input type="date" name="period_start" value="{{ $periodStart }}" max="{{ now()->format('Y-m-d') }}"
+                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                    <span class="text-xs text-slate-400">to</span>
+                    <input type="date" name="period_end" value="{{ $periodEnd }}" max="{{ now()->format('Y-m-d') }}"
+                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                    <button type="submit" name="range" value="custom" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors">Apply</button>
+                </div>
+            </form>
+        </div>
+
         {{-- Flash Messages --}}
         @if (session('success'))
             <div class="p-4 mb-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3" role="alert">
@@ -69,11 +96,20 @@
             </div>
         @endif
 
+        @php
+            $rangeLabel = match ($range) {
+                'today' => 'Today',
+                '3days' => 'Last 3 days',
+                'custom' => \Carbon\Carbon::parse($periodStart)->format('M j') . ' – ' . \Carbon\Carbon::parse($periodEnd)->format('M j'),
+                default => 'Last 7 days',
+            };
+        @endphp
+
         <!-- ADMIN KEY PERFORMANCE INDICATORS GRID (KPIs) -->
-        <div class="row g-3 mb-4">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-5 g-3 mb-4">
 
             <!-- KPI 1: System Users -->
-            <div class="col-12 col-sm-6 col-lg-3">
+            <div class="col">
                 <div class="dash-card p-3.5 h-100 flex items-center gap-3">
                     <div class="rounded-lg bg-primary/10 text-primary flex items-center justify-center w-10 h-10 shrink-0">
                         <i data-lucide="users" class="w-5 h-5"></i>
@@ -87,7 +123,7 @@
             </div>
 
             <!-- KPI 2: Circulating Capital -->
-            <div class="col-12 col-sm-6 col-lg-3">
+            <div class="col">
                 <div class="dash-card p-3.5 h-100 flex items-center gap-3">
                     <div class="rounded-lg bg-vibrant/10 text-vibrant flex items-center justify-center w-10 h-10 shrink-0">
                         <i data-lucide="wallet" class="w-5 h-5"></i>
@@ -100,8 +136,8 @@
                 </div>
             </div>
 
-            <!-- KPI 3: System Transactions -->
-            <div class="col-12 col-sm-6 col-lg-3">
+            <!-- KPI 3: System Transactions (ranged) -->
+            <div class="col">
                 <div class="dash-card p-3.5 h-100 flex items-center gap-3">
                     <div class="rounded-lg bg-primary/10 text-primary flex items-center justify-center w-10 h-10 shrink-0">
                         <i data-lucide="receipt" class="w-5 h-5"></i>
@@ -109,13 +145,27 @@
                     <div class="min-w-0 flex-1">
                         <p class="text-xs text-slate-400 mb-0.5">Transaction Volume</p>
                         <p class="text-lg font-bold font-display text-slate-800 tracking-tight mb-0 truncate">₦{{ number_format($totalTransactionVolume, 2) }}</p>
-                        <p class="text-xs text-slate-400 mb-0 truncate">{{ number_format($totalTransactionsCount) }} completed</p>
+                        <p class="text-xs text-slate-400 mb-0 truncate">{{ number_format($totalTransactionsCount) }} completed &middot; {{ $rangeLabel }}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- KPI 4: Pending Operations -->
-            <div class="col-12 col-sm-6 col-lg-3">
+            <!-- KPI 4: SIM Activations (ranged) -->
+            <div class="col">
+                <div class="dash-card p-3.5 h-100 flex items-center gap-3">
+                    <div class="rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center w-10 h-10 shrink-0">
+                        <i data-lucide="smartphone" class="w-5 h-5"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs text-slate-400 mb-0.5">SIM Activations</p>
+                        <p class="text-lg font-bold font-display text-slate-800 tracking-tight mb-0 truncate">{{ number_format($simActivationsCount) }}</p>
+                        <p class="text-xs text-slate-400 mb-0 truncate">{{ $rangeLabel }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 5: Pending Operations -->
+            <div class="col">
                 <div class="dash-card p-3.5 h-100 flex items-center gap-3">
                     <div class="rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center w-10 h-10 shrink-0">
                         <i data-lucide="bell" class="w-5 h-5"></i>
