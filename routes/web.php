@@ -115,6 +115,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/sims/activate-for-user', [\App\Http\Controllers\smartsim\SimsController::class, 'activateForDownlineUser'])->name('sims.activate-for-user');
     Route::post('/partner/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('partner.sims.assign');
     Route::post('/sims/bulk-assign', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignSim'])->name('sims.bulk-assign');
+    Route::get('/sims/bulk-assign/new', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignPage'])->name('sims.bulk-assign.page');
+    Route::post('/sims/bulk-assign/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveBulkAssignNumbers'])->name('sims.bulk-assign.resolve-numbers');
+    Route::get('/sims/bulk-collect', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkCollectPage'])->name('sims.bulk-collect');
+    Route::post('/sims/bulk-collect/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveBulkCollectNumbers'])->name('sims.bulk-collect.resolve-numbers');
+    Route::post('/sims/bulk-collect', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkCollect'])->name('sims.bulk-collect.execute');
+    Route::get('/sims/downline-users/search', [\App\Http\Controllers\smartsim\SimsController::class, 'searchUsers'])->name('sims.downline-users.search');
     Route::post('/sims/request-swap', [\App\Http\Controllers\smartsim\SimsController::class, 'requestSwap'])->name('sims.request-swap');
     Route::get('/sims/downline-requests', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequests'])->name('sims.downline-requests');
     Route::get('/sims/downline-requests/available-sims', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequestAvailableSims'])->name('sims.downline-requests.available-sims');

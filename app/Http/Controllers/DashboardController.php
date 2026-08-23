@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SimHistory;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\VirtualAccount;
 use App\Models\Transaction;
 use App\Models\SimRequest;
 use App\Models\Ticket;
+use App\Support\SimStatus;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,7 +19,7 @@ class DashboardController extends Controller
     /**
      * Display the user or admin dashboard.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         if (!$user) {
@@ -25,7 +28,7 @@ class DashboardController extends Controller
 
         // Check if user is super_admin
         if ($user->hasRole('super_admin')) {
-            return $this->adminDashboard();
+            return $this->adminDashboard($request);
         }
 
         return $this->userDashboard($user);
@@ -121,17 +124,38 @@ class DashboardController extends Controller
     /**
      * Handle super admin dashboard metrics & rendering.
      */
-    protected function adminDashboard()
+    protected function adminDashboard(Request $request)
     {
+        // Time-range filter for the two ranged KPI cards (Transaction Volume,
+        // SIM Activations) below. Other cards are current-state snapshots
+        // (user counts, wallet balances, pending counts) and aren't
+        // meaningfully rangeable, so they stay all-time regardless of this.
+        $range = $request->input('range', '7days');
+        [$rangeStart, $rangeEnd] = match ($range) {
+            'today' => [now()->startOfDay(), now()->endOfDay()],
+            '3days' => [now()->subDays(2)->startOfDay(), now()->endOfDay()],
+            'custom' => [
+                $request->filled('period_start') ? Carbon::parse($request->period_start)->startOfDay() : now()->subDays(6)->startOfDay(),
+                $request->filled('period_end') ? Carbon::parse($request->period_end)->endOfDay() : now()->endOfDay(),
+            ],
+            default => [now()->subDays(6)->startOfDay(), now()->endOfDay()], // 7days
+        };
+        $periodStart = $rangeStart->format('Y-m-d');
+        $periodEnd = $rangeEnd->format('Y-m-d');
+
         // 1. System Statistics / Metrics
         $totalUsers = User::count();
         $activeUsers = User::where('status', 'active')->count();
-        
+
         $totalWalletBalance = Wallet::sum('balance') ?? 0.00;
         $totalWalletBonus = Wallet::sum('bonus') ?? 0.00;
-        
-        $totalTransactionsCount = Transaction::where('status', 'completed')->count();
-        $totalTransactionVolume = Transaction::where('status', 'completed')->sum('amount') ?? 0.00;
+
+        $totalTransactionsCount = Transaction::where('status', 'completed')->whereBetween('created_at', [$rangeStart, $rangeEnd])->count();
+        $totalTransactionVolume = Transaction::where('status', 'completed')->whereBetween('created_at', [$rangeStart, $rangeEnd])->sum('amount') ?? 0.00;
+
+        $simActivationsCount = SimHistory::where('to_status', SimStatus::ACTIVATED)
+            ->whereBetween('created_at', [$rangeStart, $rangeEnd])
+            ->count();
 
         $pendingUpgradesCount = User::where('upgrade_status', 'pending')->count();
         $pendingSimRequestsCount = SimRequest::where('status', 'pending')->count();
@@ -176,6 +200,10 @@ class DashboardController extends Controller
             'totalWalletBonus',
             'totalTransactionsCount',
             'totalTransactionVolume',
+            'simActivationsCount',
+            'range',
+            'periodStart',
+            'periodEnd',
             'pendingUpgradesCount',
             'pendingSimRequestsCount',
             'openTicketsCount',

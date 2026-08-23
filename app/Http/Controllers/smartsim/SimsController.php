@@ -893,7 +893,7 @@ class SimsController extends Controller
     public function bulkAssignSim(Request $request)
     {
         $request->validate([
-            'sim_ids'   => 'required|array|max:50',
+            'sim_ids'   => 'required|array|max:1000',
             'sim_ids.*' => 'exists:sims,id',
             'user_id'   => 'required|exists:users,id',
         ]);
@@ -1063,6 +1063,243 @@ class SimsController extends Controller
             'coordinator'       => $sim->coordinator_id === $user->id && $sim->status === SimStatus::ASSIGNED_TO_COORDINATOR,
             default             => $sim->partner_id === $user->id && $sim->user_id === $user->id && $sim->status === SimStatus::ASSIGNED_TO_PARTNER,
         };
+    }
+
+    /**
+     * Restrict the four bulk-assign/collect actions below to Regional
+     * Managers and Coordinators — the two roles with a direct downline
+     * delegation cascade (assignDown()/collectUp()) worth a dedicated bulk
+     * paste-numbers flow. Partner keeps the existing checkbox picker on
+     * Inventory unchanged.
+     */
+    private function authorizeBulkDelegator(): User
+    {
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['regional_manager', 'coordinator'], true)) {
+            abort(403, 'This page is only available to Regional Managers and Coordinators.');
+        }
+
+        return $user;
+    }
+
+    /**
+     * Dedicated page: paste a large batch of SIM numbers currently held by
+     * the actor, then search and pick a direct downline user to hand them
+     * all to via assignDown() — mirrors Admin\SimPlanController's Bulk
+     * Assign page, scoped to the actor's own held stock instead of the
+     * global unassigned pool.
+     */
+    public function bulkAssignPage()
+    {
+        $this->authorizeBulkDelegator();
+
+        return view('smartsimcard.bulk-assign');
+    }
+
+    /**
+     * Dedicated page: paste a large batch of SIM numbers currently sitting
+     * one tier below the actor, then search and pick which direct downline
+     * user to reclaim them from via collectUp().
+     */
+    public function bulkCollectPage()
+    {
+        $this->authorizeBulkDelegator();
+
+        return view('smartsimcard.bulk-collect');
+    }
+
+    /**
+     * AJAX: resolve pasted SIM numbers for the RM/Coordinator Bulk Assign
+     * page — must be held by the actor right now, in any category/provider
+     * (no parent request to match against here).
+     */
+    public function resolveBulkAssignNumbers(Request $request)
+    {
+        $user = $this->authorizeBulkDelegator();
+
+        $request->validate(['numbers' => 'required|string']);
+
+        $rawNumbers = preg_split('/[\r\n,]+/', $request->numbers);
+        $resolved = [];
+        $errors = [];
+        $seen = [];
+
+        foreach ($rawNumbers as $rawNumber) {
+            $number = trim($rawNumber);
+            if ($number === '' || isset($seen[$number])) {
+                continue;
+            }
+            $seen[$number] = true;
+
+            if (strlen($number) !== 11 || !ctype_digit($number)) {
+                $errors[] = "{$number} — Invalid format (must be 11 digits)";
+                continue;
+            }
+
+            $sim = Sim::where('number', $number)->first();
+
+            if (!$sim) {
+                $errors[] = "{$number} — Not found";
+                continue;
+            }
+
+            if (!$this->holdsSim($user, $sim)) {
+                $errors[] = "{$number} — Not in your held stock";
+                continue;
+            }
+
+            $resolved[] = ['id' => $sim->id, 'number' => $sim->number];
+        }
+
+        return response()->json(['resolved' => $resolved, 'errors' => $errors]);
+    }
+
+    /**
+     * AJAX: resolve pasted SIM numbers for the RM/Coordinator Bulk Collect
+     * page — must currently sit one tier below the actor AND trace back to
+     * this specific actor (the same condition collectUp() re-verifies once
+     * a specific downline user is picked, which hasn't happened yet here).
+     */
+    public function resolveBulkCollectNumbers(Request $request)
+    {
+        $user = $this->authorizeBulkDelegator();
+        $expectedHolderRole = RoleHierarchy::nextRole($user->role);
+
+        $request->validate(['numbers' => 'required|string']);
+
+        $rawNumbers = preg_split('/[\r\n,]+/', $request->numbers);
+        $resolved = [];
+        $errors = [];
+        $seen = [];
+
+        foreach ($rawNumbers as $rawNumber) {
+            $number = trim($rawNumber);
+            if ($number === '' || isset($seen[$number])) {
+                continue;
+            }
+            $seen[$number] = true;
+
+            if (strlen($number) !== 11 || !ctype_digit($number)) {
+                $errors[] = "{$number} — Invalid format (must be 11 digits)";
+                continue;
+            }
+
+            $sim = Sim::where('number', $number)->first();
+
+            if (!$sim) {
+                $errors[] = "{$number} — Not found";
+                continue;
+            }
+
+            if ($sim->status === SimStatus::ACTIVATED) {
+                $errors[] = "{$number} — Currently activated, cannot be collected";
+                continue;
+            }
+
+            $tracesBackToActor = match ($expectedHolderRole) {
+                'coordinator' => $sim->coordinator_id !== null && $sim->status === SimStatus::ASSIGNED_TO_COORDINATOR && $sim->regional_manager_id === $user->id,
+                'partner'     => $sim->partner_id !== null && $sim->user_id === $sim->partner_id && $sim->status === SimStatus::ASSIGNED_TO_PARTNER && $sim->coordinator_id === $user->id,
+                default       => false,
+            };
+
+            if (!$tracesBackToActor) {
+                $errors[] = "{$number} — Not currently down your line";
+                continue;
+            }
+
+            $resolved[] = ['id' => $sim->id, 'number' => $sim->number];
+        }
+
+        return response()->json(['resolved' => $resolved, 'errors' => $errors]);
+    }
+
+    /**
+     * AJAX: search this actor's own direct downline by name/email/phone,
+     * for the Bulk Assign/Collect pages' user picker — scoped to their own
+     * referrals at the correct next tier, not a global user search (unlike
+     * Admin\SimPlanController::searchUsers()).
+     */
+    public function searchUsers(Request $request)
+    {
+        $user = $this->authorizeBulkDelegator();
+        $nextRole = RoleHierarchy::nextRole($user->role);
+
+        $request->validate(['q' => 'required|string|min:2']);
+
+        $query = $request->q;
+
+        $downlineUsers = $user->referrals()
+            ->where('role', $nextRole)
+            ->where('status', 'active')
+            ->where(function ($q) use ($query) {
+                $q->where('first_name', 'like', "%{$query}%")
+                    ->orWhere('middle_name', 'like', "%{$query}%")
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhere('email', 'like', "%{$query}%")
+                    ->orWhere('phone', 'like', "%{$query}%");
+            })
+            ->orderBy('first_name')
+            ->limit(10)
+            ->get()
+            ->map(fn (User $u) => [
+                'id'    => $u->id,
+                'name'  => $u->name,
+                'email' => $u->email,
+                'phone' => $u->phone,
+                'role'  => $u->role,
+            ]);
+
+        return response()->json($downlineUsers);
+    }
+
+    /**
+     * Bulk Collect execute: reclaim pasted SIMs from the selected direct
+     * downline user back into the actor's own held stock via collectUp().
+     * Skips (rather than aborts on) any SIM that's raced away or doesn't
+     * actually belong to the selected user, matching bulkAssignSim()'s own
+     * catch-and-skip convention.
+     */
+    public function bulkCollect(Request $request)
+    {
+        $user = $this->authorizeBulkDelegator();
+        $nextRole = RoleHierarchy::nextRole($user->role);
+
+        $request->validate([
+            'sim_ids'   => 'required|array|max:1000',
+            'sim_ids.*' => 'exists:sims,id',
+            'user_id'   => 'required|exists:users,id',
+        ]);
+
+        $currentHolder = User::find($request->user_id);
+        if (!$currentHolder || $currentHolder->role !== $nextRole) {
+            return back()->with('error', 'You can only collect from a ' . str_replace('_', ' ', (string) $nextRole) . '.');
+        }
+
+        $sims = Sim::whereIn('id', $request->sim_ids)->get();
+        $service = app(SimAssignmentService::class);
+
+        $collectedCount = 0;
+        $skipped = 0;
+
+        DB::transaction(function () use ($sims, $user, $currentHolder, $service, &$collectedCount, &$skipped) {
+            foreach ($sims as $sim) {
+                try {
+                    $service->collectUp($sim, $user, $currentHolder);
+                    $collectedCount++;
+                } catch (\RuntimeException $e) {
+                    $skipped++;
+                }
+            }
+        });
+
+        $message = "Successfully collected {$collectedCount} SIM number(s) from {$currentHolder->first_name} {$currentHolder->last_name}.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} SIM(s) were skipped (no longer eligible).";
+
+            return back()->with('warning', $message);
+        }
+
+        return back()->with('success', $message);
     }
 
     /**

@@ -345,5 +345,31 @@
             @endif
         </div>
 
+        @if (in_array(auth()->user()->role, ['regional_manager', 'coordinator'], true))
+            <!-- Floating bulk-actions button -->
+            <div class="fixed bottom-6 right-6 z-40" x-data="{ open: false }">
+                <div x-show="open" @click.away="open = false"
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 translate-y-2"
+                     class="absolute bottom-16 right-0 w-56 bg-white rounded-xl border border-slate-200 shadow-xl p-2 space-y-1" style="display: none;" x-cloak>
+                    <a href="{{ route('sims.bulk-assign.page') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                        <i data-lucide="user-plus" class="w-4 h-4 text-emerald-600"></i> Bulk Assign SIM
+                    </a>
+                    <a href="{{ route('sims.bulk-collect') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                        <i data-lucide="user-minus" class="w-4 h-4 text-rose-600"></i> Bulk Collect SIM
+                    </a>
+                </div>
+                <button type="button" @click="open = !open" aria-label="Bulk actions"
+                        class="w-14 h-14 rounded-full bg-[#0056D2] hover:bg-[#0049b8] text-white shadow-xl flex items-center justify-center transition-transform"
+                        :class="open ? 'rotate-45' : ''">
+                    <i data-lucide="plus" class="w-6 h-6"></i>
+                </button>
+            </div>
+        @endif
+
     </div>
 </x-app-layout>
