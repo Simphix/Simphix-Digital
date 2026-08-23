@@ -84,6 +84,50 @@ class SimAssignmentService
     }
 
     /**
+     * $collector pulls a SIM back from their direct subordinate $currentHolder
+     * into their own held stock (Coordinator -> Regional Manager, Partner ->
+     * Coordinator) — the mirror of assignDown(). Only reclaims a SIM that
+     * both currently sits with $currentHolder at the expected stage AND
+     * traces back to this specific $collector (not some other upline's
+     * lineage), so a regional_manager can't collect a coordinator's SIM that
+     * actually came from a different regional_manager.
+     */
+    public function collectUp(Sim $sim, User $collector, User $currentHolder): void
+    {
+        $expectedHolderRole = RoleHierarchy::nextRole($collector->role);
+        if (!$expectedHolderRole || $expectedHolderRole !== $currentHolder->role) {
+            throw new \RuntimeException("You can only collect from a " . str_replace('_', ' ', (string) $expectedHolderRole) . '.');
+        }
+
+        $holds = match ($currentHolder->role) {
+            'coordinator' => $sim->coordinator_id === $currentHolder->id
+                && $sim->status === SimStatus::ASSIGNED_TO_COORDINATOR
+                && $sim->regional_manager_id === $collector->id,
+            'partner' => $sim->partner_id === $currentHolder->id
+                && $sim->user_id === $sim->partner_id
+                && $sim->status === SimStatus::ASSIGNED_TO_PARTNER
+                && $sim->coordinator_id === $collector->id,
+            default => false,
+        };
+
+        if (!$holds) {
+            throw new \RuntimeException('This SIM is not currently held by that user under you.');
+        }
+
+        DB::transaction(function () use ($sim, $collector, $currentHolder) {
+            $fields = match ($collector->role) {
+                'regional_manager' => ['coordinator_id' => null, 'status' => SimStatus::ASSIGNED_TO_RM],
+                'coordinator' => ['partner_id' => null, 'user_id' => null, 'status' => SimStatus::ASSIGNED_TO_COORDINATOR],
+                default => throw new \RuntimeException('Invalid collector role.'),
+            };
+
+            $fromStatus = $sim->status;
+            $sim->update($fields);
+            $this->logHistory($sim, $fromStatus, $sim->status, $collector, "Collected back from {$currentHolder->name} ({$currentHolder->role})");
+        });
+    }
+
+    /**
      * Admin-approved swap: move a SIM currently held at the Coordinator or
      * Partner tier to a different holder at that same tier. Status and any
      * higher-tier FK columns are left untouched — this is a lateral move,
