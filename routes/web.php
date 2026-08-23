@@ -275,6 +275,12 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::put('/tiers/{tier}', [\App\Http\Controllers\Admin\LeaderboardSettingsController::class, 'updateTier'])->name('tiers.update');
         Route::delete('/tiers/{tier}', [\App\Http\Controllers\Admin\LeaderboardSettingsController::class, 'destroyTier'])->name('tiers.destroy');
     });
+
+    // Webhook monitoring — every recorded webhook attempt, with retry on failures.
+    Route::prefix('admin/webhooks')->name('admin.webhooks.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\WebhookLogController::class, 'index'])->name('index');
+        Route::post('/{webhookLog}/retry', [\App\Http\Controllers\Admin\WebhookLogController::class, 'retry'])->name('retry');
+    });
 });
 
 // Onboarding invite acceptance — invitee is not authenticated yet, gated by the signed URL instead.
