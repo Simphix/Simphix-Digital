@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\VirtualAccount;
 use App\Models\Wallet;
+use App\Models\WebhookLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,21 +28,42 @@ class PaymentWebhookController extends Controller
         $payload = $request->all();
         Log::info('Palmpay webhook hit:', ['payload' => $payload]);
 
+        $log = WebhookLog::create([
+            'provider'   => 'palmpay',
+            'event_type' => (($payload['transType'] ?? null) == 41) ? 'payout' : 'payin',
+            'payload'    => $payload,
+            'status'     => 'received',
+        ]);
+
         // Verify the signature
         if (!$this->verifySignature($payload)) {
             Log::warning('Invalid webhook signature received', ['payload' => $payload]);
+            $log->update(['status' => 'invalid_signature']);
             return response()->json(['error' => 'Invalid signature'], 401);
         }
 
+        $this->processAndLog($payload, $log);
+
+        return $log->status === 'success'
+            ? response('success', 200)->header('Content-Type', 'text/plain')
+            : response()->json(['error' => 'Server error'], 500);
+    }
+
+    /**
+     * Shared processing path for both the live webhook route and the admin
+     * "Retry" action, so there's exactly one place this logic lives.
+     */
+    public function processAndLog(array $payload, WebhookLog $log): void
+    {
         try {
             $this->processReservedAccountTransaction($payload);
-            return response('success', 200)->header('Content-Type', 'text/plain');
+            $log->update(['status' => 'success', 'processed_at' => now(), 'attempts' => $log->attempts + 1]);
         } catch (\Throwable $e) {
             Log::error('Error processing webhook: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'payload' => $payload
             ]);
-            return response()->json(['error' => 'Server error'], 500);
+            $log->update(['status' => 'failed', 'error_message' => $e->getMessage(), 'attempts' => $log->attempts + 1]);
         }
     }
 
@@ -161,8 +183,14 @@ class PaymentWebhookController extends Controller
             
             $this->debitWallet($userId, $chargeAmount, $chargeDesc, $chargeRef, $orderNo);
 
-            // Schedule VAT Charge (15 Naira) after 1 minute
-            ProcessVatCharge::dispatch($userId)->delay(now()->addMinute());
+            // Schedule VAT Charge (15 Naira) after 1 minute. Non-blocking: a
+            // dispatch failure here must never roll back the wallet credit
+            // this whole method runs inside a DB transaction for.
+            try {
+                ProcessVatCharge::dispatch($userId, $orderNo)->delay(now()->addMinute());
+            } catch (\Throwable $e) {
+                Log::error('Non-blocking error dispatching ProcessVatCharge: '.$e->getMessage());
+            }
         }
 
         $this->sendNotificationAndEmail($userId, $amountPaid, $orderNo, $payerBankName, 'Topup');

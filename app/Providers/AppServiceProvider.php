@@ -97,6 +97,7 @@ class AppServiceProvider extends ServiceProvider
         view()->composer('layouts.partials.sidebar', function ($view) {
             $openTicketsBadge = 0;
             $pendingDownlineRequestsBadge = 0;
+            $failedWebhooksBadge = 0;
             $sidebarUpline = null;
 
             if (auth()->check()) {
@@ -104,6 +105,7 @@ class AppServiceProvider extends ServiceProvider
 
                 if ($user->role === 'super_admin') {
                     $openTicketsBadge = \App\Models\Ticket::where('status', 'open')->count();
+                    $failedWebhooksBadge = \App\Models\WebhookLog::where('status', 'failed')->count();
                 } elseif (in_array($user->role, ['partner', 'coordinator', 'regional_manager'], true)) {
                     $pendingDownlineRequestsBadge = \App\Models\SimRequest::where('upline_id', $user->id)
                         ->where('status', 'pending')
@@ -115,6 +117,7 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('openTicketsBadge', $openTicketsBadge);
             $view->with('pendingDownlineRequestsBadge', $pendingDownlineRequestsBadge);
+            $view->with('failedWebhooksBadge', $failedWebhooksBadge);
             $view->with('sidebarUpline', $sidebarUpline);
         });
     }
