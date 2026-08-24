@@ -211,7 +211,7 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::post('/', [\App\Http\Controllers\Admin\NotificationController::class, 'store'])->name('store');
         Route::get('/{notification}', [\App\Http\Controllers\Admin\NotificationController::class, 'show'])->name('show');
         Route::post('/{notification}/cancel', [\App\Http\Controllers\Admin\NotificationController::class, 'cancel'])->name('cancel');
-    )};
+    });
                                                                               
     // Platform Wallets (welfare + utilities revenue)
     Route::prefix('admin/platform-wallets')->name('admin.platform-wallets.')->group(function () {
