@@ -162,7 +162,10 @@
                 x-data="{ subscribed: false, supported: 'serviceWorker' in navigator && 'PushManager' in window }"
                 x-init="if (supported) { navigator.serviceWorker.ready.then(r => r.pushManager.getSubscription()).then(s => subscribed = !!s) }"
                 x-show="supported"
-                @click="window.togglePushSubscription().then(s => subscribed = s)"
+                @click="window.togglePushSubscription().then(s => subscribed = s).catch(e => {
+                    console.error('Push subscription toggle failed:', e);
+                    Swal.fire({ icon: 'error', title: 'Push notifications', text: e.message, confirmButtonColor: '#0056D2' });
+                })"
                 :title="subscribed ? 'Disable push notifications' : 'Enable push notifications'"
                 class="p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors outline-none"
                 style="display: none;">

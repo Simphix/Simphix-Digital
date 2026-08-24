@@ -33,6 +33,8 @@
             </div>
         @endif
 
+        @include('admin.notifications._diagnostics')
+
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs">
