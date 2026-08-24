@@ -24,8 +24,13 @@ window.promptPwaInstall = async () => {
     window.dispatchEvent(new CustomEvent('pwa-install-resolved'));
 };
 
-// Push notification opt-in/out, driven by the header's bell-plus/bell-ring
-// toggle. Resolves to the resulting subscribed state (true/false).
+// Push notification opt-in — no header button. Auto-prompts on every
+// authenticated page load, then keeps retrying on a short interval while
+// the tab stays open, so a user who dismissed or missed the browser's
+// permission bubble keeps getting another chance rather than only ever
+// being asked once at login.
+const PUSH_RETRY_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -37,49 +42,52 @@ function csrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.content;
 }
 
-// Throws on any failure — callers must catch and surface it, rather than
-// silently leaving the toggle in a stale state with no saved subscription.
-window.togglePushSubscription = async () => {
-    const registration = await navigator.serviceWorker.ready;
-    const existing = await registration.pushManager.getSubscription();
-
-    if (existing) {
-        const res = await fetch('/push/unsubscribe', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
-            body: JSON.stringify({ endpoint: existing.endpoint }),
-        });
-        if (!res.ok) throw new Error(`Failed to unsubscribe on the server (HTTP ${res.status}).`);
-        await existing.unsubscribe();
-        return false;
-    }
+// Idempotent and silent on failure — safe to call on every login without
+// ever un-subscribing an already-subscribed device or nagging a user who
+// has already denied permission (requestPermission() just no-ops for them).
+async function subscribeToPush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (Notification.permission === 'denied') return;
 
     const vapidKey = document.querySelector('meta[name="vapid-public-key"]')?.content;
     if (!vapidKey) {
-        throw new Error('Push notifications are not configured on this server yet (no VAPID public key). Ask an admin to run "php artisan notifications:generate-vapid-keys" and set the keys in .env.');
+        console.warn('Push notifications are not configured on this server (no VAPID public key) — skipping the enable prompt.');
+        return;
     }
 
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return false;
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        if (await registration.pushManager.getSubscription()) return; // already subscribed
 
-    const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
-    });
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return;
 
-    const res = await fetch('/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
-        body: JSON.stringify(subscription.toJSON()),
-    });
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey),
+        });
 
-    if (!res.ok) {
-        // The browser-level subscription succeeded but saving it server-side
-        // didn't — undo the browser subscription rather than leaving the UI
-        // showing "subscribed" for a device the server never recorded.
-        await subscription.unsubscribe();
-        throw new Error(`Subscribed in the browser, but saving it on the server failed (HTTP ${res.status}). Not enabled — try again.`);
+        const res = await fetch('/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
+            body: JSON.stringify(subscription.toJSON()),
+        });
+
+        if (!res.ok) {
+            // Saved nowhere — undo the browser-level subscription rather
+            // than leaving a phantom one the server doesn't know about.
+            await subscription.unsubscribe();
+            console.error(`Push subscribe failed to save on the server (HTTP ${res.status}).`);
+        }
+    } catch (e) {
+        console.error('Push auto-subscribe failed:', e);
     }
+}
 
-    return true;
-};
+// The vapid-public-key meta tag is only rendered in the authenticated app
+// layout (never on guest/landing pages), so its presence doubles as "this
+// is a logged-in page where prompting makes sense."
+if (document.querySelector('meta[name="vapid-public-key"]')) {
+    subscribeToPush();
+    setInterval(subscribeToPush, PUSH_RETRY_INTERVAL_MS);
+}
