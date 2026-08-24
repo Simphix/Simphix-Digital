@@ -2,11 +2,15 @@
 
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Jobs\SendAdminNotificationJob;
 use App\Models\AdminNotification;
+use App\Models\AdminNotificationDelivery;
 use App\Models\PushSubscription;
 use App\Models\User;
+use App\Services\WebPushService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Minishlink\WebPush\MessageSentReport;
 
 uses(\Illuminate\Foundation\Testing\DatabaseTransactions::class);
 
@@ -98,6 +102,51 @@ test('composing a notification for specific roles validates and stores the role 
     expect($notification->created_by)->toBe($admin->id);
 
     Auth::logout();
+});
+
+test('a send failure for one subscription does not block delivery to the rest', function () {
+    $recipient = User::factory()->create();
+    $good = PushSubscription::create([
+        'user_id' => $recipient->id,
+        'endpoint' => 'https://fcm.googleapis.com/fcm/send/good',
+        'endpoint_hash' => hash('sha256', 'good'),
+        'public_key' => 'pk', 'auth_token' => 'at',
+    ]);
+    $bad = PushSubscription::create([
+        'user_id' => $recipient->id,
+        'endpoint' => 'https://fcm.googleapis.com/fcm/send/bad',
+        'endpoint_hash' => hash('sha256', 'bad'),
+        'public_key' => 'corrupt', 'auth_token' => 'corrupt',
+    ]);
+
+    $notification = AdminNotification::create([
+        'title' => 'Test', 'body' => 'x', 'target_type' => 'general', 'status' => 'sending',
+    ]);
+
+    $successReport = new MessageSentReport(new \GuzzleHttp\Psr7\Request('POST', 'https://example.test'));
+
+    $this->mock(WebPushService::class, function ($mock) use ($good, $bad, $successReport) {
+        $mock->shouldReceive('sendOne')
+            ->withArgs(fn ($sub) => $sub->id === $bad->id)
+            ->once()
+            ->andThrow(new RuntimeException('Unable to create the local key.'));
+        $mock->shouldReceive('sendOne')
+            ->withArgs(fn ($sub) => $sub->id === $good->id)
+            ->once()
+            ->andReturn($successReport);
+    });
+
+    // Must not throw — a bad subscription failing must not abort the job.
+    (new SendAdminNotificationJob($notification))->handle(app(WebPushService::class));
+
+    $notification->refresh();
+    expect($notification->status)->toBe('sent');
+    expect($notification->total_recipients)->toBe(2);
+    expect($notification->total_delivered)->toBe(1);
+    expect($notification->total_failed)->toBe(1);
+
+    expect(AdminNotificationDelivery::where('push_subscription_id', $good->id)->value('status'))->toBe('sent');
+    expect(AdminNotificationDelivery::where('push_subscription_id', $bad->id)->value('status'))->toBe('failed');
 });
 
 test('composing a notification with send now dispatches immediately with sending status', function () {

@@ -6,27 +6,45 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendAdminNotificationJob;
 use App\Models\AdminNotification;
 use App\Models\PushSubscription;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class NotificationController extends Controller
 {
     public function index()
     {
         $notifications = AdminNotification::with('createdBy')->latest()->paginate(15);
-        $vapidConfigured = filled(config('services.webpush.vapid.public_key')) && filled(config('services.webpush.vapid.private_key'));
-        $subscriberCount = PushSubscription::count();
+        $vapidConfigured = $this->vapidConfigured();
+        $subscriberCount = PushSubscription::distinct('user_id')->count('user_id');
+        $totalUsers = User::count();
 
-        return view('admin.notifications.index', compact('notifications', 'vapidConfigured', 'subscriberCount'));
+        return view('admin.notifications.index', compact('notifications', 'vapidConfigured', 'subscriberCount', 'totalUsers'));
     }
 
     public function create()
     {
         $roles = AdminNotification::ROLES;
-        $vapidConfigured = filled(config('services.webpush.vapid.public_key')) && filled(config('services.webpush.vapid.private_key'));
-        $subscriberCount = PushSubscription::count();
+        $vapidConfigured = $this->vapidConfigured();
+        $subscriberCount = PushSubscription::distinct('user_id')->count('user_id');
+        $totalUsers = User::count();
 
-        return view('admin.notifications.create', compact('roles', 'vapidConfigured', 'subscriberCount'));
+        // How many distinct users of each role currently have at least one
+        // subscribed device — shown next to the role checkboxes so an admin
+        // sees the real reach *before* sending, not after.
+        $subscribersByRole = User::query()
+            ->whereHas('pushSubscriptions')
+            ->select('role', DB::raw('count(*) as total'))
+            ->groupBy('role')
+            ->pluck('total', 'role');
+
+        $usersByRole = User::query()
+            ->select('role', DB::raw('count(*) as total'))
+            ->groupBy('role')
+            ->pluck('total', 'role');
+
+        return view('admin.notifications.create', compact('roles', 'vapidConfigured', 'subscriberCount', 'totalUsers', 'subscribersByRole', 'usersByRole'));
     }
 
     public function store(Request $request)
@@ -65,10 +83,16 @@ class NotificationController extends Controller
     public function show(AdminNotification $notification)
     {
         $deliveries = $notification->deliveries()->with('subscription.user')->paginate(20);
-        $vapidConfigured = filled(config('services.webpush.vapid.public_key')) && filled(config('services.webpush.vapid.private_key'));
-        $subscriberCount = PushSubscription::count();
+        $vapidConfigured = $this->vapidConfigured();
+        $subscriberCount = PushSubscription::distinct('user_id')->count('user_id');
+        $totalUsers = User::count();
 
-        return view('admin.notifications.show', compact('notification', 'deliveries', 'vapidConfigured', 'subscriberCount'));
+        return view('admin.notifications.show', compact('notification', 'deliveries', 'vapidConfigured', 'subscriberCount', 'totalUsers'));
+    }
+
+    private function vapidConfigured(): bool
+    {
+        return filled(config('services.webpush.vapid.public_key')) && filled(config('services.webpush.vapid.private_key'));
     }
 
     public function cancel(AdminNotification $notification)

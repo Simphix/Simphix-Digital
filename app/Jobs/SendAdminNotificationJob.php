@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class SendAdminNotificationJob implements ShouldQueue
 {
@@ -26,23 +27,31 @@ class SendAdminNotificationJob implements ShouldQueue
     {
         $subscriptions = $this->recipients()->get();
 
-        // Keyed by endpoint so flush()'s reports can be matched back to a
-        // subscription/delivery row.
-        $byEndpoint = $subscriptions->keyBy('endpoint');
-
-        $webPush->queue($subscriptions, [
+        $payload = [
             'title' => $this->notification->title,
             'body' => $this->notification->body,
             'url' => $this->notification->url ?: '/',
             'icon' => $this->notification->icon,
-        ]);
+        ];
 
         $delivered = 0;
         $failed = 0;
 
-        foreach ($webPush->flush() as $report) {
-            $subscription = $byEndpoint->get($report->getEndpoint());
-            if (!$subscription) {
+        // Sent one at a time and isolated in its own try/catch — a single
+        // corrupt/invalid subscription must never block delivery to
+        // everyone else in the batch (see WebPushService::sendOne()).
+        foreach ($subscriptions as $subscription) {
+            try {
+                $report = $webPush->sendOne($subscription, $payload);
+            } catch (\Throwable $e) {
+                $failed++;
+                AdminNotificationDelivery::create([
+                    'admin_notification_id' => $this->notification->id,
+                    'push_subscription_id' => $subscription->id,
+                    'status' => 'failed',
+                    'error' => $e->getMessage(),
+                ]);
+                Log::warning('Push send failed for subscription #' . $subscription->id . ': ' . $e->getMessage());
                 continue;
             }
 
@@ -82,6 +91,20 @@ class SendAdminNotificationJob implements ShouldQueue
             'total_delivered' => $delivered,
             'total_failed' => $failed,
         ]);
+    }
+
+    /**
+     * Even if every send throws, the notification must still be marked
+     * resolved (not left stuck on "sending" forever) — record whatever
+     * we know and re-throw so the queue's own failure tracking still sees it.
+     */
+    public function failed(\Throwable $e): void
+    {
+        $this->notification->update([
+            'status' => 'failed',
+            'sent_at' => now(),
+        ]);
+        Log::error('SendAdminNotificationJob permanently failed for notification #' . $this->notification->id . ': ' . $e->getMessage());
     }
 
     private function recipients()

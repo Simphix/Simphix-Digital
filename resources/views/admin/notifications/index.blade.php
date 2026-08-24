@@ -58,16 +58,21 @@
                                     {{ $n->target_type === 'general' ? 'All Users' : implode(', ', $n->target_roles ?? []) }}
                                 </td>
                                 <td class="py-3 px-6">
-                                    <span @class([
-                                        'px-2 py-0.5 rounded-full text-xs font-bold uppercase',
-                                        'bg-slate-100 text-slate-500' => $n->status === 'draft',
-                                        'bg-amber-50 text-amber-600' => in_array($n->status, ['scheduled', 'sending']),
-                                        'bg-emerald-50 text-emerald-600' => $n->status === 'sent',
-                                        'bg-rose-50 text-rose-600' => in_array($n->status, ['failed', 'cancelled']),
-                                    ])>{{ $n->status }}</span>
+                                    @if ($n->status === 'sent' && $n->total_recipients === 0)
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase bg-amber-50 text-amber-600">Sent &middot; no recipients</span>
+                                    @else
+                                        <span @class([
+                                            'px-2 py-0.5 rounded-full text-xs font-bold uppercase',
+                                            'bg-slate-100 text-slate-500' => $n->status === 'draft',
+                                            'bg-amber-50 text-amber-600' => in_array($n->status, ['scheduled', 'sending']),
+                                            'bg-emerald-50 text-emerald-600' => $n->status === 'sent',
+                                            'bg-rose-50 text-rose-600' => in_array($n->status, ['failed', 'cancelled']),
+                                        ])>{{ $n->status }}</span>
+                                    @endif
                                 </td>
-                                <td class="py-3 px-6 text-slate-600 font-semibold">
+                                <td class="py-3 px-6 font-semibold {{ $n->total_recipients === 0 ? 'text-slate-400' : 'text-slate-600' }}">
                                     {{ $n->total_delivered }} / {{ $n->total_failed }}
+                                    <span class="text-slate-400 font-normal">of {{ $n->total_recipients }}</span>
                                 </td>
                                 <td class="py-3 px-6 text-slate-400 font-medium">
                                     {{ ($n->scheduled_at ?? $n->sent_at)?->format('M d, Y H:i') ?? '—' }}

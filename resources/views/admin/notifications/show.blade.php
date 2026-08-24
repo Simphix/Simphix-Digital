@@ -44,7 +44,11 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div class="p-4 rounded-xl bg-white border border-slate-200 shadow-sm text-center">
                 <p class="text-xs font-semibold text-slate-400 uppercase">Status</p>
-                <p class="text-sm font-bold text-slate-800 mt-1 capitalize">{{ $notification->status }}</p>
+                @if ($notification->status === 'sent' && $notification->total_recipients === 0)
+                    <p class="text-sm font-bold text-amber-600 mt-1">Sent &middot; no recipients</p>
+                @else
+                    <p class="text-sm font-bold text-slate-800 mt-1 capitalize">{{ $notification->status }}</p>
+                @endif
             </div>
             <div class="p-4 rounded-xl bg-white border border-slate-200 shadow-sm text-center">
                 <p class="text-xs font-semibold text-slate-400 uppercase">Recipients</p>
