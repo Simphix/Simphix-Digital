@@ -214,6 +214,7 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.leaderboard.index'), 'icon' => 'trophy', 'label' => 'Leaderboard Settings', 'active' => request()->routeIs('admin.leaderboard*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.transactions'), 'icon' => 'receipt', 'label' => 'All Transactions', 'active' => request()->routeIs('admin.transactions*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.manage.adminwallet'), 'icon' => 'wallet', 'label' => 'Admin Wallet', 'active' => request()->routeIs('admin.manage.adminwallet')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.notifications.index'), 'icon' => 'send', 'label' => 'Push Notifications', 'active' => request()->routeIs('admin.notifications*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.manage.support.index'), 'icon' => 'message-square', 'label' => 'Admin Support', 'active' => request()->routeIs('admin.manage.support*'), 'badge' => $openTicketsBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.webhooks.index'), 'icon' => 'webhook', 'label' => 'Webhook Logs', 'active' => request()->routeIs('admin.webhooks*'), 'badge' => $failedWebhooksBadge ?? 0])
             </div>

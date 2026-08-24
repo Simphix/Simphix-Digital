@@ -29,3 +29,24 @@ self.addEventListener('fetch', (e) => {
         );
     }
 });
+
+self.addEventListener('push', (e) => {
+    const data = e.data ? e.data.json() : {};
+    e.waitUntil(self.registration.showNotification(data.title || 'SmartSIM', {
+        body: data.body || '',
+        icon: data.icon || '/assets/images/icons/icon-192.png',
+        badge: '/assets/images/icons/icon-192.png',
+        data: { url: data.url || '/' },
+    }));
+});
+
+self.addEventListener('notificationclick', (e) => {
+    e.notification.close();
+    const url = e.notification.data?.url || '/';
+    e.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+            const existing = list.find((c) => c.url === url);
+            return existing ? existing.focus() : clients.openWindow(url);
+        })
+    );
+});
