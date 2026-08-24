@@ -24,9 +24,13 @@ window.promptPwaInstall = async () => {
     window.dispatchEvent(new CustomEvent('pwa-install-resolved'));
 };
 
-// Push notification opt-in, triggered automatically right after login (see
-// the "prompt-push-permission" meta tag below) — no header button; this is
-// the only entry point.
+// Push notification opt-in — no header button. Auto-prompts on every
+// authenticated page load, then keeps retrying on a short interval while
+// the tab stays open, so a user who dismissed or missed the browser's
+// permission bubble keeps getting another chance rather than only ever
+// being asked once at login.
+const PUSH_RETRY_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -80,6 +84,10 @@ async function subscribeToPush() {
     }
 }
 
-if (document.querySelector('meta[name="prompt-push-permission"]')) {
+// The vapid-public-key meta tag is only rendered in the authenticated app
+// layout (never on guest/landing pages), so its presence doubles as "this
+// is a logged-in page where prompting makes sense."
+if (document.querySelector('meta[name="vapid-public-key"]')) {
     subscribeToPush();
+    setInterval(subscribeToPush, PUSH_RETRY_INTERVAL_MS);
 }
