@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\PlatformWallet;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Transaction;
@@ -20,14 +21,6 @@ class AdminWalletController extends Controller
     public function index()
     {
         // Calculate statistics for manual adjustments (completed transactions of type manual_credit or manual_debit)
-        $totalManualCredit = Transaction::where('type', 'manual_credit')
-            ->where('status', 'completed')
-            ->sum('amount');
-
-        $totalManualDebit = Transaction::where('type', 'manual_debit')
-            ->where('status', 'completed')
-            ->sum('amount');
-
         $monthlyManualCredit = Transaction::where('type', 'manual_credit')
             ->where('status', 'completed')
             ->whereMonth('created_at', now()->month)
@@ -48,13 +41,16 @@ class AdminWalletController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
+        $welfareWallet = PlatformWallet::forType(PlatformWallet::TYPE_WELFARE, 'Platform Welfare Wallet');
+        $utilitiesWallet = PlatformWallet::forType(PlatformWallet::TYPE_UTILITIES_REVENUE, 'Utilities Revenue Wallet');
+
         return view('admin.manage.adminwallet', compact(
-            'totalManualCredit',
-            'totalManualDebit',
             'monthlyManualCredit',
             'monthlyManualDebit',
             'totalUsers',
-            'transactions'
+            'transactions',
+            'welfareWallet',
+            'utilitiesWallet'
         ));
     }
 

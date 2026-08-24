@@ -200,6 +200,12 @@ Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->
 Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
     Route::get('/admin/transactions', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])->name('admin.transactions');
 
+    // Platform Wallets (welfare + utilities revenue)
+    Route::prefix('admin/platform-wallets')->name('admin.platform-wallets.')->group(function () {
+        Route::get('/welfare-settings', [\App\Http\Controllers\Admin\PlatformWelfareSettingsController::class, 'edit'])->name('welfare-settings.edit');
+        Route::put('/welfare-settings', [\App\Http\Controllers\Admin\PlatformWelfareSettingsController::class, 'update'])->name('welfare-settings.update');
+    });
+
     // Services Management
     Route::prefix('admin/services')->name('admin.services.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ServiceController::class, 'index'])->name('index');

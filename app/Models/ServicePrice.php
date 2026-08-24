@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'user_type',
     'price',
     'commission',
+    'margin_percent',
 ])]
 class ServicePrice extends Model
 {
@@ -64,8 +65,9 @@ class ServicePrice extends Model
     protected function casts(): array
     {
         return [
-            'price'      => 'decimal:2',
-            'commission' => 'decimal:2',
+            'price'          => 'decimal:2',
+            'commission'     => 'decimal:2',
+            'margin_percent' => 'decimal:2',
         ];
     }
 }

@@ -39,33 +39,35 @@
 
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Total Manual Credit Card -->
-            <div class="p-6 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+            <!-- Platform Welfare Wallet Card -->
+            <a href="{{ route('admin.platform-wallets.cashout.show', \App\Models\PlatformWallet::TYPE_WELFARE) }}"
+               class="block p-6 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Manual Credit</p>
-                        <h3 class="text-2xl font-extrabold text-slate-900 mt-2 tracking-tight">₦{{ number_format($totalManualCredit, 2) }}</h3>
-                        <p class="text-[11px] text-slate-400 mt-1.5 font-medium">All-time credit adjustments</p>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Platform Welfare Wallet</p>
+                        <h3 class="text-2xl font-extrabold text-slate-900 mt-2 tracking-tight">₦{{ number_format($welfareWallet->balance, 2) }}</h3>
+                        <p class="text-[11px] text-slate-400 mt-1.5 font-medium">Credited ₦{{ number_format($welfareWallet->total_credited, 2) }} all-time &middot; Click to cash out</p>
                     </div>
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100/50 flex items-center justify-center text-emerald-600">
-                        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    <div class="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100/50 flex items-center justify-center text-sky-600">
+                        <i data-lucide="shield-plus" class="w-5 h-5"></i>
                     </div>
                 </div>
-            </div>
+            </a>
 
-            <!-- Total Manual Debit Card -->
-            <div class="p-6 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+            <!-- Utilities Revenue Wallet Card -->
+            <a href="{{ route('admin.platform-wallets.cashout.show', \App\Models\PlatformWallet::TYPE_UTILITIES_REVENUE) }}"
+               class="block p-6 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Manual Debit</p>
-                        <h3 class="text-2xl font-extrabold text-slate-900 mt-2 tracking-tight">₦{{ number_format($totalManualDebit, 2) }}</h3>
-                        <p class="text-[11px] text-slate-400 mt-1.5 font-medium">All-time debit adjustments</p>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Utilities Revenue Wallet</p>
+                        <h3 class="text-2xl font-extrabold text-slate-900 mt-2 tracking-tight">₦{{ number_format($utilitiesWallet->balance, 2) }}</h3>
+                        <p class="text-[11px] text-slate-400 mt-1.5 font-medium">Credited ₦{{ number_format($utilitiesWallet->total_credited, 2) }} all-time &middot; Click to cash out</p>
                     </div>
-                    <div class="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100/50 flex items-center justify-center text-rose-600">
-                        <i data-lucide="minus-circle" class="w-5 h-5"></i>
+                    <div class="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-100/50 flex items-center justify-center text-violet-600">
+                        <i data-lucide="zap" class="w-5 h-5"></i>
                     </div>
                 </div>
-            </div>
+            </a>
 
             <!-- Monthly Manual Credit Card -->
             <div class="p-6 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">

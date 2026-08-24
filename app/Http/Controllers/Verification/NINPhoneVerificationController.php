@@ -426,6 +426,26 @@ class NINPhoneVerificationController extends Controller
 
             DB::commit();
 
+            // Platform margin — credited to the Utilities Revenue Wallet.
+            // See docs/platform-wallets.md.
+            $priceRecord = \App\Models\ServicePrice::where('service_fields_id', $serviceField->id)
+                ->where('user_type', $user->role)
+                ->whereNull('user_id')
+                ->first();
+            if ($priceRecord && $priceRecord->margin_percent > 0) {
+                $marginAmount = ($servicePrice * (float) $priceRecord->margin_percent) / 100;
+                if ($marginAmount > 0) {
+                    app(\App\Services\PlatformWalletLedger::class)->credit(
+                        \App\Models\PlatformWallet::TYPE_UTILITIES_REVENUE,
+                        'Utilities Revenue Wallet',
+                        $marginAmount,
+                        'verification_nin_phone',
+                        "Platform margin on NIN phone verification ({$transactionRef})",
+                        $transaction
+                    );
+                }
+            }
+
             session()->flash('verification', [
                 'data' => [
                     'nin' => $ninData['nin'] ?? 'N/A',
