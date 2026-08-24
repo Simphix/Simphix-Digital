@@ -13,7 +13,7 @@
         <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 shrink-0 mt-0.5"></i>
         <div class="text-xs leading-relaxed">
             <strong class="text-sm block mb-0.5">No devices are subscribed yet</strong>
-            Push notifications are configured correctly, but 0 of {{ $totalUsers }} users have enabled them so far. Each person (including you, to test) needs to click the bell-plus icon in the header and grant permission on their own device before they can receive anything — a notification can never reach someone who hasn't done that, the same way it can't on any app.
+            Push notifications are configured correctly, but 0 of {{ $totalUsers }} users have enabled them so far. Everyone is automatically prompted to allow notifications the next time they log in — if you haven't seen that prompt yourself, log out and back in and accept it when your browser asks. A notification can never reach someone who hasn't granted that permission, the same way it can't on any app.
         </div>
     </div>
 @else

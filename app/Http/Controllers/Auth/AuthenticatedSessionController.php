@@ -35,6 +35,8 @@ class AuthenticatedSessionController extends Controller
             session()->flash('pos_sim_notice', true);
         }
 
+        session()->flash('prompt_push_permission', true);
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

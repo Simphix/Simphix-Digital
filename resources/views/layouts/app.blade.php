@@ -5,6 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="vapid-public-key" content="{{ config('services.webpush.vapid.public_key') }}">
+        @if (session('prompt_push_permission'))
+            <meta name="prompt-push-permission" content="1">
+        @endif
 
         <title>{{ config('app.name', 'SmartSIM') }}</title>
 
