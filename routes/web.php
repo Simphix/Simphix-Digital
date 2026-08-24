@@ -37,6 +37,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/withdraw/verify-account', [\App\Http\Controllers\Action\WithdrawController::class, 'verifyAccount'])->name('withdraw.verifyAccount');
     Route::post('/withdraw/process', [\App\Http\Controllers\Action\WithdrawController::class, 'processWithdrawal'])->name('withdraw.process');
 
+    // Push Notification Subscription Routes
+    Route::post('/push/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])->name('push.subscribe');
+    Route::delete('/push/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy'])->name('push.unsubscribe');
+
     // Transactions Routes
     Route::get('/transactions', [\App\Http\Controllers\TransactionController::class, 'index'])->name('transactions');
     Route::get('/receipt', [\App\Http\Controllers\TransactionController::class, 'receipt'])->name('transactions.receipt');
@@ -199,6 +203,15 @@ Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->
 
 Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
     Route::get('/admin/transactions', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])->name('admin.transactions');
+
+    // Push Notifications
+    Route::prefix('admin/notifications')->name('admin.notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\NotificationController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\NotificationController::class, 'store'])->name('store');
+        Route::get('/{notification}', [\App\Http\Controllers\Admin\NotificationController::class, 'show'])->name('show');
+        Route::post('/{notification}/cancel', [\App\Http\Controllers\Admin\NotificationController::class, 'cancel'])->name('cancel');
+    });
 
     // Services Management
     Route::prefix('admin/services')->name('admin.services.')->group(function () {

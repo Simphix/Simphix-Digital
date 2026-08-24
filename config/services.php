@@ -80,4 +80,12 @@ return [
         'base_url' => env('AMSUB_BASE_URL', 'https://amsubapi.com/api'),
         'api_key'  => env('AMSUB_API_KEY'),
     ],
+
+    'webpush' => [
+        'vapid' => [
+            'subject'     => env('VAPID_SUBJECT', env('APP_URL', 'http://localhost')),
+            'public_key'  => env('VAPID_PUBLIC_KEY'),
+            'private_key' => env('VAPID_PRIVATE_KEY'),
+        ],
+    ],
 ];

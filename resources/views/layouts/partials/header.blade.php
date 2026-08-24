@@ -157,10 +157,23 @@
             <i data-lucide="search" class="w-5 h-5"></i>
         </button>
 
+        <!-- Push Notification Opt-in Toggle -->
+        <button type="button"
+                x-data="{ subscribed: false, supported: 'serviceWorker' in navigator && 'PushManager' in window }"
+                x-init="if (supported) { navigator.serviceWorker.ready.then(r => r.pushManager.getSubscription()).then(s => subscribed = !!s) }"
+                x-show="supported"
+                @click="window.togglePushSubscription().then(s => subscribed = s)"
+                :title="subscribed ? 'Disable push notifications' : 'Enable push notifications'"
+                class="p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors outline-none"
+                style="display: none;">
+            <i data-lucide="bell-ring" class="w-5 h-5" x-show="subscribed" style="display: none;"></i>
+            <i data-lucide="bell-plus" class="w-5 h-5" x-show="!subscribed"></i>
+        </button>
+
         <!-- Notifications Dropdown -->
-        <div x-data="{ 
-            open: false, 
-            badge: {{ count($headerNotifications ?? []) }}, 
+        <div x-data="{
+            open: false,
+            badge: {{ count($headerNotifications ?? []) }},
             notifications: {{ json_encode($headerNotifications ?? []) }}
         }" @click.away="open = false" class="relative">
             <!-- Trigger Button -->
