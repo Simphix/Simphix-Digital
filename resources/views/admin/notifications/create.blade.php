@@ -54,7 +54,7 @@
                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Audience</label>
                     <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
                         <button type="button" @click="targetType = 'general'" :class="targetType === 'general' ? 'bg-[#0056D2] text-white' : 'text-slate-700 hover:bg-slate-200/50'" class="py-2 text-xs font-bold rounded-lg transition-all duration-150">
-                            All Users
+                            All Users <span class="font-normal opacity-75">({{ $subscriberCount }} reachable)</span>
                         </button>
                         <button type="button" @click="targetType = 'roles'" :class="targetType === 'roles' ? 'bg-[#0056D2] text-white' : 'text-slate-700 hover:bg-slate-200/50'" class="py-2 text-xs font-bold rounded-lg transition-all duration-150">
                             Specific Roles
@@ -68,10 +68,12 @@
                                 <input type="checkbox" name="target_roles[]" value="{{ $role }}"
                                        @checked(collect(old('target_roles', []))->contains($role))
                                        class="w-3.5 h-3.5 text-primary border-slate-300 rounded focus:ring-primary">
-                                {{ str_replace('_', ' ', ucfirst($role)) }}
+                                <span class="flex-1">{{ str_replace('_', ' ', ucfirst($role)) }}</span>
+                                <span class="text-slate-400 font-normal">{{ $subscribersByRole[$role] ?? 0 }}/{{ $usersByRole[$role] ?? 0 }}</span>
                             </label>
                         @endforeach
                     </div>
+                    <p class="text-[11px] text-slate-400">Numbers show devices reachable / total users in that role — a notification can only reach someone who has personally enabled push notifications on their device.</p>
                 </div>
 
                 <div class="space-y-2">

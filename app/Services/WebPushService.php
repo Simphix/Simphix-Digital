@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PushSubscription;
 use Minishlink\WebPush\MessageSentReport;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\WebPush;
@@ -26,33 +27,26 @@ class WebPushService
     }
 
     /**
-     * Queue a notification for every subscription in $subscriptions.
-     */
-    public function queue(iterable $subscriptions, array $payload): void
-    {
-        $body = json_encode($payload);
-
-        foreach ($subscriptions as $subscription) {
-            $this->webPush->queueNotification(
-                Subscription::create([
-                    'endpoint' => $subscription->endpoint,
-                    'publicKey' => $subscription->public_key,
-                    'authToken' => $subscription->auth_token,
-                    'contentEncoding' => $subscription->content_encoding ?: 'aesgcm',
-                ]),
-                $body
-            );
-        }
-    }
-
-    /**
-     * Send everything queued via queue(). Yields MessageSentReport, each
-     * carrying ->getEndpoint() so callers can map back to a PushSubscription.
+     * Send to one subscription, isolated from every other subscription.
+     * Deliberately not queueNotification()+flush() — the encryption step
+     * for a single subscription with a corrupt/invalid key throws out of
+     * flush()'s generator entirely, aborting delivery to every OTHER
+     * subscription still queued in that batch. Sending one at a time
+     * trades flush()'s connection-pooling for the guarantee that one bad
+     * subscription can never block delivery to the rest.
      *
-     * @return \Generator<MessageSentReport>
+     * @throws \Throwable on any failure — encryption or transport
      */
-    public function flush(): \Generator
+    public function sendOne(PushSubscription $subscription, array $payload): MessageSentReport
     {
-        return $this->webPush->flush();
+        return $this->webPush->sendOneNotification(
+            Subscription::create([
+                'endpoint' => $subscription->endpoint,
+                'publicKey' => $subscription->public_key,
+                'authToken' => $subscription->auth_token,
+                'contentEncoding' => $subscription->content_encoding ?: 'aesgcm',
+            ]),
+            json_encode($payload)
+        );
     }
 }

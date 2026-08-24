@@ -80,6 +80,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Devices/browsers this user has enabled push notifications on.
+     */
+    public function pushSubscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
+
+    /**
      * Get the virtual accounts associated with the user.
      */
     public function virtualAccounts(): \Illuminate\Database\Eloquent\Relations\HasMany
