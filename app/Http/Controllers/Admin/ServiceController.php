@@ -192,6 +192,7 @@ class ServiceController extends Controller
             'service_fields_id' => 'nullable|exists:service_fields,id',
             'price' => 'required|numeric|min:0',
             'commission' => 'nullable|numeric|min:0',
+            'margin_percent' => 'nullable|numeric|min:0',
         ];
 
         if ($priceTarget === 'user') {
@@ -241,6 +242,7 @@ class ServiceController extends Controller
             'user_type' => $userType,
             'price' => $validated['price'],
             'commission' => $validated['commission'] ?? 0.00,
+            'margin_percent' => $validated['margin_percent'] ?? 0.00,
         ]);
 
         return back()->with('success', 'Price configuration added successfully.');
@@ -253,6 +255,7 @@ class ServiceController extends Controller
         $rules = [
             'price' => 'required|numeric|min:0',
             'commission' => 'nullable|numeric|min:0',
+            'margin_percent' => 'nullable|numeric|min:0',
         ];
 
         if ($priceTarget === 'user') {
@@ -293,6 +296,7 @@ class ServiceController extends Controller
             'user_type' => $userType,
             'price' => $validated['price'],
             'commission' => $validated['commission'] ?? 0.00,
+            'margin_percent' => $validated['margin_percent'] ?? 0.00,
         ]);
 
         return back()->with('success', 'Price configuration updated successfully.');

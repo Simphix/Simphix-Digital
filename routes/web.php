@@ -200,6 +200,22 @@ Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->
 Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
     Route::get('/admin/transactions', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])->name('admin.transactions');
 
+    // Platform Wallets (welfare + utilities revenue)
+    Route::prefix('admin/platform-wallets')->name('admin.platform-wallets.')->group(function () {
+        Route::get('/welfare-settings', [\App\Http\Controllers\Admin\PlatformWelfareSettingsController::class, 'edit'])->name('welfare-settings.edit');
+        Route::put('/welfare-settings', [\App\Http\Controllers\Admin\PlatformWelfareSettingsController::class, 'update'])->name('welfare-settings.update');
+        Route::get('/withdrawal-account', [\App\Http\Controllers\Admin\PlatformWithdrawalAccountController::class, 'edit'])->name('withdrawal-account.edit');
+        Route::post('/withdrawal-account', [\App\Http\Controllers\Admin\PlatformWithdrawalAccountController::class, 'update'])->name('withdrawal-account.update');
+        Route::get('/{walletType}/cashout', [\App\Http\Controllers\Admin\PlatformWalletCashOutController::class, 'show'])->name('cashout.show');
+        Route::post('/{walletType}/cashout', [\App\Http\Controllers\Admin\PlatformWalletCashOutController::class, 'store'])->name('cashout.store');
+
+        Route::prefix('cash-out-approvals')->name('approvals.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\PlatformCashOutApprovalController::class, 'index'])->name('index');
+            Route::post('/{platformCashOutRequest}/approve', [\App\Http\Controllers\Admin\PlatformCashOutApprovalController::class, 'approve'])->name('approve');
+            Route::post('/{platformCashOutRequest}/reject', [\App\Http\Controllers\Admin\PlatformCashOutApprovalController::class, 'reject'])->name('reject');
+        });
+    });
+
     // Services Management
     Route::prefix('admin/services')->name('admin.services.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ServiceController::class, 'index'])->name('index');

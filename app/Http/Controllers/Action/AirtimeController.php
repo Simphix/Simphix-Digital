@@ -330,6 +330,22 @@ class AirtimeController extends Controller implements HasMiddleware
                     });
                 }
 
+                // Platform margin — credited to the Utilities Revenue Wallet.
+                // See docs/platform-wallets.md.
+                if (isset($servicePrice) && $servicePrice->margin_percent > 0) {
+                    $marginAmount = ($amount * (float) $servicePrice->margin_percent) / 100;
+                    if ($marginAmount > 0) {
+                        app(\App\Services\PlatformWalletLedger::class)->credit(
+                            \App\Models\PlatformWallet::TYPE_UTILITIES_REVENUE,
+                            'Utilities Revenue Wallet',
+                            $marginAmount,
+                            'airtime_topup',
+                            "Platform margin on airtime purchase ({$mobile})",
+                            $transaction
+                        );
+                    }
+                }
+
                 $transaction->update([
                     'status'   => 'completed',
                     'metadata' => json_encode([
