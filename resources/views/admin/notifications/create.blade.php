@@ -15,6 +15,8 @@
             <p class="text-sm text-slate-500 mt-1">Only reaches users who have enabled push notifications on a device.</p>
         </div>
 
+        @include('admin.notifications._diagnostics')
+
         @if ($errors->any())
             <div class="p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-2xl space-y-1">
                 <ul class="list-disc pl-5 text-xs font-semibold">

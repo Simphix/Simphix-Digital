@@ -39,6 +39,8 @@
             </div>
         @endif
 
+        @include('admin.notifications._diagnostics')
+
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div class="p-4 rounded-xl bg-white border border-slate-200 shadow-sm text-center">
                 <p class="text-xs font-semibold text-slate-400 uppercase">Status</p>

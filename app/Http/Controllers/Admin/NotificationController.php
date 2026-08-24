@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendAdminNotificationJob;
 use App\Models\AdminNotification;
+use App\Models\PushSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,15 +14,19 @@ class NotificationController extends Controller
     public function index()
     {
         $notifications = AdminNotification::with('createdBy')->latest()->paginate(15);
+        $vapidConfigured = filled(config('services.webpush.vapid.public_key')) && filled(config('services.webpush.vapid.private_key'));
+        $subscriberCount = PushSubscription::count();
 
-        return view('admin.notifications.index', compact('notifications'));
+        return view('admin.notifications.index', compact('notifications', 'vapidConfigured', 'subscriberCount'));
     }
 
     public function create()
     {
         $roles = AdminNotification::ROLES;
+        $vapidConfigured = filled(config('services.webpush.vapid.public_key')) && filled(config('services.webpush.vapid.private_key'));
+        $subscriberCount = PushSubscription::count();
 
-        return view('admin.notifications.create', compact('roles'));
+        return view('admin.notifications.create', compact('roles', 'vapidConfigured', 'subscriberCount'));
     }
 
     public function store(Request $request)
@@ -60,8 +65,10 @@ class NotificationController extends Controller
     public function show(AdminNotification $notification)
     {
         $deliveries = $notification->deliveries()->with('subscription.user')->paginate(20);
+        $vapidConfigured = filled(config('services.webpush.vapid.public_key')) && filled(config('services.webpush.vapid.private_key'));
+        $subscriberCount = PushSubscription::count();
 
-        return view('admin.notifications.show', compact('notification', 'deliveries'));
+        return view('admin.notifications.show', compact('notification', 'deliveries', 'vapidConfigured', 'subscriberCount'));
     }
 
     public function cancel(AdminNotification $notification)

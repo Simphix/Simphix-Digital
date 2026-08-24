@@ -37,34 +37,49 @@ function csrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.content;
 }
 
+// Throws on any failure — callers must catch and surface it, rather than
+// silently leaving the toggle in a stale state with no saved subscription.
 window.togglePushSubscription = async () => {
     const registration = await navigator.serviceWorker.ready;
     const existing = await registration.pushManager.getSubscription();
 
     if (existing) {
-        await fetch('/push/unsubscribe', {
+        const res = await fetch('/push/unsubscribe', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
             body: JSON.stringify({ endpoint: existing.endpoint }),
         });
+        if (!res.ok) throw new Error(`Failed to unsubscribe on the server (HTTP ${res.status}).`);
         await existing.unsubscribe();
         return false;
+    }
+
+    const vapidKey = document.querySelector('meta[name="vapid-public-key"]')?.content;
+    if (!vapidKey) {
+        throw new Error('Push notifications are not configured on this server yet (no VAPID public key). Ask an admin to run "php artisan notifications:generate-vapid-keys" and set the keys in .env.');
     }
 
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return false;
 
-    const vapidKey = document.querySelector('meta[name="vapid-public-key"]')?.content;
     const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidKey),
     });
 
-    await fetch('/push/subscribe', {
+    const res = await fetch('/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
         body: JSON.stringify(subscription.toJSON()),
     });
+
+    if (!res.ok) {
+        // The browser-level subscription succeeded but saving it server-side
+        // didn't — undo the browser subscription rather than leaving the UI
+        // showing "subscribed" for a device the server never recorded.
+        await subscription.unsubscribe();
+        throw new Error(`Subscribed in the browser, but saving it on the server failed (HTTP ${res.status}). Not enabled — try again.`);
+    }
 
     return true;
 };
