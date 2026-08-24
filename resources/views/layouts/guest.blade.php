@@ -7,6 +7,7 @@
     <title>{{ config('app.name', 'SmartSIM') }}</title>
     <meta name="description" content="SmartSIM — secure SIM services, affordable data and a smarter wallet.">
     <link rel="shortcut icon" href="{{ asset('assets/images/logo/favicon.png') }}" type="image/png">
+    @include('layouts.partials.pwa-head')
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -66,5 +67,7 @@
             });
         });
     </script>
+
+    @include('layouts.partials.pwa-install-banner')
 </body>
 </html>

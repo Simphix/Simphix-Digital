@@ -10,6 +10,9 @@
         <!-- Favicon -->
         <link rel="shortcut icon" href="{{ asset('assets/images/logo/favicon.png') }}" type="image/png">
 
+        <!-- PWA -->
+        @include('layouts.partials.pwa-head')
+
         <!-- Bootstrap 5 GRID ONLY for premium responsiveness without Reboot/Reset overrides -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap-grid.min.css" rel="stylesheet" />
         
@@ -187,6 +190,8 @@
                 </div>
             </div>
         @endif
+
+        @include('layouts.partials.pwa-install-banner')
 
         @stack('scripts')
     </body>

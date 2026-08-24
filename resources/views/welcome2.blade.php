@@ -29,6 +29,10 @@
     <link rel="icon" href="{{ asset('assets/images/logo/favicon.png') }}" type="image/png">
     <link rel="shortcut icon" href="{{ asset('assets/images/logo/favicon.png') }}" type="image/png">
 
+    <!-- PWA -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/images/icons/icon-192.png') }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -109,5 +113,7 @@
 
         @include('pages.welcome2.footer')
     </div>
+
+    @include('layouts.partials.pwa-install-banner')
 </body>
 </html>
