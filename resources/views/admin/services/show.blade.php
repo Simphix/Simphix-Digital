@@ -9,7 +9,7 @@
         editField: { id: '', field_name: '', field_code: '', base_price: '', isActive: true },
         
         // Price states
-        editPrice: { id: '', service_fields_id: '', price_target: 'role', user_type: 'personal', user_email: '', price: '', commission: '' }
+        editPrice: { id: '', service_fields_id: '', price_target: 'role', user_type: 'personal', user_email: '', price: '', commission: '', margin_percent: '' }
     }" class="space-y-8 max-w-7xl mx-auto">
         
         <!-- Breadcrumb & Back -->
@@ -207,6 +207,7 @@
                             <th class="py-4 px-6">Linked Variant</th>
                             <th class="py-4 px-6">Custom Price</th>
                             <th class="py-4 px-6">Commission</th>
+                            <th class="py-4 px-6">Platform Margin</th>
                             <th class="py-4 px-6 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -244,6 +245,9 @@
                                 <td class="py-4 px-6 text-emerald-600 font-bold font-display">
                                     {{ $service->name === 'airtime' ? number_format($price->commission, 2) . '%' : '₦' . number_format($price->commission, 2) }}
                                 </td>
+                                <td class="py-4 px-6 text-violet-600 font-bold font-display">
+                                    {{ number_format($price->margin_percent, 2) }}%
+                                </td>
                                 <td class="py-4 px-6">
                                     <div class="flex items-center justify-end gap-2">
                                         <!-- Edit Pricing -->
@@ -255,8 +259,9 @@
                                                 user_type: '{{ $price->user_type ?? 'personal' }}', 
                                                 user_email: '{{ $price->user->email ?? '' }}', 
                                                 price: '{{ $price->price }}',
-                                                commission: '{{ $price->commission }}'
-                                            }; 
+                                                commission: '{{ $price->commission }}',
+                                                margin_percent: '{{ $price->margin_percent }}'
+                                            };
                                             editPriceModalOpen = true;
                                         " class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all duration-150">
                                             <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
@@ -500,6 +505,15 @@
                                        class="rounded-xl bg-slate-50/50" />
                             </div>
 
+                            <!-- Platform Margin -->
+                            <div>
+                                <x-input-label>
+                                    Platform Margin (%) <span class="text-slate-400 font-normal normal-case">— credited to the Utilities Revenue Wallet</span>
+                                </x-input-label>
+                                <x-text-input type="number" step="0.01" name="margin_percent" value="0.00" placeholder="e.g., 2.00"
+                                       class="rounded-xl bg-slate-50/50" />
+                            </div>
+
                         </div>
 
                         <div class="flex items-center justify-end gap-3 mt-8 border-t border-slate-100 pt-4">
@@ -592,6 +606,15 @@
                                     Commission <span x-text="'{{ $service->name }}' === 'airtime' ? '(%)' : '(₦)'"></span>
                                 </x-input-label>
                                 <x-text-input type="number" step="0.01" name="commission" x-bind:value="editPrice.commission" required placeholder="e.g., 50.00"
+                                       class="rounded-xl bg-slate-50/50" />
+                            </div>
+
+                            <!-- Platform Margin -->
+                            <div>
+                                <x-input-label>
+                                    Platform Margin (%) <span class="text-slate-400 font-normal normal-case">— credited to the Utilities Revenue Wallet</span>
+                                </x-input-label>
+                                <x-text-input type="number" step="0.01" name="margin_percent" x-bind:value="editPrice.margin_percent" placeholder="e.g., 2.00"
                                        class="rounded-xl bg-slate-50/50" />
                             </div>
 

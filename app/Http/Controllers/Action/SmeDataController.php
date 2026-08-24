@@ -350,6 +350,22 @@ class SmeDataController extends Controller
                     });
                 }
 
+                // Platform margin — credited to the Utilities Revenue Wallet.
+                // See docs/platform-wallets.md.
+                if (isset($servicePrice) && $servicePrice->margin_percent > 0) {
+                    $marginAmount = ($payableAmount * (float) $servicePrice->margin_percent) / 100;
+                    if ($marginAmount > 0) {
+                        app(\App\Services\PlatformWalletLedger::class)->credit(
+                            \App\Models\PlatformWallet::TYPE_UTILITIES_REVENUE,
+                            'Utilities Revenue Wallet',
+                            $marginAmount,
+                            'data_topup',
+                            "Platform margin on SME data purchase ({$mobile})",
+                            $transaction
+                        );
+                    }
+                }
+
                 $lock->release();
                 return redirect()->back()->with('success', "Data purchase of {$plan->size} ({$plan->plan_type}) for {$mobile} was successful!");
             } else {
