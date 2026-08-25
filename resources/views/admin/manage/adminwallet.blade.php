@@ -40,19 +40,28 @@
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- Platform Welfare Wallet Card -->
-            <a href="{{ route('admin.platform-wallets.cashout.show', \App\Models\PlatformWallet::TYPE_WELFARE) }}"
-               class="block p-6 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
-                <div class="flex items-center justify-between">
+            <div class="relative group p-6 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+                <a href="{{ route('admin.platform-wallets.cashout.show', \App\Models\PlatformWallet::TYPE_WELFARE) }}" class="absolute inset-0" aria-label="Cash out Platform Welfare Wallet"></a>
+                <a href="{{ route('admin.platform-wallets.welfare-settings.edit') }}"
+                   class="absolute top-3 right-3 z-10 p-1.5 rounded-lg text-slate-300 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+                   title="Welfare wallet settings">
+                    <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                </a>
+                <div class="flex items-center justify-between pointer-events-none">
                     <div>
                         <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Platform Welfare Wallet</p>
                         <h3 class="text-2xl font-extrabold text-slate-900 mt-2 tracking-tight">₦{{ number_format($welfareWallet->balance, 2) }}</h3>
-                        <p class="text-[11px] text-slate-400 mt-1.5 font-medium">Credited ₦{{ number_format($welfareWallet->total_credited, 2) }} all-time &middot; Click to cash out</p>
+                        @if (!$welfareConfigured)
+                            <p class="text-[11px] text-amber-600 mt-1.5 font-semibold">Not crediting yet &middot; click the gear to set an amount</p>
+                        @else
+                            <p class="text-[11px] text-slate-400 mt-1.5 font-medium">Credited ₦{{ number_format($welfareWallet->total_credited, 2) }} all-time &middot; Click to cash out</p>
+                        @endif
                     </div>
                     <div class="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100/50 flex items-center justify-center text-sky-600">
                         <i data-lucide="shield-plus" class="w-5 h-5"></i>
                     </div>
                 </div>
-            </a>
+            </div>
 
             <!-- Utilities Revenue Wallet Card -->
             <a href="{{ route('admin.platform-wallets.cashout.show', \App\Models\PlatformWallet::TYPE_UTILITIES_REVENUE) }}"

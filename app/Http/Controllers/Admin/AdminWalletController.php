@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PlatformWallet;
+use App\Models\PlatformWelfareSettings;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Transaction;
@@ -44,13 +45,17 @@ class AdminWalletController extends Controller
         $welfareWallet = PlatformWallet::forType(PlatformWallet::TYPE_WELFARE, 'Platform Welfare Wallet');
         $utilitiesWallet = PlatformWallet::forType(PlatformWallet::TYPE_UTILITIES_REVENUE, 'Utilities Revenue Wallet');
 
+        $welfareSettings = PlatformWelfareSettings::current();
+        $welfareConfigured = $welfareSettings->is_active && $welfareSettings->amount_per_activation > 0;
+
         return view('admin.manage.adminwallet', compact(
             'monthlyManualCredit',
             'monthlyManualDebit',
             'totalUsers',
             'transactions',
             'welfareWallet',
-            'utilitiesWallet'
+            'utilitiesWallet',
+            'welfareConfigured'
         ));
     }
 
