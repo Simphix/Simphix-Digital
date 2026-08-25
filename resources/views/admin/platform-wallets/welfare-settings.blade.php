@@ -12,6 +12,20 @@
             </div>
         @endif
 
+        @if (!$settings->is_active || $settings->amount_per_activation <= 0)
+            <div class="p-4 bg-amber-50/70 border border-amber-100 text-amber-800 rounded-2xl flex items-start gap-3 shadow-sm">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 shrink-0 mt-0.5"></i>
+                <div class="text-xs leading-relaxed">
+                    <strong class="text-sm block mb-0.5">Nothing is being credited right now</strong>
+                    @if (!$settings->is_active)
+                        Welfare wallet crediting is switched off — check the box below and save to resume it.
+                    @else
+                        The amount per activation is ₦0.00 — SIM activations won't add anything to the wallet until you set a real amount below and save.
+                    @endif
+                </div>
+            </div>
+        @endif
+
         <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <form method="POST" action="{{ route('admin.platform-wallets.welfare-settings.update') }}" class="space-y-5">
                 @csrf
