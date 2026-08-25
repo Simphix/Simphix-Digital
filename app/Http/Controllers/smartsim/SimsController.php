@@ -84,9 +84,9 @@ class SimsController extends Controller
         $categories = $this->resolveCategories($user);
         $categoryPrices = collect($categories)->pluck('price', 'name');
 
-        // Roles outside the SIM catalog (Personal, Business, ...) go straight to
-        // the request page — they don't browse/self-activate, someone in the
-        // hierarchy (or admin) activates on their behalf.
+        // Roles outside the SIM catalog (Personal, Agent's downline, ...) go
+        // straight to the request page — they don't browse/self-activate,
+        // someone in the hierarchy (or admin) activates on their behalf.
         $goToRequest = !SimAccess::canBrowseCatalog($user);
         $canEarn = SimAccess::canBrowseCatalog($user);
 
@@ -165,22 +165,23 @@ class SimsController extends Controller
         $providers = ['mtn', 'airtel', 'glo', '9mobile'];
 
         $mode = match ($user->role) {
-            'regional_manager', 'coordinator' => 'distribute',
-            'partner' => 'activate_for_user',
+            'regional_manager', 'coordinator', 'business' => 'distribute',
+            'partner', 'business_agent' => 'activate_for_user',
             default => 'self_activate',
         };
 
         $downlineUsers = collect();
 
         $heldSims = match ($mode) {
-            'distribute' => Sim::where($user->role === 'regional_manager' ? 'regional_manager_id' : 'coordinator_id', $user->id)
-                ->where('status', $user->role === 'regional_manager' ? SimStatus::ASSIGNED_TO_RM : SimStatus::ASSIGNED_TO_COORDINATOR)
-                ->where('category', $category)
-                ->latest()->get(),
-            'activate_for_user' => Sim::where('partner_id', $user->id)
-                ->where('status', SimStatus::ASSIGNED_TO_PARTNER)
-                ->where('category', $category)
-                ->latest()->get(),
+            'distribute' => (match ($user->role) {
+                'regional_manager' => Sim::where('regional_manager_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_RM),
+                'coordinator' => Sim::where('coordinator_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_COORDINATOR),
+                'business' => Sim::where('business_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_BUSINESS),
+            })->where('category', $category)->latest()->get(),
+            'activate_for_user' => (match ($user->role) {
+                'partner' => Sim::where('partner_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_PARTNER),
+                'business_agent' => Sim::where('business_agent_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_BUSINESS_AGENT),
+            })->where('category', $category)->latest()->get(),
             default => Sim::where('user_id', $user->id)
                 ->where('category', $category)
                 ->where('status', '!=', SimStatus::ACTIVATED)
@@ -250,7 +251,7 @@ class SimsController extends Controller
     {
         $user = Auth::user();
         if (!$user || !SimAccess::canBrowseCatalog($user)) {
-            abort(403, 'This page is only available to Regional Managers, Coordinators, Partners, and Agents.');
+            abort(403, 'This page is only available to Regional Managers, Coordinators, Partners, Agents, Enterprise Partners, and Business Agents.');
         }
     }
 
@@ -410,6 +411,8 @@ class SimsController extends Controller
             // downline user's id only once handed further down. So
             // user_id = partner_id is what "still with the partner" means.
             'partner' => $query->where('partner_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_PARTNER)->whereColumn('user_id', 'partner_id'),
+            'business' => $query->where('business_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_BUSINESS),
+            'business_agent' => $query->where('business_agent_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_BUSINESS_AGENT)->whereColumn('user_id', 'business_agent_id'),
             default => $query->where('user_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_PARTNER), // agent
         };
     }
@@ -426,6 +429,9 @@ class SimsController extends Controller
             'coordinator' => $query->where('coordinator_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_PARTNER),
             'partner' => $query->where('partner_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_PARTNER)
                 ->whereColumn('user_id', '!=', 'partner_id'),
+            'business' => $query->where('business_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_BUSINESS_AGENT),
+            'business_agent' => $query->where('business_agent_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_BUSINESS_AGENT)
+                ->whereColumn('user_id', '!=', 'business_agent_id'),
             default => $query->whereRaw('1 = 0'), // agent has no downline
         };
     }
@@ -454,6 +460,18 @@ class SimsController extends Controller
                 && $sim->partner_id === $user->id
                 && $sim->status === SimStatus::ASSIGNED_TO_PARTNER
                 && $sim->user_id !== $sim->partner_id
+                => ['holder_id' => $sim->user_id, 'holder_role' => 'personal'],
+
+            $user->role === 'business'
+                && $sim->business_id === $user->id
+                && $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT
+                && $sim->user_id === $sim->business_agent_id
+                => ['holder_id' => $sim->business_agent_id, 'holder_role' => 'business_agent'],
+
+            $user->role === 'business_agent'
+                && $sim->business_agent_id === $user->id
+                && $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT
+                && $sim->user_id !== $sim->business_agent_id
                 => ['holder_id' => $sim->user_id, 'holder_role' => 'personal'],
 
             default => null,
@@ -517,6 +535,8 @@ class SimsController extends Controller
             'regional_manager' => $query->where('regional_manager_id', $user->id),
             'coordinator' => $query->where('coordinator_id', $user->id),
             'partner' => $query->where('partner_id', $user->id),
+            'business' => $query->where('business_id', $user->id),
+            'business_agent' => $query->where('business_agent_id', $user->id),
             default => $query->where('user_id', $user->id), // agent
         };
     }
@@ -531,7 +551,7 @@ class SimsController extends Controller
             return redirect()->route('login')->with('error', 'Please log in.');
         }
         if (!SimAccess::canViewMine($user)) {
-            abort(403, 'My SIM is only available to Personal and Business accounts.');
+            abort(403, 'My SIM is only available to Personal accounts.');
         }
 
         $sims = Sim::where('user_id', $user->id)->latest()->paginate(10, ['*'], 'sims_page');
@@ -564,29 +584,43 @@ class SimsController extends Controller
 
     /**
      * A requester's immediate upline is only usable for self-service SIM
-     * fulfillment when it's an active user in the correct parent role for
-     * the chain step below them (personal/business -> partner -> coordinator
-     * -> regional_manager). Anything else (no referrer, a suspended upline,
-     * a referrer from outside the distribution chain — e.g. another personal
-     * user via the leaderboard referral system, or a role with no parent
-     * tier at all — agent, regional_manager) is treated as "unclaimed".
+     * fulfillment when it's an active user in one of the correct parent
+     * roles for the chain step below them: personal -> partner OR
+     * business_agent -> coordinator -> regional_manager, and separately
+     * business_agent -> business. Anything else (no referrer, a suspended
+     * upline, a referrer from outside the distribution chain — e.g. another
+     * personal user via the leaderboard referral system, or a role with no
+     * parent tier at all — agent, regional_manager, business) is treated as
+     * "unclaimed".
      */
     private function resolveUpline(User $user): ?User
     {
-        $parentRole = match ($user->role) {
-            'personal', 'business' => 'partner',
-            'partner' => 'coordinator',
-            'coordinator' => 'regional_manager',
-            default => null,
+        // A 'personal' requester's referrer might legitimately be a
+        // 'partner' OR a 'business_agent' now that there are two parallel
+        // chains terminating at 'personal' — so this checks a list of
+        // acceptable parent roles for the requester's own role, not a
+        // single hardcoded one.
+        //
+        // 'business' (Enterprise Partner) is deliberately absent here — it
+        // no longer resolves an upline for self-service SIM requests at
+        // all. It gets its inventory via the eligibility payment flow
+        // instead, and doesn't necessarily have a 'partner' upline to
+        // request from the way the old generic 'business' role did.
+        $allowedParentRoles = match ($user->role) {
+            'personal' => ['partner', 'business_agent'],
+            'business_agent' => ['business'],
+            'partner' => ['coordinator'],
+            'coordinator' => ['regional_manager'],
+            default => [],
         };
 
-        if (!$parentRole) {
+        if (empty($allowedParentRoles)) {
             return null;
         }
 
         $referrer = $user->referrer;
 
-        return ($referrer && $referrer->role === $parentRole && $referrer->status === 'active') ? $referrer : null;
+        return ($referrer && in_array($referrer->role, $allowedParentRoles, true) && $referrer->status === 'active') ? $referrer : null;
     }
 
     /**
@@ -931,12 +965,14 @@ class SimsController extends Controller
     }
 
     /**
-     * A Partner activates a SIM they hold on behalf of a User in their
-     * downline. The activation fee is debited from that User's wallet (not
-     * the partner's), then the SIM is marked ACTIVATED — which fires the
-     * commission payout up the whole chain (partner, coordinator, regional
-     * manager). Regional Managers and Coordinators never activate — they
-     * only distribute, via partnerAssignSim() above.
+     * A Partner (or Business Agent) activates a SIM they hold on behalf of a
+     * User in their downline. The activation fee is debited from that User's
+     * wallet (not the actor's), then the SIM is marked ACTIVATED — which
+     * fires the commission payout up the whole chain (partner/coordinator/
+     * regional manager, or business_agent/business for the Enterprise
+     * Partner chain). Regional Managers, Coordinators, and Enterprise
+     * Partners never activate — they only distribute, via
+     * partnerAssignSim()/bulk-assign above.
      */
     public function activateForDownlineUser(Request $request)
     {
@@ -946,14 +982,15 @@ class SimsController extends Controller
         ]);
 
         $partner = Auth::user();
-        if ($partner->role !== 'partner') {
-            return back()->with('error', 'Only partners can activate a SIM for a downline user.');
+        if (!in_array($partner->role, ['partner', 'business_agent'], true)) {
+            return back()->with('error', 'Only partners or business agents can activate a SIM for a downline user.');
         }
 
         $sim = Sim::find($request->sim_id);
         $targetUser = User::find($request->user_id);
+        $holderColumn = $partner->role === 'business_agent' ? 'business_agent_id' : 'partner_id';
 
-        if ($sim->partner_id !== $partner->id) {
+        if ($sim->{$holderColumn} !== $partner->id) {
             return back()->with('error', 'You can only activate numbers currently allocated to you.');
         }
 
@@ -992,7 +1029,7 @@ class SimsController extends Controller
                     'amount'          => $payableAmount,
                     'fee'             => 0.00,
                     'net_amount'      => $payableAmount,
-                    'description'     => "SIM Card Activation: {$sim->number} (Category: {$sim->category}, Network: " . strtoupper($sim->provider) . "), activated by partner {$partner->first_name} {$partner->last_name}",
+                    'description'     => "SIM Card Activation: {$sim->number} (Category: {$sim->category}, Network: " . strtoupper($sim->provider) . '), activated by ' . str_replace('_', ' ', $partner->role) . " {$partner->first_name} {$partner->last_name}",
                     'type'            => 'debit',
                     'status'          => 'completed',
                     'performed_by'    => $partner->first_name . ' ' . $partner->last_name,
@@ -1006,7 +1043,7 @@ class SimsController extends Controller
                     'amount'       => $payableAmount,
                     'status'       => 'completed',
                     'type'         => 'sim_activation',
-                    'description'  => "SIM Card Activation: {$sim->number} (Category: {$sim->category}), activated by partner",
+                    'description'  => "SIM Card Activation: {$sim->number} (Category: {$sim->category}), activated by " . str_replace('_', ' ', $partner->role),
                     'old_balance'  => $oldBalance,
                     'new_balance'  => $newBalance,
                     'service_id'   => $simService ? $simService->id : null,
@@ -1024,16 +1061,17 @@ class SimsController extends Controller
     }
 
     /**
-     * Restrict the downline-requests actions below to the three roles that
-     * hold stock a direct downline's SimRequest.upline_id can point to (see
-     * resolveUpline()): Partner (-> personal/business), Coordinator
-     * (-> partner), Regional Manager (-> coordinator).
+     * Restrict the downline-requests actions below to the roles that hold
+     * stock a direct downline's SimRequest.upline_id can point to (see
+     * resolveUpline()): Partner (-> personal), Coordinator (-> partner),
+     * Regional Manager (-> coordinator), Business (-> business_agent),
+     * Business Agent (-> personal).
      */
     private function authorizeUplineFulfiller(): User
     {
         $user = Auth::user();
-        if (!$user || !in_array($user->role, ['partner', 'coordinator', 'regional_manager'], true)) {
-            abort(403, 'This page is only available to Partners, Coordinators, and Regional Managers.');
+        if (!$user || !in_array($user->role, ['partner', 'coordinator', 'regional_manager', 'business', 'business_agent'], true)) {
+            abort(403, 'This page is only available to Partners, Coordinators, Regional Managers, Enterprise Partners, and Business Agents.');
         }
 
         return $user;
@@ -1050,36 +1088,42 @@ class SimsController extends Controller
         return (match ($user->role) {
             'regional_manager' => Sim::where('regional_manager_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_RM),
             'coordinator'       => Sim::where('coordinator_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_COORDINATOR),
+            'business'          => Sim::where('business_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_BUSINESS),
+            'business_agent'    => Sim::where('business_agent_id', $user->id)->where('user_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_BUSINESS_AGENT),
             default             => Sim::where('partner_id', $user->id)->where('user_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_PARTNER),
         })->where('category', $category)->where('provider', $provider);
     }
 
     /**
      * Whether $user currently holds $sim at their own tier (Regional
-     * Manager/Coordinator/Partner), the same condition heldStockQuery()
-     * checks in bulk, evaluated here against an already-loaded Sim.
+     * Manager/Coordinator/Partner/Business/Business Agent), the same
+     * condition heldStockQuery() checks in bulk, evaluated here against an
+     * already-loaded Sim.
      */
     private function holdsSim(User $user, Sim $sim): bool
     {
         return match ($user->role) {
             'regional_manager' => $sim->regional_manager_id === $user->id && $sim->status === SimStatus::ASSIGNED_TO_RM,
             'coordinator'       => $sim->coordinator_id === $user->id && $sim->status === SimStatus::ASSIGNED_TO_COORDINATOR,
+            'business'          => $sim->business_id === $user->id && $sim->status === SimStatus::ASSIGNED_TO_BUSINESS,
+            'business_agent'    => $sim->business_agent_id === $user->id && $sim->user_id === $user->id && $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT,
             default             => $sim->partner_id === $user->id && $sim->user_id === $user->id && $sim->status === SimStatus::ASSIGNED_TO_PARTNER,
         };
     }
 
     /**
      * Restrict the four bulk-assign/collect actions below to Regional
-     * Managers and Coordinators — the two roles with a direct downline
-     * delegation cascade (assignDown()/collectUp()) worth a dedicated bulk
-     * paste-numbers flow. Partner keeps the existing checkbox picker on
-     * Inventory unchanged.
+     * Managers, Coordinators, and Enterprise Partners (business) — the
+     * roles with a direct downline delegation cascade (assignDown()/
+     * collectUp()) worth a dedicated bulk paste-numbers flow. Partner and
+     * Business Agent keep the existing checkbox picker on Inventory
+     * unchanged (they activate one at a time, not in bulk).
      */
     private function authorizeBulkDelegator(): User
     {
         $user = Auth::user();
-        if (!$user || !in_array($user->role, ['regional_manager', 'coordinator'], true)) {
-            abort(403, 'This page is only available to Regional Managers and Coordinators.');
+        if (!$user || !in_array($user->role, ['regional_manager', 'coordinator', 'business'], true)) {
+            abort(403, 'This page is only available to Regional Managers, Coordinators, and Enterprise Partners.');
         }
 
         return $user;
@@ -1202,6 +1246,7 @@ class SimsController extends Controller
             $tracesBackToActor = match ($expectedHolderRole) {
                 'coordinator' => $sim->coordinator_id !== null && $sim->status === SimStatus::ASSIGNED_TO_COORDINATOR && $sim->regional_manager_id === $user->id,
                 'partner'     => $sim->partner_id !== null && $sim->user_id === $sim->partner_id && $sim->status === SimStatus::ASSIGNED_TO_PARTNER && $sim->coordinator_id === $user->id,
+                'business_agent' => $sim->business_agent_id !== null && $sim->user_id === $sim->business_agent_id && $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT && $sim->business_id === $user->id,
                 default       => false,
             };
 
