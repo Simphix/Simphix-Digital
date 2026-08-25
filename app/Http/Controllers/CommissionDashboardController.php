@@ -12,7 +12,9 @@ class CommissionDashboardController extends Controller
 {
     /**
      * The user's own commission earnings history; admins see every payout.
-     * Personal/Business accounts never earn SIM commissions, so they don't get this page.
+     * Personal accounts never earn SIM commissions, so they don't get this
+     * page. Enterprise Partners (business) additionally see a downline
+     * breakdown of what each business_agent kept vs. their own margin.
      */
     public function index(Request $request)
     {
@@ -21,7 +23,7 @@ class CommissionDashboardController extends Controller
             return redirect()->route('login')->with('error', 'Please log in.');
         }
         if (!SimAccess::canBrowseCatalog($user) && !$user->hasRole('super_admin')) {
-            abort(403, 'Commissions are only available to Regional Managers, Coordinators, Partners, and Agents.');
+            abort(403, 'Commissions are only available to Regional Managers, Coordinators, Partners, Agents, Enterprise Partners, and Business Agents.');
         }
 
         if ($user->hasRole('super_admin')) {
@@ -43,6 +45,27 @@ class CommissionDashboardController extends Controller
             $totalPending = Wallet::where('user_id', $user->id)->value('bonus') ?? 0.00;
         }
 
-        return view('commissions.dashboard', compact('user', 'earnings', 'totalPaid', 'totalPending'));
+        $downlineBreakdown = collect();
+        if ($user->role === 'business') {
+            $simIds = $earnings->pluck('sim_id');
+            $agentEarnings = CommissionEarning::with('user')
+                ->where('role', 'business_agent')
+                ->whereIn('sim_id', $simIds)
+                ->get()
+                ->keyBy('sim_id');
+
+            $downlineBreakdown = $earnings->getCollection()->mapWithKeys(function (CommissionEarning $earning) use ($agentEarnings) {
+                $agentEarning = $agentEarnings->get($earning->sim_id);
+
+                return [$earning->id => [
+                    'agent_name' => $agentEarning?->user ? trim($agentEarning->user->first_name . ' ' . $agentEarning->user->last_name) : null,
+                    'agent_amount' => $agentEarning ? (float) $agentEarning->amount : 0.00,
+                    'ep_amount' => (float) $earning->amount,
+                    'price' => (float) $earning->amount + ($agentEarning ? (float) $agentEarning->amount : 0.00),
+                ]];
+            });
+        }
+
+        return view('commissions.dashboard', compact('user', 'earnings', 'totalPaid', 'totalPending', 'downlineBreakdown'));
     }
 }
