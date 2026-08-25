@@ -231,6 +231,13 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         });
     });
 
+    // Enterprise Partner referral settings — one-time bonus paid to whoever
+    // invited a newly-activated Enterprise Partner.
+    Route::prefix('admin/enterprise-partners')->name('admin.enterprise-partners.')->group(function () {
+        Route::get('/referral-settings', [\App\Http\Controllers\Admin\EnterprisePartnerReferralSettingsController::class, 'edit'])->name('referral-settings.edit');
+        Route::put('/referral-settings', [\App\Http\Controllers\Admin\EnterprisePartnerReferralSettingsController::class, 'update'])->name('referral-settings.update');
+    });
+
     // Services Management
     Route::prefix('admin/services')->name('admin.services.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ServiceController::class, 'index'])->name('index');
