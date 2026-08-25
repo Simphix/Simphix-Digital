@@ -101,7 +101,16 @@
             });
         </script>
 
-        @if(Auth::check() && Auth::user()->hasVerifiedEmail() && (empty(Auth::user()->first_name) || empty(Auth::user()->last_name) || empty(Auth::user()->phone) || empty(Auth::user()->state) || empty(Auth::user()->lga) || empty(Auth::user()->address)))
+        @php
+            // A newly-registered Enterprise Partner's own registration form
+            // never collects state/lga/address (see EnterprisePartnerController::register())
+            // — don't block them behind this modal before they've even had
+            // the chance to pay and unlock the rest of the app. Mirrors the
+            // same exception already carved out in EnsureKycCompleted.
+            $isPendingEnterprisePartner = Auth::check() && Auth::user()->role === 'business'
+                && in_array(Auth::user()->status, ['pending_eligibility', 'pending_payment'], true);
+        @endphp
+        @if(Auth::check() && Auth::user()->hasVerifiedEmail() && !$isPendingEnterprisePartner && (empty(Auth::user()->first_name) || empty(Auth::user()->last_name) || empty(Auth::user()->phone) || empty(Auth::user()->state) || empty(Auth::user()->lga) || empty(Auth::user()->address)))
             @include('pages.dashboard.kyc')
         @endif
 

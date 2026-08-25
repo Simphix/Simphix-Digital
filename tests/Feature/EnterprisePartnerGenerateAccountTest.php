@@ -130,3 +130,22 @@ test('once a payment exists, the page shows its details instead of the identity 
     $again->assertRedirect(route('enterprise-partner.generate-account'));
     expect(EnterprisePartnerPayment::where('application_id', $application->id)->count())->toBe(1);
 });
+
+test('a pending EP with no state/lga/address (as the real registration form leaves them) is not blocked by the global KYC modal on the generate-account page', function () {
+    [$ep, $application] = makeEpWithApplication();
+    $ep->forceFill(['state' => null, 'lga' => null, 'address' => null, 'email_verified_at' => now()])->save();
+
+    $response = $this->actingAs($ep)->get(route('enterprise-partner.generate-account'));
+
+    $response->assertOk();
+    $response->assertDontSee('Complete Profile Setup');
+});
+
+test('a non-EP user with incomplete KYC still gets the blocking modal (the exception is scoped to pending EPs only)', function () {
+    $user = User::factory()->create(['state' => null, 'email_verified_at' => now()]);
+
+    $response = $this->actingAs($user)->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Complete Profile Setup');
+});
