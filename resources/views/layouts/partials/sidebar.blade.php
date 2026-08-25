@@ -157,6 +157,9 @@
         @if (auth()->user() && auth()->user()->role !== 'super_admin')
             @include('layouts.partials.sidebar-link', ['href' => route('network'), 'icon' => 'users', 'label' => __('My Network'), 'active' => request()->routeIs('network')])
         @endif
+        @if (auth()->user() && in_array(auth()->user()->role, ['partner', 'coordinator', 'regional_manager'], true))
+            @include('layouts.partials.sidebar-link', ['href' => route('enterprise-partner.invite'), 'icon' => 'handshake', 'label' => __('Invite Enterprise Partner'), 'active' => request()->routeIs('enterprise-partner.invite')])
+        @endif
         @if (auth()->user() && (\App\Support\SimAccess::canBrowseCatalog(auth()->user()) || auth()->user()->hasRole('super_admin')))
             @include('layouts.partials.sidebar-link', ['href' => route('commissions.dashboard'), 'icon' => 'badge-percent', 'label' => __('Commissions'), 'active' => request()->routeIs('commissions.dashboard')])
         @endif

@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             \App\Http\Middleware\EnsureKycCompleted::class,
+            \App\Http\Middleware\EnsureEnterprisePartnerPaid::class,
             \App\Http\Middleware\VerifySessionFingerprint::class,
             \App\Http\Middleware\AddSecurityHeaders::class,
         ]);

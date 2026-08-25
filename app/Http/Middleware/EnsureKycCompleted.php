@@ -31,8 +31,13 @@ class EnsureKycCompleted
                 }
 
                 if ($incomplete) {
-                    // Check if current route is not dashboard, kyc.submit, or logout
-                    if (!$request->routeIs('dashboard') && !$request->routeIs('kyc.submit') && !$request->routeIs('logout')) {
+                    // Also let a newly-registered, not-yet-paid Enterprise
+                    // Partner reach their info/payment pages — their
+                    // registration form doesn't collect state/lga/address
+                    // upfront, and EnsureEnterprisePartnerPaid needs the
+                    // chance to route them there instead of bouncing them
+                    // to a dashboard they can't use yet.
+                    if (!$request->routeIs('dashboard', 'kyc.submit', 'logout', 'enterprise-partner.info', 'enterprise-partner.generate-account*')) {
                         return redirect()->route('dashboard')->with('warning', 'Please complete your KYC profile to continue.');
                     }
                 }
