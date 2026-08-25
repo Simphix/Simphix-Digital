@@ -861,8 +861,11 @@ class SimsController extends Controller
         $sim = Sim::find($request->sim_id);
         $targetUser = User::find($request->user_id);
 
-        // Legacy path: partner delegating to an agent/business account (outside the hierarchy).
-        if ($from->role === 'partner' && in_array($targetUser->role, ['agent', 'business'])) {
+        // Legacy path: partner delegating to an agent account (outside the hierarchy).
+        // 'business' deliberately excluded here — Enterprise Partner is now a
+        // parallel root tier of its own (gets inventory via the payment
+        // flow), not a Partner's downline.
+        if ($from->role === 'partner' && in_array($targetUser->role, ['agent'])) {
             if ($sim->partner_id !== $from->id || $sim->user_id !== $from->id) {
                 return back()->with('error', 'You can only assign numbers currently allocated to you.');
             }
