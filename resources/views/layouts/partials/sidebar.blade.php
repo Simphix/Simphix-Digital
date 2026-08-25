@@ -112,7 +112,7 @@
                     @if (\App\Support\SimAccess::canViewMine(auth()->user()))
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.mine'), 'icon' => 'smartphone', 'label' => __('My SIM'), 'active' => request()->routeIs('sims.mine')])
                     @endif
-                    @if (in_array(auth()->user()->role, ['partner', 'coordinator', 'regional_manager'], true))
+                    @if (in_array(auth()->user()->role, ['partner', 'coordinator', 'regional_manager', 'business', 'business_agent'], true))
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.downline-requests'), 'icon' => 'inbox', 'label' => __('Downline Requests'), 'active' => request()->routeIs('sims.downline-requests'), 'badge' => $pendingDownlineRequestsBadge ?? 0])
                     @endif
                 </div>

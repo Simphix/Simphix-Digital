@@ -145,3 +145,22 @@ test('EP sees downline requests routed from their business_agent stock', functio
     $response->assertOk();
     $response->assertViewHas('requests', fn ($requests) => $requests->firstWhere('id', $simRequest->id)?->held_count === 1);
 });
+
+test('the Downline Requests sidebar link and badge are visible to EP and business_agent', function () {
+    SimRequest::create([
+        'user_id' => $this->agent->id,
+        'upline_id' => $this->ep->id,
+        'category' => 'POS SIM',
+        'provider' => 'mtn',
+        'quantity' => 1,
+        'status' => 'pending',
+    ]);
+
+    $epResponse = $this->actingAs($this->ep)->get(route('sims.inventory'));
+    $epResponse->assertOk();
+    $epResponse->assertSee(route('sims.downline-requests'), false);
+
+    $agentResponse = $this->actingAs($this->agent)->get(route('sims.inventory'));
+    $agentResponse->assertOk();
+    $agentResponse->assertSee(route('sims.downline-requests'), false);
+});
