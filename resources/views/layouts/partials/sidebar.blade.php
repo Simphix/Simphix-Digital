@@ -210,6 +210,7 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.services.index'), 'icon' => 'server', 'label' => 'Services Pricing', 'active' => request()->routeIs('admin.services*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sme-plans.index'), 'icon' => 'wifi', 'label' => 'SME Data Plans', 'active' => request()->routeIs('admin.sme-plans*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-plan.index'), 'icon' => 'settings', 'label' => 'SIM Plans', 'active' => request()->routeIs('admin.sim-plan*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.referral-settings.edit'), 'icon' => 'handshake', 'label' => 'EP Referral Settings', 'active' => request()->routeIs('admin.enterprise-partners*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.cash-out.index'), 'icon' => 'banknote', 'label' => 'Cash Out Approvals', 'active' => request()->routeIs('admin.cash-out*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.leaderboard.index'), 'icon' => 'trophy', 'label' => 'Leaderboard Settings', 'active' => request()->routeIs('admin.leaderboard*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.transactions'), 'icon' => 'receipt', 'label' => 'All Transactions', 'active' => request()->routeIs('admin.transactions*')])
