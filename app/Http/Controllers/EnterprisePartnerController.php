@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\EnterprisePartnerApplication;
+use App\Models\EnterprisePartnerPayment;
 use App\Models\Service;
 use App\Models\ServiceField;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Repositories\VirtualAccountRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -147,14 +149,75 @@ class EnterprisePartnerController extends Controller
 
     public function infoPage()
     {
+        $user = $this->authorizeBusiness();
+
+        $application = EnterprisePartnerApplication::where('user_id', $user->id)->first();
+
+        return view('enterprise-partner.info', compact('user', 'application'));
+    }
+
+    /**
+     * Shows the pending payment's virtual account details + amount due if
+     * one has already been generated, else a BVN/NIN identity form to
+     * generate one — mirrors WalletController::createWallet()'s identity
+     * verification step.
+     */
+    public function generateAccountPage()
+    {
+        $user = $this->authorizeBusiness();
+
+        $application = EnterprisePartnerApplication::where('user_id', $user->id)->first();
+        $payment = $application
+            ? EnterprisePartnerPayment::where('application_id', $application->id)->latest()->first()
+            : null;
+
+        return view('enterprise-partner.generate-account', compact('user', 'application', 'payment'));
+    }
+
+    public function generateAccount(Request $request)
+    {
+        $user = $this->authorizeBusiness();
+
+        $application = EnterprisePartnerApplication::where('user_id', $user->id)->first();
+        if (!$application) {
+            abort(404);
+        }
+
+        if (EnterprisePartnerPayment::where('application_id', $application->id)->exists()) {
+            return redirect()->route('enterprise-partner.generate-account')->with('error', 'A payment account has already been generated.');
+        }
+
+        $validated = $request->validate([
+            'identity_type' => 'required|in:bvn,nin',
+            'bvn' => 'required_if:identity_type,bvn|nullable|string|digits:11|unique:users,bvn,' . $user->id,
+            'nin' => 'required_if:identity_type,nin|nullable|string|digits:11|unique:users,nin,' . $user->id,
+        ]);
+
+        $identityType = $validated['identity_type'];
+        if ($identityType === 'nin') {
+            $user->nin = $validated['nin'];
+        } else {
+            $user->bvn = $validated['bvn'];
+        }
+        $user->save();
+
+        $result = (new VirtualAccountRepository())->createVirtualAccountForEnterprisePartner($application, $user, $identityType);
+
+        if (!$result['success']) {
+            return redirect()->route('enterprise-partner.generate-account')->with('error', $result['message']);
+        }
+
+        return redirect()->route('enterprise-partner.generate-account')->with('success', $result['message']);
+    }
+
+    private function authorizeBusiness(): User
+    {
         $user = Auth::user();
         if (!$user || $user->role !== 'business') {
             abort(403);
         }
 
-        $application = EnterprisePartnerApplication::where('user_id', $user->id)->first();
-
-        return view('enterprise-partner.info', compact('user', 'application'));
+        return $user;
     }
 
     /**

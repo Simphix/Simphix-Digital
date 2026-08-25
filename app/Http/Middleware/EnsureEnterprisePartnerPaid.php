@@ -22,7 +22,7 @@ class EnsureEnterprisePartnerPaid
 
             if ($user->role === 'business' && in_array($user->status, ['pending_eligibility', 'pending_payment'], true)) {
                 if (!$request->routeIs('enterprise-partner.info', 'enterprise-partner.generate-account*', 'logout')) {
-                    return redirect('/enterprise-partner/generate-account')->with('warning', 'Complete your eligibility payment to access your dashboard.');
+                    return redirect()->route('enterprise-partner.generate-account')->with('warning', 'Complete your eligibility payment to access your dashboard.');
                 }
             }
         }
