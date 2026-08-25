@@ -768,121 +768,21 @@ class SimsController extends Controller
     /**
      * User submits request to activate their assigned SIM.
      */
+    /**
+     * This action was always exclusively Agent's self-activation flow — now
+     * that Agent no longer distributes/holds SIMs at all (it's a
+     * discount-only tier, see AgentUpgradeController), no role reaches this
+     * successfully anymore.
+     */
     public function activateSim(Request $request)
     {
-        $request->validate([
-            'sim_id' => 'required|exists:sims,id',
-        ]);
-
-        $user = Auth::user();
-
-        if ($user->role !== 'agent') {
-            return back()->with('error', 'Self-activation isn\'t available on your account. Regional Managers and Coordinators distribute SIMs down the chain; Partners activate for their downline Users.');
-        }
-
-        $sim = Sim::find($request->sim_id);
-
-        // Ensure the SIM belongs to the user or partner
-        if ($sim->user_id !== $user->id && $sim->partner_id !== $user->id) {
-            return back()->with('error', 'Access denied. You do not own this SIM card.');
-        }
-
-        if ($sim->status === SimStatus::ACTIVATED) {
-            return back()->with('error', 'This SIM card is already active.');
-        }
-
-        // Check if there is already a pending activation request
-        $existing = SimRequest::where('sim_id', $sim->id)
-            ->where('request_type', 'activation')
-            ->where('status', 'pending')
-            ->first();
-
-        if ($existing) {
-            return back()->with('error', 'There is already a pending activation request for this number.');
-        }
-
-        // 1. Resolve pricing
-        $simService = \App\Models\Service::where('name', 'simcard')->first();
-        $serviceField = null;
-        $payableAmount = 0.00;
-        if ($simService) {
-            $serviceField = \App\Models\ServiceField::where('service_id', $simService->id)
-                ->where('field_name', $sim->category)
-                ->first();
-        }
-        if ($serviceField) {
-            $payableAmount = $serviceField->priceForUser($user);
-        }
-
-        // 2. Database Transaction to charge wallet and create request
-        try {
-            DB::transaction(function () use ($user, $sim, $payableAmount, $simService) {
-                // Lock wallet
-                $wallet = \App\Models\Wallet::where('user_id', $user->id)->lockForUpdate()->first();
-                if (!$wallet || $wallet->balance < $payableAmount) {
-                    throw new \Exception('Insufficient wallet balance! You need ₦' . number_format($payableAmount, 2));
-                }
-
-                $oldBalance = $wallet->balance;
-                $wallet->decrement('balance', $payableAmount);
-                $newBalance = $wallet->balance;
-
-                $ref = 'ACT-' . time() . '-' . rand(1000, 9999);
-
-                // Create Transaction record
-                \App\Models\Transaction::create([
-                    'transaction_ref' => $ref,
-                    'user_id'         => $user->id,
-                    'amount'          => $payableAmount,
-                    'fee'             => 0.00,
-                    'net_amount'      => $payableAmount,
-                    'description'     => "SIM Card Activation: Request for number {$sim->number} (Category: {$sim->category}, Network: " . strtoupper($sim->provider) . ")",
-                    'type'            => 'debit',
-                    'status'          => 'completed',
-                    'performed_by'    => $user->first_name . ' ' . $user->last_name,
-                    'approved_by'     => $user->id,
-                ]);
-
-                // Create Report record
-                \App\Models\Report::create([
-                    'user_id'      => $user->id,
-                    'phone_number' => $sim->number,
-                    'network'      => $sim->provider,
-                    'ref'          => $ref,
-                    'amount'       => $payableAmount,
-                    'status'       => 'completed',
-                    'type'         => 'sim_activation',
-                    'description'  => "SIM Card Activation: Request for number {$sim->number} (Category: {$sim->category})",
-                    'old_balance'  => $oldBalance,
-                    'new_balance'  => $newBalance,
-                    'service_id'   => $simService ? $simService->id : null,
-                ]);
-
-                // Create the SIM request
-                SimRequest::create([
-                    'user_id'      => $user->id,
-                    'sim_id'       => $sim->id,
-                    'number'       => $sim->number,
-                    'category'     => $sim->category,
-                    'provider'     => $sim->provider,
-                    'request_type' => 'activation',
-                    'status'       => 'pending',
-                    'amount'       => $payableAmount,
-                ]);
-            });
-
-            $chargeMsg = $payableAmount > 0 ? " ₦" . number_format($payableAmount, 2) . " has been charged from your wallet." : "";
-            return back()->with('success', 'Activation request for ' . $sim->number . ' has been submitted successfully.' . $chargeMsg);
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
-        }
+        abort(403, 'Self-activation is no longer available. Regional Managers and Coordinators distribute SIMs down the chain; Partners activate for their downline Users.');
     }
 
     /**
      * A Regional Manager / Coordinator / Partner delegates a SIM they currently
-     * hold down to their direct subordinate. Also preserves the legacy
-     * Partner -> agent/business assignment, which sits outside the new
-     * Regional Manager -> Coordinator -> Partner -> User hierarchy.
+     * hold down to their direct subordinate (Regional Manager -> Coordinator,
+     * Coordinator -> Partner, Partner -> User).
      */
     public function partnerAssignSim(Request $request)
     {
@@ -894,23 +794,6 @@ class SimsController extends Controller
         $from = Auth::user();
         $sim = Sim::find($request->sim_id);
         $targetUser = User::find($request->user_id);
-
-        // Legacy path: partner delegating to an agent account (outside the hierarchy).
-        // 'business' deliberately excluded here — Enterprise Partner is now a
-        // parallel root tier of its own (gets inventory via the payment
-        // flow), not a Partner's downline.
-        if ($from->role === 'partner' && in_array($targetUser->role, ['agent'])) {
-            if ($sim->partner_id !== $from->id || $sim->user_id !== $from->id) {
-                return back()->with('error', 'You can only assign numbers currently allocated to you.');
-            }
-
-            $sim->update([
-                'user_id' => $targetUser->id,
-                'status'  => SimStatus::ASSIGNED_TO_PARTNER,
-            ]);
-
-            return back()->with('success', "SIM number {$sim->number} successfully assigned to {$targetUser->first_name} {$targetUser->last_name}.");
-        }
 
         // Hierarchy path: Regional Manager -> Coordinator, Coordinator -> Partner, Partner -> User.
         try {

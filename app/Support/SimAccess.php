@@ -6,16 +6,19 @@ use App\Models\User;
 
 /**
  * Role gating for the SIM Services pages. Two tiers:
- * - Catalog roles (Regional Manager, Coordinator, Partner, Agent, Business
+ * - Catalog roles (Regional Manager, Coordinator, Partner, Business
  *   [Enterprise Partner], Business Agent) browse the POS SIM / CCTV SIM
  *   device pages, the raw Inventory, and self-activate a SIM they hold.
- * - Everyone else (Personal, ...) only requests a SIM — activation is done
- *   for them by their partner/business agent/admin — and uses "My SIM" to
- *   track what they've requested/own.
+ * - Everyone else (Personal, Agent, ...) only requests a SIM — activation is
+ *   done for them by their partner/business agent/admin — and uses "My SIM"
+ *   to track what they've requested/own. Agent lost catalog/distribution
+ *   access entirely when it became a discount-only tier (see
+ *   AgentUpgradeController) — it was never in MINE_ROLES either, so an
+ *   agent effectively has no SIM Services access at all now.
  */
 class SimAccess
 {
-    public const CATALOG_ROLES = ['regional_manager', 'coordinator', 'partner', 'agent', 'business', 'business_agent'];
+    public const CATALOG_ROLES = ['regional_manager', 'coordinator', 'partner', 'business', 'business_agent'];
 
     public const MINE_ROLES = ['personal'];
 

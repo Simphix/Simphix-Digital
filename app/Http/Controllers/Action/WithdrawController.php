@@ -26,10 +26,23 @@ class WithdrawController extends Controller
     }
 
     /**
+     * Cash Out isn't available to Agent — it's a discount-only tier now
+     * (see AgentUpgradeController), not a wallet-movement role.
+     */
+    private function blockAgents(): void
+    {
+        if (Auth::user()?->role === 'agent') {
+            abort(403, 'This feature is not available for your account type.');
+        }
+    }
+
+    /**
      * Show withdrawal index page.
      */
     public function index()
     {
+        $this->blockAgents();
+
         $user = Auth::user();
 
         // Ensure Withdrawal service and fields exist
@@ -85,6 +98,8 @@ class WithdrawController extends Controller
      */
     public function verifyAccount(Request $request)
     {
+        $this->blockAgents();
+
         $request->validate([
             'bankCode' => 'required|string',
             'account_no' => 'required|string|digits:10',
@@ -123,6 +138,8 @@ class WithdrawController extends Controller
      */
     public function processWithdrawal(Request $request)
     {
+        $this->blockAgents();
+
         $request->validate([
             'amount' => 'required|numeric|min:100', // Minimum 100 NGN
             'pin' => 'required|digits:4',
