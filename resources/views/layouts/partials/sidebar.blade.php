@@ -240,7 +240,7 @@
         </a>
     </div>
 
-    @if ($sidebarUpline ?? null)
+    @if (($sidebarUpline ?? null) && auth()->user()->role !== 'business')
     <div class="border-t border-slate-200 p-3" x-data="{ open: false }">
         <button type="button"
                 @click="if (sidebarCollapsed) { sidebarCollapsed = false; open = true } else { open = !open }"

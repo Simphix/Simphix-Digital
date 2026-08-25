@@ -25,8 +25,19 @@ test('the Invite Enterprise Partner navbar button is visible to eligible roles a
     $partner = User::factory()->create(['role' => 'partner']);
     $agent = User::factory()->create(['role' => 'agent']);
 
-    $this->actingAs($partner)->get(route('dashboard'))->assertOk()->assertSee(route('enterprise-partner.invite'), false);
+    $this->actingAs($partner)->get(route('dashboard'))->assertOk()
+        ->assertSee(route('enterprise-partner.invite'), false)
+        ->assertSee('Invite Enterprise Partner');
     $this->actingAs($agent)->get(route('dashboard'))->assertOk()->assertDontSee(route('enterprise-partner.invite'), false);
+});
+
+test('the Upline Manager sidebar panel is hidden for the business role but still shown for other roles with a referrer', function () {
+    $rm = User::factory()->create(['role' => 'regional_manager']);
+    $ep = User::factory()->create(['role' => 'business', 'status' => 'active', 'referred_by' => $rm->id]);
+    $coordinator = User::factory()->create(['role' => 'coordinator', 'referred_by' => $rm->id]);
+
+    $this->actingAs($ep)->get(route('dashboard'))->assertOk()->assertDontSee('Upline Manager');
+    $this->actingAs($coordinator)->get(route('dashboard'))->assertOk()->assertSee('Upline Manager');
 });
 
 test('only inviter-eligible roles can view the invite page', function () {
