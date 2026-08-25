@@ -13,6 +13,14 @@ Route::get('/welcome2', function () {
 
 Route::post('/palmpay/webhook', [\App\Http\Controllers\PaymentWebhookController::class, 'handleWebhook'])->name('palmpay.webhook');
 
+// Enterprise Partner registration — reached via a referral link shared by an
+// eligible upline (see enterprise-partner.invite); guest-only since the
+// invitee doesn't have an account yet.
+Route::middleware('guest')->group(function () {
+    Route::get('/enterprise-partner/register', [\App\Http\Controllers\EnterprisePartnerController::class, 'registerForm'])->name('enterprise-partner.register');
+    Route::post('/enterprise-partner/register', [\App\Http\Controllers\EnterprisePartnerController::class, 'register'])->name('enterprise-partner.register.store')->middleware('throttle:5,1');
+});
+
 Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 
@@ -54,6 +62,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/network/claim', [\App\Http\Controllers\NetworkController::class, 'claim'])->name('network.claim');
     Route::patch('/network/invited/{user}', [\App\Http\Controllers\NetworkController::class, 'updateInvited'])->name('network.invited.update');
     Route::post('/network/invited/{user}/resend', [\App\Http\Controllers\NetworkController::class, 'resendInvite'])->name('network.invited.resend');
+
+    // Enterprise Partner invite + info — registration itself is a guest
+    // route (see below), reached via the shareable ?ref= link this page hands out.
+    Route::get('/enterprise-partner/invite', [\App\Http\Controllers\EnterprisePartnerController::class, 'inviteForm'])->name('enterprise-partner.invite');
+    Route::get('/enterprise-partner/info', [\App\Http\Controllers\EnterprisePartnerController::class, 'infoPage'])->name('enterprise-partner.info');
 
     // Downline restriction actions — shared by catalog-role self-service (own
     // immediate downline only) and super_admin (anyone); see
