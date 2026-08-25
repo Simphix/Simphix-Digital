@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Helpers\signatureHelper;
 use App\Jobs\ProcessVatCharge;
 use App\Mail\PaymentNotifyMail;
+use App\Models\EnterprisePartnerPayment;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\VirtualAccount;
 use App\Models\Wallet;
 use App\Models\WebhookLog;
+use App\Services\EnterprisePartnerActivationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -121,10 +123,43 @@ class PaymentWebhookController extends Controller
                         $payload
                     );
                 } else {
-                    Log::warning('Virtual account not found for account_number: '.$virtualAccountNo, ['payload' => $payload]);
+                    $this->handleEnterprisePartnerPayment($virtualAccountNo, $amountPaid, $orderStatus, $payload);
                 }
             }
         });
+    }
+
+    /**
+     * Purely additive fallback for a payin whose account_number doesn't
+     * match any VirtualAccount (the general wallet-topup flow) — checks
+     * whether it instead matches a pending EnterprisePartnerPayment (the
+     * eligibility-purchase flow) before falling through to the existing
+     * "not found" warning log.
+     */
+    private function handleEnterprisePartnerPayment(?string $virtualAccountNo, float $amountPaid, $orderStatus, array $payload): void
+    {
+        $payment = $virtualAccountNo
+            ? EnterprisePartnerPayment::where('account_number', $virtualAccountNo)->where('status', 'pending')->first()
+            : null;
+
+        if (!$payment) {
+            Log::warning('Virtual account not found for account_number: '.$virtualAccountNo, ['payload' => $payload]);
+
+            return;
+        }
+
+        if ($orderStatus != 1 || $amountPaid < (float) $payment->expected_amount) {
+            Log::info('Enterprise Partner payment received but not yet sufficient/successful, skipping activation', [
+                'account_number' => $virtualAccountNo,
+                'order_status'   => $orderStatus,
+                'amount_paid'    => $amountPaid,
+                'expected'       => (float) $payment->expected_amount,
+            ]);
+
+            return;
+        }
+
+        app(EnterprisePartnerActivationService::class)->activate($payment);
     }
 
     private function handlePayout($payload)
