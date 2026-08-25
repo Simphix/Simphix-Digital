@@ -67,6 +67,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // route (see below), reached via the shareable ?ref= link this page hands out.
     Route::get('/enterprise-partner/invite', [\App\Http\Controllers\EnterprisePartnerController::class, 'inviteForm'])->name('enterprise-partner.invite');
     Route::get('/enterprise-partner/info', [\App\Http\Controllers\EnterprisePartnerController::class, 'infoPage'])->name('enterprise-partner.info');
+    Route::get('/enterprise-partner/generate-account', [\App\Http\Controllers\EnterprisePartnerController::class, 'generateAccountPage'])->name('enterprise-partner.generate-account');
+    Route::post('/enterprise-partner/generate-account', [\App\Http\Controllers\EnterprisePartnerController::class, 'generateAccount'])->name('enterprise-partner.generate-account.create');
 
     // Downline restriction actions — shared by catalog-role self-service (own
     // immediate downline only) and super_admin (anyone); see

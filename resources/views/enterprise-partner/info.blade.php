@@ -54,7 +54,7 @@
             </ol>
         </div>
 
-        <a href="/enterprise-partner/generate-account"
+        <a href="{{ route('enterprise-partner.generate-account') }}"
            class="inline-flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg bg-primary text-white text-sm font-bold shadow-sm transition-all hover:bg-primary/90">
             <i data-lucide="credit-card" class="w-4 h-4"></i>
             Generate Payment Account
