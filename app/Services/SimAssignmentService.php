@@ -31,6 +31,14 @@ class SimAssignmentService
             $fields = match ($target->role) {
                 'regional_manager' => ['regional_manager_id' => $target->id, 'status' => SimStatus::ASSIGNED_TO_RM],
                 'coordinator' => ['coordinator_id' => $target->id, 'status' => SimStatus::ASSIGNED_TO_COORDINATOR],
+                // Business (Enterprise Partner) is structurally the
+                // "coordinator" of this 2-tier chain — an intermediate role
+                // that never touches user_id, same as 'coordinator' above.
+                // business_agent is the terminal tier before 'personal', so
+                // it uses user_id as its own self-held marker, same as
+                // 'partner' does in the default arm below.
+                'business' => ['business_id' => $target->id, 'status' => SimStatus::ASSIGNED_TO_BUSINESS],
+                'business_agent' => ['business_agent_id' => $target->id, 'user_id' => $target->id, 'status' => SimStatus::ASSIGNED_TO_BUSINESS_AGENT],
                 default => ['user_id' => $target->id, 'partner_id' => $target->role === 'partner' ? $target->id : null, 'status' => SimStatus::ASSIGNED_TO_PARTNER],
             };
 
@@ -62,6 +70,11 @@ class SimAssignmentService
             // user's id once handed further down. So user_id === partner_id
             // is what "still with the partner" actually means here.
             'partner' => $sim->partner_id === $from->id && $sim->status === SimStatus::ASSIGNED_TO_PARTNER && $sim->user_id === $sim->partner_id,
+            // 'business' mirrors 'coordinator' above (intermediate tier,
+            // never touches user_id); 'business_agent' mirrors 'partner'
+            // (terminal tier, user_id === business_agent_id means self-held).
+            'business' => $sim->business_id === $from->id && $sim->status === SimStatus::ASSIGNED_TO_BUSINESS,
+            'business_agent' => $sim->business_agent_id === $from->id && $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT && $sim->user_id === $sim->business_agent_id,
             default => false,
         };
 
@@ -73,7 +86,13 @@ class SimAssignmentService
             $fields = match ($to->role) {
                 'coordinator' => ['coordinator_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_COORDINATOR],
                 'partner' => ['partner_id' => $to->id, 'user_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_PARTNER],
-                'personal' => ['user_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_PARTNER],
+                'business_agent' => ['business_agent_id' => $to->id, 'user_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_BUSINESS_AGENT],
+                // 'personal' is a terminal target reachable from two
+                // different source tiers (Partner and Business Agent), so
+                // it must stay from-role-aware to pick the right status.
+                'personal' => $from->role === 'business_agent'
+                    ? ['user_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_BUSINESS_AGENT]
+                    : ['user_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_PARTNER],
                 default => throw new \RuntimeException('Invalid target role.'),
             };
 
@@ -107,6 +126,12 @@ class SimAssignmentService
                 && $sim->user_id === $sim->partner_id
                 && $sim->status === SimStatus::ASSIGNED_TO_PARTNER
                 && $sim->coordinator_id === $collector->id,
+            // Mirrors the 'partner' case: reclaim from a business_agent back
+            // to the Enterprise Partner (business) that dispatched it.
+            'business_agent' => $sim->business_agent_id === $currentHolder->id
+                && $sim->user_id === $sim->business_agent_id
+                && $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT
+                && $sim->business_id === $collector->id,
             default => false,
         };
 
@@ -118,6 +143,7 @@ class SimAssignmentService
             $fields = match ($collector->role) {
                 'regional_manager' => ['coordinator_id' => null, 'status' => SimStatus::ASSIGNED_TO_RM],
                 'coordinator' => ['partner_id' => null, 'user_id' => null, 'status' => SimStatus::ASSIGNED_TO_COORDINATOR],
+                'business' => ['business_agent_id' => null, 'user_id' => null, 'status' => SimStatus::ASSIGNED_TO_BUSINESS],
                 default => throw new \RuntimeException('Invalid collector role.'),
             };
 
@@ -138,6 +164,8 @@ class SimAssignmentService
         $column = match (true) {
             $sim->status === SimStatus::ASSIGNED_TO_COORDINATOR => 'coordinator_id',
             $sim->status === SimStatus::ASSIGNED_TO_PARTNER && $sim->user_id !== $sim->partner_id => 'user_id',
+            $sim->status === SimStatus::ASSIGNED_TO_BUSINESS => 'business_id',
+            $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT && $sim->user_id !== $sim->business_agent_id => 'user_id',
             default => throw new \RuntimeException('This SIM is not in a swappable state.'),
         };
 
