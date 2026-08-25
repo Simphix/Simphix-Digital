@@ -51,11 +51,17 @@
                             <th class="py-2.5">Role</th>
                             <th class="py-2.5">SIM Number</th>
                             <th class="py-2.5">Week</th>
-                            <th class="py-2.5 text-right">Amount</th>
+                            @if ($user->role === 'business')
+                                <th class="py-2.5">Business Agent</th>
+                                <th class="py-2.5 text-right">Price</th>
+                                <th class="py-2.5 text-right">Agent Commission</th>
+                            @endif
+                            <th class="py-2.5 text-right">{{ $user->role === 'business' ? 'You Kept' : 'Amount' }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($earnings as $earning)
+                            @php $breakdown = $downlineBreakdown->get($earning->id); @endphp
                             <tr class="border-b border-slate-50 hover:bg-slate-50/50">
                                 @if ($user->hasRole('super_admin'))
                                     <td class="py-3 font-bold text-slate-800">{{ $earning->user ? ($earning->user->first_name . ' ' . $earning->user->last_name) : 'Unknown' }}</td>
@@ -67,11 +73,16 @@
                                 </td>
                                 <td class="py-3 font-semibold text-slate-700">{{ $earning->sim->number ?? '—' }}</td>
                                 <td class="py-3 text-slate-400 font-medium">{{ $earning->period_week->format('M d, Y') }}</td>
+                                @if ($user->role === 'business')
+                                    <td class="py-3 text-slate-600">{{ $breakdown['agent_name'] ?? '—' }}</td>
+                                    <td class="py-3 text-right text-slate-500">₦{{ number_format($breakdown['price'] ?? 0, 2) }}</td>
+                                    <td class="py-3 text-right text-slate-500">₦{{ number_format($breakdown['agent_amount'] ?? 0, 2) }}</td>
+                                @endif
                                 <td class="py-3 text-right font-bold text-slate-800">₦{{ number_format($earning->amount, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="py-12 text-center text-slate-400">
+                                <td colspan="{{ $user->role === 'business' ? 7 : 5 }}" class="py-12 text-center text-slate-400">
                                     <div class="bg-slate-50 rounded-2xl w-14 h-14 flex items-center justify-center mb-3 mx-auto border border-slate-100">
                                         <i data-lucide="badge-percent" class="w-6 h-6 text-slate-400"></i>
                                     </div>
