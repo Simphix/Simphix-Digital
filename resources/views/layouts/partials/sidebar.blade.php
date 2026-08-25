@@ -115,6 +115,9 @@
                     @if (in_array(auth()->user()->role, ['partner', 'coordinator', 'regional_manager'], true))
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.downline-requests'), 'icon' => 'inbox', 'label' => __('Downline Requests'), 'active' => request()->routeIs('sims.downline-requests'), 'badge' => $pendingDownlineRequestsBadge ?? 0])
                     @endif
+                    @if (auth()->user()->role === 'business')
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.business.commission-rates.index'), 'icon' => 'badge-percent', 'label' => __('Commission Rates'), 'active' => request()->routeIs('sims.business.commission-rates.*')])
+                    @endif
                 </div>
             </div>
         @endif
