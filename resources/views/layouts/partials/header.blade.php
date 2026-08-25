@@ -157,6 +157,14 @@
             <i data-lucide="search" class="w-5 h-5"></i>
         </button>
 
+        <!-- Invite Enterprise Partner -->
+        @if (auth()->user() && in_array(auth()->user()->role, ['partner', 'coordinator', 'regional_manager'], true))
+            <a href="{{ route('enterprise-partner.invite') }}" title="Invite Enterprise Partner"
+               class="p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors outline-none">
+                <i data-lucide="handshake" class="w-5 h-5"></i>
+            </a>
+        @endif
+
         <!-- Notifications Dropdown -->
         <div x-data="{
             open: false,

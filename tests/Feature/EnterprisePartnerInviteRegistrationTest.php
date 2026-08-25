@@ -21,7 +21,7 @@ beforeEach(function () {
     $this->unitPrice = $this->field->getPriceForUserType('business');
 });
 
-test('the Invite Enterprise Partner sidebar link is visible to eligible roles and hidden from others', function () {
+test('the Invite Enterprise Partner navbar button is visible to eligible roles and hidden from others', function () {
     $partner = User::factory()->create(['role' => 'partner']);
     $agent = User::factory()->create(['role' => 'agent']);
 
