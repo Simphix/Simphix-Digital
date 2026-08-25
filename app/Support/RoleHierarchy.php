@@ -6,10 +6,14 @@ use App\Models\User;
 
 /**
  * Single source of truth for the onboarding / distribution chain:
- * Regional Manager -> Coordinator -> Partner -> User (personal).
+ * Regional Manager -> Coordinator -> Partner -> User (personal), plus a
+ * second, independent chain for the Enterprise Partner tier:
+ * Business (Enterprise Partner) -> Business Agent -> User (personal).
  *
  * Each role may only onboard, or assign a SIM to, the role directly
- * beneath it in this chain.
+ * beneath it in its own chain. The two chains never intersect (nothing
+ * maps to 'business' via nextRole() — that tier is entered only through
+ * the dedicated invite/payment flow, not this hierarchy).
  */
 class RoleHierarchy
 {
@@ -17,6 +21,8 @@ class RoleHierarchy
         'regional_manager' => 'coordinator',
         'coordinator' => 'partner',
         'partner' => 'personal',
+        'business' => 'business_agent',
+        'business_agent' => 'personal',
     ];
 
     /** Roles that bypass the hierarchy for admin operations. */

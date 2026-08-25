@@ -15,6 +15,8 @@ class SimStatus
     public const ASSIGNED_TO_RM = 'ASSIGNED_TO_RM';
     public const ASSIGNED_TO_COORDINATOR = 'ASSIGNED_TO_COORDINATOR';
     public const ASSIGNED_TO_PARTNER = 'ASSIGNED_TO_PARTNER';
+    public const ASSIGNED_TO_BUSINESS = 'ASSIGNED_TO_BUSINESS';
+    public const ASSIGNED_TO_BUSINESS_AGENT = 'ASSIGNED_TO_BUSINESS_AGENT';
     public const ACTIVATED = 'ACTIVATED';
     public const DEACTIVATED = 'DEACTIVATED';
     public const SUSPENDED = 'SUSPENDED';
@@ -26,6 +28,8 @@ class SimStatus
             self::ASSIGNED_TO_RM,
             self::ASSIGNED_TO_COORDINATOR,
             self::ASSIGNED_TO_PARTNER,
+            self::ASSIGNED_TO_BUSINESS,
+            self::ASSIGNED_TO_BUSINESS_AGENT,
             self::ACTIVATED,
             self::DEACTIVATED,
             self::SUSPENDED,
@@ -40,6 +44,8 @@ class SimStatus
             self::ASSIGNED_TO_RM => 'With Regional Manager',
             self::ASSIGNED_TO_COORDINATOR => 'With Coordinator',
             self::ASSIGNED_TO_PARTNER => 'With Partner',
+            self::ASSIGNED_TO_BUSINESS => 'With Enterprise Partner',
+            self::ASSIGNED_TO_BUSINESS_AGENT => 'With Business Agent',
             self::ACTIVATED => 'Activated',
             self::DEACTIVATED => 'Deactivated',
             self::SUSPENDED => 'Suspended',

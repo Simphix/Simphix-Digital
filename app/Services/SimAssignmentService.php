@@ -206,6 +206,8 @@ class SimAssignmentService
             'partner_id' => null,
             'coordinator_id' => null,
             'regional_manager_id' => null,
+            'business_id' => null,
+            'business_agent_id' => null,
             'status' => SimStatus::UNASSIGNED,
         ]);
         $this->logHistory($sim, $from, SimStatus::UNASSIGNED, $actor, 'SIM unassigned.');

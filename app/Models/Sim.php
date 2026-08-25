@@ -19,6 +19,8 @@ class Sim extends Model
         'partner_id',
         'coordinator_id',
         'regional_manager_id',
+        'business_id',
+        'business_agent_id',
         'status',
     ];
 
@@ -52,6 +54,23 @@ class Sim extends Model
     public function regionalManager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'regional_manager_id');
+    }
+
+    /**
+     * Get the Enterprise Partner (business role) currently holding this SIM
+     * in the cascade.
+     */
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'business_id');
+    }
+
+    /**
+     * Get the business agent currently holding this SIM in the cascade.
+     */
+    public function businessAgent(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'business_agent_id');
     }
 
     /**
