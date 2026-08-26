@@ -29,6 +29,20 @@
                         <span class="px-3 py-0.5 text-xs font-bold bg-[#0056D2]/10 text-[#0056D2] rounded-full uppercase tracking-wider">
                             {{ $user->role }}
                         </span>
+                        @if ($user->hasJurisdictionRole())
+                            <span class="text-slate-300 text-xs">•</span>
+                            @if ($user->jurisdictionLabel())
+                                <span class="px-3 py-0.5 text-xs font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-full uppercase tracking-wider flex items-center gap-1">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                                    {{ $user->jurisdictionLabel() }}
+                                </span>
+                            @else
+                                <span class="px-3 py-0.5 text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100 rounded-full uppercase tracking-wider flex items-center gap-1">
+                                    <i data-lucide="map-pin-off" class="w-3.5 h-3.5"></i>
+                                    Unassigned
+                                </span>
+                            @endif
+                        @endif
                         <span class="text-slate-300 text-xs">•</span>
                         <span class="px-3 py-0.5 text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full uppercase tracking-wider flex items-center gap-1">
                             <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
