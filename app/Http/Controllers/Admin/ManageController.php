@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Region;
+use App\Models\SenatorialDistrict;
 use App\Models\User;
 use App\Support\DownlineMetrics;
 use Illuminate\Http\RedirectResponse;
@@ -74,6 +76,8 @@ class ManageController extends Controller
             'role' => ['required', 'string', 'in:personal,agent,partner,business,staff,checker,super_admin,regional_manager,coordinator'],
         ]);
 
+        $previousRole = $user->role;
+
         $user->forceFill([
             'first_name' => $request->first_name,
             'middle_name' => $request->middle_name,
@@ -83,6 +87,8 @@ class ManageController extends Controller
             'status' => $request->status,
             'role' => $request->role,
         ])->save();
+
+        $this->clearStaleJurisdiction($user, $previousRole);
 
         return redirect()->route('admin.manage.users')->with('success', 'User ' . $user->first_name . ' has been updated successfully.');
     }
@@ -224,10 +230,31 @@ class ManageController extends Controller
             'role' => ['required', 'string', 'in:personal,agent,partner,business,staff,checker,super_admin,regional_manager,coordinator'],
         ]);
 
+        $previousRole = $user->role;
+
         $user->forceFill([
             'role' => $request->role,
         ])->save();
 
+        $this->clearStaleJurisdiction($user, $previousRole);
+
         return redirect()->back()->with('success', 'Access permission for ' . $user->first_name . ' updated to ' . strtoupper($user->role) . '.');
+    }
+
+    /**
+     * A role change away from regional_manager/coordinator must not leave
+     * a stale jurisdiction assignment behind — clear it so the region/
+     * district reverts to unassigned rather than silently pointing at a
+     * user who no longer holds the role.
+     */
+    private function clearStaleJurisdiction(User $user, string $previousRole): void
+    {
+        if ($previousRole === 'regional_manager' && $user->role !== 'regional_manager') {
+            Region::where('regional_manager_id', $user->id)->update(['regional_manager_id' => null]);
+        }
+
+        if ($previousRole === 'coordinator' && $user->role !== 'coordinator') {
+            SenatorialDistrict::where('coordinator_id', $user->id)->update(['coordinator_id' => null]);
+        }
     }
 }

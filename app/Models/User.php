@@ -215,6 +215,56 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(User::class, 'referred_by');
     }
 
+    // -------------------------------------------------------------------------
+    // Jurisdiction Relationships (independent of the referral hierarchy above)
+    // -------------------------------------------------------------------------
+
+    /** The region this user manages, if they are its Regional Manager. */
+    public function regionAsManager(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Region::class, 'regional_manager_id');
+    }
+
+    /** The senatorial district this user covers, if they are its Coordinator. */
+    public function districtAsCoordinator(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(SenatorialDistrict::class, 'coordinator_id');
+    }
+
+    /** Does this user's role carry a geographic jurisdiction at all? */
+    public function hasJurisdictionRole(): bool
+    {
+        return in_array($this->role, ['regional_manager', 'coordinator'], true);
+    }
+
+    /**
+     * Human-readable jurisdiction label: the region name for a Regional
+     * Manager, or "{district} · {state} · {region}" for a Coordinator —
+     * region resolved live through district->state->region, never
+     * duplicated/cached, which is what makes a state-remap cascade
+     * automatically with zero writes to the district/coordinator record.
+     * Null both when the role carries no jurisdiction and when it does but
+     * none is assigned yet — callers needing to distinguish check
+     * hasJurisdictionRole() first.
+     */
+    public function jurisdictionLabel(): ?string
+    {
+        if ($this->role === 'regional_manager') {
+            return $this->regionAsManager?->name;
+        }
+
+        if ($this->role === 'coordinator') {
+            $district = $this->districtAsCoordinator;
+            if (!$district) {
+                return null;
+            }
+
+            return implode(' · ', array_filter([$district->name, $district->state?->name, $district->state?->region?->name]));
+        }
+
+        return null;
+    }
+
     /**
      * Generate a new 6-digit OTP code for the user.
      */
