@@ -264,6 +264,25 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::get('/settings', [\App\Http\Controllers\Admin\AgentUpgradeSettingsController::class, 'edit'])->name('edit');
         Route::put('/settings', [\App\Http\Controllers\Admin\AgentUpgradeSettingsController::class, 'update'])->name('update');
     });
+  
+    // Jurisdictions (Region -> State -> SenatorialDistrict admin-authored tree,
+    // used to assign geographic coverage to Regional Manager / Coordinator).
+    Route::prefix('admin/jurisdictions')->name('admin.jurisdictions.')->group(function () {
+        Route::get('/regions', [\App\Http\Controllers\Admin\JurisdictionController::class, 'regions'])->name('regions.index');
+        Route::post('/regions', [\App\Http\Controllers\Admin\JurisdictionController::class, 'storeRegion'])->name('regions.store');
+        Route::put('/regions/{region}', [\App\Http\Controllers\Admin\JurisdictionController::class, 'updateRegion'])->name('regions.update');
+        Route::delete('/regions/{region}', [\App\Http\Controllers\Admin\JurisdictionController::class, 'destroyRegion'])->name('regions.destroy');
+
+        Route::get('/states', [\App\Http\Controllers\Admin\JurisdictionController::class, 'states'])->name('states.index');
+        Route::post('/states', [\App\Http\Controllers\Admin\JurisdictionController::class, 'storeState'])->name('states.store');
+        Route::put('/states/{state}', [\App\Http\Controllers\Admin\JurisdictionController::class, 'updateState'])->name('states.update');
+        Route::delete('/states/{state}', [\App\Http\Controllers\Admin\JurisdictionController::class, 'destroyState'])->name('states.destroy');
+
+        Route::get('/districts', [\App\Http\Controllers\Admin\JurisdictionController::class, 'districts'])->name('districts.index');
+        Route::post('/districts', [\App\Http\Controllers\Admin\JurisdictionController::class, 'storeDistrict'])->name('districts.store');
+        Route::put('/districts/{district}', [\App\Http\Controllers\Admin\JurisdictionController::class, 'updateDistrict'])->name('districts.update');
+        Route::delete('/districts/{district}', [\App\Http\Controllers\Admin\JurisdictionController::class, 'destroyDistrict'])->name('districts.destroy');
+    });
 
     // Services Management
     Route::prefix('admin/services')->name('admin.services.')->group(function () {

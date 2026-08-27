@@ -212,6 +212,7 @@
                     </div>
                 </div>
 
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.jurisdictions.regions.index'), 'icon' => 'map', 'label' => 'Jurisdictions', 'active' => request()->routeIs('admin.jurisdictions*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.services.index'), 'icon' => 'server', 'label' => 'Services Pricing', 'active' => request()->routeIs('admin.services*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sme-plans.index'), 'icon' => 'wifi', 'label' => 'SME Data Plans', 'active' => request()->routeIs('admin.sme-plans*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-plan.index'), 'icon' => 'settings', 'label' => 'SIM Plans', 'active' => request()->routeIs('admin.sim-plan*')])

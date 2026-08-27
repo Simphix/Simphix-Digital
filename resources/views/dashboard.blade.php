@@ -49,6 +49,19 @@
                     <span class="text-xs font-semibold text-primary bg-primary/10 border border-primary/20 rounded-md py-1 px-2.5">
                         {{ Auth::user()->role }}
                     </span>
+                    @if (Auth::user()->hasJurisdictionRole())
+                        @if (Auth::user()->jurisdictionLabel())
+                            <span class="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-md py-1 px-2.5 flex items-center gap-1">
+                                <i data-lucide="map-pin" class="w-3 h-3"></i>
+                                {{ Auth::user()->jurisdictionLabel() }}
+                            </span>
+                        @else
+                            <span class="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 rounded-md py-1 px-2.5 flex items-center gap-1">
+                                <i data-lucide="map-pin-off" class="w-3 h-3"></i>
+                                Jurisdiction unassigned
+                            </span>
+                        @endif
+                    @endif
                 </h1>
                 <p class="text-slate-500 text-sm mb-0">Here is your account overview and recent activity for today, {{ now()->format('F d, Y') }}.</p>
             </div>
