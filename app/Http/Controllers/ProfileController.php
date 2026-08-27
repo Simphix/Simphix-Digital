@@ -152,11 +152,17 @@ class ProfileController extends Controller
     }
 
     /**
-     * Handle business, partner, or agent account upgrade requests.
+     * Handle business or partner account upgrade requests. Agent upgrades
+     * moved to a separate, instant, wallet-balance-gated self-service flow
+     * (see AgentUpgradeController) — no admin review, no business fields.
      */
     public function requestUpgrade(Request $request): RedirectResponse
     {
         $user = $request->user();
+
+        if ($request->input('role') === 'agent') {
+            return Redirect::route('agent-upgrade.show')->with('error', 'Agent upgrades are now instant — use the Upgrade to Agent option instead.');
+        }
 
         // Prevent multiple upgrade request submissions
         if ($user->upgrade_status === 'pending' || $user->upgrade_status === 'approved' || in_array($user->role, ['agent', 'partner', 'business'])) {
@@ -164,7 +170,7 @@ class ProfileController extends Controller
         }
 
         $request->validate([
-            'role' => ['required', 'string', 'in:agent,partner,business'],
+            'role' => ['required', 'string', 'in:partner,business'],
             'gender' => ['required', 'string', 'in:male,female,other'],
             'business_name' => ['required', 'string', 'max:255'],
             'business_type' => ['required', 'string', 'in:sole_proprietor,llc,partnership'],
@@ -172,7 +178,7 @@ class ProfileController extends Controller
         ]);
 
         // Explicit security check to prevent role injection attacks
-        $allowedRoles = ['agent', 'partner', 'business'];
+        $allowedRoles = ['partner', 'business'];
         if (!in_array($request->role, $allowedRoles)) {
             abort(403, 'Invalid or unauthorized role request.');
         }

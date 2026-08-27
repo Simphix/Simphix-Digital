@@ -201,12 +201,28 @@ class WalletController extends Controller
     }
 
     /**
+     * P2P Transfer isn't available to Agent — it's a discount-only tier now
+     * (see AgentUpgradeController), not a wallet-movement role. Named
+     * distinctly from a general "block agents" guard since this controller
+     * also owns unrelated wallet methods (index, claimBonus, createWallet,
+     * getBalance) that must stay open to agents.
+     */
+    private function blockAgentsFromP2p(): void
+    {
+        if (Auth::user()?->role === 'agent') {
+            abort(403, 'This feature is not available for your account type.');
+        }
+    }
+
+    /**
      * Show P2P transfer view
      */
     public function p2p()
     {
+        $this->blockAgentsFromP2p();
+
         $user = Auth::user();
-        
+
         // Fetch last 15 unique transfer recipients from report table (type: transfer)
         $recentRecipients = \App\Models\Report::where('user_id', $user->id)
             ->where('type', 'transfer')
@@ -235,6 +251,8 @@ class WalletController extends Controller
      */
     public function verifyUser(Request $request)
     {
+        $this->blockAgentsFromP2p();
+
         $identifier = trim($request->input('wallet_id'));
 
         if (empty($identifier)) {
@@ -322,6 +340,8 @@ class WalletController extends Controller
      */
     public function processTransfer(Request $request)
     {
+        $this->blockAgentsFromP2p();
+
         $request->validate([
             'wallet_id' => 'required|string',
             'amount' => 'required|numeric|min:1',

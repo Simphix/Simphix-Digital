@@ -70,6 +70,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/enterprise-partner/generate-account', [\App\Http\Controllers\EnterprisePartnerController::class, 'generateAccountPage'])->name('enterprise-partner.generate-account');
     Route::post('/enterprise-partner/generate-account', [\App\Http\Controllers\EnterprisePartnerController::class, 'generateAccount'])->name('enterprise-partner.generate-account.create');
 
+    // Agent upgrade — self-service, instant. Personal-role users only; see
+    // AgentUpgradeController.
+    Route::get('/agent-upgrade', [\App\Http\Controllers\AgentUpgradeController::class, 'show'])->name('agent-upgrade.show');
+    Route::post('/agent-upgrade', [\App\Http\Controllers\AgentUpgradeController::class, 'process'])->name('agent-upgrade.process');
+
     // Downline restriction actions — shared by catalog-role self-service (own
     // immediate downline only) and super_admin (anyone); see
     // DownlineAuthorization::authorize().
@@ -253,6 +258,13 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::put('/referral-settings', [\App\Http\Controllers\Admin\EnterprisePartnerReferralSettingsController::class, 'update'])->name('referral-settings.update');
     });
 
+    // Agent upgrade settings — minimum wallet balance to self-upgrade to
+    // Agent, and the one-time commission paid to a Partner upline.
+    Route::prefix('admin/agent-upgrade')->name('admin.agent-upgrade-settings.')->group(function () {
+        Route::get('/settings', [\App\Http\Controllers\Admin\AgentUpgradeSettingsController::class, 'edit'])->name('edit');
+        Route::put('/settings', [\App\Http\Controllers\Admin\AgentUpgradeSettingsController::class, 'update'])->name('update');
+    });
+  
     // Jurisdictions (Region -> State -> SenatorialDistrict admin-authored tree,
     // used to assign geographic coverage to Regional Manager / Coordinator).
     Route::prefix('admin/jurisdictions')->name('admin.jurisdictions.')->group(function () {
