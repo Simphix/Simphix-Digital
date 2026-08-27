@@ -18,12 +18,26 @@ use App\Models\User;
  */
 class UtilityAccess
 {
+    /**
+     * Airtime and Data purchases are platform-wide suspended for every
+     * role, independent of ALLOWED_ROLES below — flip to false to restore
+     * access exactly as it was (personal/business only). Does not affect
+     * canVerify()/Verification, which is intentionally independent (see
+     * class docblock above). Endpoints/controllers/routes are untouched;
+     * this is the only thing stopping them from being reachable.
+     */
+    public const UTILITIES_SUSPENDED = true;
+
     public const ALLOWED_ROLES = ['personal', 'business'];
 
     private const VERIFICATION_ROLES = ['personal', 'business', 'agent', 'partner'];
 
     public static function canUse(User $user): bool
     {
+        if (self::UTILITIES_SUSPENDED) {
+            return false;
+        }
+
         return in_array($user->role, self::ALLOWED_ROLES, true);
     }
 

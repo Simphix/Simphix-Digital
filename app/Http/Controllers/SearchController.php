@@ -260,8 +260,6 @@ class SearchController extends Controller
 
             // 5. Search Static Service Operations & Action Items (Correct verified paths)
             $services = [
-                ['title' => 'Buy Airtime', 'description' => 'Recharge VTU airtime instantly for MTN, Glo, Airtel, 9mobile.', 'url' => route('airtime'), 'icon' => 'phone'],
-                ['title' => 'Buy Data Bundle', 'description' => 'Purchase internet data plans (SME, CG, Corporate, Retail).', 'url' => route('buy-sme-data'), 'icon' => 'wifi'],
                 ['title' => 'SIM Plans & Services', 'description' => 'Request new SIM number or perform activations.', 'url' => route('sims.index'), 'icon' => 'cpu'],
                 ['title' => 'Send Cash / Transfer', 'description' => 'Perform peer-to-peer wallet transfers to other users.', 'url' => route('transfer'), 'icon' => 'send'],
                 ['title' => 'Bank Withdrawal', 'description' => 'Payout money from wallet balance to your bank account.', 'url' => route('withdraw'), 'icon' => 'banknote'],

@@ -310,12 +310,15 @@ test('agent is blocked from Cash Out and P2P Transfer (GET and POST), while a pe
     $this->actingAs($agent)->post(route('transfer.process'), [])->assertForbidden();
 });
 
-test('a personal user still has normal access to Cash Out, P2P Transfer, SIM catalog, and Airtime (regression guard)', function () {
+test('a personal user still has normal access to Cash Out, P2P Transfer, and SIM catalog (regression guard)', function () {
     $personal = makeUserWithWallet('personal', 50000.00);
 
     $this->actingAs($personal)->get(route('withdraw'))->assertOk();
     $this->actingAs($personal)->get(route('transfer'))->assertOk();
-    $this->actingAs($personal)->get(route('airtime'))->assertOk();
+    // Airtime access is covered separately in UtilitiesSuspensionTest — it's
+    // now platform-wide suspended (UtilityAccess::UTILITIES_SUSPENDED), so a
+    // personal user no longer gets 200 here even though their role would
+    // otherwise be allowed.
 });
 
 test('agent is blocked from Airtime and Buy Data', function () {

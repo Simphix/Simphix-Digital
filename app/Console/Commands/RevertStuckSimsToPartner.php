@@ -11,7 +11,8 @@ use Illuminate\Console\Command;
 
 /**
  * Recovery tool for the activation-transaction-rollback bug (fixed
- * alongside this command): a partner/business_agent delegates a SIM to a
+ * alongside this command) — see docs/sim-activation-recovery.md for the
+ * full runbook. A partner/business_agent delegates a SIM to a
  * downline personal user (user_id set to them, status stays
  * ASSIGNED_TO_PARTNER/ASSIGNED_TO_BUSINESS_AGENT), the activation attempt
  * then throws somewhere downstream (commission/welfare payout) and the
