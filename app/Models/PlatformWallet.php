@@ -31,14 +31,25 @@ class PlatformWallet extends Model
 
     /**
      * Get or create the wallet for a type, so callers never have to worry
-     * about whether the row exists yet.
+     * about whether the row exists yet. Safe under concurrency: two requests
+     * racing to create the same type's row for the first time will have one
+     * winner and one loser at the database's unique constraint on `type` —
+     * the loser catches that and re-selects the winner's row instead of
+     * letting the exception propagate (plain firstOrCreate() is not safe
+     * here since its SELECT-then-INSERT isn't atomic).
      */
     public static function forType(string $type, string $name): self
     {
-        return static::firstOrCreate(
-            ['type' => $type],
-            ['name' => $name, 'balance' => 0.00]
-        );
+        $wallet = static::where('type', $type)->first();
+        if ($wallet) {
+            return $wallet;
+        }
+
+        try {
+            return static::create(['type' => $type, 'name' => $name, 'balance' => 0.00]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return static::where('type', $type)->firstOrFail();
+        }
     }
 
     public function transactions(): HasMany

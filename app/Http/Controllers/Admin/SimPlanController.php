@@ -17,6 +17,7 @@ use App\Support\SimStatus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -346,6 +347,8 @@ class SimPlanController extends Controller
 
             return back()->with('success', $message);
         } catch (\Exception $e) {
+            Log::error('Admin SIM request approval failed.', ['sim_request_id' => $simRequest->id, 'exception' => $e->getMessage()]);
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -691,6 +694,8 @@ class SimPlanController extends Controller
             $refundMessage = $simRequest->amount > 0 ? " and refunded ₦" . number_format($simRequest->amount, 2) . " to their wallet" : "";
             return back()->with('success', 'Request rejected successfully' . $refundMessage . '.');
         } catch (\Exception $e) {
+            Log::error('Admin SIM request rejection failed.', ['sim_request_id' => $simRequest->id, 'exception' => $e->getMessage()]);
+
             return back()->with('error', 'Error rejecting request: ' . $e->getMessage());
         }
     }
@@ -845,6 +850,8 @@ class SimPlanController extends Controller
             return back()->with('success', $message);
 
         } catch (\Exception $e) {
+            Log::error('Admin SIM bulk Excel import failed.', ['exception' => $e->getMessage()]);
+
             return back()->with('error', 'Error reading Excel file: ' . $e->getMessage());
         }
     }

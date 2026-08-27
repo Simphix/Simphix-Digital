@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Support\RoleHierarchy;
 use App\Support\SimStatus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Single place for every SIM status transition: the admin -> Regional Manager
@@ -180,6 +181,21 @@ class SimAssignmentService
      * Mark a SIM active, whether triggered by admin approval of a user's
      * activation request or a direct admin action. Fires SimActivated so the
      * Commission Engine can pay out the chain.
+     *
+     * The status flip + history row is the one thing this method absolutely
+     * guarantees: once it returns without throwing, the SIM is durably
+     * ACTIVATED. SimActivated's side effects (commission payouts, welfare
+     * wallet credit, activation-bonus job) are deliberately dispatched via
+     * DB::afterCommit() rather than fired inline — this method is normally
+     * called from inside a caller's own transaction that also debits the
+     * activating user's wallet (see SimsController::activateForDownlineUser),
+     * so firing the event inline would let an unrelated failure deep in the
+     * commission chain (a misconfigured ServicePrice, a locked row, ...) roll
+     * back that already-legitimate debit + activation. Deferring to
+     * afterCommit means the debit and the ACTIVATED status are locked in
+     * first, no matter what happens to the side effects afterward; any
+     * failure there is caught and logged instead of being allowed to
+     * surface as a confusing error on an activation that actually succeeded.
      */
     public function activate(Sim $sim, User $actor): void
     {
@@ -195,9 +211,21 @@ class SimAssignmentService
             $from = $sim->status;
             $sim->update(['status' => SimStatus::ACTIVATED]);
             $this->logHistory($sim, $from, SimStatus::ACTIVATED, $actor, 'SIM activated.');
-        });
 
-        event(new SimActivated($sim->fresh(), $actor));
+            DB::afterCommit(function () use ($sim, $actor) {
+                try {
+                    event(new SimActivated($sim->fresh(), $actor));
+                } catch (\Throwable $e) {
+                    Log::error('SIM activated successfully but a post-activation side effect (commission/welfare payout) failed.', [
+                        'sim_id' => $sim->id,
+                        'sim_number' => $sim->number,
+                        'actor_id' => $actor->id,
+                        'exception' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                }
+            });
+        });
     }
 
     /**
@@ -239,6 +267,41 @@ class SimAssignmentService
             'status' => SimStatus::UNASSIGNED,
         ]);
         $this->logHistory($sim, $from, SimStatus::UNASSIGNED, $actor, 'SIM unassigned.');
+    }
+
+    /**
+     * Recovery for a SIM stuck mid-handoff: delegated to a downline personal
+     * user (user_id points at them) but never actually activated — status
+     * is still ASSIGNED_TO_PARTNER/ASSIGNED_TO_BUSINESS_AGENT, so it never
+     * shows up as ACTIVATED anywhere. Reverts user_id back to the holder's
+     * own id (partner_id or business_agent_id), which is this codebase's
+     * "still self-held, not yet handed to anyone" marker — leaving the SIM
+     * exactly as if it had never been delegated, so the holder sees it back
+     * in their own inventory and can re-delegate/activate it cleanly.
+     *
+     * Callers are responsible for confirming the target was never actually
+     * debited before calling this — see sim:revert-stuck-to-partner, which
+     * checks for a matching Transaction row before including a SIM here.
+     */
+    public function revertToHolder(Sim $sim, User $actor, string $note): void
+    {
+        $holderId = $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT
+            ? $sim->business_agent_id
+            : $sim->partner_id;
+
+        if (!in_array($sim->status, [SimStatus::ASSIGNED_TO_PARTNER, SimStatus::ASSIGNED_TO_BUSINESS_AGENT], true) || !$holderId) {
+            throw new \RuntimeException('This SIM is not in a delegated-but-unactivated state that can be reverted to a holder.');
+        }
+
+        if ($sim->user_id === $holderId) {
+            throw new \RuntimeException('This SIM is already sitting with its holder — nothing to revert.');
+        }
+
+        DB::transaction(function () use ($sim, $holderId, $actor, $note) {
+            $from = $sim->status;
+            $sim->update(['user_id' => $holderId]);
+            $this->logHistory($sim, $from, $sim->status, $actor, $note);
+        });
     }
 
     private function logHistory(Sim $sim, ?string $from, string $to, User $actor, string $note): void
