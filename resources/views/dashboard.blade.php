@@ -273,20 +273,6 @@
                     </div>
                 @endif
 
-                <!-- Service 10: Bills Payment (Coming Soon) -->
-                <div class="col">
-                    <div class="service-btn relative p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2 opacity-60 cursor-not-allowed" aria-disabled="true">
-                        <span class="absolute top-1.5 right-1.5 text-[8px] font-bold uppercase tracking-wide text-slate-500 bg-slate-100 border border-slate-200 rounded-full px-1.5 py-0.5 leading-none">Coming Soon</span>
-                        <div class="p-2 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center w-10 h-10">
-                            <i data-lucide="receipt" class="w-5 h-5"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-slate-500 mb-0 font-display text-sm">Bills Payment</h4>
-                            <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">Pay your bills easily</p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Service 11: CAC Registration (Coming Soon) -->
                 <div class="col">
                     <div class="service-btn relative p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2 opacity-60 cursor-not-allowed" aria-disabled="true">
