@@ -73,11 +73,6 @@
             </div>
         @endif
 
-        @if (\App\Support\UtilityAccess::canUse(auth()->user()))
-            @include('layouts.partials.sidebar-link', ['href' => route('airtime'), 'icon' => 'phone', 'label' => __('Buy Airtime'), 'active' => request()->routeIs('airtime')])
-            @include('layouts.partials.sidebar-link', ['href' => route('buy-sme-data'), 'icon' => 'wifi', 'label' => __('Buy Data'), 'active' => request()->routeIs('buy-sme-data*')])
-        @endif
-
         @if (auth()->user() && auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'agent')
             @php
                 $simsActive = request()->routeIs('sims.*');

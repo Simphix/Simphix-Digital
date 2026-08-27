@@ -18,6 +18,10 @@ class EnsureCanUseUtilities
             return $next($request);
         }
 
-        abort(403, 'This feature is not available for your account type.');
+        $message = UtilityAccess::UTILITIES_SUSPENDED
+            ? 'Airtime and Data purchases are temporarily unavailable. Please check back later.'
+            : 'This feature is not available for your account type.';
+
+        abort(403, $message);
     }
 }
