@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Support\RoleHierarchy;
 use App\Support\SimStatus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Single place for every SIM status transition: the admin -> Regional Manager
@@ -180,6 +181,21 @@ class SimAssignmentService
      * Mark a SIM active, whether triggered by admin approval of a user's
      * activation request or a direct admin action. Fires SimActivated so the
      * Commission Engine can pay out the chain.
+     *
+     * The status flip + history row is the one thing this method absolutely
+     * guarantees: once it returns without throwing, the SIM is durably
+     * ACTIVATED. SimActivated's side effects (commission payouts, welfare
+     * wallet credit, activation-bonus job) are deliberately dispatched via
+     * DB::afterCommit() rather than fired inline — this method is normally
+     * called from inside a caller's own transaction that also debits the
+     * activating user's wallet (see SimsController::activateForDownlineUser),
+     * so firing the event inline would let an unrelated failure deep in the
+     * commission chain (a misconfigured ServicePrice, a locked row, ...) roll
+     * back that already-legitimate debit + activation. Deferring to
+     * afterCommit means the debit and the ACTIVATED status are locked in
+     * first, no matter what happens to the side effects afterward; any
+     * failure there is caught and logged instead of being allowed to
+     * surface as a confusing error on an activation that actually succeeded.
      */
     public function activate(Sim $sim, User $actor): void
     {
@@ -195,9 +211,21 @@ class SimAssignmentService
             $from = $sim->status;
             $sim->update(['status' => SimStatus::ACTIVATED]);
             $this->logHistory($sim, $from, SimStatus::ACTIVATED, $actor, 'SIM activated.');
-        });
 
-        event(new SimActivated($sim->fresh(), $actor));
+            DB::afterCommit(function () use ($sim, $actor) {
+                try {
+                    event(new SimActivated($sim->fresh(), $actor));
+                } catch (\Throwable $e) {
+                    Log::error('SIM activated successfully but a post-activation side effect (commission/welfare payout) failed.', [
+                        'sim_id' => $sim->id,
+                        'sim_number' => $sim->number,
+                        'actor_id' => $actor->id,
+                        'exception' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                }
+            });
+        });
     }
 
     /**

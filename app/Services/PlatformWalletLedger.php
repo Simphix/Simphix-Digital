@@ -24,8 +24,9 @@ class PlatformWalletLedger
         ?Model $related = null,
         array $metadata = []
     ): PlatformWalletTransaction {
-        return DB::transaction(function () use ($walletType, $walletName, $amount, $source, $description, $related, $metadata) {
-            PlatformWallet::firstOrCreate(['type' => $walletType], ['name' => $walletName, 'balance' => 0.00]);
+        PlatformWallet::forType($walletType, $walletName);
+
+        return DB::transaction(function () use ($walletType, $amount, $source, $description, $related, $metadata) {
             $wallet = PlatformWallet::where('type', $walletType)->lockForUpdate()->first();
 
             $oldBalance = $wallet->balance;

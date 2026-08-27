@@ -14,6 +14,7 @@ use App\Support\SimStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SimsController extends Controller
 {
@@ -671,6 +672,8 @@ class SimsController extends Controller
 
                 return back()->with('success', $message);
             } catch (\Exception $e) {
+                Log::error('SIM purchase request failed.', ['user_id' => $user->id, 'exception' => $e->getMessage()]);
+
                 return back()->with('error', $e->getMessage());
             }
         }
@@ -761,6 +764,8 @@ class SimsController extends Controller
 
             return back()->with('success', "Your request for {$request->quantity} x {$request->category} has been submitted and ₦" . number_format($totalAmount, 2) . " has been charged from your wallet. Our team will assign your SIM number(s) shortly.");
         } catch (\Exception $e) {
+            Log::error('Paid SIM purchase request failed.', ['user_id' => $user->id, 'exception' => $e->getMessage()]);
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -874,6 +879,8 @@ class SimsController extends Controller
             $chargeMsg = $payableAmount > 0 ? " ₦" . number_format($payableAmount, 2) . " has been charged from your wallet." : "";
             return back()->with('success', 'Activation request for ' . $sim->number . ' has been submitted successfully.' . $chargeMsg);
         } catch (\Exception $e) {
+            Log::error('Self-activation request failed.', ['user_id' => $user->id, 'sim_id' => $sim->id, 'exception' => $e->getMessage()]);
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -986,31 +993,41 @@ class SimsController extends Controller
             return back()->with('error', 'Only partners or business agents can activate a SIM for a downline user.');
         }
 
-        $sim = Sim::find($request->sim_id);
         $targetUser = User::find($request->user_id);
         $holderColumn = $partner->role === 'business_agent' ? 'business_agent_id' : 'partner_id';
-
-        if ($sim->{$holderColumn} !== $partner->id) {
-            return back()->with('error', 'You can only activate numbers currently allocated to you.');
-        }
-
-        if ($sim->status === SimStatus::ACTIVATED) {
-            return back()->with('error', 'This SIM card is already active.');
-        }
 
         if ($targetUser->role !== 'personal' || $targetUser->referred_by !== $partner->id) {
             return back()->with('error', 'You can only activate a SIM for a User in your downline.');
         }
 
-        // Resolve the activation price for the target user's role/category.
-        $simService = \App\Models\Service::where('name', 'simcard')->first();
-        $serviceField = $simService
-            ? \App\Models\ServiceField::where('service_id', $simService->id)->where('field_name', $sim->category)->first()
-            : null;
-        $payableAmount = $serviceField ? $serviceField->priceForUser($targetUser) : 0.00;
-
         try {
-            DB::transaction(function () use ($sim, $partner, $targetUser, $payableAmount, $simService) {
+            $activatedSim = DB::transaction(function () use ($request, $partner, $targetUser, $holderColumn) {
+                // Lock the SIM row before trusting anything about its current
+                // state — without this, two concurrent requests for the same
+                // sim_id (double-submit, a retried request) each work off
+                // their own stale, unlocked copy: the second one can sail
+                // past SimAssignmentService::activate()'s "already activated"
+                // guard (checked against the in-memory object, not a fresh
+                // read) and re-activate, double-debiting the target wallet
+                // and double-paying commissions. Locking + re-validating here
+                // mirrors fulfillDownlineRequest()/SimPlanController::approveRequest().
+                $sim = Sim::where('id', $request->sim_id)->lockForUpdate()->first();
+
+                if (!$sim || $sim->{$holderColumn} !== $partner->id) {
+                    throw new \Exception('You can only activate numbers currently allocated to you.');
+                }
+
+                if ($sim->status === SimStatus::ACTIVATED) {
+                    throw new \Exception('This SIM card is already active.');
+                }
+
+                // Resolve the activation price for the target user's role/category.
+                $simService = \App\Models\Service::where('name', 'simcard')->first();
+                $serviceField = $simService
+                    ? \App\Models\ServiceField::where('service_id', $simService->id)->where('field_name', $sim->category)->first()
+                    : null;
+                $payableAmount = $serviceField ? $serviceField->priceForUser($targetUser) : 0.00;
+
                 // Lock and debit the downline user's wallet — not the partner's.
                 $wallet = \App\Models\Wallet::where('user_id', $targetUser->id)->lockForUpdate()->first();
                 if (!$wallet || $wallet->balance < $payableAmount) {
@@ -1052,10 +1069,19 @@ class SimsController extends Controller
                 $sim->update(['user_id' => $targetUser->id]);
 
                 app(SimAssignmentService::class)->activate($sim, $partner);
+
+                return $sim;
             });
 
-            return back()->with('success', "Activated {$sim->number} for {$targetUser->first_name} {$targetUser->last_name}.");
+            return back()->with('success', "Activated {$activatedSim->number} for {$targetUser->first_name} {$targetUser->last_name}.");
         } catch (\Exception $e) {
+            Log::error('SIM activation for downline user failed.', [
+                'sim_id' => $request->sim_id,
+                'target_user_id' => $targetUser->id,
+                'partner_id' => $partner->id,
+                'exception' => $e->getMessage(),
+            ]);
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -1524,6 +1550,8 @@ class SimsController extends Controller
 
             return back()->with('success', "Request fulfilled: {$processedCount} SIM(s) assigned.");
         } catch (\Exception $e) {
+            Log::error('Downline SIM request fulfillment failed.', ['sim_request_id' => $simRequest->id, 'upline_id' => $user->id, 'exception' => $e->getMessage()]);
+
             return back()->with('error', $e->getMessage());
         }
     }
