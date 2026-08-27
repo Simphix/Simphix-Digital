@@ -269,6 +269,41 @@ class SimAssignmentService
         $this->logHistory($sim, $from, SimStatus::UNASSIGNED, $actor, 'SIM unassigned.');
     }
 
+    /**
+     * Recovery for a SIM stuck mid-handoff: delegated to a downline personal
+     * user (user_id points at them) but never actually activated — status
+     * is still ASSIGNED_TO_PARTNER/ASSIGNED_TO_BUSINESS_AGENT, so it never
+     * shows up as ACTIVATED anywhere. Reverts user_id back to the holder's
+     * own id (partner_id or business_agent_id), which is this codebase's
+     * "still self-held, not yet handed to anyone" marker — leaving the SIM
+     * exactly as if it had never been delegated, so the holder sees it back
+     * in their own inventory and can re-delegate/activate it cleanly.
+     *
+     * Callers are responsible for confirming the target was never actually
+     * debited before calling this — see sim:revert-stuck-to-partner, which
+     * checks for a matching Transaction row before including a SIM here.
+     */
+    public function revertToHolder(Sim $sim, User $actor, string $note): void
+    {
+        $holderId = $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT
+            ? $sim->business_agent_id
+            : $sim->partner_id;
+
+        if (!in_array($sim->status, [SimStatus::ASSIGNED_TO_PARTNER, SimStatus::ASSIGNED_TO_BUSINESS_AGENT], true) || !$holderId) {
+            throw new \RuntimeException('This SIM is not in a delegated-but-unactivated state that can be reverted to a holder.');
+        }
+
+        if ($sim->user_id === $holderId) {
+            throw new \RuntimeException('This SIM is already sitting with its holder — nothing to revert.');
+        }
+
+        DB::transaction(function () use ($sim, $holderId, $actor, $note) {
+            $from = $sim->status;
+            $sim->update(['user_id' => $holderId]);
+            $this->logHistory($sim, $from, $sim->status, $actor, $note);
+        });
+    }
+
     private function logHistory(Sim $sim, ?string $from, string $to, User $actor, string $note): void
     {
         SimHistory::create([
