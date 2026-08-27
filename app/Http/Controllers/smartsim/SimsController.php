@@ -773,6 +773,12 @@ class SimsController extends Controller
     /**
      * User submits request to activate their assigned SIM.
      */
+    /**
+     * This action was always exclusively Agent's self-activation flow — now
+     * that Agent no longer distributes/holds SIMs at all (it's a
+     * discount-only tier, see AgentUpgradeController), no role reaches this
+     * successfully anymore.
+     */
     public function activateSim(Request $request)
     {
         $request->validate([
@@ -883,13 +889,13 @@ class SimsController extends Controller
 
             return back()->with('error', $e->getMessage());
         }
+        abort(403, 'Self-activation is no longer available. Regional Managers and Coordinators distribute SIMs down the chain; Partners activate for their downline Users.');
     }
 
     /**
      * A Regional Manager / Coordinator / Partner delegates a SIM they currently
-     * hold down to their direct subordinate. Also preserves the legacy
-     * Partner -> agent/business assignment, which sits outside the new
-     * Regional Manager -> Coordinator -> Partner -> User hierarchy.
+     * hold down to their direct subordinate (Regional Manager -> Coordinator,
+     * Coordinator -> Partner, Partner -> User).
      */
     public function partnerAssignSim(Request $request)
     {
@@ -901,23 +907,6 @@ class SimsController extends Controller
         $from = Auth::user();
         $sim = Sim::find($request->sim_id);
         $targetUser = User::find($request->user_id);
-
-        // Legacy path: partner delegating to an agent account (outside the hierarchy).
-        // 'business' deliberately excluded here — Enterprise Partner is now a
-        // parallel root tier of its own (gets inventory via the payment
-        // flow), not a Partner's downline.
-        if ($from->role === 'partner' && in_array($targetUser->role, ['agent'])) {
-            if ($sim->partner_id !== $from->id || $sim->user_id !== $from->id) {
-                return back()->with('error', 'You can only assign numbers currently allocated to you.');
-            }
-
-            $sim->update([
-                'user_id' => $targetUser->id,
-                'status'  => SimStatus::ASSIGNED_TO_PARTNER,
-            ]);
-
-            return back()->with('success', "SIM number {$sim->number} successfully assigned to {$targetUser->first_name} {$targetUser->last_name}.");
-        }
 
         // Hierarchy path: Regional Manager -> Coordinator, Coordinator -> Partner, Partner -> User.
         try {

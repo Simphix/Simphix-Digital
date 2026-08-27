@@ -170,6 +170,19 @@
             </a>
         @endif
 
+        <!-- Upgrade to Agent -->
+        @if (auth()->user() && auth()->user()->role === 'personal')
+            <a href="{{ route('agent-upgrade.show') }}" title="Upgrade to Agent"
+               class="hidden lg:inline-flex items-center gap-2 pl-3 pr-4 py-2 rounded-xl text-xs font-bold text-primary bg-primary/10 hover:bg-primary/15 transition-colors outline-none">
+                <i data-lucide="trending-up" class="w-4 h-4"></i>
+                <span>Upgrade to Agent</span>
+            </a>
+            <a href="{{ route('agent-upgrade.show') }}" title="Upgrade to Agent"
+               class="lg:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors outline-none">
+                <i data-lucide="trending-up" class="w-5 h-5"></i>
+            </a>
+        @endif
+
         <!-- Notifications Dropdown -->
         <div x-data="{
             open: false,

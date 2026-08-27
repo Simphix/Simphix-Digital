@@ -580,7 +580,6 @@
                                 <x-input-label value="Target Account Tier" />
                                 <x-select-input name="role">
                                     <option value="" disabled selected>Select Tier </option>
-                                    <option value="agent" {{ old('role', $user->pending_role ?? $user->role) == 'agent' ? 'selected' : '' }}>Agent (Sub-distributor/Reseller benefits)</option>
                                     <option value="partner" {{ old('role', $user->pending_role ?? $user->role) == 'partner' ? 'selected' : '' }}>Partner (Integrator APIs & custom values)</option>
                                     <option value="business" {{ old('role', $user->pending_role ?? $user->role) == 'business' ? 'selected' : '' }}>Business (Wholesale pricing tiers)</option>
                                 </x-select-input>
