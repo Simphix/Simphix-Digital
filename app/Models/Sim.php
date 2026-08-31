@@ -96,4 +96,43 @@ class Sim extends Model
     {
         return $this->hasMany(SimSwapRequest::class, 'sim_id');
     }
+
+    /**
+     * Filters to SIMs whose cascade lineage falls within a given
+     * Region/State/SenatorialDistrict. Safe on an ACTIVATED sim because
+     * SimAssignmentService::activate() only ever flips status — it never
+     * touches regional_manager_id/coordinator_id, so those FKs (set once
+     * per tier as the sim moved down the cascade via assignDown()) persist
+     * for the sim's whole lifetime. Most-specific filter wins: passing a
+     * districtId ignores stateId/regionId, etc.
+     *
+     * Two resolution paths, since a sim's jurisdiction can be known via
+     * either holder: coordinator->districtAsCoordinator (district/state/
+     * region all derivable) or regionalManager->regionAsManager (region and
+     * its states, for a sim whose current cascade never passed through a
+     * district-holding coordinator — e.g. it's still sitting with the
+     * Regional Manager, or moved straight to a state-level query).
+     */
+    public function scopeInJurisdiction($query, ?int $regionId, ?int $stateId, ?int $districtId)
+    {
+        if ($districtId) {
+            return $query->whereHas('coordinator.districtAsCoordinator', fn ($q) => $q->where('id', $districtId));
+        }
+
+        if ($stateId) {
+            return $query->where(function ($q) use ($stateId) {
+                $q->whereHas('coordinator.districtAsCoordinator', fn ($q2) => $q2->where('state_id', $stateId))
+                    ->orWhereHas('regionalManager.regionAsManager.states', fn ($q2) => $q2->where('id', $stateId));
+            });
+        }
+
+        if ($regionId) {
+            return $query->where(function ($q) use ($regionId) {
+                $q->whereHas('regionalManager.regionAsManager', fn ($q2) => $q2->where('id', $regionId))
+                    ->orWhereHas('coordinator.districtAsCoordinator.state', fn ($q2) => $q2->where('region_id', $regionId));
+            });
+        }
+
+        return $query;
+    }
 }

@@ -208,6 +208,7 @@
                 </div>
 
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.jurisdictions.regions.index'), 'icon' => 'map', 'label' => 'Jurisdictions', 'active' => request()->routeIs('admin.jurisdictions*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.reconciliation.index'), 'icon' => 'scale', 'label' => 'Reconciliation', 'active' => request()->routeIs('admin.reconciliation*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.services.index'), 'icon' => 'server', 'label' => 'Services Pricing', 'active' => request()->routeIs('admin.services*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sme-plans.index'), 'icon' => 'wifi', 'label' => 'SME Data Plans', 'active' => request()->routeIs('admin.sme-plans*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-plan.index'), 'icon' => 'settings', 'label' => 'SIM Plans', 'active' => request()->routeIs('admin.sim-plan*')])
@@ -220,6 +221,13 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.notifications.index'), 'icon' => 'send', 'label' => 'Push Notifications', 'active' => request()->routeIs('admin.notifications*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.manage.support.index'), 'icon' => 'message-square', 'label' => 'Admin Support', 'active' => request()->routeIs('admin.manage.support*'), 'badge' => $openTicketsBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.webhooks.index'), 'icon' => 'webhook', 'label' => 'Webhook Logs', 'active' => request()->routeIs('admin.webhooks*'), 'badge' => $failedWebhooksBadge ?? 0])
+            </div>
+
+            <!-- Advanced Dashboard Section -->
+            <div class="pt-4 mt-4 border-t border-slate-200">
+                <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Advanced Dashboard</span>
+
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.sims-operations.index'), 'icon' => 'bar-chart-3', 'label' => 'SIMs Operations', 'active' => request()->routeIs('admin.sims-operations*')])
             </div>
         @endif
     </nav>

@@ -284,6 +284,18 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::delete('/districts/{district}', [\App\Http\Controllers\Admin\JurisdictionController::class, 'destroyDistrict'])->name('districts.destroy');
     });
 
+    // Reconciliation (read-only detection across P2P, deposits, cashouts,
+    // commissions, purchases, the SIM activation bonus, and wallet integrity)
+    Route::prefix('admin/reconciliation')->name('admin.reconciliation.')->group(function () {
+        Route::get('/{tab?}', [\App\Http\Controllers\Admin\ReconciliationController::class, 'index'])->name('index');
+    });
+
+    // Advanced SIM Operations dashboard
+    Route::prefix('admin/sims-operations')->name('admin.sims-operations.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\SimsOperationsDashboardController::class, 'index'])->name('index');
+        Route::get('/export', [\App\Http\Controllers\Admin\SimsOperationsDashboardController::class, 'exportCsv'])->name('export');
+    });
+
     // Services Management
     Route::prefix('admin/services')->name('admin.services.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ServiceController::class, 'index'])->name('index');
