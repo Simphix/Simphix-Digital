@@ -33,7 +33,7 @@ class GrantActivationBonusData implements ShouldQueue
     public int $tries = 4;
     public array $backoff = [30, 120, 600];
 
-    public function __construct(public Sim $sim)
+    public function __construct(public Sim $sim, public ?Report $existingReport = null)
     {
     }
 
@@ -46,6 +46,8 @@ class GrantActivationBonusData implements ShouldQueue
     {
         $settings = ActivationBonusSettings::forProvider($this->sim->provider);
         if (!$settings->is_active || !$settings->plan) {
+            $this->resolveStaleRetry('Activation bonus is currently turned off for this network.');
+
             return;
         }
 
@@ -55,6 +57,7 @@ class GrantActivationBonusData implements ShouldQueue
             // — but fail closed rather than granting against an undefined
             // period if SimHistory somehow has no ACTIVATED row yet.
             Log::warning('GrantActivationBonusData: no activation history found, skipping.', ['sim' => $this->sim->number]);
+            $this->resolveStaleRetry('No activation history found for this SIM.');
 
             return;
         }
@@ -66,6 +69,11 @@ class GrantActivationBonusData implements ShouldQueue
         // race-proof backstop for two jobs racing the same sim/period.
         if (!SimBonusPeriod::isDueForGrant($this->sim)) {
             Log::info('Activation bonus already granted for this period, skipping.', ['sim' => $this->sim->number, 'period_index' => $periodIndex]);
+            // A retry against a report whose period was, in the meantime,
+            // already fulfilled by a separate successful attempt — resolve
+            // it rather than leaving it claimed ("retrying") forever with no
+            // terminal outcome.
+            $this->resolveStaleRetry('The bonus for this billing period was already granted through a separate attempt.');
 
             return;
         }
@@ -144,7 +152,7 @@ class GrantActivationBonusData implements ShouldQueue
         // the recipient's current balance, unchanged, to satisfy the audit trail.
         $balance = \App\Models\Wallet::where('user_id', $sim->user_id)->value('balance') ?? 0.00;
 
-        return Report::create([
+        $attributes = [
             'user_id'      => $sim->user_id,
             'phone_number' => $sim->number,
             'network'      => $plan->network,
@@ -155,6 +163,39 @@ class GrantActivationBonusData implements ShouldQueue
             'description'  => $description,
             'old_balance'  => $balance,
             'new_balance'  => $balance,
+        ];
+
+        // An admin retry is bound to the original failed Report — update
+        // that same row in place instead of inserting a fresh one, so a
+        // resolved retry actually disappears from the Failed Activations
+        // list rather than leaving the stale row sitting there forever.
+        if ($this->existingReport) {
+            $existing = $this->existingReport->fresh();
+            $existing->update($attributes + ['resolved_at' => $success ? now() : null]);
+
+            return $existing;
+        }
+
+        return Report::create($attributes);
+    }
+
+    /**
+     * Marks a claimed ("retrying") report resolved when handle() bails out
+     * before ever reaching logReport() — e.g. the bonus was turned off, or
+     * the current period was already fulfilled by a separate attempt.
+     * Without this, a report claimed by retryActivationBonus() would be
+     * stuck in "retrying" forever with no terminal outcome.
+     */
+    private function resolveStaleRetry(string $description): void
+    {
+        if (!$this->existingReport) {
+            return;
+        }
+
+        $this->existingReport->fresh()->update([
+            'status' => 'completed',
+            'description' => $description,
+            'resolved_at' => now(),
         ]);
     }
 }
