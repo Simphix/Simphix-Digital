@@ -168,8 +168,7 @@ test('sim:grant-bulk-activation-bonus still queues and grants normally while uti
         'number' => '0806' . fake()->unique()->numerify('#######'),
         'category' => 'POS SIM',
         'provider' => 'mtn',
-        'status' => \App\Support\SimStatus::ACTIVATED,
-        'user_id' => $simOwner->id,
+        'status' => \App\Support\SimStatus::UNASSIGNED,
     ]);
 
     $plan = \App\Models\SmeData::create([
@@ -186,6 +185,13 @@ test('sim:grant-bulk-activation-bonus still queues and grants normally while uti
         'validity' => '30 days',
         'status' => 'enabled',
     ]);
+
+    // Activate BEFORE enabling the bonus plan — the SimActivated listener
+    // fires synchronously in this test env and would otherwise auto-grant
+    // period 0 itself, before the bulk command gets a chance to.
+    app(\App\Services\SimAssignmentService::class)->adminAssign($sim, $simOwner, $admin);
+    app(\App\Services\SimAssignmentService::class)->activate($sim->fresh(), $admin);
+
     ActivationBonusSettings::forProvider('mtn')->update(['is_active' => true, 'sme_data_id' => $plan->id]);
 
     Http::fake(['*' => Http::response(['status' => 'success', 'transid' => 'VEND-1'], 200)]);
