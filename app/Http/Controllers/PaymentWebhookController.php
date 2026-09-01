@@ -11,7 +11,7 @@ use App\Models\User;
 use App\Models\VirtualAccount;
 use App\Models\Wallet;
 use App\Models\WebhookLog;
-use App\Services\EnterprisePartnerActivationService;
+use App\Services\EnterprisePartnerPaymentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -159,7 +159,7 @@ class PaymentWebhookController extends Controller
             return;
         }
 
-        app(EnterprisePartnerActivationService::class)->activate($payment);
+        app(EnterprisePartnerPaymentService::class)->confirmPayment($payment);
     }
 
     private function handlePayout($payload)

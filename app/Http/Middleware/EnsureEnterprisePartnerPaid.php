@@ -11,8 +11,11 @@ class EnsureEnterprisePartnerPaid
 {
     /**
      * A newly-registered Enterprise Partner (business role) can't use the
-     * rest of the app until their eligibility payment clears (see
-     * EnterprisePartnerActivationService) — everything except the info
+     * rest of the app until an admin fulfills their order — payment alone
+     * only moves them from 'pending_eligibility' to 'pending_fulfillment'
+     * (see EnterprisePartnerPaymentService::confirmPayment()); the
+     * dashboard only unlocks once EnterprisePartnerFulfillmentService::
+     * fulfill() runs and flips them to 'active'. Everything except the info
      * (cart) page, the cart-mutation routes, the generate-account payment
      * flow, and logout redirects here. The fallback destination is the
      * cart, not generate-account — an EP with no route preference yet
@@ -24,7 +27,7 @@ class EnsureEnterprisePartnerPaid
         if (Auth::check()) {
             $user = Auth::user();
 
-            if ($user->role === 'business' && in_array($user->status, ['pending_eligibility', 'pending_payment'], true)) {
+            if ($user->role === 'business' && in_array($user->status, ['pending_eligibility', 'pending_payment', 'pending_fulfillment'], true)) {
                 if (!$request->routeIs('enterprise-partner.info', 'enterprise-partner.cart.*', 'enterprise-partner.generate-account*', 'logout')) {
                     return redirect()->route('enterprise-partner.info')->with('warning', 'Finish building your SIM order to unlock your dashboard.');
                 }

@@ -12,6 +12,7 @@ class EnterprisePartnerApplicationItem extends Model
         'sim_category',
         'provider',
         'quantity',
+        'fulfilled_quantity',
         'unit_price_snapshot',
         'line_total_snapshot',
     ];

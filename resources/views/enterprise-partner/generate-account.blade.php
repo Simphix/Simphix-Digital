@@ -10,7 +10,7 @@
                 Complete Your Eligibility Payment
             </h1>
             <p class="text-sm text-slate-500 mt-1">
-                Your dashboard unlocks automatically once this payment is confirmed.
+                Track your SIM order and payment status below.
             </p>
         </div>
 
@@ -33,7 +33,45 @@
             </div>
         @endif
 
-        @if ($payment)
+        @if ($payment && $payment->status === 'paid' && $application->status === 'fulfilled')
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <h3 class="text-sm font-semibold text-slate-800 font-display pb-3 border-b border-slate-100 flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
+                    Your order has been fulfilled
+                </h3>
+                <div class="space-y-2 text-sm">
+                    @foreach ($application->items as $item)
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-600">{{ $item->sim_category }} ({{ strtoupper($item->provider) }})</span>
+                            <span class="font-bold {{ $item->fulfilled_quantity < $item->quantity ? 'text-amber-600' : 'text-emerald-600' }}">
+                                {{ $item->fulfilled_quantity }} / {{ $item->quantity }} received
+                            </span>
+                        </div>
+                    @endforeach
+                </div>
+                @if ($application->items->sum('fulfilled_quantity') < $application->items->sum('quantity'))
+                    <div class="bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-800">
+                        Some items were fulfilled below what you ordered — reach out to support if you have questions about your order.
+                    </div>
+                @endif
+                <p class="text-xs text-slate-400">Your dashboard is unlocked — this page is just a record of your order.</p>
+            </div>
+        @elseif ($payment && $payment->status === 'paid')
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <h3 class="text-sm font-semibold text-slate-800 font-display pb-3 border-b border-slate-100 flex items-center gap-2">
+                    <i data-lucide="clock" class="w-4 h-4 text-amber-500"></i>
+                    Payment confirmed — order under review
+                </h3>
+                <p class="text-sm text-slate-600">Your payment has been received. Our team is reviewing your order and will assign your SIMs shortly — you'll be able to use your dashboard once that's done.</p>
+                <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 text-xs text-slate-600 space-y-2">
+                    @foreach ($application->items as $item)
+                        <div class="flex items-center justify-between">
+                            <span>{{ $item->quantity }} &times; {{ $item->sim_category }} ({{ strtoupper($item->provider) }})</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @elseif ($payment)
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
                 <h3 class="text-sm font-semibold text-slate-800 font-display pb-3 border-b border-slate-100">Your payment account</h3>
                 <div class="grid grid-cols-2 gap-4 text-sm">
@@ -55,7 +93,7 @@
                     </div>
                 </div>
                 <div class="bg-primary/5 border border-primary/10 rounded-lg p-3 text-xs text-slate-600">
-                    Transfer the exact amount above to this account. Your dashboard unlocks automatically once payment is confirmed — no need to refresh manually.
+                    Transfer the exact amount above to this account. Your dashboard unlocks once your payment is confirmed and our team fulfills your order.
                 </div>
             </div>
         @else
