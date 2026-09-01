@@ -265,6 +265,7 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::prefix('fulfillment')->name('fulfillment.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\EnterprisePartnerFulfillmentController::class, 'index'])->name('index');
             Route::post('/{application}/fulfill', [\App\Http\Controllers\Admin\EnterprisePartnerFulfillmentController::class, 'fulfill'])->name('fulfill');
+            Route::post('/items/{item}/resolve-numbers', [\App\Http\Controllers\Admin\EnterprisePartnerFulfillmentController::class, 'resolveItemNumbers'])->name('items.resolve-numbers');
         });
     });
 

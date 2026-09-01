@@ -13,8 +13,7 @@
                 userQuery: '',
                 userResults: [],
                 selectedUser: null,
-                category: '{{ $categories[0] ?? '' }}',
-                provider: '{{ $providers[0] ?? '' }}',
+                simNumber: '',
                 submitting: false,
 
                 async searchUsers() {
@@ -30,15 +29,14 @@
                 },
 
                 submit() {
-                    if (!this.selectedUser || this.submitting) return;
+                    if (!this.selectedUser || !this.simNumber.trim() || this.submitting) return;
                     this.submitting = true;
                     const f = document.createElement('form');
                     f.method = 'POST';
                     f.action = '{{ route('admin.sim-plan.direct-assign') }}';
                     let inputs = '<input type=\'hidden\' name=\'_token\' value=\'{{ csrf_token() }}\'>';
                     inputs += '<input type=\'hidden\' name=\'user_id\' value=\'' + this.selectedUser.id + '\'>';
-                    inputs += '<input type=\'hidden\' name=\'category\' value=\'' + this.category + '\'>';
-                    inputs += '<input type=\'hidden\' name=\'provider\' value=\'' + this.provider + '\'>';
+                    inputs += '<input type=\'hidden\' name=\'number\' value=\'' + this.simNumber.trim() + '\'>';
                     f.innerHTML = inputs;
                     document.body.appendChild(f);
                     f.submit();
@@ -87,26 +85,13 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="space-y-1.5">
-                            <x-input-label value="Category" />
-                            <select x-model="category" class="w-full rounded-xl border-slate-200 text-xs font-semibold">
-                                @foreach ($categories as $cat)
-                                    <option value="{{ $cat }}">{{ $cat }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="space-y-1.5">
-                            <x-input-label value="Network" />
-                            <select x-model="provider" class="w-full rounded-xl border-slate-200 text-xs font-semibold">
-                                @foreach ($providers as $prov)
-                                    <option value="{{ $prov }}">{{ strtoupper($prov) }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <div class="space-y-1.5">
+                        <x-input-label value="SIM Number" />
+                        <x-text-input type="text" x-model="simNumber" placeholder="e.g. 08031234567"
+                                      autocomplete="off" class="w-full rounded-xl font-medium" />
                     </div>
 
-                    <button type="button" @click="submit()" :disabled="!selectedUser || submitting"
+                    <button type="button" @click="submit()" :disabled="!selectedUser || !simNumber.trim() || submitting"
                             class="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors">
                         <i data-lucide="zap" class="w-3.5 h-3.5"></i>
                         Assign &amp; Activate — No Commission

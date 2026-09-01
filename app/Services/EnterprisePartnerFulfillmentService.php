@@ -14,11 +14,12 @@ use App\Support\SimStatus;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The admin side of an Enterprise Partner's order: a super_admin decides how
- * many of each line item to actually grant (never more than what the EP
- * ordered/paid for, further capped by live stock) — never an automatic
- * exact-match the moment payment clears. Only once this runs does the EP's
- * dashboard unlock and their inviter's referral bonus get paid.
+ * The admin side of an Enterprise Partner's order: a super_admin picks the
+ * exact SIM(s) to grant per line item (never more than what the EP
+ * ordered/paid for, and only ones still genuinely UNASSIGNED at commit time)
+ * — never an automatic exact-match the moment payment clears. Only once this
+ * runs does the EP's dashboard unlock and their inviter's referral bonus get
+ * paid.
  */
 class EnterprisePartnerFulfillmentService
 {
@@ -33,12 +34,12 @@ class EnterprisePartnerFulfillmentService
      * bonus. Throws \RuntimeException (caller's responsibility to catch and
      * flash) if the application isn't in a fulfillable state.
      *
-     * @param array<int,int> $fulfilledQuantities item_id => admin-requested quantity
+     * @param array<int,array<int>> $simIdsByItem item_id => admin-selected sim ids
      * @return array<int,array{item_id:int,requested:int,fulfilled:int}> per-item outcome
      */
-    public function fulfill(EnterprisePartnerApplication $application, array $fulfilledQuantities, User $actor): array
+    public function fulfill(EnterprisePartnerApplication $application, array $simIdsByItem, User $actor): array
     {
-        return DB::transaction(function () use ($application, $fulfilledQuantities, $actor) {
+        return DB::transaction(function () use ($application, $simIdsByItem, $actor) {
             $lockedApplication = EnterprisePartnerApplication::where('id', $application->id)->lockForUpdate()->first();
             if (!$lockedApplication || $lockedApplication->status !== 'awaiting_fulfillment') {
                 throw new \RuntimeException('This order is not awaiting fulfillment (already fulfilled, or payment not yet confirmed).');
@@ -55,30 +56,35 @@ class EnterprisePartnerFulfillmentService
 
             $summary = [];
             foreach ($items as $item) {
-                $requested = (int) ($fulfilledQuantities[$item->id] ?? 0);
-                // Never more than what was originally ordered/paid for, and
-                // never negative — clamp before ever touching stock.
-                $wanted = max(0, min($requested, $item->quantity));
+                // Never process more sim ids than were originally ordered,
+                // even if the admin's selection somehow exceeds that.
+                $simIds = array_slice($simIdsByItem[$item->id] ?? [], 0, $item->quantity);
 
-                $sims = $wanted > 0
-                    ? Sim::where('status', SimStatus::UNASSIGNED)
+                $sims = !empty($simIds)
+                    ? Sim::whereIn('id', $simIds)
                         ->where('category', $item->sim_category)
                         ->where('provider', $item->provider)
                         ->lockForUpdate()
-                        ->limit($wanted)
                         ->get()
                     : collect();
 
+                $fulfilledCount = 0;
                 foreach ($sims as $sim) {
+                    if ($sim->status !== SimStatus::UNASSIGNED) {
+                        // Raced away since the admin picked it client-side —
+                        // skip it rather than aborting the whole batch.
+                        continue;
+                    }
                     $this->simAssignmentService->adminAssign($sim, $ep, $actor);
+                    $fulfilledCount++;
                 }
 
-                $item->update(['fulfilled_quantity' => $sims->count()]);
+                $item->update(['fulfilled_quantity' => $fulfilledCount]);
 
                 $summary[] = [
                     'item_id' => $item->id,
                     'requested' => $item->quantity,
-                    'fulfilled' => $sims->count(),
+                    'fulfilled' => $fulfilledCount,
                 ];
             }
 

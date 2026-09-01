@@ -41,10 +41,7 @@ function directAssignSim(string $category, string $provider = 'mtn'): Sim
 /**
  * A fresh ServiceField under a per-test-unique category name (rather than
  * the real "POS SIM" the dev DB already has plenty of live inventory for),
- * so the controller's "first available in this category/provider" auto-pick
- * can only ever match a SIM this test itself created — otherwise the query
- * could silently pick up unrelated pre-existing dev-DB stock instead of the
- * SIM the test is asserting against.
+ * so pricing can only ever resolve against a SIM this test itself created.
  */
 function setDirectAssignPrice(string $category, float $price, float $commission = 0.00, string $provider = 'mtn'): ServiceField
 {
@@ -79,22 +76,22 @@ test('non-super_admin actors are forbidden from the direct-assign route', functi
     setDirectAssignPrice($this->category, 1000);
     $partner = User::factory()->create(['role' => 'partner']);
     $target = directAssignSimUser('personal', 5000);
-    directAssignSim($this->category);
+    $sim = directAssignSim($this->category);
 
     $response = $this->actingAs($partner)->post(route('admin.sim-plan.direct-assign'), [
-        'user_id' => $target->id, 'category' => $this->category, 'provider' => 'mtn',
+        'user_id' => $target->id, 'number' => $sim->number,
     ]);
 
     $response->assertForbidden();
 });
 
-test('admin can assign and activate a SIM directly to a personal user with sufficient balance, no commission paid even when a rate is configured', function () {
+test('admin can assign and activate a SIM directly to a personal user by its exact number, no commission paid even when a rate is configured', function () {
     setDirectAssignPrice($this->category, 1000, commission: 500);
     $target = directAssignSimUser('personal', 5000);
     $sim = directAssignSim($this->category);
 
     $response = $this->actingAs($this->admin)->post(route('admin.sim-plan.direct-assign'), [
-        'user_id' => $target->id, 'category' => $this->category, 'provider' => 'mtn',
+        'user_id' => $target->id, 'number' => $sim->number,
     ]);
 
     $response->assertRedirect();
@@ -117,6 +114,22 @@ test('admin can assign and activate a SIM directly to a personal user with suffi
     expect(CommissionEarning::where('sim_id', $freshSim->id)->count())->toBe(0);
 });
 
+test('the admin gets the exact SIM number they typed, not just any available one in the category', function () {
+    setDirectAssignPrice($this->category, 1000);
+    $target = directAssignSimUser('personal', 5000);
+    $sim1 = directAssignSim($this->category);
+    $sim2 = directAssignSim($this->category);
+
+    $response = $this->actingAs($this->admin)->post(route('admin.sim-plan.direct-assign'), [
+        'user_id' => $target->id, 'number' => $sim2->number,
+    ]);
+
+    $response->assertSessionHas('success');
+    expect($sim2->fresh()->status)->toBe(SimStatus::ACTIVATED);
+    expect($sim2->fresh()->user_id)->toBe($target->id);
+    expect($sim1->fresh()->status)->toBe(SimStatus::UNASSIGNED);
+});
+
 test('platform welfare wallet and the silent activation data bonus still fire for a direct admin activation', function () {
     setDirectAssignPrice($this->category, 1000);
     $welfareBefore = (float) (PlatformWallet::where('type', PlatformWallet::TYPE_WELFARE)->value('balance') ?? 0.00);
@@ -125,11 +138,11 @@ test('platform welfare wallet and the silent activation data bonus still fire fo
     // inserting a second, never-consulted row.
     PlatformWelfareSettings::current()->update(['amount_per_activation' => 50.00, 'is_active' => true]);
     $target = directAssignSimUser('personal', 5000);
-    directAssignSim($this->category);
+    $sim = directAssignSim($this->category);
     Queue::fake();
 
     $response = $this->actingAs($this->admin)->post(route('admin.sim-plan.direct-assign'), [
-        'user_id' => $target->id, 'category' => $this->category, 'provider' => 'mtn',
+        'user_id' => $target->id, 'number' => $sim->number,
     ]);
 
     $response->assertSessionHas('success');
@@ -146,7 +159,7 @@ test('direct-assign is rejected when the target personal user has insufficient w
     $sim = directAssignSim($this->category);
 
     $response = $this->actingAs($this->admin)->post(route('admin.sim-plan.direct-assign'), [
-        'user_id' => $target->id, 'category' => $this->category, 'provider' => 'mtn',
+        'user_id' => $target->id, 'number' => $sim->number,
     ]);
 
     $response->assertSessionHas('error');
@@ -162,23 +175,41 @@ test('direct-assign is rejected for a non-personal-role target', function () {
     $sim = directAssignSim($this->category);
 
     $response = $this->actingAs($this->admin)->post(route('admin.sim-plan.direct-assign'), [
-        'user_id' => $target->id, 'category' => $this->category, 'provider' => 'mtn',
+        'user_id' => $target->id, 'number' => $sim->number,
     ]);
 
     $response->assertSessionHas('error');
     expect($sim->fresh()->status)->toBe(SimStatus::UNASSIGNED);
 });
 
-test('direct-assign fails cleanly with no matching SIM in stock', function () {
-    setDirectAssignPrice($this->category, 1000);
+test('direct-assign fails cleanly when the submitted number does not exist, with no side effects', function () {
     $target = directAssignSimUser('personal', 5000);
 
     $response = $this->actingAs($this->admin)->post(route('admin.sim-plan.direct-assign'), [
-        'user_id' => $target->id, 'category' => $this->category, 'provider' => 'mtn',
+        'user_id' => $target->id, 'number' => '08000000000',
     ]);
 
-    $response->assertSessionHas('error');
+    $response->assertSessionHas('error', fn ($message) => str_contains($message, 'No SIM found'));
     expect((float) Wallet::where('user_id', $target->id)->value('balance'))->toBe(5000.00);
+    expect(\App\Models\Transaction::where('user_id', $target->id)->count())->toBe(0);
+});
+
+test('direct-assign is rejected when the submitted number is already assigned to someone else, with no double-assignment', function () {
+    setDirectAssignPrice($this->category, 1000);
+    $target = directAssignSimUser('personal', 5000);
+    $other = directAssignSimUser('personal', 0);
+    $sim = directAssignSim($this->category);
+    $sim->update(['status' => SimStatus::ASSIGNED_TO_PARTNER, 'user_id' => $other->id]);
+
+    $response = $this->actingAs($this->admin)->post(route('admin.sim-plan.direct-assign'), [
+        'user_id' => $target->id, 'number' => $sim->number,
+    ]);
+
+    $response->assertSessionHas('error', fn ($message) => str_contains($message, 'not available'));
+    expect($sim->fresh()->status)->toBe(SimStatus::ASSIGNED_TO_PARTNER);
+    expect($sim->fresh()->user_id)->toBe($other->id);
+    expect((float) Wallet::where('user_id', $target->id)->value('balance'))->toBe(5000.00);
+    expect(\App\Models\Transaction::where('user_id', $target->id)->count())->toBe(0);
 });
 
 test('direct-assign respects the per-category activation kill-switch and rolls back the assignment too', function () {
@@ -188,7 +219,7 @@ test('direct-assign respects the per-category activation kill-switch and rolls b
     $sim = directAssignSim($this->category);
 
     $response = $this->actingAs($this->admin)->post(route('admin.sim-plan.direct-assign'), [
-        'user_id' => $target->id, 'category' => $this->category, 'provider' => 'mtn',
+        'user_id' => $target->id, 'number' => $sim->number,
     ]);
 
     $response->assertSessionHas('error');
