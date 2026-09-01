@@ -72,34 +72,13 @@ test('the registration page 404s without a valid inviter ref', function () {
     $this->get(route('enterprise-partner.register', ['ref' => 'AGENTREF']))->assertNotFound();
 });
 
-test('the registration page renders an availability matrix reflecting real stock', function () {
-    $glo = ServiceField::firstOrCreate(
-        ['service_id' => $this->service->id, 'field_name' => 'CAMERA SIM'],
-        ['field_code' => 'CAM-' . fake()->unique()->numerify('####'), 'base_price' => 800, 'is_active' => true]
-    );
-    seedEligibleStock('CAMERA SIM', 'glo', 100);
-    seedEligibleStock('CAMERA SIM', '9mobile', 40); // short of the 100 minimum — must render unavailable
-
-    $coordinator = User::factory()->create(['role' => 'coordinator', 'referral_code' => 'COORDREF', 'status' => 'active']);
-
-    $response = $this->get(route('enterprise-partner.register', ['ref' => 'COORDREF']));
-
-    $response->assertOk();
-    $response->assertViewHas('quantity', 100);
-    $response->assertViewHas('matrix', function ($matrix) {
-        return $matrix['POS SIM']['providers']['mtn']['available'] === true
-            && $matrix['CAMERA SIM']['providers']['glo']['available'] === true
-            && $matrix['CAMERA SIM']['providers']['9mobile']['available'] === false;
-    });
-});
-
 test('a suspended inviter cannot be used to register', function () {
     $partner = User::factory()->create(['role' => 'partner', 'referral_code' => 'SUSPREF', 'status' => 'suspended']);
 
     $this->get(route('enterprise-partner.register', ['ref' => 'SUSPREF']))->assertNotFound();
 });
 
-test('submitting the registration form creates a business account, wallet, and application snapshot for the chosen category/network, then logs the EP in', function () {
+test('submitting the registration form creates a business account, wallet, and an empty order header ready for the cart, then logs the EP in', function () {
     $rm = User::factory()->create(['role' => 'regional_manager', 'referral_code' => 'RMREF', 'status' => 'active']);
 
     $response = $this->post(route('enterprise-partner.register.store'), [
@@ -113,8 +92,6 @@ test('submitting the registration form creates a business account, wallet, and a
         'business_name' => 'Ada Ventures',
         'business_type' => 'llc',
         'cac_number' => 'RC-123456',
-        'sim_category' => 'POS SIM',
-        'provider' => 'mtn',
     ]);
 
     $response->assertRedirect(route('enterprise-partner.info'));
@@ -130,75 +107,14 @@ test('submitting the registration form creates a business account, wallet, and a
 
     $application = EnterprisePartnerApplication::where('user_id', $ep->id)->first();
     expect($application)->not->toBeNull();
-    expect($application->sim_category)->toBe('POS SIM');
-    expect($application->provider)->toBe('mtn');
-    expect($application->quantity)->toBe(100);
-    expect((float) $application->unit_price_snapshot)->toBe($this->unitPrice);
-    expect((float) $application->total_amount_snapshot)->toBe($this->unitPrice * 100);
+    expect((float) $application->total_amount_snapshot)->toBe(0.0);
     expect($application->status)->toBe('pending_payment');
+    expect($application->items)->toHaveCount(0);
 
     $this->assertAuthenticatedAs($ep);
 });
 
-test('registering with an available non-default category and network stores exactly that selection and its own price', function () {
-    $camera = ServiceField::firstOrCreate(
-        ['service_id' => $this->service->id, 'field_name' => 'CAMERA SIM'],
-        ['field_code' => 'CAM2-' . fake()->unique()->numerify('####'), 'base_price' => 800, 'is_active' => true]
-    );
-    seedEligibleStock('CAMERA SIM', 'glo', 100);
-    $cameraPrice = $camera->getPriceForUserType('business');
-    $rm = User::factory()->create(['role' => 'regional_manager', 'referral_code' => 'RMREF-CAM', 'status' => 'active']);
-
-    $response = $this->post(route('enterprise-partner.register.store'), [
-        'ref' => 'RMREF-CAM',
-        'first_name' => 'Cam', 'last_name' => 'Era',
-        'email' => 'cam.era@example.com', 'phone' => '08066665555',
-        'password' => 'Passw0rd!123', 'password_confirmation' => 'Passw0rd!123',
-        'business_name' => 'Cam Era Ventures', 'business_type' => 'llc', 'cac_number' => 'RC-777777',
-        'sim_category' => 'CAMERA SIM', 'provider' => 'glo',
-    ]);
-
-    $response->assertRedirect(route('enterprise-partner.info'));
-
-    $application = EnterprisePartnerApplication::whereHas('user', fn ($q) => $q->where('email', 'cam.era@example.com'))->first();
-    expect($application->sim_category)->toBe('CAMERA SIM');
-    expect($application->provider)->toBe('glo');
-    expect((float) $application->unit_price_snapshot)->toBe($cameraPrice);
-});
-
-test('registration is rejected server-side for a category/network without enough stock, even if the client bypassed the disabled option', function () {
-    $rm = User::factory()->create(['role' => 'regional_manager', 'referral_code' => 'RMREF-SHORT', 'status' => 'active']);
-
-    $response = $this->post(route('enterprise-partner.register.store'), [
-        'ref' => 'RMREF-SHORT',
-        'first_name' => 'Short', 'last_name' => 'Stock',
-        'email' => 'short.stock@example.com', 'phone' => '08055554444',
-        'password' => 'Passw0rd!123', 'password_confirmation' => 'Passw0rd!123',
-        'business_name' => 'Short Co', 'business_type' => 'llc', 'cac_number' => 'RC-000001',
-        'sim_category' => 'POS SIM', 'provider' => 'glo', // seeded stock is on 'mtn' only
-    ]);
-
-    $response->assertSessionHasErrors('sim_category');
-    expect(User::where('email', 'short.stock@example.com')->exists())->toBeFalse();
-});
-
-test('registration is rejected for an unknown SIM category', function () {
-    $rm = User::factory()->create(['role' => 'regional_manager', 'referral_code' => 'RMREF-BAD', 'status' => 'active']);
-
-    $response = $this->post(route('enterprise-partner.register.store'), [
-        'ref' => 'RMREF-BAD',
-        'first_name' => 'Bad', 'last_name' => 'Cat',
-        'email' => 'bad.cat@example.com', 'phone' => '08044443333',
-        'password' => 'Passw0rd!123', 'password_confirmation' => 'Passw0rd!123',
-        'business_name' => 'Bad Co', 'business_type' => 'llc', 'cac_number' => 'RC-000002',
-        'sim_category' => 'NOT A REAL CATEGORY', 'provider' => 'mtn',
-    ]);
-
-    $response->assertSessionHasErrors('sim_category');
-    expect(User::where('email', 'bad.cat@example.com')->exists())->toBeFalse();
-});
-
-test('the info page shows the freshly-registered EP their eligibility snapshot', function () {
+test('the cart page loads for a freshly-registered EP with an empty order', function () {
     $rm = User::factory()->create(['role' => 'regional_manager', 'referral_code' => 'RMREF2', 'status' => 'active']);
 
     $this->post(route('enterprise-partner.register.store'), [
@@ -212,18 +128,16 @@ test('the info page shows the freshly-registered EP their eligibility snapshot',
         'business_name' => 'Bola Traders',
         'business_type' => 'sole_proprietor',
         'cac_number' => 'RC-654321',
-        'sim_category' => 'POS SIM',
-        'provider' => 'mtn',
     ]);
 
     $response = $this->get(route('enterprise-partner.info'));
 
     $response->assertOk();
-    $response->assertSee(number_format($this->unitPrice * 100, 2), false);
-    $response->assertSee('POS SIM');
+    $response->assertSee('Your order is empty');
+    $response->assertSee('0 / 100 minimum');
 });
 
-test('an unpaid EP is redirected away from the rest of the app by the payment gate, but the info page stays reachable', function () {
+test('an unpaid EP is redirected to the cart (not generate-account) by the payment gate, and the cart page stays reachable', function () {
     $rm = User::factory()->create(['role' => 'regional_manager', 'referral_code' => 'RMREF3', 'status' => 'active']);
 
     $this->post(route('enterprise-partner.register.store'), [
@@ -237,10 +151,8 @@ test('an unpaid EP is redirected away from the rest of the app by the payment ga
         'business_name' => 'Chidi Co',
         'business_type' => 'partnership',
         'cac_number' => 'RC-999999',
-        'sim_category' => 'POS SIM',
-        'provider' => 'mtn',
     ]);
 
     $this->get(route('enterprise-partner.info'))->assertOk();
-    $this->get(route('dashboard'))->assertRedirect('/enterprise-partner/generate-account');
+    $this->get(route('dashboard'))->assertRedirect('/enterprise-partner/info');
 });

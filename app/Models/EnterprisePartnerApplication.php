@@ -10,17 +10,12 @@ class EnterprisePartnerApplication extends Model
 {
     protected $fillable = [
         'user_id',
-        'sim_category',
-        'provider',
-        'quantity',
-        'unit_price_snapshot',
         'total_amount_snapshot',
         'status',
         'paid_at',
     ];
 
     protected $casts = [
-        'unit_price_snapshot' => 'decimal:2',
         'total_amount_snapshot' => 'decimal:2',
         'paid_at' => 'datetime',
     ];
@@ -33,5 +28,10 @@ class EnterprisePartnerApplication extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(EnterprisePartnerPayment::class);
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(EnterprisePartnerApplicationItem::class, 'application_id');
     }
 }

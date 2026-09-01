@@ -64,9 +64,17 @@
                 <h3 class="text-sm font-semibold text-slate-800 font-display pb-3 border-b border-slate-100">Verify your identity to generate an account</h3>
 
                 @if ($application)
-                    <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 text-xs text-slate-600 flex items-center justify-between">
-                        <span>Amount due for {{ $application->quantity }} {{ $application->sim_category }}</span>
-                        <span class="font-bold text-slate-800">₦{{ number_format($application->total_amount_snapshot, 2) }}</span>
+                    <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 text-xs text-slate-600 space-y-2">
+                        @foreach ($application->items as $item)
+                            <div class="flex items-center justify-between">
+                                <span>{{ $item->quantity }} &times; {{ $item->sim_category }} ({{ strtoupper($item->provider) }})</span>
+                                <span class="font-semibold text-slate-700">₦{{ number_format($item->line_total_snapshot, 2) }}</span>
+                            </div>
+                        @endforeach
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-200">
+                            <span class="font-semibold text-slate-700">Total Due</span>
+                            <span class="font-bold text-slate-800">₦{{ number_format($application->total_amount_snapshot, 2) }}</span>
+                        </div>
                     </div>
                 @endif
 
