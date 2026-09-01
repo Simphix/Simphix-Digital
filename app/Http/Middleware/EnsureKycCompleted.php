@@ -37,7 +37,7 @@ class EnsureKycCompleted
                     // upfront, and EnsureEnterprisePartnerPaid needs the
                     // chance to route them there instead of bouncing them
                     // to a dashboard they can't use yet.
-                    if (!$request->routeIs('dashboard', 'kyc.submit', 'logout', 'enterprise-partner.info', 'enterprise-partner.generate-account*')) {
+                    if (!$request->routeIs('dashboard', 'kyc.submit', 'logout', 'enterprise-partner.info', 'enterprise-partner.cart.*', 'enterprise-partner.generate-account*')) {
                         return redirect()->route('dashboard')->with('warning', 'Please complete your KYC profile to continue.');
                     }
                 }

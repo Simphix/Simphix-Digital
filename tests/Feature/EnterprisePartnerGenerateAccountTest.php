@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\EnterprisePartnerApplication;
+use App\Models\EnterprisePartnerApplicationItem;
 use App\Models\EnterprisePartnerPayment;
 use App\Models\User;
 use App\Models\Wallet;
@@ -33,12 +34,16 @@ function makeEpWithApplication(float $unitPrice = 1500.0, int $quantity = 100): 
     Wallet::create(['user_id' => $ep->id, 'balance' => 0, 'wallet_number' => 'WLT' . str_pad((string) $ep->id, 7, '0', STR_PAD_LEFT)]);
     $application = EnterprisePartnerApplication::create([
         'user_id' => $ep->id,
+        'total_amount_snapshot' => $unitPrice * $quantity,
+        'status' => 'pending_payment',
+    ]);
+    EnterprisePartnerApplicationItem::create([
+        'application_id' => $application->id,
         'sim_category' => 'POS SIM',
         'provider' => 'mtn',
         'quantity' => $quantity,
         'unit_price_snapshot' => $unitPrice,
-        'total_amount_snapshot' => $unitPrice * $quantity,
-        'status' => 'pending_payment',
+        'line_total_snapshot' => $unitPrice * $quantity,
     ]);
 
     return [$ep, $application];

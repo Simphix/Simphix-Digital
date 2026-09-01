@@ -2,8 +2,48 @@
     <title>SmartSIM - Admin SIM Management</title>
 
     <div class="max-w-7xl mx-auto space-y-6">
-        <!-- Page Header -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <!-- Page Header + Admin SIM Activation: assign + activate a SIM
+             directly to a personal user, bypassing any partner/agent — no
+             commission is paid to anyone on this SIM. The user's own wallet
+             is still debited the normal price; activation is refused if
+             their balance is short. -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+             x-data="{
+                open: false,
+                userQuery: '',
+                userResults: [],
+                selectedUser: null,
+                category: '{{ $categories[0] ?? '' }}',
+                provider: '{{ $providers[0] ?? '' }}',
+                submitting: false,
+
+                async searchUsers() {
+                    if (this.userQuery.trim().length < 2) { this.userResults = []; return; }
+                    const res = await fetch('{{ route('admin.sim-plan.users.search') }}?role=personal&q=' + encodeURIComponent(this.userQuery));
+                    this.userResults = await res.json();
+                },
+
+                selectUser(u) {
+                    this.selectedUser = u;
+                    this.userResults = [];
+                    this.userQuery = u.name + ' · ' + (u.phone || u.email);
+                },
+
+                submit() {
+                    if (!this.selectedUser || this.submitting) return;
+                    this.submitting = true;
+                    const f = document.createElement('form');
+                    f.method = 'POST';
+                    f.action = '{{ route('admin.sim-plan.direct-assign') }}';
+                    let inputs = '<input type=\'hidden\' name=\'_token\' value=\'{{ csrf_token() }}\'>';
+                    inputs += '<input type=\'hidden\' name=\'user_id\' value=\'' + this.selectedUser.id + '\'>';
+                    inputs += '<input type=\'hidden\' name=\'category\' value=\'' + this.category + '\'>';
+                    inputs += '<input type=\'hidden\' name=\'provider\' value=\'' + this.provider + '\'>';
+                    f.innerHTML = inputs;
+                    document.body.appendChild(f);
+                    f.submit();
+                }
+             }">
             <div>
                 <h1 class="text-2xl font-bold font-display text-slate-800 flex items-center gap-2.5">
                     <div class="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-[#0056D2] border border-indigo-100/50 shadow-sm">
@@ -12,6 +52,66 @@
                     SIM Cards & Plans Management
                 </h1>
                 <p class="text-sm text-slate-500 mt-1">Upload available SIM numbers, assign numbers directly to roles, and approve user requests.</p>
+            </div>
+            <div>
+                <button type="button" @click="open = true"
+                        class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors shadow-sm">
+                    <i data-lucide="zap" class="w-4 h-4"></i>
+                    Admin SIM Activation
+                </button>
+            </div>
+
+            <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50" @click.self="open = false">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-md p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-extrabold font-display text-slate-900">Admin SIM Activation</h3>
+                        <button type="button" @click="open = false" class="text-slate-400 hover:text-slate-600">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500">Assign and activate a SIM directly to a personal user — the user's wallet is debited the normal price, but no partner/agent is involved, so no one earns a commission on it.</p>
+
+                    <div class="space-y-1.5 relative">
+                        <x-input-label value="Personal User" />
+                        <x-text-input type="text" x-model="userQuery" @input.debounce.400ms="searchUsers()"
+                                      placeholder="Search by name, email, or phone…" autocomplete="off" class="rounded-xl font-medium" />
+                        <div x-show="userResults.length > 0" x-cloak
+                             class="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+                            <template x-for="u in userResults" :key="u.id">
+                                <button type="button" @click="selectUser(u)"
+                                        class="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-0">
+                                    <span class="block text-xs font-bold text-slate-700" x-text="u.name"></span>
+                                    <span class="block text-[11px] text-slate-400" x-text="(u.phone || '') + ' · ' + u.email"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1.5">
+                            <x-input-label value="Category" />
+                            <select x-model="category" class="w-full rounded-xl border-slate-200 text-xs font-semibold">
+                                @foreach ($categories as $cat)
+                                    <option value="{{ $cat }}">{{ $cat }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <x-input-label value="Network" />
+                            <select x-model="provider" class="w-full rounded-xl border-slate-200 text-xs font-semibold">
+                                @foreach ($providers as $prov)
+                                    <option value="{{ $prov }}">{{ strtoupper($prov) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="button" @click="submit()" :disabled="!selectedUser || submitting"
+                            class="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors">
+                        <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                        Assign &amp; Activate — No Commission
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -743,6 +843,7 @@
                                 <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase">
                                     <th class="py-2.5">Phone Number</th>
                                     <th class="py-2.5">Network</th>
+                                    <th class="py-2.5">Status</th>
                                     <th class="py-2.5">Reason</th>
                                     <th class="py-2.5">Failed At</th>
                                     <th class="py-2.5 text-right">Actions</th>
@@ -753,18 +854,29 @@
                                     <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                                         <td class="py-3 font-semibold text-slate-800">{{ $failed->phone_number }}</td>
                                         <td class="py-3 text-slate-600 uppercase">{{ $failed->network }}</td>
+                                        <td class="py-3">
+                                            @if ($failed->status === 'retrying')
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-100 text-amber-700">Retrying…</span>
+                                            @else
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-red-100 text-red-700">Failed</span>
+                                            @endif
+                                        </td>
                                         <td class="py-3 text-slate-600 max-w-xs">{{ $failed->description }}</td>
                                         <td class="py-3 text-slate-400 font-medium">{{ $failed->created_at->format('M d, Y H:i') }}</td>
                                         <td class="py-3 text-right whitespace-nowrap">
-                                            <form action="{{ route('admin.sim-plan.failed-activations.retry', $failed) }}" method="POST" class="inline-block">
-                                                @csrf
-                                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2.5 py-1 rounded-lg transition-colors">Retry</button>
-                                            </form>
+                                            @if ($failed->status === 'failed')
+                                                <form action="{{ route('admin.sim-plan.failed-activations.retry', $failed) }}" method="POST" class="inline-block">
+                                                    @csrf
+                                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2.5 py-1 rounded-lg transition-colors">Retry</button>
+                                                </form>
+                                            @else
+                                                <span class="text-slate-300 font-semibold">—</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="py-8 text-center text-slate-400 font-semibold">No failed activation bonus top-ups found.</td>
+                                        <td colspan="6" class="py-8 text-center text-slate-400 font-semibold">No failed activation bonus top-ups found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

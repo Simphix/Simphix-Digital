@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PaymentWebhookController;
 use App\Models\EnterprisePartnerApplication;
+use App\Models\EnterprisePartnerApplicationItem;
 use App\Models\EnterprisePartnerPayment;
 use App\Models\EnterprisePartnerReferralSettings;
 use App\Models\Sim;
@@ -13,21 +14,40 @@ use App\Support\SimStatus;
 
 uses(\Illuminate\Foundation\Testing\DatabaseTransactions::class);
 
-function makePendingEpPayment(int $quantity = 5, ?User $inviter = null): array
+/**
+ * $items defaults to a single POS SIM/mtn line for $quantity, matching the
+ * pre-cart single-item shape most of these tests still exercise — pass an
+ * explicit $items array (each ['sim_category', 'provider', 'quantity',
+ * 'unit_price' => 1500]) to build a multi-item order instead.
+ */
+function makePendingEpPayment(int $quantity = 5, ?User $inviter = null, ?array $items = null): array
 {
     $admin = User::where('role', 'super_admin')->first() ?? User::factory()->create(['role' => 'super_admin']);
     $ep = User::factory()->create(['role' => 'business', 'status' => 'pending_eligibility', 'referred_by' => $inviter?->id]);
     Wallet::create(['user_id' => $ep->id, 'balance' => 0, 'wallet_number' => 'WLT' . str_pad((string) $ep->id, 7, '0', STR_PAD_LEFT)]);
 
+    $items ??= [['sim_category' => 'POS SIM', 'provider' => 'mtn', 'quantity' => $quantity, 'unit_price' => 1500]];
+
     $application = EnterprisePartnerApplication::create([
         'user_id' => $ep->id,
-        'sim_category' => 'POS SIM',
-        'provider' => 'mtn',
-        'quantity' => $quantity,
-        'unit_price_snapshot' => 1500,
-        'total_amount_snapshot' => 1500 * $quantity,
+        'total_amount_snapshot' => 0.00,
         'status' => 'pending_payment',
     ]);
+
+    $total = 0.0;
+    foreach ($items as $item) {
+        $lineTotal = $item['quantity'] * $item['unit_price'];
+        $total += $lineTotal;
+        EnterprisePartnerApplicationItem::create([
+            'application_id' => $application->id,
+            'sim_category' => $item['sim_category'],
+            'provider' => $item['provider'],
+            'quantity' => $item['quantity'],
+            'unit_price_snapshot' => $item['unit_price'],
+            'line_total_snapshot' => $lineTotal,
+        ]);
+    }
+    $application->update(['total_amount_snapshot' => $total]);
 
     $payment = EnterprisePartnerPayment::create([
         'application_id' => $application->id,
@@ -134,7 +154,29 @@ test('a stock shortfall still activates the EP with whatever SIMs were available
     expect($ep->fresh()->status)->toBe('active');
     expect($payment->fresh()->status)->toBe('paid');
     expect(Sim::where('business_id', $ep->id)->count())->toBe($availableNow);
-    expect(Sim::where('business_id', $ep->id)->count())->toBeLessThan($application->quantity);
+    expect(Sim::where('business_id', $ep->id)->count())->toBeLessThan($application->items->sum('quantity'));
+});
+
+test('activation assigns stock correctly across two distinct category/network items, with a shortfall logged only for the item that runs short', function () {
+    seedUnassignedPosSims(5); // POS SIM/mtn — plenty
+
+    // The dev DB this suite runs against may already hold real unassigned
+    // CAMERA SIM/glo stock — same reasoning as the shortfall test above:
+    // request exactly 2 more than whatever already exists, guaranteeing a
+    // real, exact shortfall of 2 regardless of that pre-existing count.
+    $cameraAvailableNow = Sim::where('status', SimStatus::UNASSIGNED)->where('category', 'CAMERA SIM')->where('provider', 'glo')->count();
+    $cameraRequested = $cameraAvailableNow + 2;
+
+    [$admin, $ep, $application, $payment] = makePendingEpPayment(items: [
+        ['sim_category' => 'POS SIM', 'provider' => 'mtn', 'quantity' => 5, 'unit_price' => 1500],
+        ['sim_category' => 'CAMERA SIM', 'provider' => 'glo', 'quantity' => $cameraRequested, 'unit_price' => 800],
+    ]);
+
+    app(EnterprisePartnerActivationService::class)->activate($payment);
+
+    expect($ep->fresh()->status)->toBe('active');
+    expect(Sim::where('business_id', $ep->id)->where('category', 'POS SIM')->count())->toBe(5);
+    expect(Sim::where('business_id', $ep->id)->where('category', 'CAMERA SIM')->count())->toBe($cameraAvailableNow);
 });
 
 test('the webhook fallback activates a matching EP payment on a sufficient, successful payin', function () {

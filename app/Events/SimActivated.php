@@ -15,6 +15,7 @@ class SimActivated
     public function __construct(
         public Sim $sim,
         public User $actor,
+        public bool $awardCommission = true,
     ) {
     }
 }

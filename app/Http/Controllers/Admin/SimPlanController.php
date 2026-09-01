@@ -74,8 +74,11 @@ class SimPlanController extends Controller
 
         // Failed activation-bonus-data top-ups, written by GrantActivationBonusData
         // to the shared reports table — same source every other purchase-attempt log uses.
+        // 'retrying' rows are a retry claimed but not yet resolved — still
+        // shown (non-actionable) so the admin can see it's in flight; a
+        // resolved ('completed') row drops out of this list entirely.
         $failedActivations = Report::where('type', 'activation_bonus_data')
-            ->where('status', 'failed')
+            ->whereIn('status', ['failed', 'retrying'])
             ->latest()
             ->paginate(10, ['*'], 'failed_page')
             ->appends(request()->query());
@@ -118,21 +121,50 @@ class SimPlanController extends Controller
      * Re-dispatch the activation bonus data top-up for a failed attempt,
      * looked up by phone number (the SIM's own number) since GrantActivationBonusData
      * takes a Sim, not a Report.
+     *
+     * The report is atomically claimed (failed -> retrying) under a row
+     * lock before the job is ever dispatched, so a double-click (or two
+     * admins retrying the same stale row) can never result in more than one
+     * job — and therefore more than one real vendor top-up — in flight for
+     * it. GrantActivationBonusData resolves the claimed row in place
+     * (completed+resolved_at on success, back to failed on a genuine
+     * retry-failure, or resolved with an explanatory note if the retry
+     * turned out to be moot) — see its logReport()/resolveStaleRetry().
      */
     public function retryActivationBonus(Report $report): RedirectResponse
     {
-        if ($report->type !== 'activation_bonus_data' || $report->status !== 'failed') {
+        if ($report->type !== 'activation_bonus_data') {
             return back()->with('error', 'This entry is not a retryable failed activation bonus.');
         }
 
-        $sim = Sim::where('number', $report->phone_number)->first();
-        if (!$sim) {
-            return back()->with('error', "No SIM found for {$report->phone_number}.");
+        $claimed = DB::transaction(function () use ($report) {
+            $locked = Report::where('id', $report->id)->lockForUpdate()->first();
+
+            if (!$locked || $locked->status !== 'failed' || $locked->resolved_at !== null) {
+                return null;
+            }
+
+            $locked->update(['status' => 'retrying']);
+
+            return $locked;
+        });
+
+        if (!$claimed) {
+            return back()->with('error', 'This entry has already been retried or resolved.');
         }
 
-        GrantActivationBonusData::dispatch($sim);
+        $sim = Sim::where('number', $claimed->phone_number)->first();
+        if (!$sim) {
+            // Release the claim — nothing was dispatched, so it must not be
+            // left stuck in "retrying" with no job ever coming to resolve it.
+            $claimed->update(['status' => 'failed']);
 
-        return back()->with('success', "Retry queued for {$report->phone_number}.");
+            return back()->with('error', "No SIM found for {$claimed->phone_number}.");
+        }
+
+        GrantActivationBonusData::dispatch($sim, $claimed);
+
+        return back()->with('success', "Retry queued for {$claimed->phone_number}.");
     }
 
     /**
@@ -212,6 +244,108 @@ class SimPlanController extends Controller
         });
 
         return back()->with('success', "Successfully assigned {$assignedCount} SIM number(s) to {$targetUser->first_name} {$targetUser->last_name} ({$targetUser->role}).");
+    }
+
+    /**
+     * Admin sells + activates a SIM directly to a personal user, bypassing
+     * the normal partner/business_agent middleman entirely — the user's own
+     * wallet is debited the usual category/role price (activation is
+     * refused if their balance is short), but because there is no
+     * partner/coordinator/regional_manager in the chain for this SIM, and
+     * activate() is called with awardCommission: false, nobody earns a
+     * commission on it. The platform welfare wallet credit and the silent
+     * SIM activation data bonus still fire — neither pays a third party.
+     *
+     * The server auto-picks the first available UNASSIGNED SIM for the
+     * chosen category/provider; the admin never sees/selects a specific
+     * number, matching the "gift"/direct-sale nature of this action.
+     */
+    public function directAssign(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'user_id'  => 'required|exists:users,id',
+            'category' => 'required|string',
+            'provider' => 'required|string',
+        ]);
+
+        $target = User::find($validated['user_id']);
+        if (!$target || $target->role !== 'personal' || $target->status !== 'active') {
+            return back()->with('error', 'This action can only assign a SIM directly to an active personal user.');
+        }
+
+        $actor = $request->user();
+
+        try {
+            $sim = DB::transaction(function () use ($validated, $target, $actor) {
+                $sim = Sim::where('status', SimStatus::UNASSIGNED)
+                    ->where('category', $validated['category'])
+                    ->where('provider', $validated['provider'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$sim) {
+                    throw new \RuntimeException("No available {$validated['category']} ({$validated['provider']}) SIM in stock.");
+                }
+
+                $simService = \App\Models\Service::where('name', 'simcard')->first();
+                $serviceField = $simService
+                    ? ServiceField::where('service_id', $simService->id)->where('field_name', $sim->category)->first()
+                    : null;
+                $payableAmount = $serviceField ? $serviceField->priceForUser($target) : 0.00;
+
+                $wallet = Wallet::where('user_id', $target->id)->lockForUpdate()->first();
+                if (!$wallet || $wallet->balance < $payableAmount) {
+                    throw new \RuntimeException("Insufficient wallet balance for {$target->first_name}. They need ₦" . number_format($payableAmount, 2) . ' in their wallet.');
+                }
+
+                $oldBalance = $wallet->balance;
+                $wallet->decrement('balance', $payableAmount);
+                $newBalance = $wallet->balance;
+
+                $ref = 'ADMIN-ACT-' . time() . '-' . rand(1000, 9999);
+
+                Transaction::create([
+                    'transaction_ref' => $ref,
+                    'user_id'         => $target->id,
+                    'amount'          => $payableAmount,
+                    'fee'             => 0.00,
+                    'net_amount'      => $payableAmount,
+                    'description'     => "SIM Card Activation: {$sim->number} (Category: {$sim->category}, Network: " . strtoupper($sim->provider) . '), activated directly by admin ' . $actor->first_name . ' ' . $actor->last_name . ' — no commission chain.',
+                    'type'            => 'debit',
+                    'status'          => 'completed',
+                    'performed_by'    => $actor->first_name . ' ' . $actor->last_name,
+                ]);
+
+                Report::create([
+                    'user_id'      => $target->id,
+                    'phone_number' => $sim->number,
+                    'network'      => $sim->provider,
+                    'ref'          => $ref,
+                    'amount'       => $payableAmount,
+                    'status'       => 'completed',
+                    'type'         => 'sim_activation',
+                    'description'  => "SIM Card Activation: {$sim->number} (Category: {$sim->category}), direct admin activation — no commission chain.",
+                    'old_balance'  => $oldBalance,
+                    'new_balance'  => $newBalance,
+                    'service_id'   => $simService?->id,
+                ]);
+
+                $service = app(SimAssignmentService::class);
+                $service->adminAssign($sim, $target, $actor);
+                $service->activate(
+                    $sim->fresh(),
+                    $actor,
+                    awardCommission: false,
+                    note: "SIM activated by admin — direct sale to {$target->name} (personal), no commission."
+                );
+
+                return $sim->fresh();
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', "SIM {$sim->number} assigned and activated for {$target->name} — no commission paid.");
     }
 
     /**
@@ -543,12 +677,13 @@ class SimPlanController extends Controller
      */
     public function searchUsers(Request $request)
     {
-        $request->validate(['q' => 'required|string|min:2']);
+        $request->validate(['q' => 'required|string|min:2', 'role' => 'nullable|string']);
 
         $query = $request->q;
 
         $users = User::where('role', '!=', 'super_admin')
             ->where('status', 'active')
+            ->when($request->filled('role'), fn ($q) => $q->where('role', $request->role))
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
                     ->orWhere('middle_name', 'like', "%{$query}%")

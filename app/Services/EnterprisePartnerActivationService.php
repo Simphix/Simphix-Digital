@@ -70,23 +70,25 @@ class EnterprisePartnerActivationService
             return;
         }
 
-        $sims = Sim::where('status', SimStatus::UNASSIGNED)
-            ->where('category', $application->sim_category)
-            ->where('provider', $application->provider)
-            ->lockForUpdate()
-            ->limit($application->quantity)
-            ->get();
+        foreach ($application->items as $item) {
+            $sims = Sim::where('status', SimStatus::UNASSIGNED)
+                ->where('category', $item->sim_category)
+                ->where('provider', $item->provider)
+                ->lockForUpdate()
+                ->limit($item->quantity)
+                ->get();
 
-        foreach ($sims as $sim) {
-            $this->simAssignmentService->adminAssign($sim, $ep, $systemActor);
-        }
+            foreach ($sims as $sim) {
+                $this->simAssignmentService->adminAssign($sim, $ep, $systemActor);
+            }
 
-        if ($sims->count() < $application->quantity) {
-            // Known gap: this needs a real admin-alert channel (e.g. an
-            // admin notification or a dedicated ops queue), not just a log
-            // line — an EP who paid for 100 SIMs but only 40 were in stock
-            // deserves more than a silent shortfall.
-            Log::critical("Enterprise Partner activation for user {$ep->id}: only {$sims->count()} of {$application->quantity} {$application->sim_category} ({$application->provider}) SIMs were available to assign.");
+            if ($sims->count() < $item->quantity) {
+                // Known gap: this needs a real admin-alert channel (e.g. an
+                // admin notification or a dedicated ops queue), not just a log
+                // line — an EP who paid for 100 SIMs but only 40 were in stock
+                // deserves more than a silent shortfall.
+                Log::critical("Enterprise Partner activation for user {$ep->id}: only {$sims->count()} of {$item->quantity} {$item->sim_category} ({$item->provider}) SIMs were available to assign.");
+            }
         }
     }
 

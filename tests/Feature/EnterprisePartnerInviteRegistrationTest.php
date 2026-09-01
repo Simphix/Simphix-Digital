@@ -3,9 +3,24 @@
 use App\Models\EnterprisePartnerApplication;
 use App\Models\Service;
 use App\Models\ServiceField;
+use App\Models\Sim;
 use App\Models\User;
+use App\Support\SimStatus;
 
 uses(\Illuminate\Foundation\Testing\DatabaseTransactions::class);
+
+/** Seeds >= 100 UNASSIGNED sims for a category/provider so it clears the eligibility stock gate. */
+function seedEligibleStock(string $category, string $provider = 'mtn', int $count = 100): void
+{
+    for ($i = 0; $i < $count; $i++) {
+        Sim::create([
+            'number' => '080' . fake()->unique()->numerify('########'),
+            'category' => $category,
+            'provider' => $provider,
+            'status' => SimStatus::UNASSIGNED,
+        ]);
+    }
+}
 
 beforeEach(function () {
     // 'POS SIM' already exists as a real seeded category in the dev DB this
@@ -19,6 +34,7 @@ beforeEach(function () {
         ['field_code' => 'POS-' . fake()->unique()->numerify('####'), 'base_price' => 1500, 'is_active' => true]
     );
     $this->unitPrice = $this->field->getPriceForUserType('business');
+    seedEligibleStock('POS SIM', 'mtn');
 });
 
 test('the Invite Enterprise Partner navbar button is visible to eligible roles and hidden from others', function () {
@@ -56,24 +72,13 @@ test('the registration page 404s without a valid inviter ref', function () {
     $this->get(route('enterprise-partner.register', ['ref' => 'AGENTREF']))->assertNotFound();
 });
 
-test('the registration page renders eligibility pricing for a valid inviter', function () {
-    $coordinator = User::factory()->create(['role' => 'coordinator', 'referral_code' => 'COORDREF', 'status' => 'active']);
-
-    $response = $this->get(route('enterprise-partner.register', ['ref' => 'COORDREF']));
-
-    $response->assertOk();
-    $response->assertViewHas('unitPrice', $this->unitPrice);
-    $response->assertViewHas('quantity', 100);
-    $response->assertViewHas('totalAmount', $this->unitPrice * 100);
-});
-
 test('a suspended inviter cannot be used to register', function () {
     $partner = User::factory()->create(['role' => 'partner', 'referral_code' => 'SUSPREF', 'status' => 'suspended']);
 
     $this->get(route('enterprise-partner.register', ['ref' => 'SUSPREF']))->assertNotFound();
 });
 
-test('submitting the registration form creates a business account, wallet, and application snapshot, then logs the EP in', function () {
+test('submitting the registration form creates a business account, wallet, and an empty order header ready for the cart, then logs the EP in', function () {
     $rm = User::factory()->create(['role' => 'regional_manager', 'referral_code' => 'RMREF', 'status' => 'active']);
 
     $response = $this->post(route('enterprise-partner.register.store'), [
@@ -102,15 +107,14 @@ test('submitting the registration form creates a business account, wallet, and a
 
     $application = EnterprisePartnerApplication::where('user_id', $ep->id)->first();
     expect($application)->not->toBeNull();
-    expect($application->quantity)->toBe(100);
-    expect((float) $application->unit_price_snapshot)->toBe($this->unitPrice);
-    expect((float) $application->total_amount_snapshot)->toBe($this->unitPrice * 100);
+    expect((float) $application->total_amount_snapshot)->toBe(0.0);
     expect($application->status)->toBe('pending_payment');
+    expect($application->items)->toHaveCount(0);
 
     $this->assertAuthenticatedAs($ep);
 });
 
-test('the info page shows the freshly-registered EP their eligibility snapshot', function () {
+test('the cart page loads for a freshly-registered EP with an empty order', function () {
     $rm = User::factory()->create(['role' => 'regional_manager', 'referral_code' => 'RMREF2', 'status' => 'active']);
 
     $this->post(route('enterprise-partner.register.store'), [
@@ -129,10 +133,11 @@ test('the info page shows the freshly-registered EP their eligibility snapshot',
     $response = $this->get(route('enterprise-partner.info'));
 
     $response->assertOk();
-    $response->assertSee(number_format($this->unitPrice * 100, 2), false);
+    $response->assertSee('Your order is empty');
+    $response->assertSee('0 / 100 minimum');
 });
 
-test('an unpaid EP is redirected away from the rest of the app by the payment gate, but the info page stays reachable', function () {
+test('an unpaid EP is redirected to the cart (not generate-account) by the payment gate, and the cart page stays reachable', function () {
     $rm = User::factory()->create(['role' => 'regional_manager', 'referral_code' => 'RMREF3', 'status' => 'active']);
 
     $this->post(route('enterprise-partner.register.store'), [
@@ -149,5 +154,5 @@ test('an unpaid EP is redirected away from the rest of the app by the payment ga
     ]);
 
     $this->get(route('enterprise-partner.info'))->assertOk();
-    $this->get(route('dashboard'))->assertRedirect('/enterprise-partner/generate-account');
+    $this->get(route('dashboard'))->assertRedirect('/enterprise-partner/info');
 });

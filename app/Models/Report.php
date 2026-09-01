@@ -23,12 +23,14 @@ class Report extends Model
         'old_balance',
         'new_balance',
         'service_id',
+        'resolved_at',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'old_balance' => 'decimal:2',
         'new_balance' => 'decimal:2',
+        'resolved_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

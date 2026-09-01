@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\EnterprisePartnerApplication;
+use App\Models\EnterprisePartnerApplicationItem;
 use App\Models\EnterprisePartnerPayment;
 use App\Models\Service;
 use App\Models\ServiceField;
+use App\Models\Sim;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Repositories\VirtualAccountRepository;
+use App\Support\SimStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,15 +22,26 @@ use Illuminate\Validation\Rules;
 /**
  * The Enterprise Partner funnel: an existing Regional Manager / Coordinator
  * / Partner shares a referral link, the invitee fills a dedicated
- * registration form (eligibility = buying a minimum 100 MTN POS SIMs),
- * lands on an info page explaining what's next, then (PR9) generates a
- * virtual account to pay for the SIMs. Until payment clears (PR10), the new
- * account is locked out of the rest of the app by EnsureEnterprisePartnerPaid.
+ * registration form (personal/business info only — no SIM selection),
+ * lands on a cart page where they add/adjust SIM category+network line
+ * items until their combined quantity reaches the 100-unit eligibility
+ * minimum (see resolveAvailabilityMatrix()), then generates a virtual
+ * account to pay for the order. Until payment clears, the new account is
+ * locked out of the rest of the app by EnsureEnterprisePartnerPaid.
  */
 class EnterprisePartnerController extends Controller
 {
     /** Roles allowed to invite a new Enterprise Partner. */
     private const INVITER_ROLES = ['regional_manager', 'coordinator', 'partner'];
+
+    /** Networks a SIM can be requested on — no dedicated provider table exists in this schema. */
+    private const PROVIDERS = ['mtn', 'airtel', 'glo', '9mobile'];
+
+    /** Eligibility is a minimum TOTAL quantity across every cart line item combined, not per item. */
+    private const ELIGIBILITY_QUANTITY = 100;
+
+    /** Sanity cap on a single add/update-quantity call — a fat-finger guard, not a product rule. */
+    private const MAX_ITEM_QUANTITY = 5000;
 
     /**
      * Shareable registration link for an eligible upline, keyed off their
@@ -53,13 +67,8 @@ class EnterprisePartnerController extends Controller
             abort(404);
         }
 
-        [$unitPrice, $quantity] = $this->resolveEligibility();
-
         return view('enterprise-partner.register', [
             'inviter' => $inviter,
-            'unitPrice' => $unitPrice,
-            'quantity' => $quantity,
-            'totalAmount' => $unitPrice * $quantity,
         ]);
     }
 
@@ -126,15 +135,11 @@ class EnterprisePartnerController extends Controller
                 'last_activity' => now(),
             ]);
 
-            [$unitPrice, $quantity] = $this->resolveEligibility();
-
+            // An empty order header — the cart page (infoPage/cartPage) is
+            // where the EP actually builds their order via addItem().
             EnterprisePartnerApplication::create([
                 'user_id' => $ep->id,
-                'sim_category' => 'POS SIM',
-                'provider' => 'mtn',
-                'quantity' => $quantity,
-                'unit_price_snapshot' => $unitPrice,
-                'total_amount_snapshot' => $unitPrice * $quantity,
+                'total_amount_snapshot' => 0.00,
                 'status' => 'pending_payment',
             ]);
 
@@ -144,16 +149,193 @@ class EnterprisePartnerController extends Controller
         Auth::login($ep);
         $request->session()->regenerate();
 
-        return redirect()->route('enterprise-partner.info')->with('success', 'Application received! Review the eligibility details below.');
+        return redirect()->route('enterprise-partner.info')->with('success', 'Account created! Build your SIM order below.');
     }
 
+    /**
+     * The cart: an EP adds/adjusts SIM category+network line items here
+     * until their combined quantity reaches the eligibility minimum, then
+     * proceeds to generateAccountPage() to pay. Keeps the historical
+     * "enterprise-partner.info" route name — it's already whitelisted in
+     * EnsureEnterprisePartnerPaid and already sits in the right funnel spot
+     * (post-registration, pre-payment).
+     */
     public function infoPage()
     {
         $user = $this->authorizeBusiness();
 
-        $application = EnterprisePartnerApplication::where('user_id', $user->id)->first();
+        $application = EnterprisePartnerApplication::with('items')->where('user_id', $user->id)->first();
+        $matrix = $this->resolveAvailabilityMatrix();
+        $hasPayment = $application && EnterprisePartnerPayment::where('application_id', $application->id)->exists();
+        $totalQuantity = $application ? $application->items->sum('quantity') : 0;
+        $eligible = $totalQuantity >= self::ELIGIBILITY_QUANTITY;
 
-        return view('enterprise-partner.info', compact('user', 'application'));
+        return view('enterprise-partner.info', compact('user', 'application', 'matrix', 'hasPayment', 'totalQuantity', 'eligible'))
+            ->with('providers', self::PROVIDERS)
+            ->with('eligibilityQuantity', self::ELIGIBILITY_QUANTITY);
+    }
+
+    /**
+     * Add a SIM category/network line item to the cart, or increment its
+     * quantity if that exact combo is already in the cart. Never trusts the
+     * client's disabled options — re-validates the category/stock exactly
+     * like register() used to before this moved into its own step.
+     */
+    public function addItem(Request $request)
+    {
+        $user = $this->authorizeBusiness();
+        $application = EnterprisePartnerApplication::where('user_id', $user->id)->firstOrFail();
+        $this->assertCartOpen($application);
+
+        $validated = $request->validate([
+            'sim_category' => ['required', 'string'],
+            'provider' => ['required', 'string', 'in:' . implode(',', self::PROVIDERS)],
+            'quantity' => ['required', 'integer', 'min:1', 'max:' . self::MAX_ITEM_QUANTITY],
+        ]);
+
+        $field = $this->resolveActiveField($validated['sim_category']);
+        if (!$field) {
+            return back()->withErrors(['sim_category' => 'That SIM category is not available.'])->withInput();
+        }
+
+        try {
+            DB::transaction(function () use ($application, $validated, $field) {
+                $existing = EnterprisePartnerApplicationItem::where('application_id', $application->id)
+                    ->where('sim_category', $validated['sim_category'])
+                    ->where('provider', $validated['provider'])
+                    ->lockForUpdate()
+                    ->first();
+
+                $prospectiveQuantity = ($existing?->quantity ?? 0) + $validated['quantity'];
+
+                $stock = Sim::where('status', SimStatus::UNASSIGNED)
+                    ->where('category', $validated['sim_category'])
+                    ->where('provider', $validated['provider'])
+                    ->count();
+
+                if ($stock < $prospectiveQuantity) {
+                    throw new \RuntimeException("Only {$stock} {$validated['sim_category']} (" . strtoupper($validated['provider']) . ") SIM(s) are currently in stock.");
+                }
+
+                $unitPrice = $field->getPriceForUserType('business');
+
+                if ($existing) {
+                    $existing->update([
+                        'quantity' => $prospectiveQuantity,
+                        'unit_price_snapshot' => $unitPrice,
+                        'line_total_snapshot' => $prospectiveQuantity * $unitPrice,
+                    ]);
+                } else {
+                    EnterprisePartnerApplicationItem::create([
+                        'application_id' => $application->id,
+                        'sim_category' => $validated['sim_category'],
+                        'provider' => $validated['provider'],
+                        'quantity' => $validated['quantity'],
+                        'unit_price_snapshot' => $unitPrice,
+                        'line_total_snapshot' => $validated['quantity'] * $unitPrice,
+                    ]);
+                }
+
+                $this->recalculateTotal($application);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['quantity' => $e->getMessage()])->withInput();
+        }
+
+        return redirect()->route('enterprise-partner.info')->with('success', 'Added to your order.');
+    }
+
+    /** Change an existing line item's quantity. */
+    public function updateItemQuantity(Request $request, EnterprisePartnerApplicationItem $item)
+    {
+        $user = $this->authorizeBusiness();
+        $application = EnterprisePartnerApplication::where('user_id', $user->id)->firstOrFail();
+
+        if ($item->application_id !== $application->id) {
+            abort(403);
+        }
+
+        $this->assertCartOpen($application);
+
+        $validated = $request->validate([
+            'quantity' => ['required', 'integer', 'min:1', 'max:' . self::MAX_ITEM_QUANTITY],
+        ]);
+
+        try {
+            DB::transaction(function () use ($application, $item, $validated) {
+                $locked = EnterprisePartnerApplicationItem::where('id', $item->id)->lockForUpdate()->first();
+
+                $stock = Sim::where('status', SimStatus::UNASSIGNED)
+                    ->where('category', $locked->sim_category)
+                    ->where('provider', $locked->provider)
+                    ->count();
+
+                if ($stock < $validated['quantity']) {
+                    throw new \RuntimeException("Only {$stock} {$locked->sim_category} (" . strtoupper($locked->provider) . ") SIM(s) are currently in stock.");
+                }
+
+                $locked->update([
+                    'quantity' => $validated['quantity'],
+                    'line_total_snapshot' => $validated['quantity'] * $locked->unit_price_snapshot,
+                ]);
+
+                $this->recalculateTotal($application);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['quantity' => $e->getMessage()])->withInput();
+        }
+
+        return redirect()->route('enterprise-partner.info')->with('success', 'Order updated.');
+    }
+
+    /** Remove a line item from the cart entirely. */
+    public function removeItem(EnterprisePartnerApplicationItem $item)
+    {
+        $user = $this->authorizeBusiness();
+        $application = EnterprisePartnerApplication::where('user_id', $user->id)->firstOrFail();
+
+        if ($item->application_id !== $application->id) {
+            abort(403);
+        }
+
+        $this->assertCartOpen($application);
+
+        DB::transaction(function () use ($application, $item) {
+            $item->delete();
+            $this->recalculateTotal($application);
+        });
+
+        return redirect()->route('enterprise-partner.info')->with('success', 'Removed from your order.');
+    }
+
+    /**
+     * The cart is locked the moment a payment account exists for it — the
+     * PalmPay virtual account already has a fixed expected_amount baked in,
+     * so changing items after that would desync the two. One source of
+     * truth shared by every cart-mutation action and generateAccount()
+     * itself; each caller decides how to respond (a raw 403 for the
+     * mutation routes — normally unreachable since their forms are hidden
+     * once the cart is locked — vs. a friendly redirect+flash for
+     * generateAccount(), which is a normal path to land on after payment
+     * already exists, e.g. via browser back).
+     */
+    private function cartIsLocked(EnterprisePartnerApplication $application): bool
+    {
+        return EnterprisePartnerPayment::where('application_id', $application->id)->exists();
+    }
+
+    private function assertCartOpen(EnterprisePartnerApplication $application): void
+    {
+        if ($this->cartIsLocked($application)) {
+            abort(403, 'Your order is already locked in for payment and can no longer be changed.');
+        }
+    }
+
+    private function recalculateTotal(EnterprisePartnerApplication $application): void
+    {
+        $application->update([
+            'total_amount_snapshot' => $application->items()->sum('line_total_snapshot'),
+        ]);
     }
 
     /**
@@ -166,10 +348,18 @@ class EnterprisePartnerController extends Controller
     {
         $user = $this->authorizeBusiness();
 
-        $application = EnterprisePartnerApplication::where('user_id', $user->id)->first();
+        $application = EnterprisePartnerApplication::with('items')->where('user_id', $user->id)->first();
         $payment = $application
             ? EnterprisePartnerPayment::where('application_id', $application->id)->latest()->first()
             : null;
+
+        // No point showing a payment screen for an order that isn't
+        // eligible yet — send them back to keep building it. Once a
+        // payment already exists the order is locked in regardless, so
+        // this only ever applies before checkout has started.
+        if (!$payment && (!$application || $application->items->sum('quantity') < self::ELIGIBILITY_QUANTITY)) {
+            return redirect()->route('enterprise-partner.info')->with('warning', 'Add at least ' . self::ELIGIBILITY_QUANTITY . ' SIMs to your order before proceeding to payment.');
+        }
 
         return view('enterprise-partner.generate-account', compact('user', 'application', 'payment'));
     }
@@ -178,13 +368,19 @@ class EnterprisePartnerController extends Controller
     {
         $user = $this->authorizeBusiness();
 
-        $application = EnterprisePartnerApplication::where('user_id', $user->id)->first();
+        $application = EnterprisePartnerApplication::with('items')->where('user_id', $user->id)->first();
         if (!$application) {
             abort(404);
         }
 
-        if (EnterprisePartnerPayment::where('application_id', $application->id)->exists()) {
+        if ($this->cartIsLocked($application)) {
             return redirect()->route('enterprise-partner.generate-account')->with('error', 'A payment account has already been generated.');
+        }
+
+        // Never trust the client's disabled "Proceed to Payment" button —
+        // re-verify the same eligibility total the cart page itself enforced.
+        if ($application->items->sum('quantity') < self::ELIGIBILITY_QUANTITY) {
+            return redirect()->route('enterprise-partner.info')->with('error', 'Add at least ' . self::ELIGIBILITY_QUANTITY . ' SIMs to your order before proceeding to payment.');
         }
 
         $validated = $request->validate([
@@ -241,23 +437,52 @@ class EnterprisePartnerController extends Controller
     }
 
     /**
-     * The eligibility purchase is always priced off the MTN POS SIM
-     * category specifically (per the confirmed product decision — the only
-     * SIM type that counts toward the 100-unit eligibility purchase), using
-     * whatever role-priced rate is configured for 'business' — resolved the
-     * same way both before and after the account exists, so the price
-     * quoted on the registration page always matches what's actually
-     * charged (the target role is always 'business', known upfront).
+     * Every active SIM category × network combo, each flagged available/
+     * unavailable based on whether ANY UNASSIGNED SIMs exist for it — the
+     * 100-unit eligibility minimum is a total across the whole cart (see
+     * class docblock), not a per-combo minimum, so a combo with even 1 in
+     * stock is a legitimate line item to add. Only the boolean is exposed
+     * to the client, not the exact count — the cart shows "available" or
+     * "not available," never a real-time inventory number.
+     * addItem()/updateItemQuantity() re-run the live stock count
+     * server-side against the actual requested quantity before ever
+     * writing a row, so the client's disabled state can never be bypassed.
      */
-    private function resolveEligibility(): array
+    private function resolveAvailabilityMatrix(): array
     {
         $service = Service::where('name', 'simcard')->first();
-        $field = $service
-            ? ServiceField::where('service_id', $service->id)->where('field_name', 'POS SIM')->first()
+        $fields = $service ? ServiceField::where('service_id', $service->id)->active()->get() : collect();
+
+        $matrix = [];
+        foreach ($fields as $field) {
+            $providers = [];
+            foreach (self::PROVIDERS as $provider) {
+                $stock = Sim::where('status', SimStatus::UNASSIGNED)
+                    ->where('category', $field->field_name)
+                    ->where('provider', $provider)
+                    ->count();
+
+                $providers[$provider] = [
+                    'available' => $stock > 0,
+                ];
+            }
+
+            $matrix[$field->field_name] = [
+                'unit_price' => $field->getPriceForUserType('business'),
+                'providers' => $providers,
+            ];
+        }
+
+        return $matrix;
+    }
+
+    /** The active ServiceField for a chosen category, or null if it isn't a real/active SIM category. */
+    private function resolveActiveField(string $category): ?ServiceField
+    {
+        $service = Service::where('name', 'simcard')->first();
+
+        return $service
+            ? ServiceField::where('service_id', $service->id)->where('field_name', $category)->active()->first()
             : null;
-
-        $unitPrice = $field ? $field->getPriceForUserType('business') : 0.00;
-
-        return [$unitPrice, 100];
     }
 }

@@ -11,7 +11,8 @@
             </h1>
             <p class="text-sm text-slate-500 mt-1">
                 Share this link with a business that wants to run its own SIM distribution network. They'll register,
-                buy a minimum of 100 MTN POS SIMs to activate, and you'll earn a referral bonus once they do.
+                build an order mixing any SIM categories and networks in stock, buy a minimum of 100 in total to
+                activate, and you'll earn a referral bonus once they do.
             </p>
         </div>
 
@@ -30,8 +31,8 @@
         <div class="bg-amber-50/70 border border-amber-100 rounded-xl p-4 text-amber-800 flex items-start gap-3">
             <i data-lucide="info" class="w-5 h-5 text-amber-500 shrink-0 mt-0.5"></i>
             <p class="text-xs leading-relaxed">
-                Eligibility to become an Enterprise Partner requires purchasing a minimum of 100 MTN POS SIM cards.
-                Their dashboard stays locked until that payment clears.
+                Eligibility to become an Enterprise Partner requires purchasing a minimum of 100 SIM cards, mixing any
+                categories/networks currently in stock. Their dashboard stays locked until that payment clears.
             </p>
         </div>
     </div>

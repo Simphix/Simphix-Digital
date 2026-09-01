@@ -67,6 +67,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // route (see below), reached via the shareable ?ref= link this page hands out.
     Route::get('/enterprise-partner/invite', [\App\Http\Controllers\EnterprisePartnerController::class, 'inviteForm'])->name('enterprise-partner.invite');
     Route::get('/enterprise-partner/info', [\App\Http\Controllers\EnterprisePartnerController::class, 'infoPage'])->name('enterprise-partner.info');
+    Route::post('/enterprise-partner/cart/items', [\App\Http\Controllers\EnterprisePartnerController::class, 'addItem'])->name('enterprise-partner.cart.items.store');
+    Route::patch('/enterprise-partner/cart/items/{item}', [\App\Http\Controllers\EnterprisePartnerController::class, 'updateItemQuantity'])->name('enterprise-partner.cart.items.update');
+    Route::delete('/enterprise-partner/cart/items/{item}', [\App\Http\Controllers\EnterprisePartnerController::class, 'removeItem'])->name('enterprise-partner.cart.items.destroy');
     Route::get('/enterprise-partner/generate-account', [\App\Http\Controllers\EnterprisePartnerController::class, 'generateAccountPage'])->name('enterprise-partner.generate-account');
     Route::post('/enterprise-partner/generate-account', [\App\Http\Controllers\EnterprisePartnerController::class, 'generateAccount'])->name('enterprise-partner.generate-account.create');
 
@@ -335,6 +338,7 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\SimPlanController::class, 'index'])->name('index');
         Route::post('/store', [\App\Http\Controllers\Admin\SimPlanController::class, 'store'])->name('store');
         Route::post('/assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'assign'])->name('assign');
+        Route::post('/direct-assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'directAssign'])->name('direct-assign');
         Route::post('/unassign/{sim}', [\App\Http\Controllers\Admin\SimPlanController::class, 'unassign'])->name('unassign');
         Route::post('/activate/{sim}', [\App\Http\Controllers\Admin\SimPlanController::class, 'activate'])->name('activate');
         Route::post('/requests/{simRequest}/approve', [\App\Http\Controllers\Admin\SimPlanController::class, 'approveRequest'])->name('requests.approve');

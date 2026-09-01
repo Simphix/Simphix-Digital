@@ -9,9 +9,8 @@
     <div class="mb-6 p-4 rounded-lg bg-primary/5 border border-primary/10 text-slate-700 text-sm flex gap-3 items-start">
         <i data-lucide="info" class="w-5 h-5 text-primary shrink-0 mt-0.5"></i>
         <span>
-            Eligibility requires purchasing <strong>{{ $quantity }} MTN POS SIM</strong> cards at
-            <strong>₦{{ number_format($unitPrice, 2) }}</strong> each &mdash; a total of
-            <strong>₦{{ number_format($totalAmount, 2) }}</strong>. You'll pay after registering.
+            After registering, you'll build your SIM order — mix any categories and networks that currently have
+            stock, in whatever quantities you like, as long as they add up to at least 100 SIMs. You'll pay once your order is ready.
         </span>
     </div>
 
