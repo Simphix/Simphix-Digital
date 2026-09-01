@@ -116,6 +116,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Profile PIN update requires verified email (financial action)
     Route::post('/profile/pin', [ProfileController::class, 'updatePin'])->name('profile.pin.update')->middleware('throttle:5,1');
     Route::post('/profile/withdrawal-account', [ProfileController::class, 'updateWithdrawalAccount'])->name('profile.withdrawal-account.update')->middleware('throttle:5,1');
+    Route::post('/profile/device-registration', [ProfileController::class, 'toggleDeviceRegistration'])->name('profile.device-registration.update')->middleware('throttle:5,1');
+    Route::delete('/profile/trusted-devices/{device}', [ProfileController::class, 'revokeTrustedDevice'])->name('profile.trusted-devices.revoke');
+    Route::post('/profile/phone/send-otp', [ProfileController::class, 'sendPhoneVerificationOtp'])->name('profile.phone.send-otp')->middleware('throttle:5,1');
+    Route::post('/profile/phone/verify-otp', [ProfileController::class, 'verifyPhoneOtp'])->name('profile.phone.verify-otp')->middleware('throttle:5,1');
 
     // Support Tickets Routes
     Route::get('/support', [\App\Http\Controllers\SupportController::class, 'index'])->name('support');

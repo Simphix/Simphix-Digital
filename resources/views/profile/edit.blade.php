@@ -365,6 +365,99 @@
                         </div>
                     </form>
                 </div>
+
+                <!-- Device Registration block -->
+                <div class="bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm space-y-6"
+                     x-data="{ showConfirm: false, pendingEnabled: {{ $user->device_registration_enabled ? 'true' : 'false' }} }">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800 font-display">New Device Sign-In Verification</h2>
+                            <p class="text-xs text-slate-400 mt-1">Require a one-time code when signing in from a device we haven't seen before, sent to your phone, email, or an already-trusted device.</p>
+                        </div>
+                        <div class="shrink-0 flex items-center gap-3">
+                            @if ($user->device_registration_enabled)
+                                <span class="px-3 py-1 text-xs font-extrabold bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full uppercase tracking-wider flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                    Enabled
+                                </span>
+                            @else
+                                <span class="px-3 py-1 text-xs font-extrabold bg-slate-50 text-slate-500 border border-slate-200 rounded-full uppercase tracking-wider flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
+                                    Disabled
+                                </span>
+                            @endif
+                            <x-toggle-switch :checked="$user->device_registration_enabled"
+                                              x-on:click.prevent="pendingEnabled = !pendingEnabled; showConfirm = true" />
+                        </div>
+                    </div>
+
+                    @if ($errors->deviceRegistration->any())
+                        <div class="p-3 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl">
+                            <ul class="list-disc pl-4 space-y-0.5">
+                                @foreach ($errors->deviceRegistration->all() as $error)
+                                    <li class="text-xs font-semibold">{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <div x-show="showConfirm" x-cloak class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <form method="POST" action="{{ route('profile.device-registration.update') }}" class="space-y-3">
+                            @csrf
+                            <input type="hidden" name="enabled" x-bind:value="pendingEnabled ? 1 : 0">
+                            <p class="text-xs text-slate-500"
+                               x-text="pendingEnabled ? 'Confirm your password to require a code on new devices from now on.' : 'Confirm your password to stop requiring a code on new devices.'"></p>
+                            <x-text-input type="password" name="password" required placeholder="Confirm your password" class="w-full" />
+                            <div class="flex gap-2">
+                                <x-primary-button type="submit">
+                                    <span x-text="pendingEnabled ? 'Enable' : 'Disable'"></span>
+                                </x-primary-button>
+                                <button type="button" @click="showConfirm = false" class="text-xs font-semibold text-slate-500 px-3">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    @if ($user->phone && !$user->phone_verified_at)
+                        <div x-data="{ codeSent: false }" class="p-4 bg-amber-50/60 border border-amber-100 rounded-xl space-y-3">
+                            <p class="text-xs text-amber-700">Verify your phone number to unlock SMS as a sign-in verification channel.</p>
+                            <form method="POST" action="{{ route('profile.phone.send-otp') }}" x-show="!codeSent" @submit="codeSent = true">
+                                @csrf
+                                <button type="submit" class="text-xs font-bold text-amber-700 hover:text-amber-800 px-3 py-1.5 rounded-lg border border-amber-200 hover:bg-amber-100 transition">
+                                    Send Verification Code
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ route('profile.phone.verify-otp') }}" x-show="codeSent" x-cloak class="space-y-2">
+                                @csrf
+                                @if ($errors->phoneVerification->any())
+                                    <p class="text-xs font-semibold text-rose-600">{{ $errors->phoneVerification->first('code') }}</p>
+                                @endif
+                                <x-text-input type="text" name="code" maxlength="6" placeholder="Enter the 6-digit code" class="w-full" />
+                                <x-primary-button type="submit">Verify Phone</x-primary-button>
+                            </form>
+                        </div>
+                    @endif
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Trusted Devices</h3>
+                        @forelse ($trustedDevices as $device)
+                            <div class="flex items-center justify-between gap-3 p-3 bg-slate-50/60 border border-slate-100 rounded-xl">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold text-slate-700 truncate">{{ $device->label }}</p>
+                                    <p class="text-[11px] text-slate-400">Last used {{ $device->last_used_at?->diffForHumans() ?? 'never' }} @if ($device->last_used_ip) &middot; {{ $device->last_used_ip }} @endif</p>
+                                </div>
+                                <form method="POST" action="{{ route('profile.trusted-devices.revoke', $device) }}" class="shrink-0">
+                                    @csrf
+                                    @method('delete')
+                                    <button type="submit" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 px-2.5 py-1 rounded-lg border border-rose-100 hover:bg-rose-50 transition">
+                                        Revoke
+                                    </button>
+                                </form>
+                            </div>
+                        @empty
+                            <p class="text-xs text-slate-400 italic">No trusted devices yet — the next device you verify from will appear here.</p>
+                        @endforelse
+                    </div>
+                </div>
             </div>
 
             <!-- TAB: WITHDRAWAL ACCOUNT -->

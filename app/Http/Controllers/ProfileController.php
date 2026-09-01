@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Bank;
+use App\Models\TrustedDevice;
 use App\Models\WithdrawalAccount;
 use App\Services\PalmPayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
@@ -24,6 +26,10 @@ class ProfileController extends Controller
             'user' => $request->user(),
             'banks' => Bank::where('is_active', true)->orderBy('bank_name')->get(),
             'withdrawalAccount' => $request->user()->withdrawalAccount,
+            'trustedDevices' => $request->user()->trustedDevices()
+                ->whereNull('revoked_at')
+                ->orderByDesc('last_used_at')
+                ->get(),
         ]);
     }
 
@@ -100,6 +106,108 @@ class ProfileController extends Controller
         ]);
 
         return Redirect::route('profile.edit')->with('success', 'Transaction PIN updated successfully. You can now use it to authorise purchases.');
+    }
+
+    /**
+     * Enable/disable the new-device OTP verification feature for this
+     * account. Password-reconfirmed, same as updatePin() — this is a
+     * security-relevant toggle, not an ordinary preference.
+     */
+    public function toggleDeviceRegistration(Request $request): RedirectResponse
+    {
+        $request->validateWithBag('deviceRegistration', [
+            'password' => ['required', 'string'],
+            'enabled'  => ['required', 'boolean'],
+        ]);
+
+        $user = \App\Models\User::find(Auth::id());
+
+        if (!Hash::check($request->password, $user->getAuthPassword())) {
+            return Redirect::route('profile.edit')
+                ->withErrors(['password' => 'The password you entered is incorrect.'], 'deviceRegistration')
+                ->withInput();
+        }
+
+        $user->device_registration_enabled = $request->boolean('enabled');
+        $user->save();
+
+        Log::info('Device registration setting changed', [
+            'user_id' => $user->id,
+            'enabled' => $user->device_registration_enabled,
+            'ip'      => $request->ip(),
+            'ua'      => $request->userAgent(),
+        ]);
+
+        $message = $user->device_registration_enabled
+            ? 'New-device sign-in verification is now enabled.'
+            : 'New-device sign-in verification is now disabled.';
+
+        return Redirect::route('profile.edit')->with('success', $message);
+    }
+
+    /**
+     * Revoke a single trusted device — a pure downgrade action (the user is
+     * only making their own account harder, not easier, to access), so no
+     * password reconfirmation is required, same as unsubscribing from push.
+     */
+    public function revokeTrustedDevice(Request $request, TrustedDevice $device): RedirectResponse
+    {
+        if ($device->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $device->revoke();
+
+        Log::info('Trusted device revoked', [
+            'user_id' => Auth::id(),
+            'device_id' => $device->id,
+            'ip' => $request->ip(),
+        ]);
+
+        return Redirect::route('profile.edit')->with('success', 'That device will need to verify again next time it signs in.');
+    }
+
+    /**
+     * Send a one-time code to the phone number on file, to confirm the user
+     * actually controls it before SMS can be offered as a device-OTP
+     * delivery channel (phone is otherwise just unverified free text set
+     * during KYC).
+     */
+    public function sendPhoneVerificationOtp(Request $request): RedirectResponse
+    {
+        $user = \App\Models\User::find(Auth::id());
+
+        if (!$user->phone) {
+            return Redirect::route('profile.edit')->with('error', 'Add a phone number to your profile first.');
+        }
+
+        $code = $user->generatePhoneVerificationOtp();
+        $sent = app(\App\Services\TermiiSmsApi::class)->sendSms(
+            $user->phone,
+            "Your SmartSIM phone verification code is {$code}. Do not share this."
+        );
+
+        if (!$sent['success']) {
+            return Redirect::route('profile.edit')->with('error', 'Could not send the verification code right now. Please try again shortly.');
+        }
+
+        return Redirect::route('profile.edit')->with('success', 'A verification code has been sent to your phone.');
+    }
+
+    public function verifyPhoneOtp(Request $request): RedirectResponse
+    {
+        $request->validateWithBag('phoneVerification', [
+            'code' => ['required', 'string', 'size:6'],
+        ]);
+
+        $user = \App\Models\User::find(Auth::id());
+
+        if (!$user->verifyPhoneVerificationOtp($request->code)) {
+            return Redirect::route('profile.edit')
+                ->withErrors(['code' => 'That code is incorrect or has expired.'], 'phoneVerification');
+        }
+
+        return Redirect::route('profile.edit')->with('success', 'Phone number verified — SMS is now available as a sign-in verification channel.');
     }
 
     /**
