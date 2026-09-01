@@ -197,7 +197,7 @@ class SimAssignmentService
      * failure there is caught and logged instead of being allowed to
      * surface as a confusing error on an activation that actually succeeded.
      */
-    public function activate(Sim $sim, User $actor): void
+    public function activate(Sim $sim, User $actor, bool $awardCommission = true, ?string $note = null): void
     {
         if ($sim->status === SimStatus::ACTIVATED) {
             throw new \RuntimeException('This SIM is already activated.');
@@ -207,14 +207,14 @@ class SimAssignmentService
             throw new \RuntimeException('Activation is currently disabled for this SIM category.');
         }
 
-        DB::transaction(function () use ($sim, $actor) {
+        DB::transaction(function () use ($sim, $actor, $awardCommission, $note) {
             $from = $sim->status;
             $sim->update(['status' => SimStatus::ACTIVATED]);
-            $this->logHistory($sim, $from, SimStatus::ACTIVATED, $actor, 'SIM activated.');
+            $this->logHistory($sim, $from, SimStatus::ACTIVATED, $actor, $note ?? 'SIM activated.');
 
-            DB::afterCommit(function () use ($sim, $actor) {
+            DB::afterCommit(function () use ($sim, $actor, $awardCommission) {
                 try {
-                    event(new SimActivated($sim->fresh(), $actor));
+                    event(new SimActivated($sim->fresh(), $actor, $awardCommission));
                 } catch (\Throwable $e) {
                     Log::error('SIM activated successfully but a post-activation side effect (commission/welfare payout) failed.', [
                         'sim_id' => $sim->id,

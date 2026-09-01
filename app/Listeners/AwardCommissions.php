@@ -29,6 +29,10 @@ class AwardCommissions
 {
     public function handle(SimActivated $event): void
     {
+        if (!$event->awardCommission) {
+            return;
+        }
+
         $sim = $event->sim;
 
         $service = Service::where('name', 'simcard')->first();

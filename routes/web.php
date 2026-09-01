@@ -335,6 +335,7 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\SimPlanController::class, 'index'])->name('index');
         Route::post('/store', [\App\Http\Controllers\Admin\SimPlanController::class, 'store'])->name('store');
         Route::post('/assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'assign'])->name('assign');
+        Route::post('/direct-assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'directAssign'])->name('direct-assign');
         Route::post('/unassign/{sim}', [\App\Http\Controllers\Admin\SimPlanController::class, 'unassign'])->name('unassign');
         Route::post('/activate/{sim}', [\App\Http\Controllers\Admin\SimPlanController::class, 'activate'])->name('activate');
         Route::post('/requests/{simRequest}/approve', [\App\Http\Controllers\Admin\SimPlanController::class, 'approveRequest'])->name('requests.approve');
