@@ -6,18 +6,50 @@
         </p>
     </div>
 
-    <div class="mb-6 p-4 rounded-lg bg-primary/5 border border-primary/10 text-slate-700 text-sm flex gap-3 items-start">
-        <i data-lucide="info" class="w-5 h-5 text-primary shrink-0 mt-0.5"></i>
-        <span>
-            Eligibility requires purchasing <strong>{{ $quantity }} MTN POS SIM</strong> cards at
-            <strong>₦{{ number_format($unitPrice, 2) }}</strong> each &mdash; a total of
-            <strong>₦{{ number_format($totalAmount, 2) }}</strong>. You'll pay after registering.
-        </span>
-    </div>
-
-    <form method="POST" action="{{ route('enterprise-partner.register.store') }}" class="space-y-5">
+    <form method="POST" action="{{ route('enterprise-partner.register.store') }}" class="space-y-5"
+          x-data="{
+            matrix: @json($matrix),
+            category: '{{ old('sim_category', array_key_first($matrix) ?? '') }}',
+            provider: '{{ old('provider', 'mtn') }}',
+            get unitPrice() { return this.matrix[this.category]?.unit_price ?? 0; },
+            get totalAmount() { return this.unitPrice * {{ $quantity }}; },
+            isAvailable(cat, prov) { return this.matrix[cat]?.providers?.[prov]?.available ?? false; },
+          }">
         @csrf
         <input type="hidden" name="ref" value="{{ old('ref', request('ref')) }}">
+
+        <div class="p-4 rounded-lg bg-primary/5 border border-primary/10 text-slate-700 text-sm flex gap-3 items-start">
+            <i data-lucide="info" class="w-5 h-5 text-primary shrink-0 mt-0.5"></i>
+            <span>
+                Eligibility requires purchasing <strong>{{ $quantity }}</strong> SIM cards, in any category and network
+                that currently has enough stock, at <strong x-text="'₦' + unitPrice.toLocaleString(undefined, {minimumFractionDigits: 2})"></strong>
+                each &mdash; a total of <strong x-text="'₦' + totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2})"></strong>.
+                You'll pay after registering.
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <x-input-label for="sim_category" value="SIM Category" />
+                <x-select-input id="sim_category" name="sim_category" x-model="category" class="w-full">
+                    <template x-for="(data, cat) in matrix" :key="cat">
+                        <option :value="cat" x-text="cat"></option>
+                    </template>
+                </x-select-input>
+                <x-input-error :messages="$errors->get('sim_category')" class="mt-1.5" />
+            </div>
+            <div>
+                <x-input-label for="provider" value="Network" />
+                <x-select-input id="provider" name="provider" x-model="provider" class="w-full">
+                    @foreach ($providers as $prov)
+                        <option value="{{ $prov }}" :disabled="!isAvailable(category, '{{ $prov }}')">
+                            {{ strtoupper($prov) }} <template x-if="!isAvailable(category, '{{ $prov }}')"> (unavailable)</template>
+                        </option>
+                    @endforeach
+                </x-select-input>
+                <x-input-error :messages="$errors->get('provider')" class="mt-1.5" />
+            </div>
+        </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

@@ -50,7 +50,7 @@
             <ol class="text-xs text-slate-500 space-y-2 list-decimal list-inside">
                 <li>Generate a dedicated payment account for your eligibility purchase.</li>
                 <li>Transfer the exact amount shown above.</li>
-                <li>Once confirmed, your 100 MTN POS SIMs are credited to your inventory automatically and your dashboard unlocks.</li>
+                <li>Once confirmed, your {{ $application->quantity ?? 100 }} {{ $application->sim_category ?? '' }} ({{ strtoupper($application->provider ?? '') }}) SIMs are credited to your inventory automatically and your dashboard unlocks.</li>
             </ol>
         </div>
 

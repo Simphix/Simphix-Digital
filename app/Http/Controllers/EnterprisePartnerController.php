@@ -6,9 +6,11 @@ use App\Models\EnterprisePartnerApplication;
 use App\Models\EnterprisePartnerPayment;
 use App\Models\Service;
 use App\Models\ServiceField;
+use App\Models\Sim;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Repositories\VirtualAccountRepository;
+use App\Support\SimStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +21,10 @@ use Illuminate\Validation\Rules;
 /**
  * The Enterprise Partner funnel: an existing Regional Manager / Coordinator
  * / Partner shares a referral link, the invitee fills a dedicated
- * registration form (eligibility = buying a minimum 100 MTN POS SIMs),
- * lands on an info page explaining what's next, then (PR9) generates a
+ * registration form (eligibility = buying a minimum of 100 SIMs, in any
+ * category/network that currently has enough stock to fulfill it — see
+ * resolveAvailabilityMatrix()), lands on an info page explaining what's
+ * next, then (PR9) generates a
  * virtual account to pay for the SIMs. Until payment clears (PR10), the new
  * account is locked out of the rest of the app by EnsureEnterprisePartnerPaid.
  */
@@ -28,6 +32,12 @@ class EnterprisePartnerController extends Controller
 {
     /** Roles allowed to invite a new Enterprise Partner. */
     private const INVITER_ROLES = ['regional_manager', 'coordinator', 'partner'];
+
+    /** Networks a SIM can be requested on — no dedicated provider table exists in this schema. */
+    private const PROVIDERS = ['mtn', 'airtel', 'glo', '9mobile'];
+
+    /** Every eligibility purchase is a fixed 100-unit minimum, regardless of category/network chosen. */
+    private const ELIGIBILITY_QUANTITY = 100;
 
     /**
      * Shareable registration link for an eligible upline, keyed off their
@@ -53,13 +63,11 @@ class EnterprisePartnerController extends Controller
             abort(404);
         }
 
-        [$unitPrice, $quantity] = $this->resolveEligibility();
-
         return view('enterprise-partner.register', [
             'inviter' => $inviter,
-            'unitPrice' => $unitPrice,
-            'quantity' => $quantity,
-            'totalAmount' => $unitPrice * $quantity,
+            'matrix' => $this->resolveAvailabilityMatrix(),
+            'providers' => self::PROVIDERS,
+            'quantity' => self::ELIGIBILITY_QUANTITY,
         ]);
     }
 
@@ -83,9 +91,31 @@ class EnterprisePartnerController extends Controller
             'business_name' => ['required', 'string', 'max:255'],
             'business_type' => ['required', 'string', 'in:sole_proprietor,llc,partnership'],
             'cac_number' => ['required', 'string', 'max:50'],
+            'sim_category' => ['required', 'string'],
+            'provider' => ['required', 'string', 'in:' . implode(',', self::PROVIDERS)],
         ]);
 
-        $ep = DB::transaction(function () use ($validated, $inviter) {
+        // Never trust the client's disabled options — re-run the exact same
+        // availability check the registration page itself was rendered
+        // with, before creating any record.
+        $field = $this->resolveActiveField($validated['sim_category']);
+        if (!$field) {
+            return back()->withErrors(['sim_category' => 'That SIM category is not available.'])->withInput();
+        }
+
+        $stock = Sim::where('status', SimStatus::UNASSIGNED)
+            ->where('category', $validated['sim_category'])
+            ->where('provider', $validated['provider'])
+            ->count();
+
+        if ($stock < self::ELIGIBILITY_QUANTITY) {
+            return back()->withErrors(['sim_category' => 'That category/network combination is currently unavailable. Please choose another.'])->withInput();
+        }
+
+        $unitPrice = $field->getPriceForUserType('business');
+        $quantity = self::ELIGIBILITY_QUANTITY;
+
+        $ep = DB::transaction(function () use ($validated, $inviter, $unitPrice, $quantity) {
             $ep = User::create([
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
@@ -126,12 +156,10 @@ class EnterprisePartnerController extends Controller
                 'last_activity' => now(),
             ]);
 
-            [$unitPrice, $quantity] = $this->resolveEligibility();
-
             EnterprisePartnerApplication::create([
                 'user_id' => $ep->id,
-                'sim_category' => 'POS SIM',
-                'provider' => 'mtn',
+                'sim_category' => $validated['sim_category'],
+                'provider' => $validated['provider'],
                 'quantity' => $quantity,
                 'unit_price_snapshot' => $unitPrice,
                 'total_amount_snapshot' => $unitPrice * $quantity,
@@ -241,23 +269,49 @@ class EnterprisePartnerController extends Controller
     }
 
     /**
-     * The eligibility purchase is always priced off the MTN POS SIM
-     * category specifically (per the confirmed product decision — the only
-     * SIM type that counts toward the 100-unit eligibility purchase), using
-     * whatever role-priced rate is configured for 'business' — resolved the
-     * same way both before and after the account exists, so the price
-     * quoted on the registration page always matches what's actually
-     * charged (the target role is always 'business', known upfront).
+     * Every active SIM category × network combo, each flagged available/
+     * unavailable based on whether at least ELIGIBILITY_QUANTITY UNASSIGNED
+     * SIMs exist for it — the registration page disables unavailable
+     * combos, and register() re-runs this exact same check server-side
+     * before ever creating a record, so the client's disabled state can
+     * never be bypassed.
      */
-    private function resolveEligibility(): array
+    private function resolveAvailabilityMatrix(): array
     {
         $service = Service::where('name', 'simcard')->first();
-        $field = $service
-            ? ServiceField::where('service_id', $service->id)->where('field_name', 'POS SIM')->first()
+        $fields = $service ? ServiceField::where('service_id', $service->id)->active()->get() : collect();
+
+        $matrix = [];
+        foreach ($fields as $field) {
+            $providers = [];
+            foreach (self::PROVIDERS as $provider) {
+                $stock = Sim::where('status', SimStatus::UNASSIGNED)
+                    ->where('category', $field->field_name)
+                    ->where('provider', $provider)
+                    ->count();
+
+                $providers[$provider] = [
+                    'available' => $stock >= self::ELIGIBILITY_QUANTITY,
+                    'stock' => $stock,
+                ];
+            }
+
+            $matrix[$field->field_name] = [
+                'unit_price' => $field->getPriceForUserType('business'),
+                'providers' => $providers,
+            ];
+        }
+
+        return $matrix;
+    }
+
+    /** The active ServiceField for a chosen category, or null if it isn't a real/active SIM category. */
+    private function resolveActiveField(string $category): ?ServiceField
+    {
+        $service = Service::where('name', 'simcard')->first();
+
+        return $service
+            ? ServiceField::where('service_id', $service->id)->where('field_name', $category)->active()->first()
             : null;
-
-        $unitPrice = $field ? $field->getPriceForUserType('business') : 0.00;
-
-        return [$unitPrice, 100];
     }
 }
