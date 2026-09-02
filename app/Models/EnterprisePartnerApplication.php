@@ -13,11 +13,14 @@ class EnterprisePartnerApplication extends Model
         'total_amount_snapshot',
         'status',
         'paid_at',
+        'fulfilled_at',
+        'fulfilled_by',
     ];
 
     protected $casts = [
         'total_amount_snapshot' => 'decimal:2',
         'paid_at' => 'datetime',
+        'fulfilled_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -33,5 +36,10 @@ class EnterprisePartnerApplication extends Model
     public function items(): HasMany
     {
         return $this->hasMany(EnterprisePartnerApplicationItem::class, 'application_id');
+    }
+
+    public function fulfilledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'fulfilled_by');
     }
 }

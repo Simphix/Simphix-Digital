@@ -94,7 +94,7 @@ class AgentUpgradeController extends Controller
      * Deliberately a plain Transaction+Report, not a CommissionEarning —
      * that model is tied to per-SIM-activation semantics and doesn't fit a
      * one-time upgrade bonus with no associated SIM. Mirrors
-     * EnterprisePartnerActivationService::creditReferralBonus().
+     * EnterprisePartnerFulfillmentService::creditReferralBonus().
      */
     private function creditReferrerCommission(User $agent, AgentUpgradeSettings $settings): void
     {

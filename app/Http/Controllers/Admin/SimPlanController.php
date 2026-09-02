@@ -256,16 +256,15 @@ class SimPlanController extends Controller
      * commission on it. The platform welfare wallet credit and the silent
      * SIM activation data bonus still fire — neither pays a third party.
      *
-     * The server auto-picks the first available UNASSIGNED SIM for the
-     * chosen category/provider; the admin never sees/selects a specific
-     * number, matching the "gift"/direct-sale nature of this action.
+     * The admin types the exact SIM number to assign — the system verifies
+     * it exists and is UNASSIGNED before activating it, so the admin always
+     * knows precisely which physical SIM the personal user receives.
      */
     public function directAssign(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'user_id'  => 'required|exists:users,id',
-            'category' => 'required|string',
-            'provider' => 'required|string',
+            'user_id' => 'required|exists:users,id',
+            'number'  => 'required|string',
         ]);
 
         $target = User::find($validated['user_id']);
@@ -277,14 +276,14 @@ class SimPlanController extends Controller
 
         try {
             $sim = DB::transaction(function () use ($validated, $target, $actor) {
-                $sim = Sim::where('status', SimStatus::UNASSIGNED)
-                    ->where('category', $validated['category'])
-                    ->where('provider', $validated['provider'])
-                    ->lockForUpdate()
-                    ->first();
+                $sim = Sim::where('number', $validated['number'])->lockForUpdate()->first();
 
                 if (!$sim) {
-                    throw new \RuntimeException("No available {$validated['category']} ({$validated['provider']}) SIM in stock.");
+                    throw new \RuntimeException("No SIM found with number {$validated['number']}.");
+                }
+
+                if ($sim->status !== SimStatus::UNASSIGNED) {
+                    throw new \RuntimeException("SIM {$validated['number']} is not available (current status: {$sim->status}).");
                 }
 
                 $simService = \App\Models\Service::where('name', 'simcard')->first();
