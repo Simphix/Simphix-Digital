@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Region;
+use App\Models\Report;
 use App\Models\SenatorialDistrict;
 use App\Models\Sim;
 use App\Models\SimHistory;
@@ -9,6 +10,22 @@ use App\Models\User;
 use App\Support\SimStatus;
 
 uses(\Illuminate\Foundation\Testing\DatabaseTransactions::class);
+
+function makeActivationBonusReport(array $overrides = []): Report
+{
+    return Report::create(array_merge([
+        'user_id' => User::factory()->create(['role' => 'personal'])->id,
+        'phone_number' => '0805' . fake()->unique()->numerify('#######'),
+        'network' => 'mtn',
+        'ref' => 'ABD-' . fake()->unique()->numerify('##########'),
+        'amount' => 0.00,
+        'status' => 'completed',
+        'type' => 'activation_bonus_data',
+        'description' => 'Activation bonus: 1GB SME silently topped up',
+        'old_balance' => 0.00,
+        'new_balance' => 0.00,
+    ], $overrides));
+}
 
 function simsOpsAdmin(): User
 {
@@ -158,4 +175,94 @@ test('category and provider breakdown counts sum to the total activation count',
 
     expect($byCategory->sum('count'))->toBe($total);
     expect($byProvider->sum('count'))->toBe($total);
+});
+
+test('non-super-admin is forbidden from the activation bonus export route', function () {
+    $partner = User::factory()->create(['role' => 'partner']);
+    $this->actingAs($partner)->get(route('admin.sims-operations.activation-bonus.export'))->assertForbidden();
+});
+
+test('the activation bonus monitor lists activation_bonus_data reports and excludes other report types', function () {
+    $bonus = makeActivationBonusReport();
+    $other = Report::create([
+        'user_id' => User::factory()->create()->id,
+        'phone_number' => '08050000000',
+        'ref' => 'OTHER-' . fake()->unique()->numerify('##########'),
+        'amount' => 100.00,
+        'status' => 'completed',
+        'type' => 'withdrawal',
+        'old_balance' => 0.00,
+        'new_balance' => 100.00,
+    ]);
+
+    $response = $this->actingAs(simsOpsAdmin())->get(route('admin.sims-operations.index'));
+    $response->assertOk();
+
+    $bonusReports = $response->viewData('bonusReports');
+    $ids = collect($bonusReports->items())->pluck('id');
+    expect($ids)->toContain($bonus->id);
+    expect($ids)->not->toContain($other->id);
+});
+
+test('filtering the activation bonus monitor by status returns only matching reports', function () {
+    $completed = makeActivationBonusReport(['status' => 'completed']);
+    $failed = makeActivationBonusReport(['status' => 'failed']);
+
+    $response = $this->actingAs(simsOpsAdmin())->get(route('admin.sims-operations.index', ['bonus_status' => 'failed']));
+    $response->assertOk();
+
+    $ids = collect($response->viewData('bonusReports')->items())->pluck('id');
+    expect($ids)->toContain($failed->id);
+    expect($ids)->not->toContain($completed->id);
+});
+
+test('filtering the activation bonus monitor by phone number matches partially', function () {
+    $target = makeActivationBonusReport(['phone_number' => '08051234567']);
+    $other = makeActivationBonusReport(['phone_number' => '08059999999']);
+
+    $response = $this->actingAs(simsOpsAdmin())->get(route('admin.sims-operations.index', ['bonus_number' => '1234567']));
+    $response->assertOk();
+
+    $ids = collect($response->viewData('bonusReports')->items())->pluck('id');
+    expect($ids)->toContain($target->id);
+    expect($ids)->not->toContain($other->id);
+});
+
+test('filtering the activation bonus monitor by date range excludes reports outside the range', function () {
+    $inRange = makeActivationBonusReport();
+    $outOfRange = makeActivationBonusReport();
+    Report::where('id', $outOfRange->id)->update(['created_at' => now()->subDays(30)]);
+
+    $response = $this->actingAs(simsOpsAdmin())->get(route('admin.sims-operations.index', [
+        'bonus_date_start' => now()->subDays(3)->format('Y-m-d'),
+        'bonus_date_end' => now()->format('Y-m-d'),
+    ]));
+    $response->assertOk();
+
+    $ids = collect($response->viewData('bonusReports')->items())->pluck('id');
+    expect($ids)->toContain($inRange->id);
+    expect($ids)->not->toContain($outOfRange->id);
+});
+
+test('the activation bonus csv export returns a header row plus exactly one row per filtered report', function () {
+    // Filter by this test's own unique phone number (not just status) so
+    // the assertion is exact regardless of any pre-existing dev-DB
+    // activation-bonus rows with the same status.
+    $failed = makeActivationBonusReport(['status' => 'failed', 'phone_number' => '08057654321', 'description' => 'Connection error: timeout']);
+    makeActivationBonusReport(['status' => 'completed', 'phone_number' => '08051112222']);
+
+    $response = $this->actingAs(simsOpsAdmin())->get(route('admin.sims-operations.activation-bonus.export', [
+        'bonus_status' => 'failed',
+        'bonus_number' => '08057654321',
+    ]));
+    $response->assertOk();
+
+    $lines = array_values(array_filter(explode("\n", $response->getContent())));
+    expect($lines[0])->toContain('Phone Number');
+    expect($lines[0])->toContain('Reason');
+
+    $dataLines = array_slice($lines, 1);
+    expect($dataLines)->toHaveCount(1);
+    expect($dataLines[0])->toContain('08057654321');
+    expect($dataLines[0])->toContain('Connection error: timeout');
 });

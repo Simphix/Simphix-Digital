@@ -139,21 +139,21 @@
 
             <!-- Card 3: Virtual Account Details -->
             <div class="col-12 col-md-4">
-                <div class="dash-card p-3.5 h-100 flex items-center gap-3" x-data="{ copied: false }">
+                <div class="dash-card p-3.5 h-100 flex items-center gap-3">
                     <div class="rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center w-10 h-10 shrink-0">
                         <i data-lucide="building-2" class="w-5 h-5"></i>
                     </div>
                     @if($virtualAccount)
                         <div class="min-w-0 flex-1">
                             <p class="text-xs text-slate-400 mb-0.5 truncate">{{ $virtualAccount->bank_name ?? ($virtualAccount->bankName ?? 'PalmPay') }} &middot; Instant Funding</p>
-                            <p class="text-lg font-bold font-display text-primary tracking-wide mb-0 truncate" x-ref="accNum">
+                            <p class="text-lg font-bold font-display text-primary tracking-wide mb-0 truncate">
                                 {{ $virtualAccount->account_number ?? ($virtualAccount->accountNo ?? 'N/A') }}
                             </p>
                         </div>
-                        <button @click="navigator.clipboard.writeText($refs.accNum.innerText.trim()); copied = true; setTimeout(() => copied = false, 2000)"
+                        <button onclick="copyToClipboard('{{ $virtualAccount->account_number ?? ($virtualAccount->accountNo ?? '') }}', 'Account number')"
                                 type="button"
                                 class="shrink-0 text-xs font-semibold text-primary hover:underline">
-                            <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+                            Copy
                         </button>
                     @else
                         <div class="min-w-0 flex-1">

@@ -1,31 +1,5 @@
 <x-app-layout>
-    <div class="space-y-8 max-w-7xl mx-auto" x-data="{ 
-        activeTab: 'overview',
-        toastShow: false,
-        toastMessage: '',
-        copy(text, label) {
-            navigator.clipboard.writeText(text);
-            this.toastMessage = label + ' copied to clipboard!';
-            this.toastShow = true;
-            setTimeout(() => this.toastShow = false, 2500);
-        }
-    }">
-        
-        <!-- Toast Notification -->
-        <div x-show="toastShow" 
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 translate-y-2 scale-95"
-             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-             x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-             class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-800"
-             x-cloak>
-            <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                <i data-lucide="check" class="w-4 h-4"></i>
-            </div>
-            <span class="text-xs font-semibold" x-text="toastMessage"></span>
-        </div>
+    <div class="space-y-8 max-w-7xl mx-auto" x-data="{ activeTab: 'overview' }">
 
         <!-- Back Link & Title -->
         <div class="space-y-4">
@@ -258,7 +232,7 @@
                                     <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</span>
                                     <span class="text-xs font-bold text-slate-700 truncate block">{{ $user->email }}</span>
                                 </div>
-                                <button @click="copy('{{ $user->email }}', 'Email Address')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
+                                <button @click="copyToClipboard('{{ $user->email }}', 'Email Address')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
                                     <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                 </button>
                             </div>
@@ -269,7 +243,7 @@
                                     <span class="text-xs font-bold text-slate-700">{{ $user->phone ?? 'N/A' }}</span>
                                 </div>
                                 @if ($user->phone)
-                                    <button @click="copy('{{ $user->phone }}', 'Phone Number')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
+                                    <button @click="copyToClipboard('{{ $user->phone }}', 'Phone Number')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
                                         <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                     </button>
                                 @endif
@@ -290,7 +264,7 @@
                                     <span class="text-xs font-bold text-slate-700 font-mono">{{ $user->referral_code ?? 'N/A' }}</span>
                                 </div>
                                 @if ($user->referral_code)
-                                    <button @click="copy('{{ $user->referral_code }}', 'Referral Code')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
+                                    <button @click="copyToClipboard('{{ $user->referral_code }}', 'Referral Code')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
                                         <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                     </button>
                                 @endif
@@ -315,7 +289,7 @@
                                     <span class="text-xs font-mono font-bold text-slate-700">{{ $user->bvn ?? 'Not Provided' }}</span>
                                 </div>
                                 @if ($user->bvn)
-                                    <button @click="copy('{{ $user->bvn }}', 'BVN')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
+                                    <button @click="copyToClipboard('{{ $user->bvn }}', 'BVN')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
                                         <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                     </button>
                                 @endif
@@ -327,7 +301,7 @@
                                     <span class="text-xs font-mono font-bold text-slate-700">{{ $user->nin ?? 'Not Provided' }}</span>
                                 </div>
                                 @if ($user->nin)
-                                    <button @click="copy('{{ $user->nin }}', 'NIN')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
+                                    <button @click="copyToClipboard('{{ $user->nin }}', 'NIN')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
                                         <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                     </button>
                                 @endif
@@ -393,7 +367,7 @@
                                     <span class="text-xs font-mono font-bold text-slate-700">{{ $user->cac_number ?? 'N/A' }}</span>
                                 </div>
                                 @if ($user->cac_number)
-                                    <button @click="copy('{{ $user->cac_number }}', 'CAC Number')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
+                                    <button @click="copyToClipboard('{{ $user->cac_number }}', 'CAC Number')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
                                         <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                     </button>
                                 @endif
@@ -426,7 +400,7 @@
                                     <span class="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider">
                                         {{ $user->wallet->wallet_number }}
                                     </span>
-                                    <button @click="copy('{{ $user->wallet->wallet_number }}', 'Wallet Account Number')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
+                                    <button @click="copyToClipboard('{{ $user->wallet->wallet_number }}', 'Wallet Account Number')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
                                         <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                     </button>
                                 </div>
@@ -616,7 +590,7 @@
                                             <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Account Number</span>
                                             <span class="text-sm font-mono font-bold text-slate-800 tracking-wider">{{ $acc->account_number }}</span>
                                         </div>
-                                        <button @click="copy('{{ $acc->account_number }}', 'Account Number')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
+                                        <button @click="copyToClipboard('{{ $acc->account_number }}', 'Account Number')" class="text-slate-400 hover:text-[#0056D2] p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors">
                                             <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                         </button>
                                     </div>
