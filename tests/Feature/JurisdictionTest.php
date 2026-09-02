@@ -162,7 +162,10 @@ test('changing a regional manager away from that role via updateUser clears the 
         'middle_name' => $rm->middle_name,
         'last_name' => $rm->last_name,
         'email' => $rm->email,
-        'phone' => $rm->phone,
+        // $rm->phone is Faker-generated in US format (APP_FAKER_LOCALE=en_US)
+        // and won't pass the app's Nigerian-phone validation rule — use a
+        // valid, unique local-format number for this resubmission instead.
+        'phone' => '08' . fake()->unique()->numerify('#########'),
         'status' => 'active',
         'role' => 'partner',
     ])->assertRedirect()->assertSessionDoesntHaveErrors();
@@ -180,7 +183,10 @@ test('resubmitting the same role via updateUser leaves the region assignment unt
         'middle_name' => $rm->middle_name,
         'last_name' => $rm->last_name,
         'email' => $rm->email,
-        'phone' => $rm->phone,
+        // $rm->phone is Faker-generated in US format (APP_FAKER_LOCALE=en_US)
+        // and won't pass the app's Nigerian-phone validation rule — use a
+        // valid, unique local-format number for this resubmission instead.
+        'phone' => '08' . fake()->unique()->numerify('#########'),
         'status' => 'active',
         'role' => 'regional_manager',
     ])->assertRedirect()->assertSessionDoesntHaveErrors();

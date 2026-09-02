@@ -50,11 +50,13 @@ class OnboardingController extends Controller
             abort(403, 'Your role cannot onboard a subordinate.');
         }
 
+        \App\Support\PhoneNumber::normalizeRequestInput($request);
+
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name'  => ['required', 'string', 'max:255'],
             'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-            'phone'      => ['nullable', 'string', 'max:20', 'unique:users,phone'],
+            'phone'      => ['nullable', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), 'unique:users,phone'],
         ]);
 
         DB::beginTransaction();

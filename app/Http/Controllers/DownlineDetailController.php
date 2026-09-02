@@ -69,11 +69,13 @@ class DownlineDetailController extends Controller
             return back()->with('error', "{$user->first_name} {$user->last_name} has already completed onboarding.");
         }
 
+        \App\Support\PhoneNumber::normalizeRequestInput($request);
+
         $validated = $request->validate([
             'first_name'  => ['required', 'string', 'max:255'],
             'last_name'   => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
-            'phone'       => ['required', 'string', 'max:20', 'unique:users,phone,' . $user->id],
+            'phone'       => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), 'unique:users,phone,' . $user->id],
             'state'       => ['required', 'string', 'max:255'],
             'lga'         => ['required', 'string', 'max:255'],
             'address'     => ['required', 'string', 'max:500'],
@@ -104,8 +106,10 @@ class DownlineDetailController extends Controller
             return back()->with('error', "{$user->first_name} {$user->last_name} already has a virtual account.");
         }
 
+        \App\Support\PhoneNumber::normalizeRequestInput($request);
+
         $validated = $request->validate([
-            'phone'         => 'required|string|max:20|unique:users,phone,' . $user->id,
+            'phone'         => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), 'unique:users,phone,' . $user->id],
             'identity_type' => 'required|in:bvn,nin',
             'bvn'           => 'required_if:identity_type,bvn|nullable|string|digits:11|unique:users,bvn,' . $user->id,
             'nin'           => 'required_if:identity_type,nin|nullable|string|digits:11|unique:users,nin,' . $user->id,

@@ -76,9 +76,11 @@ class WalletController extends Controller
         // Validate details — identity_type picks which of BVN/NIN is
         // required (NIN is a fallback path for users whose BVN fails
         // PalmPay's own verification; see VirtualAccountRepository).
+        \App\Support\PhoneNumber::normalizeRequestInput($request);
+
         $request->validate([
             'name'          => 'required|string|max:255',
-            'phone'         => 'required|string|max:20|unique:users,phone,' . $loginUserId,
+            'phone'         => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), 'unique:users,phone,' . $loginUserId],
             'identity_type' => 'required|in:bvn,nin',
             'bvn'           => 'required_if:identity_type,bvn|nullable|string|digits:11|unique:users,bvn,' . $loginUserId,
             'nin'           => 'required_if:identity_type,nin|nullable|string|digits:11|unique:users,nin,' . $loginUserId,
