@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Region;
+use App\Models\Report;
 use App\Models\SenatorialDistrict;
 use App\Models\Sim;
 use App\Models\SimHistory;
@@ -11,6 +12,7 @@ use App\Models\State;
 use App\Models\User;
 use App\Support\SimStatus;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -46,10 +48,14 @@ class SimsOperationsDashboardController extends Controller
             ->orderBy('first_name')
             ->get();
 
+        $bonusFilters = $this->resolveActivationBonusFilters($request);
+        $bonusReports = $this->activationBonusQuery($bonusFilters)->paginate(20, ['*'], 'bonus_page')->withQueryString();
+
         return view('admin.sims-operations.index', compact(
             'range', 'periodStart', 'periodEnd', 'filters',
             'totalActivations', 'byJurisdiction', 'trend', 'byCategory', 'byProvider', 'events',
-            'regions', 'states', 'districts', 'users'
+            'regions', 'states', 'districts', 'users',
+            'bonusFilters', 'bonusReports'
         ));
     }
 
@@ -80,6 +86,70 @@ class SimsOperationsDashboardController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="sim-activations-' . now()->format('Y-m-d') . '.csv"',
         ]);
+    }
+
+    /**
+     * Exports exactly what's currently filtered/displayed in the Activation
+     * Bonus tab — same filter params (bonus_date_start/bonus_date_end/
+     * bonus_number/bonus_status) as the index page, unpaginated.
+     */
+    public function exportActivationBonusCsv(Request $request): Response
+    {
+        $filters = $this->resolveActivationBonusFilters($request);
+        $rows = $this->activationBonusQuery($filters)->get();
+
+        $csv = "Date,Phone Number,Network,Status,Amount,Reason,Old Balance,New Balance,Ref,Owner,Resolved At\n";
+        foreach ($rows as $report) {
+            $csv .= implode(',', array_map(fn ($v) => '"' . str_replace('"', '""', (string) $v) . '"', [
+                $report->created_at->toDateTimeString(),
+                $report->phone_number,
+                $report->network,
+                $report->status,
+                number_format((float) $report->amount, 2),
+                $report->description,
+                number_format((float) $report->old_balance, 2),
+                number_format((float) $report->new_balance, 2),
+                $report->ref,
+                $report->user ? trim($report->user->first_name . ' ' . $report->user->last_name) : '',
+                $report->resolved_at?->toDateTimeString(),
+            ])) . "\n";
+        }
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="activation-bonus-operations-' . now()->format('Y-m-d') . '.csv"',
+        ]);
+    }
+
+    /**
+     * Filters for the Activation Bonus tab — deliberately distinct
+     * "bonus_*" query-param names so this section's own filter form never
+     * collides with the SIM-activation widgets' range/region_id/etc.
+     * params, even though both forms submit to the same index route.
+     */
+    private function resolveActivationBonusFilters(Request $request): array
+    {
+        return [
+            'date_start' => $request->filled('bonus_date_start') ? Carbon::parse($request->bonus_date_start)->startOfDay() : null,
+            'date_end' => $request->filled('bonus_date_end') ? Carbon::parse($request->bonus_date_end)->endOfDay() : null,
+            'number' => $request->filled('bonus_number') ? trim($request->bonus_number) : null,
+            'status' => $request->filled('bonus_status') ? $request->bonus_status : null,
+        ];
+    }
+
+    /**
+     * Report has no sim_id column — phone_number is the SIM-identifying
+     * column directly on the row, so filtering "by number" needs no join.
+     */
+    private function activationBonusQuery(array $filters): Builder
+    {
+        return Report::where('type', 'activation_bonus_data')
+            ->when($filters['date_start'], fn ($q) => $q->where('created_at', '>=', $filters['date_start']))
+            ->when($filters['date_end'], fn ($q) => $q->where('created_at', '<=', $filters['date_end']))
+            ->when($filters['number'], fn ($q) => $q->where('phone_number', 'like', '%' . $filters['number'] . '%'))
+            ->when($filters['status'], fn ($q) => $q->where('status', $filters['status']))
+            ->with('user')
+            ->latest();
     }
 
     private function resolveRange(Request $request): array

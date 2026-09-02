@@ -21,7 +21,7 @@
             <div class="flex flex-col sm:flex-row gap-2">
                 <input type="text" readonly value="{{ $inviteUrl }}" id="ep-invite-url"
                        class="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-700 font-mono">
-                <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('ep-invite-url').value)"
+                <button type="button" onclick="copyToClipboard(document.getElementById('ep-invite-url').value, 'Invite link')"
                         class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary text-white text-xs font-bold shadow-sm transition-all hover:bg-primary/90">
                     <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
                 </button>

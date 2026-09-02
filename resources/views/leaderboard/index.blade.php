@@ -44,16 +44,15 @@
                     </div>
                 </div>
 
-                <div x-data="{ copied: false }" class="flex flex-col sm:flex-row gap-2">
+                <div class="flex flex-col sm:flex-row gap-2">
                     <div class="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 truncate">
                         {{ $referralLink }}
                     </div>
                     <button type="button"
-                            @click="navigator.clipboard.writeText('{{ $referralLink }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                            onclick="copyToClipboard('{{ $referralLink }}', 'Referral link')"
                             class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-slate-800 text-white font-semibold text-xs shadow-sm transition-all hover:bg-slate-700 active:scale-[0.98] shrink-0">
-                        <i data-lucide="copy" class="w-3.5 h-3.5" x-show="!copied"></i>
-                        <i data-lucide="check" class="w-3.5 h-3.5" x-show="copied" x-cloak></i>
-                        <span x-text="copied ? 'Copied!' : 'Copy Link'"></span>
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                        <span>Copy Link</span>
                     </button>
                 </div>
 

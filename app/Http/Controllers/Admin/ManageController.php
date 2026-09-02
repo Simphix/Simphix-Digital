@@ -66,12 +66,14 @@ class ManageController extends Controller
      */
     public function updateUser(Request $request, User $user): RedirectResponse
     {
+        \App\Support\PhoneNumber::normalizeRequestInput($request);
+
         $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
             'middle_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
-            'phone' => ['required', 'string', 'max:20', Rule::unique(User::class)->ignore($user->id)],
+            'phone' => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), Rule::unique(User::class)->ignore($user->id)],
             'status' => ['required', 'string', 'in:active,suspended,inactive,banned'],
             'role' => ['required', 'string', 'in:personal,agent,partner,business,staff,checker,super_admin,regional_manager,coordinator'],
         ]);

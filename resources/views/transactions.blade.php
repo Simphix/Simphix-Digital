@@ -311,8 +311,8 @@
                                 <span class="block text-xs font-bold text-primary uppercase tracking-wider">Purchased PIN/Token</span>
                                 <span class="font-mono font-bold text-slate-900 text-sm mt-1 block select-all" x-text="selectedTx?.purchased_pin"></span>
                             </div>
-                            <button class="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-primary/5 border border-primary/20 text-primary rounded-lg text-xs font-bold shadow-sm transition-all duration-150" 
-                                    @click="navigator.clipboard.writeText(selectedTx?.purchased_pin).then(() => Swal.fire({title: 'Copied!', text: 'PIN copied to clipboard', icon: 'success', timer: 1500, showConfirmButton: false}))">
+                            <button class="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-primary/5 border border-primary/20 text-primary rounded-lg text-xs font-bold shadow-sm transition-all duration-150"
+                                    @click="copyToClipboard(selectedTx?.purchased_pin, 'PIN')">
                                 <i class="w-3.5 h-3.5" data-lucide="copy"></i> Copy PIN
                             </button>
                         </div>

@@ -203,6 +203,24 @@
 
         @include('layouts.partials.pwa-install-banner')
 
+        <!-- Global "Copied!" snackbar — see resources/js/app.js's copyToClipboard() helper -->
+        <div x-data class="fixed bottom-5 right-5 z-50">
+            <div x-show="$store.toast.show"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                 class="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-800"
+                 x-cloak>
+                <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                </div>
+                <span class="text-xs font-semibold" x-text="$store.toast.message"></span>
+            </div>
+        </div>
+
         @stack('scripts')
     </body>
 </html>

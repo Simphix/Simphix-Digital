@@ -47,8 +47,15 @@ class TermiiSmsApi implements SmsProviderInterface
             return ['success' => false, 'message_id' => null, 'message' => 'SMS gateway is temporarily unavailable. Please try another channel.'];
         }
 
+        $formatted = \App\Support\PhoneNumber::toTermiiFormat($to);
+        if (!$formatted) {
+            Log::warning('Termii SMS: could not format recipient phone number, skipping send.', ['to' => $to]);
+
+            return ['success' => false, 'message_id' => null, 'message' => 'Invalid recipient phone number.'];
+        }
+
         $payload = [
-            'to' => $to,
+            'to' => $formatted,
             'from' => $this->senderId(),
             'sms' => $message,
             'type' => 'plain',

@@ -42,7 +42,7 @@ test('the SMS channel posts the expected payload to Termii and reports success o
     expect($sent)->toBeTrue();
     Http::assertSent(function (HttpRequest $request) {
         return str_contains($request->url(), 'termii')
-            && $request['to'] === '08031234567'
+            && $request['to'] === '2348031234567'
             && str_contains($request['sms'], '654321');
     });
 });

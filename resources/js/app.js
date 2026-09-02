@@ -4,6 +4,29 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
+// Global "Copied!" snackbar — one shared store + helper so every copy
+// button in the app gets identical feedback with a one-line @click, instead
+// of each page reinventing its own toast/text-swap/SweetAlert.
+document.addEventListener('alpine:init', () => {
+    Alpine.store('toast', {
+        show: false,
+        message: '',
+        _timer: null,
+        display(message) {
+            this.message = message;
+            this.show = true;
+            clearTimeout(this._timer);
+            this._timer = setTimeout(() => { this.show = false; }, 2500);
+        },
+    });
+});
+
+window.copyToClipboard = function (text, label) {
+    navigator.clipboard.writeText(text).then(() => {
+        Alpine.store('toast').display((label ? label + ' ' : '') + 'copied to clipboard!');
+    });
+};
+
 Alpine.start();
 
 if ('serviceWorker' in navigator) {

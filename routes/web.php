@@ -309,6 +309,7 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
     Route::prefix('admin/sims-operations')->name('admin.sims-operations.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\SimsOperationsDashboardController::class, 'index'])->name('index');
         Route::get('/export', [\App\Http\Controllers\Admin\SimsOperationsDashboardController::class, 'exportCsv'])->name('export');
+        Route::get('/activation-bonus/export', [\App\Http\Controllers\Admin\SimsOperationsDashboardController::class, 'exportActivationBonusCsv'])->name('activation-bonus.export');
     });
 
     // Services Management

@@ -17,6 +17,8 @@ class KycController extends Controller
     {
         $user = Auth::user();
 
+        \App\Support\PhoneNumber::normalizeRequestInput($request);
+
         $request->validate([
             'first_name'  => ['required', 'string', 'max:255'],
             'last_name'   => ['required', 'string', 'max:255'],
@@ -25,6 +27,7 @@ class KycController extends Controller
                 'required',
                 'string',
                 'max:20',
+                \App\Support\PhoneNumber::validationRule(),
                 Rule::unique('users', 'phone')->ignore($user->id),
             ],
             'state'       => ['required', 'string', 'max:255'],

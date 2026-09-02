@@ -224,16 +224,15 @@
                                     </div>
                                 </div>
 
-                                <div class="border-t border-slate-200/60 pt-4 space-y-1" x-data="{ copied: false }">
+                                <div class="border-t border-slate-200/60 pt-4 space-y-1">
                                     <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Account Number</span>
                                     <div class="flex items-center gap-3">
-                                        <span class="text-2xl font-extrabold font-display text-[#0056D2] tracking-wide" x-ref="accNum">{{ $virtualAccount->account_number ?? $virtualAccount->accountNo }}</span>
-                                        <button @click="navigator.clipboard.writeText($refs.accNum.innerText); copied = true; setTimeout(() => copied = false, 2000)" 
-                                                type="button" 
+                                        <span class="text-2xl font-extrabold font-display text-[#0056D2] tracking-wide">{{ $virtualAccount->account_number ?? $virtualAccount->accountNo }}</span>
+                                        <button onclick="copyToClipboard('{{ $virtualAccount->account_number ?? $virtualAccount->accountNo }}', 'Account number')"
+                                                type="button"
                                                 class="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-500 hover:text-[#0056D2] rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-slate-50 shadow-sm transition-all">
-                                            <i x-show="!copied" data-lucide="copy" class="w-3.5 h-3.5"></i>
-                                            <i x-show="copied" data-lucide="check" class="w-3.5 h-3.5 text-emerald-500" style="display: none;"></i>
-                                            <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+                                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                            <span>Copy</span>
                                         </button>
                                     </div>
                                 </div>

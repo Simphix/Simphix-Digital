@@ -79,11 +79,13 @@ class EnterprisePartnerController extends Controller
             abort(404);
         }
 
+        \App\Support\PhoneNumber::normalizeRequestInput($request);
+
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
+            'phone' => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), 'unique:users,phone'],
             'password' => [
                 'required',
                 'confirmed',
