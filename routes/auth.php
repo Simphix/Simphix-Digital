@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Auth\DeviceChallengeController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -36,6 +37,21 @@ Route::middleware('guest')->group(function () {
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->middleware('throttle:5,1')
         ->name('password.store');
+
+    Route::get('device-challenge/{token}', [DeviceChallengeController::class, 'show'])
+        ->name('device-challenge.show');
+
+    Route::post('device-challenge/{token}/send', [DeviceChallengeController::class, 'send'])
+        ->middleware('throttle:device-challenge-send')
+        ->name('device-challenge.send');
+
+    Route::post('device-challenge/{token}/verify', [DeviceChallengeController::class, 'verify'])
+        ->middleware('throttle:device-challenge-verify')
+        ->name('device-challenge.verify');
+
+    Route::post('device-challenge/{token}/resend', [DeviceChallengeController::class, 'resend'])
+        ->middleware('throttle:device-challenge-resend')
+        ->name('device-challenge.resend');
 });
 
 Route::middleware('auth')->group(function () {

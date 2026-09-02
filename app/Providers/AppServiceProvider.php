@@ -34,6 +34,20 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('sme-data-vendor', fn () => Limit::perMinute(30));
         RateLimiter::for('palmpay-vendor', fn () => Limit::perMinute(30));
 
+        // Named (not bare numeric) so each of the three device-challenge
+        // routes gets its own bucket — Laravel's bare `throttle:N,M` keys
+        // purely on (route domain, IP) for guests, so two different bare-
+        // throttled routes hit back-to-back by the same guest would
+        // otherwise silently share one counter and block each other.
+        RateLimiter::for('device-challenge-send', fn ($request) => Limit::perMinute(5)->by($request->ip()));
+        // Slightly above DeviceVerificationChallenge's own 5-wrong-attempt
+        // lockout so that lockout (not this route throttle) is what a
+        // brute-force attempt actually hits first — the throttle is a
+        // secondary safety net against hammering many different challenges
+        // from one IP, not meant to collide with legitimate lockout flow.
+        RateLimiter::for('device-challenge-verify', fn ($request) => Limit::perMinute(10)->by($request->ip()));
+        RateLimiter::for('device-challenge-resend', fn ($request) => Limit::perMinute(3)->by($request->ip()));
+
         // Enforce strong password rules globally
         \Illuminate\Validation\Rules\Password::defaults(function () {
             return \Illuminate\Validation\Rules\Password::min(8)

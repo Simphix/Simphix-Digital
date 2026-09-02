@@ -46,6 +46,9 @@ use Illuminate\Notifications\Notifiable;
     'suspended_at',
     'suspension_reason',
     'suspended_by',
+    'device_registration_enabled',
+    'phone_verification_otp_hash',
+    'phone_verification_otp_expires_at',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
@@ -85,6 +88,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function pushSubscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(PushSubscription::class);
+    }
+
+    /**
+     * Devices this user has OTP-verified and is remembered on — distinct
+     * from pushSubscriptions() above, which is about notification delivery,
+     * not login trust.
+     */
+    public function trustedDevices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TrustedDevice::class);
     }
 
     /**
@@ -139,6 +152,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at'   => 'datetime',
             'phone_verified_at'   => 'datetime',
             'otp_expires_at'      => 'datetime',
+            'device_registration_enabled' => 'boolean',
+            'phone_verification_otp_expires_at' => 'datetime',
             'pin_set_at'          => 'datetime',
             'last_login_at'       => 'datetime',
             'suspended_at'        => 'datetime',
@@ -301,6 +316,44 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $otp = $this->otp_code ?? $this->generateOtp();
         \Illuminate\Support\Facades\Mail::to($this->email)->send(new \App\Mail\OtpVerificationMail($otp));
+    }
+
+    /**
+     * Generate a 6-digit phone-ownership verification code. Deliberately
+     * separate storage from otp_code/otp_expires_at (email verification)
+     * and from device_verification_challenges (login) — this is its own
+     * narrow purpose: proving the user actually controls the phone number
+     * on file before it can be trusted as a device-OTP delivery channel.
+     */
+    public function generatePhoneVerificationOtp(): string
+    {
+        $otp = (string) random_int(100000, 999999);
+        $this->forceFill([
+            'phone_verification_otp_hash' => hash('sha256', $otp),
+            'phone_verification_otp_expires_at' => now()->addMinutes(10),
+        ])->save();
+
+        return $otp;
+    }
+
+    public function verifyPhoneVerificationOtp(string $code): bool
+    {
+        if (
+            !empty($this->phone_verification_otp_hash)
+            && $this->phone_verification_otp_expires_at
+            && $this->phone_verification_otp_expires_at->isFuture()
+            && hash_equals($this->phone_verification_otp_hash, hash('sha256', $code))
+        ) {
+            $this->forceFill([
+                'phone_verification_otp_hash' => null,
+                'phone_verification_otp_expires_at' => null,
+                'phone_verified_at' => now(),
+            ])->save();
+
+            return true;
+        }
+
+        return false;
     }
 
     /**

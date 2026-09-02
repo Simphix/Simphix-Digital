@@ -81,6 +81,12 @@ return [
         'api_key'  => env('AMSUB_API_KEY'),
     ],
 
+    'termii' => [
+        'base_url'  => env('TERMII_BASE_URL', 'https://api.ng.termii.com'),
+        'api_key'   => env('TERMII_API_KEY'),
+        'sender_id' => env('TERMII_SENDER_ID', 'SmartSIM'),
+    ],
+
     'webpush' => [
         'vapid' => [
             'subject'     => env('VAPID_SUBJECT', env('APP_URL', 'http://localhost')),
