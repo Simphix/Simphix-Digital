@@ -379,6 +379,18 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::post('/failed-activations/{report}/retry', [\App\Http\Controllers\Admin\SimPlanController::class, 'retryActivationBonus'])->name('failed-activations.retry');
     });
 
+    // Admin SIM Data Top-Up — free, admin-granted top-ups via whichever
+    // SME-data vendor is currently active, unrestricted by the
+    // activation-bonus monthly cap. Only ACTIVATED SIMs with a current
+    // holder are eligible.
+    Route::prefix('admin/sim-data-topup')->name('admin.sim-data-topup.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'index'])->name('index');
+        Route::get('/search-sims', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'searchSims'])->name('search-sims');
+        Route::get('/sims/{sim}/usage-review', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'usageReview'])->name('usage-review');
+        Route::get('/sims/{sim}/plans', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'plans'])->name('plans');
+        Route::post('/sims/{sim}/topup', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'topup'])->name('topup');
+    });
+
     // Admin Cash Out Approvals
     Route::prefix('admin/cash-out')->name('admin.cash-out.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\CashOutController::class, 'index'])->name('index');
