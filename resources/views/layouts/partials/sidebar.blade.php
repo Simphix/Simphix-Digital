@@ -67,7 +67,9 @@
                     @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('wallet'), 'icon' => 'wallet', 'label' => __('My Wallet'), 'active' => request()->routeIs('wallet')])
                     @if (auth()->user()->role !== 'agent')
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('transfer'), 'icon' => 'send', 'label' => __('P2P Transfer'), 'active' => request()->routeIs('transfer')])
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('withdraw'), 'icon' => 'banknote', 'label' => __('Cash Out'), 'active' => request()->routeIs('withdraw')])
+                        @if (auth()->user()->role !== 'personal')
+                            @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('withdraw'), 'icon' => 'banknote', 'label' => __('Cash Out'), 'active' => request()->routeIs('withdraw')])
+                        @endif
                     @endif
                 </div>
             </div>
