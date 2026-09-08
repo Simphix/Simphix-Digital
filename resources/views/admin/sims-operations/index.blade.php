@@ -83,7 +83,11 @@
                     <button type="submit" class="text-xs font-bold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors">Apply Filters</button>
                     <a href="{{ route('admin.sims-operations.export', request()->query()) }}" class="text-xs font-bold px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                        Export CSV
+                        Export Filtered Activations
+                    </a>
+                    <a href="{{ route('admin.sims-operations.activated-numbers.export') }}" class="text-xs font-bold px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5">
+                        <i data-lucide="download" class="w-3.5 h-3.5 shrink-0"></i>
+                        Export All Activated Numbers
                     </a>
                 </div>
             </form>

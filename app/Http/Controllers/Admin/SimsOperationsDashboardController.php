@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * The first "Advanced Dashboard" admin tool: filterable metrics for SIM
@@ -57,6 +58,38 @@ class SimsOperationsDashboardController extends Controller
             'regions', 'states', 'districts', 'users',
             'bonusFilters', 'bonusReports'
         ));
+    }
+
+    public function exportActivatedNumbersCsv(): StreamedResponse
+    {
+        return response()->streamDownload(function () {
+            $output = fopen('php://output', 'w');
+
+            try {
+                fputcsv($output, ['Sim Number'], ',', '"', '');
+
+                $numbers = Sim::query()
+                    ->where('status', SimStatus::ACTIVATED)
+                    ->whereNotNull('number')
+                    ->where('number', '!=', '')
+                    ->select('number')
+                    ->distinct()
+                    ->orderBy('number')
+                    ->lazy(1000);
+
+                foreach ($numbers as $sim) {
+                    $number = (string) $sim->number;
+                    if (preg_match('/^[=+\-@\t\r\n]/', $number)) {
+                        $number = "'" . $number;
+                    }
+                    fputcsv($output, [$number], ',', '"', '');
+                }
+            } finally {
+                fclose($output);
+            }
+        }, 'activated-sim-numbers-' . now()->format('Y-m-d') . '.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function exportCsv(Request $request): Response
