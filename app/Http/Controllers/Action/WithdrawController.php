@@ -26,12 +26,11 @@ class WithdrawController extends Controller
     }
 
     /**
-     * Cash Out isn't available to Agent — it's a discount-only tier now
-     * (see AgentUpgradeController), not a wallet-movement role.
+     * Personal and agent accounts cannot request cash outs.
      */
-    private function blockAgents(): void
+    private function blockRestrictedRoles(): void
     {
-        if (Auth::user()?->role === 'agent') {
+        if (in_array(Auth::user()?->role, ['agent', 'personal'], true)) {
             abort(403, 'This feature is not available for your account type.');
         }
     }
@@ -41,7 +40,7 @@ class WithdrawController extends Controller
      */
     public function index()
     {
-        $this->blockAgents();
+        $this->blockRestrictedRoles();
 
         $user = Auth::user();
 
@@ -98,7 +97,7 @@ class WithdrawController extends Controller
      */
     public function verifyAccount(Request $request)
     {
-        $this->blockAgents();
+        $this->blockRestrictedRoles();
 
         $request->validate([
             'bankCode' => 'required|string',
@@ -138,7 +137,7 @@ class WithdrawController extends Controller
      */
     public function processWithdrawal(Request $request)
     {
-        $this->blockAgents();
+        $this->blockRestrictedRoles();
 
         $request->validate([
             'amount' => 'required|numeric|min:100', // Minimum 100 NGN

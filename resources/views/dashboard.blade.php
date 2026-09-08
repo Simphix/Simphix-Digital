@@ -192,6 +192,7 @@
                         </a>
                     </div>
 
+                    @if (auth()->user()->role !== 'personal')
                     <!-- Service 4: Cash Out -->
                     <div class="col">
                         <a href="{{ route('withdraw') }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
@@ -204,6 +205,8 @@
                             </div>
                         </a>
                     </div>
+
+                    @endif
 
                     <!-- Service 5: P2P Transfer -->
                     <div class="col">
