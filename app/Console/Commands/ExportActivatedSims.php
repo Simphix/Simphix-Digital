@@ -13,16 +13,11 @@ use Illuminate\Support\Facades\Mail;
  * Emails a CSV of every currently-activated SIM number to whichever inbox
  * is configured in Admin > SIMs Operations — nothing happens if that
  * export is turned off or no recipient is set, so this is always safe to
- * run on a schedule regardless of the toggle's state.
- *
- * Meant to run nightly. Two equally valid ways to wire that up:
- *  1. Already registered with Laravel's own scheduler (see
- *     routes/console.php) — works automatically if the server's crontab
- *     has the one standard `* * * * * php artisan schedule:run` entry.
- *  2. Add it directly as its own crontab line instead, e.g.:
- *     0 0 * * * cd /path/to/app && php artisan sims:export-activated
- *     Both are safe to have at once — the on/off check below means a
- *     stray extra run never double-emails anything harmful.
+ * run on a schedule regardless of the toggle's state. Intended to be
+ * triggered by an external cron entry (no Laravel scheduler wired up in
+ * this app — same convention as sim:grant-bulk-activation-bonus and
+ * notifications:dispatch-due; see docs/sim-export-scheduling.md), e.g.:
+ *   0 0 * * * cd /path/to/app && php artisan sims:export-activated
  */
 class ExportActivatedSims extends Command
 {
