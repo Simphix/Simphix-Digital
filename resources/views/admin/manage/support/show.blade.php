@@ -1,4 +1,13 @@
 <x-app-layout>
+    @php
+        // Shared by both the super_admin console (admin.manage.support.*)
+        // and the support-desk console (support-desk.tickets.*).
+        $onSupportDesk = request()->routeIs('support-desk.*');
+        $ticketsIndexRoute = $onSupportDesk ? 'support-desk.tickets.index' : 'admin.manage.support.index';
+        $ticketReplyRoute = $onSupportDesk ? 'support-desk.tickets.reply' : 'admin.manage.support.reply';
+        $ticketStatusRoute = $onSupportDesk ? 'support-desk.tickets.status' : 'admin.manage.support.status';
+        $userShowRoute = $onSupportDesk ? 'support-desk.users.show' : 'admin.manage.users.show';
+    @endphp
     @push('styles')
     <style>
         /* Modern thin scrollbar styling */
@@ -22,7 +31,7 @@
         <!-- Page Header -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <a href="{{ route('admin.manage.support.index') }}" 
+                <a href="{{ route($ticketsIndexRoute) }}"
                    class="w-10 h-10 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 flex items-center justify-center text-slate-600 transition-all shadow-sm">
                     <i data-lucide="arrow-left" class="w-5 h-5"></i>
                 </a>
@@ -152,7 +161,7 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('admin.manage.support.reply', $ticket) }}" class="space-y-4">
+                        <form method="POST" action="{{ route($ticketReplyRoute, $ticket) }}" class="space-y-4">
                             @csrf
                             <div class="relative">
                                 <x-textarea-input name="message" rows="3" required
@@ -209,7 +218,7 @@
                     </div>
 
                     <div class="pt-4 border-t border-slate-50">
-                        <a href="{{ route('admin.manage.users.show', $ticket->user) }}" target="_blank"
+                        <a href="{{ route($userShowRoute, $ticket->user) }}" target="_blank"
                            class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl transition-all">
                             <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
                             View Complete Profile
@@ -284,7 +293,7 @@
                             <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Change Status</span>
                             
                             @if($ticket->status !== \App\Models\Ticket::STATUS_CLOSED)
-                                <form method="POST" action="{{ route('admin.manage.support.status', $ticket) }}">
+                                <form method="POST" action="{{ route($ticketStatusRoute, $ticket) }}">
                                     @csrf
                                     <input type="hidden" name="status" value="closed">
                                     <button type="submit"
@@ -294,7 +303,7 @@
                                     </button>
                                 </form>
                             @else
-                                <form method="POST" action="{{ route('admin.manage.support.status', $ticket) }}">
+                                <form method="POST" action="{{ route($ticketStatusRoute, $ticket) }}">
                                     @csrf
                                     <input type="hidden" name="status" value="open">
                                     <button type="submit"

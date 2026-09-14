@@ -7,9 +7,11 @@ use App\Models\Region;
 use App\Models\Report;
 use App\Models\SenatorialDistrict;
 use App\Models\Sim;
+use App\Models\SimExportSettings;
 use App\Models\SimHistory;
 use App\Models\State;
 use App\Models\User;
+use App\Services\ActivatedSimsExportService;
 use App\Support\SimStatus;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -52,37 +54,26 @@ class SimsOperationsDashboardController extends Controller
         $bonusFilters = $this->resolveActivationBonusFilters($request);
         $bonusReports = $this->activationBonusQuery($bonusFilters)->paginate(20, ['*'], 'bonus_page')->withQueryString();
 
+        $exportSettings = SimExportSettings::current();
+
         return view('admin.sims-operations.index', compact(
             'range', 'periodStart', 'periodEnd', 'filters',
             'totalActivations', 'byJurisdiction', 'trend', 'byCategory', 'byProvider', 'events',
             'regions', 'states', 'districts', 'users',
-            'bonusFilters', 'bonusReports'
+            'bonusFilters', 'bonusReports', 'exportSettings'
         ));
     }
 
-    public function exportActivatedNumbersCsv(): StreamedResponse
+    public function exportActivatedNumbersCsv(ActivatedSimsExportService $exporter): StreamedResponse
     {
-        return response()->streamDownload(function () {
+        return response()->streamDownload(function () use ($exporter) {
             $output = fopen('php://output', 'w');
 
             try {
                 fputcsv($output, ['Sim Number'], ',', '"', '');
 
-                $numbers = Sim::query()
-                    ->where('status', SimStatus::ACTIVATED)
-                    ->whereNotNull('number')
-                    ->where('number', '!=', '')
-                    ->select('number')
-                    ->distinct()
-                    ->orderBy('number')
-                    ->lazy(1000);
-
-                foreach ($numbers as $sim) {
-                    $number = (string) $sim->number;
-                    if (preg_match('/^[=+\-@\t\r\n]/', $number)) {
-                        $number = "'" . $number;
-                    }
-                    fputcsv($output, [$number], ',', '"', '');
+                foreach ($exporter->activatedNumbers() as $sim) {
+                    fputcsv($output, [$exporter->escapeForCsv((string) $sim->number)], ',', '"', '');
                 }
             } finally {
                 fclose($output);

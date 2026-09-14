@@ -81,6 +81,7 @@
                                             <option value="business" {{ $u->role === 'business' ? 'selected' : '' }}>Business</option>
                                             <option value="staff" {{ $u->role === 'staff' ? 'selected' : '' }}>Staff</option>
                                             <option value="checker" {{ $u->role === 'checker' ? 'selected' : '' }}>Checker</option>
+                                            <option value="support" {{ $u->role === 'support' ? 'selected' : '' }}>Support</option>
                                             <option value="super_admin" {{ $u->role === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
                                         </x-select-input>
 

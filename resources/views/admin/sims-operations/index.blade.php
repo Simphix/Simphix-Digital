@@ -6,6 +6,13 @@
             <p class="text-xs text-slate-400 mt-1">Activation metrics filterable by date, region, state, senatorial district, and user.</p>
         </div>
 
+        @if (session('success'))
+            <div class="p-3 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl flex items-center gap-2 text-xs font-semibold">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500 flex-shrink-0"></i>
+                {{ session('success') }}
+            </div>
+        @endif
+
         <!-- Section Tabs -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-2 flex gap-1">
             <button type="button" @click="activeSection = 'activations'" :class="activeSection === 'activations' ? 'bg-[#0056D2] text-white' : 'text-slate-500 hover:bg-slate-50'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5">
@@ -90,6 +97,35 @@
                         Export All Activated Numbers
                     </a>
                 </div>
+            </form>
+        </div>
+
+        <!-- Nightly Activated-SIMs Export Email -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4">
+            <form method="POST" action="{{ route('admin.sims-operations.export-settings.update') }}" class="flex flex-col md:flex-row md:items-end gap-4">
+                @csrf
+                @method('PUT')
+
+                <div class="flex items-center gap-3 shrink-0">
+                    <x-toggle-switch name="is_active" :checked="old('is_active', $exportSettings->is_active)" />
+                    <div>
+                        <span class="block text-xs font-bold text-slate-700">Nightly Export Email</span>
+                        <span class="block text-[11px] text-slate-400">Emails every activated SIM number each night (<code class="text-[10px]">sims:export-activated</code>).</span>
+                    </div>
+                </div>
+
+                <div class="flex-grow">
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Recipient Email</label>
+                    <input type="email" name="recipient_email" required
+                           value="{{ old('recipient_email', $exportSettings->recipient_email) }}"
+                           placeholder="ops@smartsimsub.com"
+                           class="w-full text-xs rounded-lg border border-slate-200 px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                    @error('recipient_email')
+                        <span class="text-[11px] text-rose-600 font-semibold">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <button type="submit" class="text-xs font-bold px-4 py-2 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors shrink-0">Save</button>
             </form>
         </div>
 

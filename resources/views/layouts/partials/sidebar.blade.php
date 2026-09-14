@@ -38,7 +38,7 @@
             'active' => request()->routeIs('dashboard'),
         ])
 
-        @if (auth()->user() && auth()->user()->role !== 'super_admin')
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true))
             @php
                 $walletActive = request()->routeIs('wallet', 'transfer', 'withdraw');
             @endphp
@@ -75,7 +75,7 @@
             </div>
         @endif
 
-        @if (auth()->user() && auth()->user()->role !== 'super_admin' && auth()->user()->role !== 'agent')
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true) && auth()->user()->role !== 'agent')
             @php
                 $simsActive = request()->routeIs('sims.*');
             @endphp
@@ -155,8 +155,10 @@
             </div>
         @endif
 
-        @include('layouts.partials.sidebar-link', ['href' => route('transactions'), 'icon' => 'history', 'label' => __('Transaction'), 'active' => request()->routeIs('transactions')])
-        @if (auth()->user() && auth()->user()->role !== 'super_admin')
+        @if (auth()->user() && auth()->user()->role !== 'support')
+            @include('layouts.partials.sidebar-link', ['href' => route('transactions'), 'icon' => 'history', 'label' => __('Transaction'), 'active' => request()->routeIs('transactions')])
+        @endif
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('network'), 'icon' => 'users', 'label' => __('My Network'), 'active' => request()->routeIs('network')])
         @endif
         @if (auth()->user() && (\App\Support\SimAccess::canBrowseCatalog(auth()->user()) || auth()->user()->hasRole('super_admin')))
@@ -168,10 +170,23 @@
         @if (auth()->user() && in_array(auth()->user()->role, ['partner', 'super_admin']))
             @include('layouts.partials.sidebar-link', ['href' => route('leaderboard'), 'icon' => 'trophy', 'label' => __('Leaderboard'), 'active' => request()->routeIs('leaderboard')])
         @endif
-        @if (auth()->user() && auth()->user()->role !== 'super_admin')
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('support'), 'icon' => 'help-circle', 'label' => __('Support'), 'active' => request()->routeIs('support')])
         @endif
         @include('layouts.partials.sidebar-link', ['href' => route('profile.edit'), 'icon' => 'user-cog', 'label' => __('Profile Settings'), 'active' => request()->routeIs('profile.edit')])
+
+        @if (auth()->user() && auth()->user()->role === 'support')
+            <!-- Support Desk Section -->
+            <div class="pt-4 mt-4 border-t border-slate-200">
+                <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Support Desk</span>
+
+                @include('layouts.partials.sidebar-link', ['href' => route('support-desk.dashboard'), 'icon' => 'layout-dashboard', 'label' => 'Overview', 'active' => request()->routeIs('support-desk.dashboard')])
+                @include('layouts.partials.sidebar-link', ['href' => route('support-desk.tickets.index'), 'icon' => 'message-square', 'label' => 'Support Tickets', 'active' => request()->routeIs('support-desk.tickets*'), 'badge' => $openTicketsBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('support-desk.transactions.index'), 'icon' => 'receipt', 'label' => 'Transactions', 'active' => request()->routeIs('support-desk.transactions*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('support-desk.sims.index'), 'icon' => 'cpu', 'label' => 'SIM Lookup', 'active' => request()->routeIs('support-desk.sims*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('support-desk.users.index'), 'icon' => 'users', 'label' => 'User Lookup', 'active' => request()->routeIs('support-desk.users*')])
+            </div>
+        @endif
 
         @if (auth()->user() && auth()->user()->role === 'super_admin')
             <!-- Admin Management Section -->
@@ -251,7 +266,7 @@
         </a>
     </div>
 
-    @if (($sidebarUpline ?? null) && auth()->user()->role !== 'business')
+    @if (($sidebarUpline ?? null) && auth()->user()->role !== 'business' && !\App\Support\StaffAccess::isInternal(auth()->user()))
     <div class="border-t border-slate-200 p-3" x-data="{ open: false }">
         <button type="button"
                 @click="if (sidebarCollapsed) { sidebarCollapsed = false; open = true } else { open = !open }"

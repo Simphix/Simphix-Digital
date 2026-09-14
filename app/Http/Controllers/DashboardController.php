@@ -31,6 +31,12 @@ class DashboardController extends Controller
             return $this->adminDashboard($request);
         }
 
+        // Support staff have their own read-mostly console — see
+        // Support\DashboardController — never the personal wallet dashboard.
+        if ($user->hasRole('support')) {
+            return redirect()->route('support-desk.dashboard');
+        }
+
         return $this->userDashboard($user);
     }
 
