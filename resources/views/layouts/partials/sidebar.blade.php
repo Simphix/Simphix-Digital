@@ -184,7 +184,10 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.tickets.index'), 'icon' => 'message-square', 'label' => 'Support Tickets', 'active' => request()->routeIs('support-desk.tickets*'), 'badge' => $openTicketsBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.transactions.index'), 'icon' => 'receipt', 'label' => 'Transactions', 'active' => request()->routeIs('support-desk.transactions*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.sims.index'), 'icon' => 'cpu', 'label' => 'SIM Lookup', 'active' => request()->routeIs('support-desk.sims*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('support-desk.sim-inventory.index'), 'icon' => 'package', 'label' => 'SIM Inventory', 'active' => request()->routeIs('support-desk.sim-inventory*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('support-desk.sim-data-topup.index'), 'icon' => 'battery-charging', 'label' => 'SIM Data Top-Up', 'active' => request()->routeIs('support-desk.sim-data-topup*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.users.index'), 'icon' => 'users', 'label' => 'User Lookup', 'active' => request()->routeIs('support-desk.users*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('support-desk.webhooks.index'), 'icon' => 'webhook', 'label' => 'Webhook Logs', 'active' => request()->routeIs('support-desk.webhooks*'), 'badge' => $failedWebhooksBadge ?? 0])
             </div>
         @endif
 

@@ -1,6 +1,18 @@
 <x-app-layout>
     <title>SmartSIM - Bulk Collect SIM</title>
 
+    @php
+        // Shared by both the super_admin console (admin.sim-plan.*) and
+        // the support-desk console (support-desk.sim-inventory.*) — same
+        // "collect fully unassigns, activated SIMs are skipped" behavior
+        // either way, only the route names differ.
+        $onSupportDesk = request()->routeIs('support-desk.*');
+        $bulkCollectResolveRoute = $onSupportDesk ? 'support-desk.sim-inventory.bulk-collect.resolve-numbers' : 'admin.sim-plan.bulk-collect.resolve-numbers';
+        $usersSearchRoute = $onSupportDesk ? 'support-desk.sim-inventory.users.search' : 'admin.sim-plan.users.search';
+        $bulkCollectExecuteRoute = $onSupportDesk ? 'support-desk.sim-inventory.bulk-collect.execute' : 'admin.sim-plan.bulk-collect.execute';
+        $backRoute = $onSupportDesk ? 'support-desk.sim-inventory.index' : 'admin.sim-plan.index';
+    @endphp
+
     <div class="max-w-3xl mx-auto space-y-6"
          x-data="{
             numbers: '',
@@ -16,7 +28,7 @@
             async validateNumbers() {
                 if (!this.numbers.trim()) return;
                 this.validating = true;
-                const res = await fetch('{{ route('admin.sim-plan.bulk-collect.resolve-numbers') }}', {
+                const res = await fetch('{{ route($bulkCollectResolveRoute) }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -36,7 +48,7 @@
             async searchUsers() {
                 if (this.userQuery.trim().length < 2) { this.userResults = []; return; }
                 this.searching = true;
-                const res = await fetch('{{ route('admin.sim-plan.users.search') }}?q=' + encodeURIComponent(this.userQuery));
+                const res = await fetch('{{ route($usersSearchRoute) }}?q=' + encodeURIComponent(this.userQuery));
                 this.userResults = await res.json();
                 this.searching = false;
             },
@@ -50,7 +62,7 @@
             submit() {
                 const f = document.createElement('form');
                 f.method = 'POST';
-                f.action = '{{ route('admin.sim-plan.bulk-collect.execute') }}';
+                f.action = '{{ route($bulkCollectExecuteRoute) }}';
                 let inputs = '<input type=\'hidden\' name=\'_token\' value=\'{{ csrf_token() }}\'>';
                 inputs += '<input type=\'hidden\' name=\'user_id\' value=\'' + this.selectedUser.id + '\'>';
                 this.resolved.forEach(s => { inputs += '<input type=\'hidden\' name=\'sim_ids[]\' value=\'' + s.id + '\'>'; });
@@ -60,10 +72,10 @@
             }
          }">
 
-        <a href="{{ route('admin.sim-plan.index') }}"
+        <a href="{{ route($backRoute) }}"
            class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-[#0056D2] transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            Back to SIM Plans
+            Back to {{ $onSupportDesk ? 'SIM Inventory' : 'SIM Plans' }}
         </a>
 
         <div class="flex items-center gap-3 bg-white rounded-xl border border-slate-200 shadow-sm p-6">

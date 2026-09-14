@@ -1,6 +1,16 @@
 <x-app-layout>
     <title>SmartSIM - Webhook Logs</title>
 
+    @php
+        // Shared by both the super_admin console (admin.webhooks.*) and
+        // the support-desk console (support-desk.webhooks.*) — support
+        // gets the exact same log visibility but never the Retry action,
+        // which re-runs payment-webhook processing.
+        $onSupportDesk = request()->routeIs('support-desk.*');
+        $webhooksIndexRoute = $onSupportDesk ? 'support-desk.webhooks.index' : 'admin.webhooks.index';
+        $canRetryWebhooks = !$onSupportDesk;
+    @endphp
+
     <div class="max-w-7xl mx-auto space-y-6">
         <!-- Page Header -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -73,7 +83,7 @@
                 <option value="palmpay" {{ request('provider') === 'palmpay' ? 'selected' : '' }}>PalmPay</option>
             </x-select-input>
             @if (request('status') || request('provider'))
-                <a href="{{ route('admin.webhooks.index') }}" class="text-xs font-bold text-slate-400 hover:text-slate-600">Clear filters</a>
+                <a href="{{ route($webhooksIndexRoute) }}" class="text-xs font-bold text-slate-400 hover:text-slate-600">Clear filters</a>
             @endif
         </form>
 
@@ -120,7 +130,7 @@
                                     </details>
                                 </td>
                                 <td class="py-3 text-right whitespace-nowrap">
-                                    @if ($log->status === 'failed')
+                                    @if ($canRetryWebhooks && $log->status === 'failed')
                                         <button type="button" @click="Swal.fire({
                                             title: 'Retry Webhook #{{ $log->id }}?',
                                             text: 'This will re-run the stored payload through processing. Safe to retry — it cannot double-credit a wallet.',

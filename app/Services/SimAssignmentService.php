@@ -155,6 +155,27 @@ class SimAssignmentService
     }
 
     /**
+     * The role a new holder must have for swapHolder() to accept them for
+     * this SIM's current state, or null if the SIM isn't in a swappable
+     * state at all (e.g. still ASSIGNED_TO_RM, self-held by a partner/
+     * business_agent, UNASSIGNED, or ACTIVATED). Mirrors swapHolder()'s own
+     * column-selection match — kept as its own query, not called from
+     * inside swapHolder() itself, so a caller (e.g. the support console's
+     * SIM Inventory) can build a role-scoped user picker and reject an
+     * obviously-wrong target before ever touching the SIM.
+     */
+    public function swapTargetRole(Sim $sim): ?string
+    {
+        return match (true) {
+            $sim->status === SimStatus::ASSIGNED_TO_COORDINATOR => 'coordinator',
+            $sim->status === SimStatus::ASSIGNED_TO_PARTNER && $sim->user_id !== $sim->partner_id => 'personal',
+            $sim->status === SimStatus::ASSIGNED_TO_BUSINESS => 'business',
+            $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT && $sim->user_id !== $sim->business_agent_id => 'personal',
+            default => null,
+        };
+    }
+
+    /**
      * Admin-approved swap: move a SIM currently held at the Coordinator or
      * Partner tier to a different holder at that same tier. Status and any
      * higher-tier FK columns are left untouched — this is a lateral move,

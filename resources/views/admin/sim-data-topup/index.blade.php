@@ -1,6 +1,17 @@
 <x-app-layout>
     <title>SmartSIM - SIM Data Top-Up</title>
 
+    @php
+        // Shared by both the super_admin console (admin.sim-data-topup.*)
+        // and the support-desk console (support-desk.sim-data-topup.*) —
+        // identical eligibility (only ACTIVATED SIMs) and identical Report
+        // rows either way, only the route/URL base differs.
+        $onSupportDesk = request()->routeIs('support-desk.*');
+        $topupIndexRoute = $onSupportDesk ? 'support-desk.sim-data-topup.index' : 'admin.sim-data-topup.index';
+        $topupSearchSimsRoute = $onSupportDesk ? 'support-desk.sim-data-topup.search-sims' : 'admin.sim-data-topup.search-sims';
+        $topupBase = $onSupportDesk ? '/support-desk/sim-data-topup' : '/admin/sim-data-topup';
+    @endphp
+
     <div class="space-y-6 max-w-7xl mx-auto"
          x-data="{
             simQuery: '',
@@ -9,7 +20,7 @@
 
             async searchSims() {
                 if (this.simQuery.trim().length < 2) { this.simResults = []; return; }
-                const res = await fetch('{{ route('admin.sim-data-topup.search-sims') }}?q=' + encodeURIComponent(this.simQuery));
+                const res = await fetch('{{ route($topupSearchSimsRoute) }}?q=' + encodeURIComponent(this.simQuery));
                 this.simResults = await res.json();
             },
 
@@ -20,8 +31,8 @@
                 this.submitting = true;
 
                 const [reviewRes, plansRes] = await Promise.all([
-                    fetch(`/admin/sim-data-topup/sims/${sim.id}/usage-review`),
-                    fetch(`/admin/sim-data-topup/sims/${sim.id}/plans`),
+                    fetch(`{{ $topupBase }}/sims/${sim.id}/usage-review`),
+                    fetch(`{{ $topupBase }}/sims/${sim.id}/plans`),
                 ]);
                 const review = await reviewRes.json();
                 const plans = await plansRes.json();
@@ -103,7 +114,7 @@
 
         <!-- Filters -->
         <div class="bg-white border border-slate-200 rounded-2xl p-4">
-            <form method="GET" action="{{ route('admin.sim-data-topup.index') }}" class="flex flex-wrap items-end gap-3">
+            <form method="GET" action="{{ route($topupIndexRoute) }}" class="flex flex-wrap items-end gap-3">
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1">From</label>
                     <input type="date" name="date_start" value="{{ $filters['date_start']?->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
@@ -235,7 +246,7 @@
                     if (!result.isConfirmed) return;
                     const f = document.createElement('form');
                     f.method = 'POST';
-                    f.action = `/admin/sim-data-topup/sims/${sim.id}/topup`;
+                    f.action = `{{ $topupBase }}/sims/${sim.id}/topup`;
                     f.innerHTML = `
                         <input type="hidden" name="_token" value="${csrfToken}">
                         <input type="hidden" name="plan" value="${result.value}">

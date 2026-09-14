@@ -217,6 +217,35 @@ Route::middleware(['auth', 'verified', 'support_staff'])->prefix('support-desk')
 
     Route::get('/users', [\App\Http\Controllers\Support\UserController::class, 'index'])->name('users.index');
     Route::get('/users/{user}', [\App\Http\Controllers\Support\UserController::class, 'show'])->name('users.show');
+
+    Route::get('/sim-data-topup', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'index'])->name('sim-data-topup.index');
+    Route::get('/sim-data-topup/search-sims', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'searchSims'])->name('sim-data-topup.search-sims');
+    Route::get('/sim-data-topup/sims/{sim}/usage-review', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'usageReview'])->name('sim-data-topup.usage-review');
+    Route::get('/sim-data-topup/sims/{sim}/plans', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'plans'])->name('sim-data-topup.plans');
+    Route::post('/sim-data-topup/sims/{sim}/topup', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'topup'])->name('sim-data-topup.topup');
+
+    Route::prefix('sim-inventory')->name('sim-inventory.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Support\SimInventoryController::class, 'index'])->name('index');
+        Route::get('/users/search', [\App\Http\Controllers\Support\SimInventoryController::class, 'searchUsers'])->name('users.search');
+
+        // Declared before the '/{sim}' catch-all below — a route with a
+        // literal segment declared after a '/{param}' route gets shadowed
+        // (see the same note on the admin/sim-plan group).
+        Route::get('/bulk-assign', [\App\Http\Controllers\Support\SimInventoryController::class, 'bulkAssignPage'])->name('bulk-assign');
+        Route::post('/bulk-assign/resolve-numbers', [\App\Http\Controllers\Support\SimInventoryController::class, 'resolveBulkAssignNumbers'])->name('bulk-assign.resolve-numbers');
+        Route::post('/bulk-assign', [\App\Http\Controllers\Support\SimInventoryController::class, 'bulkAssign'])->name('bulk-assign.execute');
+
+        Route::get('/bulk-collect', [\App\Http\Controllers\Support\SimInventoryController::class, 'bulkCollectPage'])->name('bulk-collect');
+        Route::post('/bulk-collect/resolve-numbers', [\App\Http\Controllers\Support\SimInventoryController::class, 'resolveBulkCollectNumbers'])->name('bulk-collect.resolve-numbers');
+        Route::post('/bulk-collect', [\App\Http\Controllers\Support\SimInventoryController::class, 'bulkCollect'])->name('bulk-collect.execute');
+
+        Route::get('/{sim}', [\App\Http\Controllers\Support\SimInventoryController::class, 'show'])->name('show');
+        Route::post('/{sim}/assign', [\App\Http\Controllers\Support\SimInventoryController::class, 'assign'])->name('assign');
+        Route::post('/{sim}/reassign', [\App\Http\Controllers\Support\SimInventoryController::class, 'reassign'])->name('reassign');
+        Route::post('/{sim}/unassign', [\App\Http\Controllers\Support\SimInventoryController::class, 'unassign'])->name('unassign');
+    });
+
+    Route::get('/webhooks', [\App\Http\Controllers\Support\WebhookLogController::class, 'index'])->name('webhooks.index');
 });
 
 Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->name('admin.manage.')->group(function () {
