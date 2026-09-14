@@ -202,6 +202,23 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::middleware(['auth', 'verified', 'support_staff'])->prefix('support-desk')->name('support-desk.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Support\DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/tickets', [\App\Http\Controllers\Support\TicketController::class, 'index'])->name('tickets.index');
+    Route::get('/tickets/{ticket}', [\App\Http\Controllers\Support\TicketController::class, 'show'])->name('tickets.show');
+    Route::post('/tickets/{ticket}/reply', [\App\Http\Controllers\Support\TicketController::class, 'reply'])->name('tickets.reply');
+    Route::post('/tickets/{ticket}/status', [\App\Http\Controllers\Support\TicketController::class, 'updateStatus'])->name('tickets.status');
+
+    Route::get('/transactions', [\App\Http\Controllers\Support\TransactionController::class, 'index'])->name('transactions.index');
+
+    Route::get('/sims', [\App\Http\Controllers\Support\SimController::class, 'index'])->name('sims.index');
+    Route::get('/sims/{sim}', [\App\Http\Controllers\Support\SimController::class, 'show'])->name('sims.show');
+
+    Route::get('/users', [\App\Http\Controllers\Support\UserController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}', [\App\Http\Controllers\Support\UserController::class, 'show'])->name('users.show');
+});
+
 Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->name('admin.manage.')->group(function () {
     Route::get('/users', [\App\Http\Controllers\Admin\ManageController::class, 'users'])->name('users');
     Route::get('/users/{user}/edit', [\App\Http\Controllers\Admin\ManageController::class, 'editUser'])->name('users.edit');

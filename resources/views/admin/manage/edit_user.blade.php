@@ -69,6 +69,7 @@
                             <option value="business" {{ old('role', $user->role) == 'business' ? 'selected' : '' }}>Business</option>
                             <option value="staff" {{ old('role', $user->role) == 'staff' ? 'selected' : '' }}>Staff</option>
                             <option value="checker" {{ old('role', $user->role) == 'checker' ? 'selected' : '' }}>Checker</option>
+                            <option value="support" {{ old('role', $user->role) == 'support' ? 'selected' : '' }}>Support</option>
                             <option value="super_admin" {{ old('role', $user->role) == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
                         </x-select-input>
                     </div>

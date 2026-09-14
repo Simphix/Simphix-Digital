@@ -120,6 +120,8 @@ class AppServiceProvider extends ServiceProvider
                 if ($user->role === 'super_admin') {
                     $openTicketsBadge = \App\Models\Ticket::where('status', 'open')->count();
                     $failedWebhooksBadge = \App\Models\WebhookLog::where('status', 'failed')->count();
+                } elseif ($user->role === 'support') {
+                    $openTicketsBadge = \App\Models\Ticket::where('status', 'open')->count();
                 } elseif (in_array($user->role, ['partner', 'coordinator', 'regional_manager', 'business', 'business_agent'], true)) {
                     $pendingDownlineRequestsBadge = \App\Models\SimRequest::where('upline_id', $user->id)
                         ->where('status', 'pending')

@@ -1,4 +1,13 @@
 <x-app-layout>
+    @php
+        // Shared by both the super_admin console (admin.manage.support.*)
+        // and the support-desk console (support-desk.tickets.*) — this
+        // page has identical ticket-triage powers either way, only the
+        // route names differ.
+        $onSupportDesk = request()->routeIs('support-desk.*');
+        $ticketsIndexRoute = $onSupportDesk ? 'support-desk.tickets.index' : 'admin.manage.support.index';
+        $ticketsShowRoute = $onSupportDesk ? 'support-desk.tickets.show' : 'admin.manage.support.show';
+    @endphp
     <div class="space-y-8 max-w-7xl mx-auto">
         <!-- Page Header -->
         <div>
@@ -69,7 +78,7 @@
 
         <!-- Filters Block -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-            <form method="GET" action="{{ route('admin.manage.support.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <form method="GET" action="{{ route($ticketsIndexRoute) }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div>
                     <x-input-label for="search" value="Search Query" />
                     <x-text-input type="text" id="search" name="search" :value="request('search')"
@@ -102,7 +111,7 @@
                         Apply Filters
                     </x-primary-button>
                     @if(request()->filled('search') || request()->filled('status') || request()->filled('priority'))
-                        <a href="{{ route('admin.manage.support.index') }}"
+                        <a href="{{ route($ticketsIndexRoute) }}"
                            class="py-2.5 px-4 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-xl transition-all duration-200 text-center flex items-center justify-center">
                             Reset
                         </a>
@@ -159,7 +168,7 @@
                                     </span>
                                 </td>
                                 <td class="py-4 px-6 text-right">
-                                    <a href="{{ route('admin.manage.support.show', $ticket) }}"
+                                    <a href="{{ route($ticketsShowRoute, $ticket) }}"
                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0056D2]/5 hover:bg-[#0056D2]/10 text-[#0056D2] font-bold text-xs rounded-xl transition-all">
                                         <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
                                         Respond

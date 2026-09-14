@@ -1,4 +1,12 @@
 <x-app-layout>
+    @php
+        // Internal/back-office accounts (staff, checker, support,
+        // super_admin) get none of the customer self-service tabs —
+        // withdrawal account, upgrade, and delete are all no-ops for them,
+        // and personal info is managed by a super_admin via Manage Access,
+        // not self-edited. See App\Support\StaffAccess.
+        $isInternalStaff = \App\Support\StaffAccess::isInternal($user);
+    @endphp
     <!-- Page Header Hero Card -->
     <div class="mb-8">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
@@ -86,26 +94,28 @@
                 <span>Security & PIN</span>
             </button>
             
-            <button @click="activeTab = 'withdrawal'"
-                    :class="activeTab === 'withdrawal' ? 'bg-[#0056D2] text-white shadow-lg shadow-[#0056D2]/10' : 'bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200">
-                <i data-lucide="banknote" class="w-5 h-5"></i>
-                <span>Withdrawal Account</span>
-            </button>
+            @unless ($isInternalStaff)
+                <button @click="activeTab = 'withdrawal'"
+                        :class="activeTab === 'withdrawal' ? 'bg-[#0056D2] text-white shadow-lg shadow-[#0056D2]/10' : 'bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200">
+                    <i data-lucide="banknote" class="w-5 h-5"></i>
+                    <span>Withdrawal Account</span>
+                </button>
 
-            <button @click="activeTab = 'upgrade'"
-                    :class="activeTab === 'upgrade' ? 'bg-[#0056D2] text-white shadow-lg shadow-[#0056D2]/10' : 'bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'" 
-                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200">
-                <i data-lucide="award" class="w-5 h-5"></i>
-                <span>Account Upgrade</span>
-            </button>
-            
-            <button @click="activeTab = 'danger'" 
-                    :class="activeTab === 'danger' ? 'bg-rose-50 text-rose-600' : 'bg-transparent text-slate-600 hover:bg-rose-50 hover:text-rose-700'" 
-                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200">
-                <i data-lucide="trash-2" class="w-5 h-5"></i>
-                <span>Delete Account</span>
-            </button>
+                <button @click="activeTab = 'upgrade'"
+                        :class="activeTab === 'upgrade' ? 'bg-[#0056D2] text-white shadow-lg shadow-[#0056D2]/10' : 'bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span>Account Upgrade</span>
+                </button>
+
+                <button @click="activeTab = 'danger'"
+                        :class="activeTab === 'danger' ? 'bg-rose-50 text-rose-600' : 'bg-transparent text-slate-600 hover:bg-rose-50 hover:text-rose-700'"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    <span>Delete Account</span>
+                </button>
+            @endunless
         </div>
 
         <!-- Form Panels -->
@@ -141,106 +151,161 @@
                 
                 <div>
                     <h2 class="text-lg font-bold text-slate-800 font-display">Personal Details</h2>
-                    <p class="text-xs text-slate-400 mt-1">Manage your basic profile information, gender identity, and profile picture.</p>
+                    <p class="text-xs text-slate-400 mt-1">
+                        @if ($isInternalStaff)
+                            Your profile information is managed by a super admin and cannot be self-edited.
+                        @else
+                            Manage your basic profile information, gender identity, and profile picture.
+                        @endif
+                    </p>
                 </div>
 
-                <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="space-y-6">
-                    @csrf
-                    @method('patch')
-
-                    <!-- Photo Upload Area -->
-                    <div x-data="{ photoPreview: null }" class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100">
-                        <div class="relative group">
-                            @if ($user->profile_photo)
-                                <img x-show="!photoPreview" 
-                                     src="{{ asset($user->profile_photo) }}" 
-                                     class="w-24 h-24 rounded-3xl object-cover border-4 border-slate-50 shadow-md group-hover:opacity-80 transition-all duration-200" 
-                                     alt="Avatar">
-                            @else
-                                <div x-show="!photoPreview" class="w-24 h-24 rounded-3xl bg-[#0056D2]/10 text-[#0056D2] flex items-center justify-center font-bold text-3xl font-display border-4 border-slate-50 shadow-md group-hover:opacity-80 transition-all duration-200">
-                                    {{ strtoupper(substr($user->first_name ?? $user->email, 0, 1)) }}
-                                </div>
-                            @endif
-
-                            <img x-show="photoPreview" 
-                                 :src="photoPreview" 
-                                 class="w-24 h-24 rounded-3xl object-cover border-4 border-slate-50 shadow-md" 
-                                 style="display: none;" 
-                                 alt="Preview">
-
-                            <!-- Overlay camera button -->
-                            <label for="profile_photo" class="absolute inset-0 flex items-center justify-center bg-slate-900/40 rounded-3xl opacity-0 group-hover:opacity-100 cursor-pointer transition-all duration-200">
-                                <i data-lucide="camera" class="w-6 h-6 text-white"></i>
-                            </label>
-                            
-                            <input type="file" 
-                                   id="profile_photo" 
-                                   name="profile_photo" 
-                                   class="hidden" 
-                                   accept="image/*"
-                                   @change="
-                                       const reader = new FileReader();
-                                       reader.onload = (e) => {
-                                           photoPreview = e.target.result;
-                                       };
-                                       reader.readAsDataURL($event.target.files[0]);
-                                   ">
-                        </div>
-
-                        <div class="text-center sm:text-left space-y-1.5">
+                @if ($isInternalStaff)
+                    <!-- Read-only summary — internal/back-office accounts don't self-edit their profile -->
+                    <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100">
+                        @if ($user->profile_photo)
+                            <img src="{{ asset($user->profile_photo) }}"
+                                 class="w-24 h-24 rounded-3xl object-cover border-4 border-slate-50 shadow-md"
+                                 alt="Avatar">
+                        @else
+                            <div class="w-24 h-24 rounded-3xl bg-[#0056D2]/10 text-[#0056D2] flex items-center justify-center font-bold text-3xl font-display border-4 border-slate-50 shadow-md">
+                                {{ strtoupper(substr($user->first_name ?? $user->email, 0, 1)) }}
+                            </div>
+                        @endif
+                        <div class="text-center sm:text-left space-y-1">
                             <h4 class="text-sm font-bold text-slate-700">Avatar Photo</h4>
-                            <p class="text-xs text-slate-400">Accepts PNG, JPG, or JPEG. Max file limit is 2MB.</p>
-                            <x-secondary-button type="button"
-                                    @click="document.getElementById('profile_photo').click()"
-                                    class="!py-1.5 !text-xs">
-                                Choose New File
-                            </x-secondary-button>
+                            <p class="text-xs text-slate-400">Contact a super admin to change your photo.</p>
                         </div>
                     </div>
 
-                    <!-- Input Grid (Read-only / Disabled) -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         <div>
                             <x-input-label value="First Name" />
-                            <x-text-input type="text" :value="old('first_name', $user->first_name)" disabled />
+                            <x-text-input type="text" :value="$user->first_name" disabled />
                         </div>
                         <div>
-                            <x-input-label value="Middle Name (Optional)" />
-                            <x-text-input type="text" :value="old('middle_name', $user->middle_name)" disabled />
+                            <x-input-label value="Middle Name" />
+                            <x-text-input type="text" :value="$user->middle_name" disabled />
                         </div>
                         <div>
                             <x-input-label value="Last Name" />
-                            <x-text-input type="text" :value="old('last_name', $user->last_name)" disabled />
+                            <x-text-input type="text" :value="$user->last_name" disabled />
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         <div>
                             <x-input-label value="Email Address" />
-                            <x-text-input type="email" :value="old('email', $user->email)" disabled />
+                            <x-text-input type="email" :value="$user->email" disabled />
                         </div>
                         <div>
                             <x-input-label value="Phone Number" />
-                            <x-text-input type="text" :value="old('phone', $user->phone)" disabled />
+                            <x-text-input type="text" :value="$user->phone" disabled />
+                        </div>
+                        <div>
+                            <x-input-label value="Gender" />
+                            <x-text-input type="text" :value="$user->gender ? ucfirst($user->gender) : 'Not set'" disabled />
                         </div>
                     </div>
+                @else
+                    <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="space-y-6">
+                        @csrf
+                        @method('patch')
 
-                    <div>
-                        <x-input-label value="Gender Identification" />
-                        <x-select-input name="gender">
-                            <option value="" disabled selected>Select Gender</option>
-                            <option value="male" {{ old('gender', $user->gender) == 'male' ? 'selected' : '' }}>Male</option>
-                            <option value="female" {{ old('gender', $user->gender) == 'female' ? 'selected' : '' }}>Female</option>
-                            <option value="other" {{ old('gender', $user->gender) == 'other' ? 'selected' : '' }}>Other</option>
-                        </x-select-input>
-                    </div>
+                        <!-- Photo Upload Area -->
+                        <div x-data="{ photoPreview: null }" class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100">
+                            <div class="relative group">
+                                @if ($user->profile_photo)
+                                    <img x-show="!photoPreview"
+                                         src="{{ asset($user->profile_photo) }}"
+                                         class="w-24 h-24 rounded-3xl object-cover border-4 border-slate-50 shadow-md group-hover:opacity-80 transition-all duration-200"
+                                         alt="Avatar">
+                                @else
+                                    <div x-show="!photoPreview" class="w-24 h-24 rounded-3xl bg-[#0056D2]/10 text-[#0056D2] flex items-center justify-center font-bold text-3xl font-display border-4 border-slate-50 shadow-md group-hover:opacity-80 transition-all duration-200">
+                                        {{ strtoupper(substr($user->first_name ?? $user->email, 0, 1)) }}
+                                    </div>
+                                @endif
 
-                    <div class="flex justify-end pt-4">
-                        <x-primary-button type="submit">
-                            Save Profile Changes
-                        </x-primary-button>
-                    </div>
-                </form>
+                                <img x-show="photoPreview"
+                                     :src="photoPreview"
+                                     class="w-24 h-24 rounded-3xl object-cover border-4 border-slate-50 shadow-md"
+                                     style="display: none;"
+                                     alt="Preview">
+
+                                <!-- Overlay camera button -->
+                                <label for="profile_photo" class="absolute inset-0 flex items-center justify-center bg-slate-900/40 rounded-3xl opacity-0 group-hover:opacity-100 cursor-pointer transition-all duration-200">
+                                    <i data-lucide="camera" class="w-6 h-6 text-white"></i>
+                                </label>
+
+                                <input type="file"
+                                       id="profile_photo"
+                                       name="profile_photo"
+                                       class="hidden"
+                                       accept="image/*"
+                                       @change="
+                                           const reader = new FileReader();
+                                           reader.onload = (e) => {
+                                               photoPreview = e.target.result;
+                                           };
+                                           reader.readAsDataURL($event.target.files[0]);
+                                       ">
+                            </div>
+
+                            <div class="text-center sm:text-left space-y-1.5">
+                                <h4 class="text-sm font-bold text-slate-700">Avatar Photo</h4>
+                                <p class="text-xs text-slate-400">Accepts PNG, JPG, or JPEG. Max file limit is 2MB.</p>
+                                <x-secondary-button type="button"
+                                        @click="document.getElementById('profile_photo').click()"
+                                        class="!py-1.5 !text-xs">
+                                    Choose New File
+                                </x-secondary-button>
+                            </div>
+                        </div>
+
+                        <!-- Input Grid (Read-only / Disabled) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                            <div>
+                                <x-input-label value="First Name" />
+                                <x-text-input type="text" :value="old('first_name', $user->first_name)" disabled />
+                            </div>
+                            <div>
+                                <x-input-label value="Middle Name (Optional)" />
+                                <x-text-input type="text" :value="old('middle_name', $user->middle_name)" disabled />
+                            </div>
+                            <div>
+                                <x-input-label value="Last Name" />
+                                <x-text-input type="text" :value="old('last_name', $user->last_name)" disabled />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <x-input-label value="Email Address" />
+                                <x-text-input type="email" :value="old('email', $user->email)" disabled />
+                            </div>
+                            <div>
+                                <x-input-label value="Phone Number" />
+                                <x-text-input type="text" :value="old('phone', $user->phone)" disabled />
+                            </div>
+                        </div>
+
+                        <div>
+                            <x-input-label value="Gender Identification" />
+                            <x-select-input name="gender">
+                                <option value="" disabled selected>Select Gender</option>
+                                <option value="male" {{ old('gender', $user->gender) == 'male' ? 'selected' : '' }}>Male</option>
+                                <option value="female" {{ old('gender', $user->gender) == 'female' ? 'selected' : '' }}>Female</option>
+                                <option value="other" {{ old('gender', $user->gender) == 'other' ? 'selected' : '' }}>Other</option>
+                            </x-select-input>
+                        </div>
+
+                        <div class="flex justify-end pt-4">
+                            <x-primary-button type="submit">
+                                Save Profile Changes
+                            </x-primary-button>
+                        </div>
+                    </form>
+                @endif
             </div>
 
             <!-- TAB 2: SECURITY & PIN -->
@@ -460,6 +525,7 @@
                 </div>
             </div>
 
+            @unless ($isInternalStaff)
             <!-- TAB: WITHDRAWAL ACCOUNT -->
             <div x-show="activeTab === 'withdrawal'"
                  x-transition:enter="transition ease-out duration-250"
@@ -790,6 +856,7 @@
                     </form>
                 </x-modal>
             </div>
+            @endunless
 
         </div>
     </div>

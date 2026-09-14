@@ -75,7 +75,7 @@ class ManageController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
             'phone' => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), Rule::unique(User::class)->ignore($user->id)],
             'status' => ['required', 'string', 'in:active,suspended,inactive,banned'],
-            'role' => ['required', 'string', 'in:personal,agent,partner,business,staff,checker,super_admin,regional_manager,coordinator'],
+            'role' => ['required', 'string', 'in:personal,agent,partner,business,staff,checker,support,super_admin,regional_manager,coordinator'],
         ]);
 
         $previousRole = $user->role;
@@ -229,7 +229,7 @@ class ManageController extends Controller
     public function updateAccess(Request $request, User $user): RedirectResponse
     {
         $request->validate([
-            'role' => ['required', 'string', 'in:personal,agent,partner,business,staff,checker,super_admin,regional_manager,coordinator'],
+            'role' => ['required', 'string', 'in:personal,agent,partner,business,staff,checker,support,super_admin,regional_manager,coordinator'],
         ]);
 
         $previousRole = $user->role;

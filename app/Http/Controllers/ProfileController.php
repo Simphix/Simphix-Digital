@@ -38,6 +38,8 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
+        abort_if(\App\Support\StaffAccess::isInternal($request->user()), 403, 'Personal info editing is not available for internal staff accounts.');
+
         $user = $request->user();
         $user->fill($request->safe()->except(['profile_photo']));
 
@@ -215,6 +217,8 @@ class ProfileController extends Controller
      */
     public function updateWithdrawalAccount(Request $request, PalmPayService $palmPay): RedirectResponse
     {
+        abort_if(\App\Support\StaffAccess::isInternal($request->user()), 403, 'Withdrawal accounts are not available for internal staff accounts.');
+
         $request->validateWithBag('updateWithdrawal', [
             'bankCode' => ['required', 'string', 'exists:banks,bank_code'],
             'account_no' => ['required', 'digits:10'],
@@ -268,6 +272,8 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        abort_if(\App\Support\StaffAccess::isInternal($user), 403, 'Account upgrades are not available for internal staff accounts.');
+
         if ($request->input('role') === 'agent') {
             return Redirect::route('agent-upgrade.show')->with('error', 'Agent upgrades are now instant — use the Upgrade to Agent option instead.');
         }
@@ -309,6 +315,8 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        abort_if(\App\Support\StaffAccess::isInternal($request->user()), 403, 'Internal staff accounts cannot self-delete.');
+
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);
