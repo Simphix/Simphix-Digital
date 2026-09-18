@@ -265,7 +265,10 @@ class SimPlanController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'number'  => 'required|string',
+            'waive_fee' => 'nullable|boolean',
         ]);
+
+        $waiveFee = $request->boolean('waive_fee');
 
         $target = User::find($validated['user_id']);
         if (!$target || $target->role !== 'personal' || $target->status !== 'active') {
@@ -275,7 +278,7 @@ class SimPlanController extends Controller
         $actor = $request->user();
 
         try {
-            $sim = DB::transaction(function () use ($validated, $target, $actor) {
+            $sim = DB::transaction(function () use ($validated, $target, $actor, $waiveFee) {
                 $sim = Sim::where('number', $validated['number'])->lockForUpdate()->first();
 
                 if (!$sim) {
@@ -290,30 +293,39 @@ class SimPlanController extends Controller
                 $serviceField = $simService
                     ? ServiceField::where('service_id', $simService->id)->where('field_name', $sim->category)->first()
                     : null;
-                $payableAmount = $serviceField ? $serviceField->priceForUser($target) : 0.00;
+                $payableAmount = $waiveFee ? 0.00 : ($serviceField ? $serviceField->priceForUser($target) : 0.00);
 
                 $wallet = Wallet::where('user_id', $target->id)->lockForUpdate()->first();
-                if (!$wallet || $wallet->balance < $payableAmount) {
-                    throw new \RuntimeException("Insufficient wallet balance for {$target->first_name}. They need ₦" . number_format($payableAmount, 2) . ' in their wallet.');
+
+                if ($waiveFee) {
+                    // Fee waived: the wallet is never touched (and doesn't even
+                    // have to exist), and no zero-amount debit Transaction is
+                    // written — only the Report row, for the audit trail.
+                    $oldBalance = $newBalance = $wallet->balance ?? 0.00;
+                    $ref = 'ADMIN-ACT-' . time() . '-' . rand(1000, 9999);
+                } else {
+                    if (!$wallet || $wallet->balance < $payableAmount) {
+                        throw new \RuntimeException("Insufficient wallet balance for {$target->first_name}. They need ₦" . number_format($payableAmount, 2) . ' in their wallet.');
+                    }
+
+                    $oldBalance = $wallet->balance;
+                    $wallet->decrement('balance', $payableAmount);
+                    $newBalance = $wallet->balance;
+
+                    $ref = 'ADMIN-ACT-' . time() . '-' . rand(1000, 9999);
+
+                    Transaction::create([
+                        'transaction_ref' => $ref,
+                        'user_id'         => $target->id,
+                        'amount'          => $payableAmount,
+                        'fee'             => 0.00,
+                        'net_amount'      => $payableAmount,
+                        'description'     => "SIM Card Activation: {$sim->number} (Category: {$sim->category}, Network: " . strtoupper($sim->provider) . '), activated directly by admin ' . $actor->first_name . ' ' . $actor->last_name . ' — no commission chain.',
+                        'type'            => 'debit',
+                        'status'          => 'completed',
+                        'performed_by'    => $actor->first_name . ' ' . $actor->last_name,
+                    ]);
                 }
-
-                $oldBalance = $wallet->balance;
-                $wallet->decrement('balance', $payableAmount);
-                $newBalance = $wallet->balance;
-
-                $ref = 'ADMIN-ACT-' . time() . '-' . rand(1000, 9999);
-
-                Transaction::create([
-                    'transaction_ref' => $ref,
-                    'user_id'         => $target->id,
-                    'amount'          => $payableAmount,
-                    'fee'             => 0.00,
-                    'net_amount'      => $payableAmount,
-                    'description'     => "SIM Card Activation: {$sim->number} (Category: {$sim->category}, Network: " . strtoupper($sim->provider) . '), activated directly by admin ' . $actor->first_name . ' ' . $actor->last_name . ' — no commission chain.',
-                    'type'            => 'debit',
-                    'status'          => 'completed',
-                    'performed_by'    => $actor->first_name . ' ' . $actor->last_name,
-                ]);
 
                 Report::create([
                     'user_id'      => $target->id,
@@ -323,7 +335,7 @@ class SimPlanController extends Controller
                     'amount'       => $payableAmount,
                     'status'       => 'completed',
                     'type'         => 'sim_activation',
-                    'description'  => "SIM Card Activation: {$sim->number} (Category: {$sim->category}), direct admin activation — no commission chain.",
+                    'description'  => "SIM Card Activation: {$sim->number} (Category: {$sim->category}), direct admin activation — no commission chain." . ($waiveFee ? ' Activation fee waived by admin; wallet not debited.' : ''),
                     'old_balance'  => $oldBalance,
                     'new_balance'  => $newBalance,
                     'service_id'   => $simService?->id,
@@ -335,7 +347,7 @@ class SimPlanController extends Controller
                     $sim->fresh(),
                     $actor,
                     awardCommission: false,
-                    note: "SIM activated by admin — direct sale to {$target->name} (personal), no commission."
+                    note: "SIM activated by admin — direct sale to {$target->name} (personal), no commission." . ($waiveFee ? ' Activation fee waived.' : '')
                 );
 
                 return $sim->fresh();
@@ -344,7 +356,7 @@ class SimPlanController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', "SIM {$sim->number} assigned and activated for {$target->name} — no commission paid.");
+        return back()->with('success', "SIM {$sim->number} assigned and activated for {$target->name} — no commission paid" . ($waiveFee ? ', activation fee waived (wallet not debited).' : '.'));
     }
 
     /**

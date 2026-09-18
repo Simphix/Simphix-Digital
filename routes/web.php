@@ -124,6 +124,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/phone/send-otp', [ProfileController::class, 'sendPhoneVerificationOtp'])->name('profile.phone.send-otp')->middleware('throttle:5,1');
     Route::post('/profile/phone/verify-otp', [ProfileController::class, 'verifyPhoneOtp'])->name('profile.phone.verify-otp')->middleware('throttle:5,1');
 
+    // CAC registration (customer accounts only — enforced in the controller)
+    Route::prefix('cac')->name('cac.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CacRegistrationController::class, 'overview'])->name('overview');
+        Route::get('/history', [\App\Http\Controllers\CacRegistrationController::class, 'history'])->name('history');
+        Route::get('/history/{registration}', [\App\Http\Controllers\CacRegistrationController::class, 'show'])->name('show');
+        Route::post('/history/{registration}/reply', [\App\Http\Controllers\CacRegistrationController::class, 'reply'])->name('reply');
+        Route::get('/history/{registration}/documents/{document}', [\App\Http\Controllers\CacRegistrationController::class, 'download'])->name('download');
+        Route::get('/{slug}/register', [\App\Http\Controllers\CacRegistrationController::class, 'create'])->name('create');
+        Route::post('/{slug}/register', [\App\Http\Controllers\CacRegistrationController::class, 'store'])->name('store');
+    });
+
     // Support Tickets Routes
     Route::get('/support', [\App\Http\Controllers\SupportController::class, 'index'])->name('support');
     Route::post('/support', [\App\Http\Controllers\SupportController::class, 'store'])->name('support.store');
@@ -349,6 +360,17 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
     // commissions, purchases, the SIM activation bonus, and wallet integrity)
     Route::prefix('admin/reconciliation')->name('admin.reconciliation.')->group(function () {
         Route::get('/{tab?}', [\App\Http\Controllers\Admin\ReconciliationController::class, 'index'])->name('index');
+    });
+
+    // CAC registrations (admin)
+    Route::prefix('admin/cac')->name('admin.cac.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'index'])->name('index');
+        Route::get('/{registration}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'show'])->name('show');
+        Route::post('/{registration}/status', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'updateStatus'])->name('status');
+        Route::post('/{registration}/notes', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'addNote'])->name('notes');
+        Route::post('/{registration}/upload', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'upload'])->name('upload');
+        Route::get('/{registration}/documents/{document}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'download'])->name('download');
+        Route::delete('/{registration}/documents/{document}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'destroyDocument'])->name('documents.destroy');
     });
 
     // Advanced SIM Operations dashboard
