@@ -14,6 +14,7 @@
                 userResults: [],
                 selectedUser: null,
                 simNumber: '',
+                waiveFee: false,
                 submitting: false,
 
                 async searchUsers() {
@@ -90,6 +91,14 @@
                         <x-text-input type="text" x-model="simNumber" placeholder="e.g. 08031234567"
                                       autocomplete="off" class="w-full rounded-xl font-medium" />
                     </div>
+
+                    <label class="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50/60 border border-amber-100 cursor-pointer">
+                        <input type="checkbox" x-model="waiveFee" class="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                        <span>
+                            <span class="block text-xs font-bold text-slate-700">Waive activation fee</span>
+                            <span class="block text-[11px] text-slate-500">If checked, the user's wallet is not debited for this activation.</span>
+                        </span>
+                    </label>
 
                     <button type="button" @click="submit()" :disabled="!selectedUser || !simNumber.trim() || submitting"
                             class="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors">
