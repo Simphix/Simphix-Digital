@@ -43,7 +43,7 @@ class CacRequirements
                 'people_label' => 'Applicant',
                 'people_min' => 1,
                 'names_count' => 2,
-                'timeline' => ['Name search & reservation: 1–3 days', 'CAC approval: typically within a few working days'],
+                'timeline' => ['Name search & reservation: near-instant', 'CAC approval: typically within a few working days'],
                 'checklist' => [
                     'First name, surname & other names',
                     'Phone number & email address',
@@ -65,7 +65,7 @@ class CacRequirements
                 'people_label' => 'Shareholder',
                 'people_min' => 1,
                 'names_count' => 2,
-                'timeline' => ['Name reservation: 1–3 days', 'Incorporation & CAC approval: typically within a few working days'],
+                'timeline' => ['Name reservation: near-instant', 'Incorporation & CAC approval: typically within a few working days'],
                 'checklist' => [
                     'For each shareholder: ID card, signature, passport photograph & NIN slip',
                     'Email, phone number, home address (house number, street, LGA)',
@@ -96,7 +96,7 @@ class CacRequirements
             'people_min' => 2,
             'names_count' => 2,
             'timeline' => [
-                'Name reservation: 1–3 days',
+                'Name reservation: near-instant',
                 'Newspaper publication (1 national + 1 local/state paper): 2–4 weeks',
                 'Public objection period: usually 28 days',
                 'CAC approval: 2–3 weeks after the objection period',
