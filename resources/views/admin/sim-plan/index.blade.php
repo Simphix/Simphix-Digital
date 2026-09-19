@@ -38,6 +38,9 @@
                     let inputs = '<input type=\'hidden\' name=\'_token\' value=\'{{ csrf_token() }}\'>';
                     inputs += '<input type=\'hidden\' name=\'user_id\' value=\'' + this.selectedUser.id + '\'>';
                     inputs += '<input type=\'hidden\' name=\'number\' value=\'' + this.simNumber.trim() + '\'>';
+                    if (this.waiveFee) {
+                        inputs += '<input type=\'hidden\' name=\'waive_fee\' value=\'1\'>';
+                    }
                     f.innerHTML = inputs;
                     document.body.appendChild(f);
                     f.submit();
