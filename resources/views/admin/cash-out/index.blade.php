@@ -15,6 +15,8 @@
             </div>
         </div>
 
+        @include('admin.partials.cashout-switcher', ['platformPendingCount' => $platformPendingCount])
+
         {{-- Flash Messages --}}
         @if (session('success'))
             <div class="p-4 bg-emerald-50/70 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 shadow-sm">

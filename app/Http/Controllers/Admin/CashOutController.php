@@ -37,7 +37,9 @@ class CashOutController extends Controller
             ->paginate(10, ['*'], 'requests_page')
             ->withQueryString();
 
-        return view('admin.cash-out.index', compact('pending', 'resolved'));
+        $platformPendingCount = \App\Models\PlatformCashOutRequest::where('status', 'pending')->count();
+
+        return view('admin.cash-out.index', compact('pending', 'resolved', 'platformPendingCount'));
     }
 
     /**
