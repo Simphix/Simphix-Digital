@@ -14,6 +14,14 @@
             </div>
         </div>
 
+        @include('admin.partials.cashout-switcher', ['userPendingCount' => $userPendingCount, 'platformPendingCount' => $pending->count()])
+
+        @if ($soleAdmin && $pending->where('requested_by', auth()->id())->isNotEmpty())
+            <div class="p-3 bg-amber-50 border border-amber-100 text-amber-800 rounded-xl text-xs font-semibold">
+                You're the only active super admin, so you can approve requests you submitted yourself. Once another super admin exists, they'll be required to approve them.
+            </div>
+        @endif
+
         @if (session('success'))
             <div class="p-4 bg-emerald-50/70 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 shadow-sm">
                 <div class="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0 shadow-inner">
@@ -70,7 +78,7 @@
                                 <td class="py-3 font-bold text-slate-700">₦{{ number_format($req->amount, 2) }}</td>
                                 <td class="py-3 text-slate-400 font-medium">{{ $req->created_at->diffForHumans() }}</td>
                                 <td class="py-3 text-right space-x-1 whitespace-nowrap">
-                                    @if ($req->requested_by === auth()->id())
+                                    @if ($req->requested_by === auth()->id() && !$soleAdmin)
                                         <span class="text-xs text-slate-400 italic">Awaiting another admin</span>
                                     @else
                                         <form action="{{ route('admin.platform-wallets.approvals.approve', $req->id) }}" method="POST" class="inline-block">

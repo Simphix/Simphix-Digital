@@ -30,7 +30,24 @@ class PlatformCashOutApprovalController extends Controller
             ->paginate(10, ['*'], 'requests_page')
             ->withQueryString();
 
-        return view('admin.platform-wallets.cash-out-approvals', compact('pending', 'resolved'));
+        $soleAdmin = $this->isSoleAdmin();
+        $userPendingCount = \App\Models\CashOutRequest::where('status', 'pending')->count();
+
+        return view('admin.platform-wallets.cash-out-approvals', compact('pending', 'resolved', 'soleAdmin', 'userPendingCount'));
+    }
+
+    /**
+     * Requesters normally can't approve their own platform cash-out (real company
+     * money — a second admin should sign off). But if the requester is the only
+     * active super_admin nobody else could ever approve it, so the request would
+     * sit pending forever; in that case self-approval is allowed.
+     */
+    private function isSoleAdmin(): bool
+    {
+        return !\App\Models\User::where('role', 'super_admin')
+            ->where('status', 'active')
+            ->where('id', '!=', Auth::id())
+            ->exists();
     }
 
     /**
@@ -46,8 +63,8 @@ class PlatformCashOutApprovalController extends Controller
 
         // Both requester and approver can be super_admin here — block
         // self-approval since this moves real company money.
-        if ($platformCashOutRequest->requested_by === Auth::id()) {
-            return back()->with('error', 'You cannot approve a platform cash-out request you submitted yourself.');
+        if ($platformCashOutRequest->requested_by === Auth::id() && !$this->isSoleAdmin()) {
+            return back()->with('error', 'You cannot approve a platform cash-out request you submitted yourself — another super admin must approve it.');
         }
 
         $stillPending = DB::transaction(function () use ($platformCashOutRequest) {
@@ -147,8 +164,8 @@ class PlatformCashOutApprovalController extends Controller
             return back()->with('error', 'This request has already been processed.');
         }
 
-        if ($platformCashOutRequest->requested_by === Auth::id()) {
-            return back()->with('error', 'You cannot reject a platform cash-out request you submitted yourself.');
+        if ($platformCashOutRequest->requested_by === Auth::id() && !$this->isSoleAdmin()) {
+            return back()->with('error', 'You cannot reject a platform cash-out request you submitted yourself — another super admin must handle it.');
         }
 
         try {
