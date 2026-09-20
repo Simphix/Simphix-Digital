@@ -800,6 +800,10 @@ class SimsController extends Controller
         $sim = Sim::find($request->sim_id);
         $targetUser = User::find($request->user_id);
 
+        if ($targetUser->role === 'personal') {
+            return back()->with('error', 'Personal users cannot be assigned SIMs — activate the SIM for them instead.');
+        }
+
         // Hierarchy path: Regional Manager -> Coordinator, Coordinator -> Partner, Partner -> User.
         try {
             app(SimAssignmentService::class)->assignDown($sim, $from, $targetUser);
@@ -825,6 +829,9 @@ class SimsController extends Controller
 
         $from = Auth::user();
         $targetUser = User::find($request->user_id);
+        if ($targetUser->role === 'personal') {
+            return back()->with('error', 'Personal users cannot be assigned SIMs — activate the SIM for them instead.');
+        }
         $sims = Sim::whereIn('id', $request->sim_ids)->get();
         $service = app(SimAssignmentService::class);
 
@@ -902,54 +909,7 @@ class SimsController extends Controller
                     throw new \Exception('This SIM card is already active.');
                 }
 
-                // Resolve the activation price for the target user's role/category.
-                $simService = \App\Models\Service::where('name', 'simcard')->first();
-                $serviceField = $simService
-                    ? \App\Models\ServiceField::where('service_id', $simService->id)->where('field_name', $sim->category)->first()
-                    : null;
-                $payableAmount = $serviceField ? $serviceField->priceForUser($targetUser) : 0.00;
-
-                // Lock and debit the downline user's wallet — not the partner's.
-                $wallet = \App\Models\Wallet::where('user_id', $targetUser->id)->lockForUpdate()->first();
-                if (!$wallet || $wallet->balance < $payableAmount) {
-                    throw new \Exception("Insufficient wallet balance for {$targetUser->first_name}. They need ₦" . number_format($payableAmount, 2) . ' in their wallet.');
-                }
-
-                $oldBalance = $wallet->balance;
-                $wallet->decrement('balance', $payableAmount);
-                $newBalance = $wallet->balance;
-
-                $ref = 'ACT-' . time() . '-' . rand(1000, 9999);
-
-                \App\Models\Transaction::create([
-                    'transaction_ref' => $ref,
-                    'user_id'         => $targetUser->id,
-                    'amount'          => $payableAmount,
-                    'fee'             => 0.00,
-                    'net_amount'      => $payableAmount,
-                    'description'     => "SIM Card Activation: {$sim->number} (Category: {$sim->category}, Network: " . strtoupper($sim->provider) . '), activated by ' . str_replace('_', ' ', $partner->role) . " {$partner->first_name} {$partner->last_name}",
-                    'type'            => 'debit',
-                    'status'          => 'completed',
-                    'performed_by'    => $partner->first_name . ' ' . $partner->last_name,
-                ]);
-
-                \App\Models\Report::create([
-                    'user_id'      => $targetUser->id,
-                    'phone_number' => $sim->number,
-                    'network'      => $sim->provider,
-                    'ref'          => $ref,
-                    'amount'       => $payableAmount,
-                    'status'       => 'completed',
-                    'type'         => 'sim_activation',
-                    'description'  => "SIM Card Activation: {$sim->number} (Category: {$sim->category}), activated by " . str_replace('_', ' ', $partner->role),
-                    'old_balance'  => $oldBalance,
-                    'new_balance'  => $newBalance,
-                    'service_id'   => $simService ? $simService->id : null,
-                ]);
-
-                $sim->update(['user_id' => $targetUser->id]);
-
-                app(SimAssignmentService::class)->activate($sim, $partner);
+                $this->debitAndActivate($sim, $partner, $targetUser);
 
                 return $sim;
             });
@@ -965,6 +925,63 @@ class SimsController extends Controller
 
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * Debit the personal user's wallet the activation price and activate the
+     * SIM for them (commission chain fires). Shared by direct activation and
+     * by fulfilling a personal user's SIM request — a personal user never
+     * receives an assignment, only an activation. Call inside a transaction
+     * with $sim already locked and verified as held by $partner.
+     */
+    private function debitAndActivate(Sim $sim, User $partner, User $targetUser): void
+    {
+        $simService = \App\Models\Service::where('name', 'simcard')->first();
+        $serviceField = $simService
+            ? \App\Models\ServiceField::where('service_id', $simService->id)->where('field_name', $sim->category)->first()
+            : null;
+        $payableAmount = $serviceField ? $serviceField->priceForUser($targetUser) : 0.00;
+
+        $wallet = \App\Models\Wallet::where('user_id', $targetUser->id)->lockForUpdate()->first();
+        if (!$wallet || $wallet->balance < $payableAmount) {
+            throw new \Exception("Insufficient wallet balance for {$targetUser->first_name}. They need ₦" . number_format($payableAmount, 2) . ' in their wallet.');
+        }
+
+        $oldBalance = $wallet->balance;
+        $wallet->decrement('balance', $payableAmount);
+        $newBalance = $wallet->balance;
+
+        $ref = 'ACT-' . time() . '-' . rand(1000, 9999);
+
+        \App\Models\Transaction::create([
+            'transaction_ref' => $ref,
+            'user_id'         => $targetUser->id,
+            'amount'          => $payableAmount,
+            'fee'             => 0.00,
+            'net_amount'      => $payableAmount,
+            'description'     => "SIM Card Activation: {$sim->number} (Category: {$sim->category}, Network: " . strtoupper($sim->provider) . '), activated by ' . str_replace('_', ' ', $partner->role) . " {$partner->first_name} {$partner->last_name}",
+            'type'            => 'debit',
+            'status'          => 'completed',
+            'performed_by'    => $partner->first_name . ' ' . $partner->last_name,
+        ]);
+
+        \App\Models\Report::create([
+            'user_id'      => $targetUser->id,
+            'phone_number' => $sim->number,
+            'network'      => $sim->provider,
+            'ref'          => $ref,
+            'amount'       => $payableAmount,
+            'status'       => 'completed',
+            'type'         => 'sim_activation',
+            'description'  => "SIM Card Activation: {$sim->number} (Category: {$sim->category}), activated by " . str_replace('_', ' ', $partner->role),
+            'old_balance'  => $oldBalance,
+            'new_balance'  => $newBalance,
+            'service_id'   => $simService ? $simService->id : null,
+        ]);
+
+        $sim->update(['user_id' => $targetUser->id]);
+
+        app(SimAssignmentService::class)->activate($sim, $partner);
     }
 
     /**
@@ -1385,6 +1402,7 @@ class SimsController extends Controller
         ]);
 
         $processedCount = 0;
+        $fulfilledRole = User::where('id', $simRequest->user_id)->value('role');
 
         try {
             DB::transaction(function () use ($simRequest, $user, $request, &$processedCount) {
@@ -1412,7 +1430,13 @@ class SimsController extends Controller
                         // skip it rather than aborting the whole batch.
                         continue;
                     }
-                    $service->assignDown($sim, $user, $requester);
+                    if ($requester->role === 'personal') {
+                        // Personal users never hold inventory: fulfilling their
+                        // request activates the SIM (wallet debit + commissions).
+                        $this->debitAndActivate($sim, $user, $requester);
+                    } else {
+                        $service->assignDown($sim, $user, $requester);
+                    }
                     $processedCount++;
                 }
 
@@ -1429,7 +1453,7 @@ class SimsController extends Controller
                 ]);
             });
 
-            return back()->with('success', "Request fulfilled: {$processedCount} SIM(s) assigned.");
+            return back()->with('success', "Request fulfilled: {$processedCount} SIM(s) " . ($fulfilledRole === 'personal' ? 'activated.' : 'assigned.'));
         } catch (\Exception $e) {
             Log::error('Downline SIM request fulfillment failed.', ['sim_request_id' => $simRequest->id, 'upline_id' => $user->id, 'exception' => $e->getMessage()]);
 
