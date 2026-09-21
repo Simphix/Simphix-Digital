@@ -105,81 +105,76 @@
             };
         @endphp
 
-        <!-- ADMIN KEY PERFORMANCE INDICATORS GRID (KPIs) -->
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-5 g-3 mb-4">
-
-            <!-- KPI 1: System Users -->
+        <!-- ADMIN KEY PERFORMANCE INDICATORS (KPIs): money cards get the wide top row, counters sit below.
+             Values wrap instead of truncating so large figures are always shown in full. -->
+        <div class="row row-cols-1 row-cols-md-3 g-3 mb-3">
             <div class="col">
-                <div class="dash-card p-3.5 h-100 flex items-center gap-3">
-                    <div class="rounded-lg bg-primary/10 text-primary flex items-center justify-center w-10 h-10 shrink-0">
-                        <i data-lucide="users" class="w-5 h-5"></i>
+                <div class="dash-card p-4 h-100">
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <div class="rounded-lg bg-vibrant/10 text-vibrant flex items-center justify-center w-9 h-9 shrink-0">
+                            <i data-lucide="wallet" class="w-[18px] h-[18px]"></i>
+                        </div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0">Circulating Funds</p>
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs text-slate-400 mb-0.5">System Users</p>
-                        <p class="text-lg font-bold font-display text-slate-800 tracking-tight mb-0 truncate">{{ number_format($totalUsers) }}</p>
-                        <p class="text-xs text-slate-400 mb-0 truncate">{{ number_format($activeUsers) }} active &middot; {{ number_format($totalUsers - $activeUsers) }} suspended</p>
-                    </div>
+                    <p class="text-2xl sm:text-3xl font-bold font-display text-slate-800 tracking-tight mb-1 leading-tight" style="overflow-wrap:anywhere">₦{{ number_format($totalWalletBalance, 2) }}</p>
+                    <div class="text-xs text-slate-400 mb-0 leading-relaxed">Bonus pool: <span class="font-semibold text-slate-500">₦{{ number_format($totalWalletBonus, 2) }}</span></div>
                 </div>
             </div>
-
-            <!-- KPI 2: Circulating Capital -->
             <div class="col">
-                <div class="dash-card p-3.5 h-100 flex items-center gap-3">
-                    <div class="rounded-lg bg-vibrant/10 text-vibrant flex items-center justify-center w-10 h-10 shrink-0">
-                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                <div class="dash-card p-4 h-100">
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <div class="rounded-lg bg-primary/10 text-primary flex items-center justify-center w-9 h-9 shrink-0">
+                            <i data-lucide="receipt" class="w-[18px] h-[18px]"></i>
+                        </div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0">Transaction Volume</p>
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs text-slate-400 mb-0.5">Circulating Funds</p>
-                        <p class="text-lg font-bold font-display text-slate-800 tracking-tight mb-0 truncate">₦{{ number_format($totalWalletBalance, 2) }}</p>
-                        <p class="text-xs text-slate-400 mb-0 truncate">Bonus pool: ₦{{ number_format($totalWalletBonus, 2) }}</p>
-                    </div>
+                    <p class="text-2xl sm:text-3xl font-bold font-display text-slate-800 tracking-tight mb-1 leading-tight" style="overflow-wrap:anywhere">₦{{ number_format($totalTransactionVolume, 2) }}</p>
+                    <div class="text-xs text-slate-400 mb-0 leading-relaxed"><span class="font-semibold text-slate-500">{{ number_format($totalTransactionsCount) }}</span> completed &middot; {{ $rangeLabel }}</div>
                 </div>
             </div>
-
-            <!-- KPI 3: System Transactions (ranged) -->
             <div class="col">
-                <div class="dash-card p-3.5 h-100 flex items-center gap-3">
-                    <div class="rounded-lg bg-primary/10 text-primary flex items-center justify-center w-10 h-10 shrink-0">
-                        <i data-lucide="receipt" class="w-5 h-5"></i>
+                <div class="dash-card p-4 h-100">
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <div class="rounded-lg bg-primary/10 text-primary flex items-center justify-center w-9 h-9 shrink-0">
+                            <i data-lucide="users" class="w-[18px] h-[18px]"></i>
+                        </div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0">System Users</p>
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs text-slate-400 mb-0.5">Transaction Volume</p>
-                        <p class="text-lg font-bold font-display text-slate-800 tracking-tight mb-0 truncate">₦{{ number_format($totalTransactionVolume, 2) }}</p>
-                        <p class="text-xs text-slate-400 mb-0 truncate">{{ number_format($totalTransactionsCount) }} completed &middot; {{ $rangeLabel }}</p>
-                    </div>
+                    <p class="text-2xl sm:text-3xl font-bold font-display text-slate-800 tracking-tight mb-1 leading-tight" style="overflow-wrap:anywhere">{{ number_format($totalUsers) }}</p>
+                    <div class="text-xs text-slate-400 mb-0 leading-relaxed"><span class="font-semibold text-slate-500">{{ number_format($activeUsers) }}</span> active &middot; <span class="font-semibold text-slate-500">{{ number_format($totalUsers - $activeUsers) }}</span> suspended</div>
                 </div>
             </div>
+        </div>
 
-            <!-- KPI 4: SIM Activations (ranged) -->
+        <div class="row row-cols-1 row-cols-md-2 g-3 mb-4">
             <div class="col">
-                <div class="dash-card p-3.5 h-100 flex items-center gap-3">
-                    <div class="rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center w-10 h-10 shrink-0">
-                        <i data-lucide="smartphone" class="w-5 h-5"></i>
+                <div class="dash-card p-4 h-100">
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <div class="rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center w-9 h-9 shrink-0">
+                            <i data-lucide="smartphone" class="w-[18px] h-[18px]"></i>
+                        </div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0">SIM Activations</p>
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs text-slate-400 mb-0.5">SIM Activations</p>
-                        <p class="text-lg font-bold font-display text-slate-800 tracking-tight mb-0 truncate">{{ number_format($simActivationsCount) }}</p>
-                        <p class="text-xs text-slate-400 mb-0 truncate">{{ $rangeLabel }}</p>
-                    </div>
+                    <p class="text-2xl font-bold font-display text-slate-800 tracking-tight mb-1 leading-tight" style="overflow-wrap:anywhere">{{ number_format($simActivationsCount) }}</p>
+                    <div class="text-xs text-slate-400 mb-0 leading-relaxed">{{ $rangeLabel }}</div>
                 </div>
             </div>
-
-            <!-- KPI 5: Pending Operations -->
             <div class="col">
-                <div class="dash-card p-3.5 h-100 flex items-center gap-3">
-                    <div class="rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center w-10 h-10 shrink-0">
-                        <i data-lucide="bell" class="w-5 h-5"></i>
+                <div class="dash-card p-4 h-100">
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <div class="rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center w-9 h-9 shrink-0">
+                            <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
+                        </div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0">Pending Requests</p>
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs text-slate-400 mb-0.5">Pending Requests</p>
-                        <p class="text-lg font-bold font-display text-slate-800 tracking-tight mb-0 truncate">
-                            {{ $pendingUpgradesCount + $pendingSimRequestsCount + $openTicketsCount }}
-                        </p>
-                        <p class="text-xs text-slate-400 mb-0 truncate">{{ $pendingUpgradesCount }} upgrades &middot; {{ $pendingSimRequestsCount }} SIMs &middot; {{ $openTicketsCount }} tickets</p>
-                    </div>
+                    <p class="text-2xl font-bold font-display text-slate-800 tracking-tight mb-1 leading-tight" style="overflow-wrap:anywhere">{{ number_format($pendingUpgradesCount + $pendingSimRequestsCount + $openTicketsCount) }}</p>
+                    <div class="text-xs text-slate-400 mb-0 leading-relaxed"><div class="flex flex-wrap gap-x-4 gap-y-0.5">
+                        <span><span class="font-semibold text-slate-500">{{ number_format($pendingUpgradesCount) }}</span> upgrades</span>
+                        <span><span class="font-semibold text-slate-500">{{ number_format($pendingSimRequestsCount) }}</span> SIMs</span>
+                        <span><span class="font-semibold text-slate-500">{{ number_format($openTicketsCount) }}</span> tickets</span>
+                    </div></div>
                 </div>
             </div>
-
         </div>
 
         <!-- QUICK ADMIN ACTIONS PANEL -->
