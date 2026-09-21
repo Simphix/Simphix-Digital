@@ -16,8 +16,16 @@
                 <p class="text-sm text-slate-500 mt-1">{{ $device['desc'] }}</p>
             </div>
             <div class="shrink-0 text-center sm:text-right">
-                <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Activation Fee</span>
+                <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">{{ $epOverride ? 'Customer Price' : 'Activation Fee' }}</span>
                 <span class="text-2xl font-extrabold text-primary font-display">₦{{ number_format($price ?? 0, 2) }}</span>
+                @if ($epOverride)
+                    <span class="block text-[11px] font-semibold text-emerald-600 mt-0.5">
+                        {{ $user->role === 'business_agent' ? 'You earn' : 'Your margin' }} ₦{{ number_format($epEarning ?? 0, 2) }} per sale
+                    </span>
+                    <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-700">
+                        <i data-lucide="badge-check" class="w-3 h-3"></i> Enterprise pricing — overrides platform rates
+                    </span>
+                @endif
             </div>
         </div>
 

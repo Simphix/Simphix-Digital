@@ -54,10 +54,15 @@
                         </div>
                         <div class="shrink-0 flex items-center gap-4">
                             <div class="text-center sm:text-right">
-                                <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">From</span>
+                                <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">{{ !empty($device['ep_override']) ? 'Your Price' : 'From' }}</span>
                                 <span class="text-xl font-extrabold text-primary font-display">₦{{ number_format($device['price'] ?? 0, 2) }}</span>
                                 @if (!is_null($device['commission']) && $device['commission'] > 0)
                                     <span class="block text-[11px] font-semibold text-emerald-600 mt-0.5">Earn ₦{{ number_format($device['commission'], 2) }} per sale</span>
+                                @endif
+                                @if (!empty($device['ep_override']))
+                                    <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-700">
+                                        <i data-lucide="badge-check" class="w-3 h-3"></i> Enterprise pricing
+                                    </span>
                                 @endif
                             </div>
                             <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:translate-x-0.5">

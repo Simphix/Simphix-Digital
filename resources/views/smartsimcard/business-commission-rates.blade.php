@@ -16,6 +16,15 @@
             </p>
         </div>
 
+        <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4 flex items-start gap-3">
+            <i data-lucide="badge-check" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+            <p class="text-xs text-emerald-900 leading-relaxed">
+                <strong>Your rates override the platform pricing completely.</strong>
+                Customers activated through your business are debited exactly the price you set here, your agents earn the commission you set, and you keep the difference.
+                Platform prices below are shown for reference only. A category with no rate of its own uses your default rate; with neither, platform pricing applies.
+            </p>
+        </div>
+
         {{-- Flash Messages --}}
         @if (session('success'))
             <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-emerald-800 flex items-start gap-3 shadow-sm">
@@ -53,11 +62,24 @@
             <h3 class="font-bold text-slate-800 font-display pb-3 border-b border-slate-100">Per-category rates</h3>
 
             @forelse ($fields as $field)
-                @php $rate = $rates->get($field->id); @endphp
+                @php
+                    $rate = $rates->get($field->id);
+                    $effective = $rate ?? $defaultRate;
+                    $platformPrice = $platformPrices[$field->id] ?? null;
+                @endphp
                 <form action="{{ route('sims.business.commission-rates.store') }}" method="POST" class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end border-b border-slate-50 pb-4 last:border-0 last:pb-0">
                     @csrf
                     <input type="hidden" name="service_fields_id" value="{{ $field->id }}" />
-                    <div class="sm:col-span-1 text-sm font-semibold text-slate-700">{{ $field->field_name }}</div>
+                    <div class="sm:col-span-1">
+                        <span class="block text-sm font-semibold text-slate-700">{{ $field->field_name }}</span>
+                        <span class="block text-[11px] text-slate-400">Platform: ₦{{ number_format($platformPrice ?? 0, 2) }}</span>
+                        @if ($effective && (float) $effective->price > 0)
+                            <span class="inline-flex mt-1 px-1.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-700">{{ $rate ? 'Custom' : 'Default' }} rate active</span>
+                            <span class="block text-[11px] text-slate-500 mt-0.5">Customer pays ₦{{ number_format($effective->price, 2) }} · agent ₦{{ number_format($effective->commission, 2) }} · you ₦{{ number_format(max($effective->price - $effective->commission, 0), 2) }}</span>
+                        @else
+                            <span class="inline-flex mt-1 px-1.5 py-0.5 rounded-full bg-amber-50 border border-amber-100 text-[10px] font-bold text-amber-700">Platform pricing</span>
+                        @endif
+                    </div>
                     <div class="sm:col-span-2">
                         <x-input-label value="Price (₦)" />
                         <x-text-input type="number" step="0.01" min="0" name="price" class="w-full" value="{{ old('price', $rate->price ?? '') }}" placeholder="Uses default" />
