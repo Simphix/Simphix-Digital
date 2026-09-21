@@ -8,6 +8,7 @@ use App\Models\SimRequest;
 use App\Models\SimSwapRequest;
 use App\Models\User;
 use App\Services\SimAssignmentService;
+use App\Support\EnterprisePricing;
 use App\Support\RoleHierarchy;
 use App\Support\SimAccess;
 use App\Support\SimStatus;
@@ -54,10 +55,15 @@ class SimsController extends Controller
         $simService = \App\Models\Service::where('name', 'simcard')->first();
         $categories = [];
         if ($simService) {
+            // Enterprise Partners and their business agents see the EP's own
+            // customer price, which completely overrides the platform's.
+            $businessId = in_array($user->role, ['business', 'business_agent'], true) ? EnterprisePricing::businessIdFor($user) : null;
             foreach ($simService->fields()->active()->get() as $field) {
+                $epPrice = EnterprisePricing::customerPrice($businessId, $field->field_name);
                 $categories[] = [
                     'name'  => $field->field_name,
-                    'price' => $field->priceForUser($user),
+                    'price' => $epPrice ?? $field->priceForUser($user),
+                    'ep_override' => $epPrice !== null,
                 ];
             }
         } else {
@@ -99,7 +105,8 @@ class SimsController extends Controller
                 'desc' => $meta['desc'],
                 'illustration' => $meta['illustration'],
                 'price' => $categoryPrices[$meta['category']] ?? null,
-                'commission' => $canEarn ? $this->resolveCommissionForRole($user, $meta['category']) : null,
+                'commission' => $canEarn ? (EnterprisePricing::earningFor($user, $meta['category']) ?? $this->resolveCommissionForRole($user, $meta['category'])) : null,
+                'ep_override' => (bool) (collect($categories)->firstWhere('name', $meta['category'])['ep_override'] ?? false),
                 'route' => $goToRequest ? route('sims.' . $slug . '.request') : route('sims.' . $slug),
                 'comingSoon' => false,
             ];
@@ -204,6 +211,10 @@ class SimsController extends Controller
             $personalPrice = $field
                 ? (float) (\App\Models\ServicePrice::where('service_fields_id', $field->id)->where('user_type', 'personal')->whereNull('user_id')->value('price') ?? $field->base_price)
                 : null;
+            // A business agent's customers pay the Enterprise Partner's price, not the platform's.
+            if ($user->role === 'business_agent') {
+                $personalPrice = EnterprisePricing::customerPrice(EnterprisePricing::businessIdFor($user), $category) ?? $personalPrice;
+            }
             $activationDisabled = (bool) ($field->activation_disabled ?? false);
         }
 
@@ -211,6 +222,8 @@ class SimsController extends Controller
             'user' => $user,
             'device' => $meta,
             'personalPrice' => $personalPrice,
+            'epOverride' => (bool) (collect($categories)->firstWhere('name', $category)['ep_override'] ?? false),
+            'epEarning' => EnterprisePricing::earningFor($user, $category),
             'slug' => $slug,
             'category' => $category,
             'price' => $price,
@@ -940,7 +953,11 @@ class SimsController extends Controller
         $serviceField = $simService
             ? \App\Models\ServiceField::where('service_id', $simService->id)->where('field_name', $sim->category)->first()
             : null;
-        $payableAmount = $serviceField ? $serviceField->priceForUser($targetUser) : 0.00;
+        // The Enterprise Partner's configured price completely overrides the
+        // platform price for SIMs in their chain (same rate the payout
+        // listener splits), so the customer is debited exactly what the EP set.
+        $payableAmount = EnterprisePricing::customerPrice($sim->business_id, $sim->category)
+            ?? ($serviceField ? $serviceField->priceForUser($targetUser) : 0.00);
 
         $wallet = \App\Models\Wallet::where('user_id', $targetUser->id)->lockForUpdate()->first();
         if (!$wallet || $wallet->balance < $payableAmount) {

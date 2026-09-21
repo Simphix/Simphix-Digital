@@ -30,7 +30,11 @@ class BusinessCommissionRateController extends Controller
             ->get()
             ->keyBy(fn (BusinessCommissionRate $rate) => $rate->service_fields_id ?? 'default');
 
-        return view('smartsimcard.business-commission-rates', compact('fields', 'rates'));
+        // Platform (system) prices, shown for reference only — the rates below
+        // completely override them for this EP's whole chain.
+        $platformPrices = $fields->mapWithKeys(fn ($f) => [$f->id => $f->getPriceForUserType('personal')]);
+
+        return view('smartsimcard.business-commission-rates', compact('fields', 'rates', 'platformPrices'));
     }
 
     public function store(Request $request)

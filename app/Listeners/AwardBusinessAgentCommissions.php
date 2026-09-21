@@ -3,7 +3,6 @@
 namespace App\Listeners;
 
 use App\Events\SimActivated;
-use App\Models\BusinessCommissionRate;
 use App\Models\CommissionEarning;
 use App\Models\Report;
 use App\Models\Service;
@@ -11,6 +10,7 @@ use App\Models\Sim;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Support\EnterprisePricing;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -40,15 +40,9 @@ class AwardBusinessAgentCommissions
             return;
         }
 
-        $rate = BusinessCommissionRate::where('business_id', $sim->business_id)
-            ->where(function ($query) use ($sim) {
-                $query->whereHas('serviceField', fn ($q) => $q->where('field_name', $sim->category))
-                    ->orWhereNull('service_fields_id');
-            })
-            ->orderByRaw('service_fields_id IS NULL')
-            ->first();
+        $rate = EnterprisePricing::rateFor($sim->business_id, $sim->category);
 
-        if (!$rate || (float) $rate->price <= 0.00) {
+        if (!$rate) {
             return;
         }
 
