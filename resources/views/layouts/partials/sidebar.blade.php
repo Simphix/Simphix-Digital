@@ -200,7 +200,9 @@
                 <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Administration</span>
 
                 @php
-                    $adminUsersActive = request()->routeIs('admin.manage.users*', 'admin.manage.upgrades*', 'admin.manage.access*');
+                    $replaceManagerActive = request()->routeIs('admin.manage.replace-manager*', 'admin.manage.users.replace*');
+                    $manageUsersActive = request()->routeIs('admin.manage.users*') && !$replaceManagerActive;
+                    $adminUsersActive = $manageUsersActive || $replaceManagerActive || request()->routeIs('admin.manage.upgrades*', 'admin.manage.access*');
                 @endphp
                 <div x-data="{ open: {{ $adminUsersActive ? 'true' : 'false' }} }">
                     <button type="button"
@@ -224,9 +226,10 @@
                          x-transition:leave-end="opacity-0 -translate-y-1"
                          class="mt-1 ml-[22px] space-y-0.5 border-l border-slate-200 pl-2.5" style="display: none;">
 
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.users'), 'icon' => 'users', 'label' => 'Manage Users', 'active' => request()->routeIs('admin.manage.users*')])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.users'), 'icon' => 'users', 'label' => 'Manage Users', 'active' => $manageUsersActive])
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.upgrades'), 'icon' => 'arrow-up-circle', 'label' => 'Manage Upgrades', 'active' => request()->routeIs('admin.manage.upgrades*')])
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.access'), 'icon' => 'shield-check', 'label' => 'Manage Access', 'active' => request()->routeIs('admin.manage.access*')])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.replace-manager.index'), 'icon' => 'repeat', 'label' => 'Replace Manager', 'active' => $replaceManagerActive])
                     </div>
                 </div>
 

@@ -17,6 +17,37 @@ class ManagerReplacementController extends Controller
     }
 
     /**
+     * Search-first picker: choose which manager (role in
+     * ManagerReplacementService::replaceableRoles()) to replace, before
+     * landing on their individual confirmation screen.
+     */
+    public function index(Request $request): View
+    {
+        $roles = ManagerReplacementService::replaceableRoles();
+
+        $query = User::query()->whereIn('role', $roles);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('middle_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('role') && in_array($request->role, $roles, true)) {
+            $query->where('role', $request->role);
+        }
+
+        $managers = $query->orderBy('role')->orderBy('first_name')->paginate(15)->withQueryString();
+
+        return view('admin.manage.replace_manager_picker', compact('managers', 'roles'));
+    }
+
+    /**
      * Confirmation screen: pick the vacant account that will take over
      * $outgoing's seat, after seeing exactly what that involves.
      */

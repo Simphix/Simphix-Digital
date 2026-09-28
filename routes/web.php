@@ -269,6 +269,7 @@ Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->
 
     // Manager replacement — hand an upline's entire seat (jurisdiction,
     // downline, SIM holdings, pricing overrides) to a vacant same-role user.
+    Route::get('/replace-manager', [\App\Http\Controllers\Admin\ManagerReplacementController::class, 'index'])->name('replace-manager.index');
     Route::get('/users/{user}/replace', [\App\Http\Controllers\Admin\ManagerReplacementController::class, 'show'])->name('users.replace');
     Route::post('/users/{user}/replace', [\App\Http\Controllers\Admin\ManagerReplacementController::class, 'store'])->name('users.replace.store');
 
