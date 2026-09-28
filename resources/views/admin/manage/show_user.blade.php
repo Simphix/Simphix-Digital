@@ -109,6 +109,13 @@
                                 Place Lien
                             </button>
                         @endif
+                        @if (\App\Services\ManagerReplacementService::roleColumn($user->role))
+                            <a href="{{ route('admin.manage.users.replace', $user) }}"
+                               class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center gap-2">
+                                <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
+                                Replace Manager
+                            </a>
+                        @endif
                         <a href="{{ route('admin.manage.users.edit', $user) }}"
                            class="px-4 py-2.5 bg-gradient-to-r from-[#0056D2] to-[#0049b8] hover:from-[#374368] hover:to-[#465785] text-white text-xs font-semibold rounded-xl shadow-md shadow-[#0056D2]/10 transition-all duration-200 flex items-center gap-2">
                             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
