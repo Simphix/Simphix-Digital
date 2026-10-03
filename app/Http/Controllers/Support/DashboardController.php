@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Support;
 
 use App\Http\Controllers\Controller;
+use App\Models\Report;
 use App\Models\Sim;
 use App\Models\Ticket;
 use App\Models\Transaction;
@@ -36,6 +37,10 @@ class DashboardController extends Controller
               ->whereDate('created_at', now()->toDateString());
         })->count();
 
+        $failedActivationsCount = Report::where('type', 'activation_bonus_data')->where('status', 'failed')->count();
+
+        $inventoryAvailable = Sim::where('status', SimStatus::UNASSIGNED)->count();
+
         $latestOpenTickets = Ticket::with('user')
             ->where('status', Ticket::STATUS_OPEN)
             ->orderBy('created_at', 'asc')
@@ -50,6 +55,8 @@ class DashboardController extends Controller
             'todayTransactionsVolume',
             'failedTransactionsToday',
             'todayActivations',
+            'failedActivationsCount',
+            'inventoryAvailable',
             'latestOpenTickets'
         ));
     }

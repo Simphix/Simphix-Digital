@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\GrantActivationBonusData;
 use App\Models\Report;
 use App\Models\ServiceField;
 use App\Models\Sim;
@@ -118,53 +117,15 @@ class SimPlanController extends Controller
     }
 
     /**
-     * Re-dispatch the activation bonus data top-up for a failed attempt,
-     * looked up by phone number (the SIM's own number) since GrantActivationBonusData
-     * takes a Sim, not a Report.
-     *
-     * The report is atomically claimed (failed -> retrying) under a row
-     * lock before the job is ever dispatched, so a double-click (or two
-     * admins retrying the same stale row) can never result in more than one
-     * job — and therefore more than one real vendor top-up — in flight for
-     * it. GrantActivationBonusData resolves the claimed row in place
-     * (completed+resolved_at on success, back to failed on a genuine
-     * retry-failure, or resolved with an explanatory note if the retry
-     * turned out to be moot) — see its logReport()/resolveStaleRetry().
+     * Re-dispatch the activation bonus data top-up for a failed attempt.
+     * The claim-then-dispatch logic lives in ActivationBonusRetryService so
+     * the support desk retries through the identical path.
      */
     public function retryActivationBonus(Report $report): RedirectResponse
     {
-        if ($report->type !== 'activation_bonus_data') {
-            return back()->with('error', 'This entry is not a retryable failed activation bonus.');
-        }
+        [$ok, $message] = app(\App\Services\ActivationBonusRetryService::class)->retry($report);
 
-        $claimed = DB::transaction(function () use ($report) {
-            $locked = Report::where('id', $report->id)->lockForUpdate()->first();
-
-            if (!$locked || $locked->status !== 'failed' || $locked->resolved_at !== null) {
-                return null;
-            }
-
-            $locked->update(['status' => 'retrying']);
-
-            return $locked;
-        });
-
-        if (!$claimed) {
-            return back()->with('error', 'This entry has already been retried or resolved.');
-        }
-
-        $sim = Sim::where('number', $claimed->phone_number)->first();
-        if (!$sim) {
-            // Release the claim — nothing was dispatched, so it must not be
-            // left stuck in "retrying" with no job ever coming to resolve it.
-            $claimed->update(['status' => 'failed']);
-
-            return back()->with('error', "No SIM found for {$claimed->phone_number}.");
-        }
-
-        GrantActivationBonusData::dispatch($sim, $claimed);
-
-        return back()->with('success', "Retry queued for {$claimed->phone_number}.");
+        return back()->with($ok ? 'success' : 'error', $message);
     }
 
     /**
