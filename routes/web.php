@@ -257,6 +257,9 @@ Route::middleware(['auth', 'verified', 'support_staff'])->prefix('support-desk')
     });
 
     Route::get('/webhooks', [\App\Http\Controllers\Support\WebhookLogController::class, 'index'])->name('webhooks.index');
+
+    Route::get('/failed-activations', [\App\Http\Controllers\Support\FailedActivationController::class, 'index'])->name('failed-activations.index');
+    Route::post('/failed-activations/{report}/retry', [\App\Http\Controllers\Support\FailedActivationController::class, 'retry'])->name('failed-activations.retry');
 });
 
 Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->name('admin.manage.')->group(function () {

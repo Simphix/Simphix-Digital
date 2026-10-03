@@ -117,6 +117,25 @@
                     </div>
                 </a>
 
+                <a href="{{ route('support-desk.sim-inventory.index') }}" class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-all">
+                    <div class="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100/50"><i data-lucide="package" class="w-4 h-4"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <span class="block text-sm font-bold text-slate-800">SIM Inventory</span>
+                        <span class="block text-xs text-slate-400">Collect, reassign &amp; assign &middot; {{ number_format($inventoryAvailable) }} unassigned</span>
+                    </div>
+                </a>
+
+                <a href="{{ route('support-desk.failed-activations.index') }}" class="flex items-center gap-3 p-3 rounded-xl border {{ $failedActivationsCount > 0 ? 'border-rose-100 bg-rose-50/40 hover:bg-rose-50' : 'border-slate-100 hover:bg-slate-50' }} transition-all">
+                    <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100/50"><i data-lucide="alert-octagon" class="w-4 h-4"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <span class="block text-sm font-bold text-slate-800">Failed Activations</span>
+                        <span class="block text-xs text-slate-400">Review &amp; retry failed bonus top-ups</span>
+                    </div>
+                    @if ($failedActivationsCount > 0)
+                        <span class="shrink-0 inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded-full bg-rose-600 text-white text-[11px] font-extrabold">{{ number_format($failedActivationsCount) }}</span>
+                    @endif
+                </a>
+
                 <a href="{{ route('support-desk.users.index') }}" class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-all">
                     <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200/50"><i data-lucide="user" class="w-4 h-4"></i></div>
                     <div>

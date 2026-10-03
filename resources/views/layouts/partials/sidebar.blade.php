@@ -191,6 +191,7 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.sim-data-topup.index'), 'icon' => 'battery-charging', 'label' => 'SIM Data Top-Up', 'active' => request()->routeIs('support-desk.sim-data-topup*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.users.index'), 'icon' => 'users', 'label' => 'User Lookup', 'active' => request()->routeIs('support-desk.users*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.webhooks.index'), 'icon' => 'webhook', 'label' => 'Webhook Logs', 'active' => request()->routeIs('support-desk.webhooks*'), 'badge' => $failedWebhooksBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('support-desk.failed-activations.index'), 'icon' => 'alert-octagon', 'label' => 'Failed Activations', 'active' => request()->routeIs('support-desk.failed-activations*'), 'badge' => $failedActivationsBadge ?? 0])
             </div>
         @endif
 
