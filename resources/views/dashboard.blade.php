@@ -192,7 +192,7 @@
                         </a>
                     </div>
 
-                    @if (auth()->user()->role !== 'personal')
+                    @if (auth()->user()->role !== 'personal' && \App\Models\CashoutSettings::enabled())
                     <!-- Service 4: Cash Out -->
                     <div class="col">
                         <a href="{{ route('withdraw') }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
@@ -305,6 +305,10 @@
 
             </div>
         </div>
+
+        @if ($epSims)
+            @include('enterprise-partner.partials.sims-panel', ['epSims' => $epSims])
+        @endif
 
         <!-- SPLIT LAYOUT: STATISTICS (Left) & RECENT TRANSACTIONS (Right) -->
         <div class="row g-4">

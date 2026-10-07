@@ -24,8 +24,16 @@ return Application::configure(basePath: dirname(__DIR__))
             'super_admin' => \App\Http\Middleware\EnsureIsSuperAdmin::class,
             'support_staff' => \App\Http\Middleware\EnsureIsSupportStaff::class,
             'utility_access' => \App\Http\Middleware\EnsureCanUseUtilities::class,
+            'cashout_enabled' => \App\Http\Middleware\EnsureCashoutEnabled::class,
             'verification_access' => \App\Http\Middleware\EnsureCanVerify::class,
         ]);
+
+        // Run the cashout kill-switch before route-model binding so a disabled
+        // platform refuses the request without touching the requested records.
+        $middleware->prependToPriorityList(
+            before: \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            prepend: \App\Http\Middleware\EnsureCashoutEnabled::class,
+        );
 
          $middleware->validateCsrfTokens(except: [
             '/palmpay/webhook',
