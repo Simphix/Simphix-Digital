@@ -20,7 +20,7 @@
                         <i data-lucide="send" class="w-3.5 h-3.5 text-slate-400"></i>
                         P2P Transfer
                     </a>
-                    @if (auth()->user()->role !== 'personal')
+                    @if (auth()->user()->role !== 'personal' && \App\Models\CashoutSettings::enabled())
                     <a href="{{ route('withdraw') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold transition">
                         <i data-lucide="banknote" class="w-3.5 h-3.5 text-slate-400"></i>
                         Cash Out

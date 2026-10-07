@@ -67,7 +67,7 @@
                     @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('wallet'), 'icon' => 'wallet', 'label' => __('My Wallet'), 'active' => request()->routeIs('wallet')])
                     @if (auth()->user()->role !== 'agent')
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('transfer'), 'icon' => 'send', 'label' => __('P2P Transfer'), 'active' => request()->routeIs('transfer')])
-                        @if (auth()->user()->role !== 'personal')
+                        @if (auth()->user()->role !== 'personal' && \App\Models\CashoutSettings::enabled())
                             @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('withdraw'), 'icon' => 'banknote', 'label' => __('Cash Out'), 'active' => request()->routeIs('withdraw')])
                         @endif
                     @endif
@@ -244,6 +244,7 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.referral-settings.edit'), 'icon' => 'handshake', 'label' => 'EP Referral Settings', 'active' => request()->routeIs('admin.enterprise-partners.referral-settings*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.agent-upgrade-settings.edit'), 'icon' => 'trending-up', 'label' => 'Agent Upgrade Settings', 'active' => request()->routeIs('admin.agent-upgrade-settings*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.cash-out.index'), 'icon' => 'banknote', 'label' => 'Cash Out Approvals', 'active' => request()->routeIs('admin.cash-out*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.cash-out.settings.edit'), 'icon' => 'toggle-right', 'label' => 'Cash Out Control', 'active' => request()->routeIs('admin.cash-out.settings*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.leaderboard.index'), 'icon' => 'trophy', 'label' => 'Leaderboard Settings', 'active' => request()->routeIs('admin.leaderboard*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.transactions'), 'icon' => 'receipt', 'label' => 'All Transactions', 'active' => request()->routeIs('admin.transactions*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.manage.adminwallet'), 'icon' => 'wallet', 'label' => 'Admin Wallet', 'active' => request()->routeIs('admin.manage.adminwallet')])

@@ -40,10 +40,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/verify/pin', [\App\Http\Controllers\WalletController::class, 'verifyPin'])->name('verify.pin')->middleware('throttle:5,1');
 
     // Withdraw Routes
-    Route::get('/withdraw', [\App\Http\Controllers\Action\WithdrawController::class, 'index'])->name('withdraw');
+    Route::get('/withdraw', [\App\Http\Controllers\Action\WithdrawController::class, 'index'])->name('withdraw')->middleware('cashout_enabled');
     Route::get('/withdraw/sync-banks', [\App\Http\Controllers\Action\WithdrawController::class, 'syncBanks'])->name('withdraw.syncBanks');
     Route::post('/withdraw/verify-account', [\App\Http\Controllers\Action\WithdrawController::class, 'verifyAccount'])->name('withdraw.verifyAccount');
-    Route::post('/withdraw/process', [\App\Http\Controllers\Action\WithdrawController::class, 'processWithdrawal'])->name('withdraw.process');
+    Route::post('/withdraw/process', [\App\Http\Controllers\Action\WithdrawController::class, 'processWithdrawal'])->name('withdraw.process')->middleware('cashout_enabled');
 
     // Push Notification Subscription Routes
     Route::post('/push/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])->name('push.subscribe');
@@ -314,12 +314,12 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::put('/welfare-settings', [\App\Http\Controllers\Admin\PlatformWelfareSettingsController::class, 'update'])->name('welfare-settings.update');
         Route::get('/withdrawal-account', [\App\Http\Controllers\Admin\PlatformWithdrawalAccountController::class, 'edit'])->name('withdrawal-account.edit');
         Route::post('/withdrawal-account', [\App\Http\Controllers\Admin\PlatformWithdrawalAccountController::class, 'update'])->name('withdrawal-account.update');
-        Route::get('/{walletType}/cashout', [\App\Http\Controllers\Admin\PlatformWalletCashOutController::class, 'show'])->name('cashout.show');
-        Route::post('/{walletType}/cashout', [\App\Http\Controllers\Admin\PlatformWalletCashOutController::class, 'store'])->name('cashout.store');
+        Route::get('/{walletType}/cashout', [\App\Http\Controllers\Admin\PlatformWalletCashOutController::class, 'show'])->name('cashout.show')->middleware('cashout_enabled');
+        Route::post('/{walletType}/cashout', [\App\Http\Controllers\Admin\PlatformWalletCashOutController::class, 'store'])->name('cashout.store')->middleware('cashout_enabled');
 
         Route::prefix('cash-out-approvals')->name('approvals.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\PlatformCashOutApprovalController::class, 'index'])->name('index');
-            Route::post('/{platformCashOutRequest}/approve', [\App\Http\Controllers\Admin\PlatformCashOutApprovalController::class, 'approve'])->name('approve');
+            Route::post('/{platformCashOutRequest}/approve', [\App\Http\Controllers\Admin\PlatformCashOutApprovalController::class, 'approve'])->name('approve')->middleware('cashout_enabled');
             Route::post('/{platformCashOutRequest}/reject', [\App\Http\Controllers\Admin\PlatformCashOutApprovalController::class, 'reject'])->name('reject');
         });
     });
@@ -472,8 +472,10 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
 
     // Admin Cash Out Approvals
     Route::prefix('admin/cash-out')->name('admin.cash-out.')->group(function () {
+        Route::get('/settings', [\App\Http\Controllers\Admin\CashoutSettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('/settings', [\App\Http\Controllers\Admin\CashoutSettingsController::class, 'update'])->name('settings.update');
         Route::get('/', [\App\Http\Controllers\Admin\CashOutController::class, 'index'])->name('index');
-        Route::post('/{cashOutRequest}/approve', [\App\Http\Controllers\Admin\CashOutController::class, 'approve'])->name('approve');
+        Route::post('/{cashOutRequest}/approve', [\App\Http\Controllers\Admin\CashOutController::class, 'approve'])->name('approve')->middleware('cashout_enabled');
         Route::post('/{cashOutRequest}/reject', [\App\Http\Controllers\Admin\CashOutController::class, 'reject'])->name('reject');
     });
 
