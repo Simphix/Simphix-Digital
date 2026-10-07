@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Sim;
 use App\Models\SimHistory;
 use App\Models\User;
 use App\Models\Wallet;
@@ -113,7 +114,10 @@ class DashboardController extends Controller
         $nextBonusTarget = 50000;
         $bonusProgress = $nextBonusTarget > 0 ? min(100, round(($currentSpend / $nextBonusTarget) * 100)) : 0;
 
+        $epSims = $user->role === 'business' ? $this->enterprisePartnerSims($user, request()) : null;
+
         return view('dashboard', compact(
+            'epSims',
             'walletData',
             'virtualAccount',
             'recentTransactions',
@@ -125,6 +129,57 @@ class DashboardController extends Controller
             'nextBonusTarget',
             'bonusProgress'
         ));
+    }
+
+    /**
+     * The Enterprise Partner's SIM panels: SIMs activated under them (their
+     * own downline's activations included) and SIMs their downline business
+     * agents are still holding. Both are filterable by a from/to date applied
+     * to the status-change event (ACTIVATED / ASSIGNED_TO_BUSINESS_AGENT) in
+     * sim_histories, which is also the date shown in the table.
+     */
+    protected function enterprisePartnerSims(User $user, Request $request): array
+    {
+        $request->validate([
+            'sims_from' => ['nullable', 'date'],
+            'sims_to' => ['nullable', 'date', 'after_or_equal:sims_from'],
+        ]);
+
+        $from = $request->filled('sims_from') ? Carbon::parse($request->input('sims_from'))->startOfDay() : null;
+        $to = $request->filled('sims_to') ? Carbon::parse($request->input('sims_to'))->endOfDay() : null;
+
+        $panel = function (string $status, string $pageName) use ($user, $from, $to) {
+            $eventAt = SimHistory::query()
+                ->selectRaw('max(created_at)')
+                ->whereColumn('sim_histories.sim_id', 'sims.id')
+                ->where('to_status', $status);
+
+            $query = Sim::query()
+                ->with('businessAgent:id,first_name,last_name')
+                ->where('business_id', $user->id)
+                ->where('status', $status)
+                ->addSelect(['sims.*', 'event_at' => $eventAt]);
+
+            if ($from || $to) {
+                $query->whereExists(function ($q) use ($status, $from, $to) {
+                    $q->selectRaw('1')->from('sim_histories')
+                        ->whereColumn('sim_histories.sim_id', 'sims.id')
+                        ->where('to_status', $status)
+                        ->when($from, fn ($q) => $q->where('created_at', '>=', $from))
+                        ->when($to, fn ($q) => $q->where('created_at', '<=', $to));
+                });
+            }
+
+            return $query->orderByDesc('event_at')->orderByDesc('sims.id')
+                ->paginate(10, ['*'], $pageName)->withQueryString();
+        };
+
+        return [
+            'activated' => $panel(SimStatus::ACTIVATED, 'activated_page'),
+            'held' => $panel(SimStatus::ASSIGNED_TO_BUSINESS_AGENT, 'held_page'),
+            'from' => $request->input('sims_from'),
+            'to' => $request->input('sims_to'),
+        ];
     }
 
     /**

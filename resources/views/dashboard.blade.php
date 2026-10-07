@@ -306,6 +306,10 @@
             </div>
         </div>
 
+        @if ($epSims)
+            @include('enterprise-partner.partials.sims-panel', ['epSims' => $epSims])
+        @endif
+
         <!-- SPLIT LAYOUT: STATISTICS (Left) & RECENT TRANSACTIONS (Right) -->
         <div class="row g-4">
 
