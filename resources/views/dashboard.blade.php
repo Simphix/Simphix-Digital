@@ -128,7 +128,7 @@
                         <form method="POST" action="{{ route('wallet.claimBonus') }}" class="m-0 shrink-0">
                             @csrf
                             <button type="submit" class="text-xs font-semibold text-vibrant hover:underline">
-                                Claim
+                                {{ \App\Support\SimAccess::canBrowseCatalog(auth()->user()) ? 'Withdraw' : 'Claim' }}
                             </button>
                         </form>
                     @else
@@ -137,7 +137,25 @@
                 </div>
             </div>
 
-            <!-- Card 3: Virtual Account Details -->
+            <!-- Partner Virtual Promo Wallet -->
+            @if (\App\Support\SimAccess::canBrowseCatalog(auth()->user()))
+            <div class="col-12 col-md-4">
+                <div class="dash-card p-3.5 h-100 flex items-center gap-3">
+                    <div class="rounded-lg bg-vibrant/10 text-vibrant flex items-center justify-center w-10 h-10 shrink-0">
+                        <i data-lucide="badge-percent" class="w-5 h-5"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs text-slate-400 mb-0.5">Virtual Promo Wallet</p>
+                        <p class="text-lg font-bold font-display text-slate-800 tracking-tight mb-0 truncate">
+                            ₦{{ number_format($walletData['virtual_promo'] ?? 0.00, 2) }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- Virtual Account Details -->
+            @unless (\App\Support\SimAccess::canBrowseCatalog(auth()->user()))
             <div class="col-12 col-md-4">
                 <div class="dash-card p-3.5 h-100 flex items-center gap-3">
                     <div class="rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center w-10 h-10 shrink-0">
@@ -166,6 +184,7 @@
                     @endif
                 </div>
             </div>
+            @endunless
 
         </div>
 

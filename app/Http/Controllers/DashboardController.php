@@ -51,6 +51,7 @@ class DashboardController extends Controller
         $walletData = [
             'balance' => $wallet->balance ?? 0.00,
             'bonus'   => $wallet->bonus ?? 0.00,
+            'virtual_promo' => $wallet->virtual_promo ?? 0.00,
             'status'  => $wallet->status ?? 'inactive',
         ];
 
