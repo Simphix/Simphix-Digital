@@ -94,13 +94,13 @@
                                 @csrf
                                 <x-primary-button type="submit" class="w-full font-display !bg-vibrant hover:!bg-[#008f4c]">
                                     <i data-lucide="sparkles" class="w-4 h-4"></i>
-                                    Claim & Transfer to Main Wallet
+                                    {{ \App\Support\SimAccess::canBrowseCatalog(auth()->user()) ? 'Withdraw to Main Wallet' : 'Claim & Transfer to Main Wallet' }}
                                 </x-primary-button>
                             </form>
                         @else
                             <button class="w-full py-3 px-6 bg-slate-50 border border-slate-200 text-slate-400 font-semibold text-xs rounded-lg flex items-center justify-center gap-2 cursor-not-allowed font-display" disabled>
                                 <i data-lucide="lock" class="w-4 h-4"></i>
-                                No Bonus Available to Claim
+                                {{ \App\Support\SimAccess::canBrowseCatalog(auth()->user()) ? 'No Commission Available to Withdraw' : 'No Bonus Available to Claim' }}
                             </button>
                         @endif
                     </div>

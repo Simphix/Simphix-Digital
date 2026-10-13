@@ -164,3 +164,21 @@ test('the Downline Requests sidebar link and badge are visible to EP and busines
     $agentResponse->assertOk();
     $agentResponse->assertSee(route('sims.downline-requests'), false);
 });
+
+test('the EP dashboard shows a separate virtual promo wallet and labels commission action Withdraw', function () {
+    Wallet::create([
+        'user_id' => $this->ep->id,
+        'balance' => 1250,
+        'bonus' => 300,
+        'virtual_promo' => 725.50,
+        'wallet_number' => 'WLT' . str_pad((string) $this->ep->id, 7, '0', STR_PAD_LEFT),
+    ]);
+
+    $response = $this->actingAs($this->ep)->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Virtual Promo Wallet');
+    $response->assertSee('725.50', false);
+    $response->assertSee('Withdraw');
+    $response->assertDontSee('Instant Funding');
+});
