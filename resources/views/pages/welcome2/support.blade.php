@@ -45,7 +45,7 @@
                 <div>
                     <h3 class="font-semibold text-[var(--lp-text)]">Headquarters address</h3>
                     <p class="mt-1 text-sm text-[var(--lp-text-soft)]">Walk-in customer support and business operations.</p>
-                    <p class="mt-2 text-sm font-medium text-[var(--lp-text)]">Behind Oti Carpet, Opp BMT Garden, Wuse 2, Abuja, FCT, Nigeria</p>
+                    <p class="mt-2 text-sm font-medium text-[var(--lp-text)]">90 IBB Way PZ Sabon Gari. Zaria, Kaduna State, Nigeria</p>
                 </div>
             </div>
         </div>
