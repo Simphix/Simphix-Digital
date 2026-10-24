@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - New Push Notification</title>
+    <title>SimPhix - New Push Notification</title>
 
     <div class="max-w-2xl mx-auto space-y-6" x-data="{
         targetType: '{{ old('target_type', 'general') }}',

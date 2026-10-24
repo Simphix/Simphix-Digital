@@ -31,7 +31,7 @@ class ActivatedSimsExportMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'SmartSIM - Activated SIMs Export (' . $this->generatedAt->format('M d, Y') . ')',
+            subject: 'SimPhix - Activated SIMs Export (' . $this->generatedAt->format('M d, Y') . ')',
         );
     }
 

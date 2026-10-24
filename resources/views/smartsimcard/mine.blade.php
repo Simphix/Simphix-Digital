@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - My SIM</title>
+    <title>SimPhix - My SIM</title>
 
     <div x-data="{ currentTab: 'sims' }" class="max-w-6xl mx-auto space-y-6">
         <!-- Page Header -->

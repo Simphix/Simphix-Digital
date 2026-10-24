@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Support Center</title>
+    <title>SimPhix - Support Center</title>
 
     @push('styles')
     <style>
@@ -78,7 +78,7 @@
         <!-- Direct Support Channels Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- WhatsApp Card -->
-            <a href="https://wa.me/2347048932365?text=Hello%20SmartSIM%20Support,%20I%20need%20assistance." target="_blank"
+            <a href="https://wa.me/2347048932365?text=Hello%20SimPhix%20Support,%20I%20need%20assistance." target="_blank"
                class="channel-card rounded-xl border border-slate-200/80 p-6 flex items-center gap-4 hover:border-emerald-200 group">
                 <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100/50 group-hover:scale-110 transition-transform">
                     <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">

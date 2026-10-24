@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SmartSIM - Empowering Businesses Through Smart Connectivity</title>
-    <meta name="description" content="SmartSIM - Empowering Businesses Through Smart Connectivity. Purchase bulk SIM cards wholesale, manage allocations, and get massive welcome data bonuses for the public.">
-    <meta name="keywords" content="telecom, SIM card, wholesale SIM, sell SIMs, data welcome bonus, mobile network, SmartSIMSub">
+    <title>SimPhix - Empowering Businesses Through Smart Connectivity</title>
+    <meta name="description" content="SimPhix - Empowering Businesses Through Smart Connectivity. Purchase bulk SIM cards wholesale, manage allocations, and get massive welcome data bonuses for the public.">
+    <meta name="keywords" content="telecom, SIM card, wholesale SIM, sell SIMs, data welcome bonus, mobile network, SimPhix">
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset('assets/images/logo/favicon.png') }}" type="image/png">
@@ -23,7 +23,7 @@
         <div class="container nav-wrapper">
             <!-- Brand Logo -->
             <a href="#" class="logo-link">
-                <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SmartSIM Logo" class="logo-img">
+                <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SimPhix Logo" class="logo-img">
             </a>
 
             <!-- Nav Links -->
@@ -81,7 +81,7 @@
                         <span class="blue-highlight">Supercharge</span> Your <span class="green-highlight">Business</span>.
                     </h1>
                     <p class="hero-description">
-                        SmartSIM is the ultimate high-speed telecom platform. We empower local agents to build thriving distribution businesses with wholesale rates, while offering the public premium SIM cards loaded with massive data packages and airtime bonuses.
+                        SimPhix is the ultimate high-speed telecom platform. We empower local agents to build thriving distribution businesses with wholesale rates, while offering the public premium SIM cards loaded with massive data packages and airtime bonuses.
                     </p>
                     <div class="public-alert-banner">
                         <span class="pulse-dot"></span>
@@ -122,7 +122,7 @@
                         <div class="main-phone-mockup">
                             <div class="mockup-inner">
                                 <div class="mockup-header"></div>
-                                <div class="mockup-screen-title">SmartSIM Dashboard</div>
+                                <div class="mockup-screen-title">SimPhix Dashboard</div>
                                 
                                 <div class="mockup-sim-details">
                                     <div class="mockup-sim-row">

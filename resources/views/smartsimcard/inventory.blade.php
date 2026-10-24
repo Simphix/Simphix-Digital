@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - SIM Inventory</title>
+    <title>SimPhix - SIM Inventory</title>
 
     <div class="max-w-6xl mx-auto space-y-6">
         <!-- Page Header -->

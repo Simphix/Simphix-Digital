@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - SIM Data Top-Up</title>
+    <title>SimPhix - SIM Data Top-Up</title>
 
     @php
         // Shared by both the super_admin console (admin.sim-data-topup.*)

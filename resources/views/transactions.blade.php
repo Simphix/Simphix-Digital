@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Transaction History</title>
+    <title>SimPhix - Transaction History</title>
 
     <div x-data="{ selectedTx: null }" class="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
         <!-- Page Header -->
@@ -123,7 +123,7 @@
                     Transaction Records
                 </h3>
                 <span class="px-2.5 py-1 text-xs font-extrabold rounded-full bg-primary/10 text-primary uppercase tracking-wider">
-                    SmartSIM Wallet
+                    SimPhix Wallet
                 </span>
             </div>
 

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Invite Enterprise Partner</title>
+    <title>SimPhix - Invite Enterprise Partner</title>
 
     <div class="max-w-2xl mx-auto space-y-6">
         <div>

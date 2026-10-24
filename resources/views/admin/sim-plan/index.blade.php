@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Admin SIM Management</title>
+    <title>SimPhix - Admin SIM Management</title>
 
     <div class="max-w-7xl mx-auto space-y-6">
         <!-- Page Header + Admin SIM Activation: assign + activate a SIM

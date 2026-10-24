@@ -103,7 +103,7 @@
                 <!-- Loading State -->
                 <div x-show="loading" class="flex items-center justify-center py-6 gap-2 text-slate-400">
                     <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-primary"></i>
-                    <span class="text-xs font-semibold font-display">Searching SmartSIM...</span>
+                    <span class="text-xs font-semibold font-display">Searching SimPhix...</span>
                 </div>
 
                 <!-- No Results State -->
@@ -410,7 +410,7 @@ class="relative">
                     <!-- Loading state -->
                     <div x-show="loading" class="flex flex-col items-center justify-center py-10 gap-2 text-slate-400">
                         <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-primary"></i>
-                        <span class="text-xs font-semibold font-display">Searching SmartSIM...</span>
+                        <span class="text-xs font-semibold font-display">Searching SimPhix...</span>
                     </div>
 
                     <!-- Empty / Initial state -->

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM Support Desk - Overview</title>
+    <title>SimPhix Support Desk - Overview</title>
 
     <div class="space-y-8 max-w-7xl mx-auto">
         <!-- Page Header -->

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - {{ $title ?? 'Phone Verification' }}</title>
+    <title>SimPhix - {{ $title ?? 'Phone Verification' }}</title>
 
     <div class="max-w-7xl mx-auto space-y-6">
         <!-- Page Header -->

@@ -27,7 +27,7 @@ class AdminRepliedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Reply on Ticket #' . $this->ticket->id . ' - SmartSIM Support',
+            subject: 'New Reply on Ticket #' . $this->ticket->id . ' - SimPhix Support',
         );
     }
 

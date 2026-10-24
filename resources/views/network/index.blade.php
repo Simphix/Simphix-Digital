@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - My Network</title>
+    <title>SimPhix - My Network</title>
 
     @php $canRestrict = \App\Support\SimAccess::canBrowseCatalog(auth()->user()); @endphp
     <div x-data="{ openClaimModal: false, openClaimResultModal: {{ session('claim_result') ? 'true' : 'false' }}, currentTab: 'invited', editInviteModal: false, editingInvite: null }" class="max-w-5xl mx-auto space-y-6">

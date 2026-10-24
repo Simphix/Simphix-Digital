@@ -1,4 +1,4 @@
-const CACHE = 'smartsim-static-v1';
+const CACHE = 'simphix-static-v1';
 const STATIC_ASSETS = ['/manifest.json'];
 
 self.addEventListener('install', (e) => {
@@ -32,7 +32,7 @@ self.addEventListener('fetch', (e) => {
 
 self.addEventListener('push', (e) => {
     const data = e.data ? e.data.json() : {};
-    e.waitUntil(self.registration.showNotification(data.title || 'SmartSIM', {
+    e.waitUntil(self.registration.showNotification(data.title || 'SimPhix', {
         body: data.body || '',
         icon: data.icon || '/assets/images/icons/icon-192.png',
         badge: '/assets/images/icons/icon-192.png',

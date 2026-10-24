@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Receipt</title>
+    <title>SimPhix - Receipt</title>
 
     @php
         $isPending = $status === 'pending';

@@ -15,7 +15,7 @@ class SmsDeviceOtpChannel implements DeviceOtpChannelInterface
 
     public function send(User $user, string $code, DeviceVerificationChallenge $challenge): bool
     {
-        $message = "Your SmartSIM sign-in code is {$code}. Do not share this. Expires in 10 minutes.";
+        $message = "Your SimPhix sign-in code is {$code}. Do not share this. Expires in 10 minutes.";
 
         $result = $this->sms->sendSms($user->phone, $message);
 

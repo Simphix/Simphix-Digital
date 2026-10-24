@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SmartSIM - 404 Page Not Found</title>
+    <title>SimPhix - 404 Page Not Found</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -246,7 +246,7 @@
 
         <hr class="footer-divider">
         <p class="footer-text">
-            &copy; {{ date('Y') }} SmartSIM. All rights reserved.
+            &copy; {{ date('Y') }} SimPhix. All rights reserved.
         </p>
     </div>
 

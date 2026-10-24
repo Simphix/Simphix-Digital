@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Bulk Collect SIM</title>
+    <title>SimPhix - Bulk Collect SIM</title>
 
     @php
         // Shared by both the super_admin console (admin.sim-plan.*) and

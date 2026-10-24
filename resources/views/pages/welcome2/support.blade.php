@@ -31,7 +31,7 @@
                 <div>
                     <h3 class="font-semibold text-[var(--lp-text)]">Wholesale &amp; support email</h3>
                     <p class="mt-1 text-sm text-[var(--lp-text-soft)]">Send us formal distribution proposals, bulk requests, and general questions.</p>
-                    <a href="mailto:Support@smartsimsub.com" class="mt-2 inline-block text-sm font-semibold text-primary hover:underline">Support@smartsimsub.com</a>
+                    <a href="mailto:support@simphiix.com" class="mt-2 inline-block text-sm font-semibold text-primary hover:underline">support@simphiix.com</a>
                 </div>
             </div>
 

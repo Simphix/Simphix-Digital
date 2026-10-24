@@ -23,7 +23,7 @@ class DeviceLoginOtpMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Device Sign-In Verification - SmartSIM',
+            subject: 'New Device Sign-In Verification - SimPhix',
         );
     }
 

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Downline Requests</title>
+    <title>SimPhix - Downline Requests</title>
 
     <div class="max-w-5xl mx-auto space-y-6">
         <!-- Page Header -->

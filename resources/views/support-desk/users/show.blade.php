@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM Support Desk - {{ $user->first_name }} {{ $user->last_name }}</title>
+    <title>SimPhix Support Desk - {{ $user->first_name }} {{ $user->last_name }}</title>
 
     @php
         $mask = fn (?string $value) => $value ? str_repeat('•', max(strlen($value) - 4, 0)) . substr($value, -4) : null;

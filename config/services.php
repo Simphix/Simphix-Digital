@@ -84,7 +84,7 @@ return [
     'termii' => [
         'base_url'  => env('TERMII_BASE_URL', 'https://api.ng.termii.com'),
         'api_key'   => env('TERMII_API_KEY'),
-        'sender_id' => env('TERMII_SENDER_ID', 'SmartSIM'),
+        'sender_id' => env('TERMII_SENDER_ID', 'SimPhix'),
     ],
 
     'webpush' => [

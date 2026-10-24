@@ -421,7 +421,7 @@
                                 <div class="sm:col-span-3 lg:col-span-1 relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 border border-slate-800 text-white min-h-[170px] flex flex-col justify-between shadow-lg">
                                     <div class="absolute right-0 top-0 w-32 h-32 bg-[#0049b8]/10 rounded-full blur-2xl pointer-events-none"></div>
                                     <div class="flex items-center justify-between">
-                                        <span class="text-xs font-extrabold tracking-widest uppercase opacity-70">SmartSIM wallet</span>
+                                        <span class="text-xs font-extrabold tracking-widest uppercase opacity-70">SimPhix wallet</span>
                                         <i data-lucide="contactless" class="w-4 h-4 opacity-50"></i>
                                     </div>
                                     

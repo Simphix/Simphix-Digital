@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Upgrade to Agent</title>
+    <title>SimPhix - Upgrade to Agent</title>
 
     <div class="max-w-2xl mx-auto space-y-6">
         <div>

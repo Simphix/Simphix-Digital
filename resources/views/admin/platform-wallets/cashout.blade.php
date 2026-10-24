@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - {{ $wallet->name }} Cash Out</title>
+    <title>SimPhix - {{ $wallet->name }} Cash Out</title>
 
     <div class="max-w-3xl mx-auto space-y-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

@@ -1,6 +1,6 @@
 <section id="features" class="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-28">
     <div class="max-w-2xl">
-        <h2 class="text-3xl font-bold tracking-tight text-[var(--lp-text)] sm:text-4xl">How SmartSIM works</h2>
+        <h2 class="text-3xl font-bold tracking-tight text-[var(--lp-text)] sm:text-4xl">How SimPhix works</h2>
         <p class="mt-4 text-lg leading-8 text-[var(--lp-text-soft)]">
             Instant activation, a wallet built in, and wholesale pricing for agents who sell at scale.
         </p>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support Ticket Reply - SmartSIM</title>
+    <title>Support Ticket Reply - SimPhix</title>
     <style>
         body {
             margin: 0;
@@ -113,7 +113,7 @@
     <div class="wrapper">
         <div class="container">
             <div class="header">
-                <span style="color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 1px;">SmartSIM</span>
+                <span style="color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 1px;">SimPhix</span>
             </div>
             <div class="content">
                 <h1 class="title">New Reply from Support</h1>
@@ -134,11 +134,11 @@
                 </div>
                 
                 <p class="text" style="font-size: 14px; text-align: center; margin-bottom: 0; color: #64748b;">
-                    Thank you for choosing SmartSIM. We are here to help!
+                    Thank you for choosing SimPhix. We are here to help!
                 </p>
             </div>
             <div class="footer">
-                <p class="footer-text">© {{ date('Y') }} SmartSIM. All rights reserved.</p>
+                <p class="footer-text">© {{ date('Y') }} SimPhix. All rights reserved.</p>
                 <p class="footer-text">Empowering Businesses Through Smart Connectivity.</p>
             </div>
         </div>

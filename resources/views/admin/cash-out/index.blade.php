@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Cash Out Approvals</title>
+    <title>SimPhix - Cash Out Approvals</title>
 
     <div class="max-w-6xl mx-auto space-y-6" x-data="{ currentTab: 'pending' }">
         <!-- Page Header -->

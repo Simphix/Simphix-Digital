@@ -28,7 +28,7 @@ class AdminNotificationMail extends Mailable
     {
         $statusStr = $this->action === 'created' ? 'Created' : 'Updated (User Replied)';
         return new Envelope(
-            subject: '[SmartSIM Support] Ticket #' . $this->ticket->id . ' ' . $statusStr,
+            subject: '[SimPhix Support] Ticket #' . $this->ticket->id . ' ' . $statusStr,
         );
     }
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Verification - SmartSIM</title>
+    <title>Email Verification - SimPhix</title>
     <style>
         body {
             margin: 0;
@@ -105,11 +105,11 @@
         <div class="container">
             <div class="header">
                 <!-- Fallback to text if image is not loaded -->
-                <span style="color: #ffffff; font-size: 20px; font-weight: 800; letter-spacing: 1px;">SmartSIM</span>
+                <span style="color: #ffffff; font-size: 20px; font-weight: 800; letter-spacing: 1px;">SimPhix</span>
             </div>
             <div class="content">
                 <h1 class="title">Verify Your Email Address</h1>
-                <p class="text">Thank you for registering with SmartSIM. Please use the following One-Time Password (OTP) to verify your email address and complete your registration.</p>
+                <p class="text">Thank you for registering with SimPhix. Please use the following One-Time Password (OTP) to verify your email address and complete your registration.</p>
                 
                 <div class="otp-container">
                     <div class="otp-code">{{ $otp }}</div>
@@ -119,7 +119,7 @@
                 <p class="text" style="font-size: 14px; margin-bottom: 0;">If you didn't request this verification, you can safely ignore this email.</p>
             </div>
             <div class="footer">
-                <p class="footer-text">© {{ date('Y') }} SmartSIM. All rights reserved.</p>
+                <p class="footer-text">© {{ date('Y') }} SimPhix. All rights reserved.</p>
                 <p class="footer-text">Empowering Businesses Through Smart Connectivity.</p>
             </div>
         </div>

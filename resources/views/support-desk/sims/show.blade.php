@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM Support Desk - SIM {{ $sim->number }}</title>
+    <title>SimPhix Support Desk - SIM {{ $sim->number }}</title>
 
     @php
         $holders = [

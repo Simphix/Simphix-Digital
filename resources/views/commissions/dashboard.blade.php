@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Commission Dashboard</title>
+    <title>SimPhix - Commission Dashboard</title>
 
     <div class="max-w-4xl mx-auto space-y-6">
         <!-- Page Header -->

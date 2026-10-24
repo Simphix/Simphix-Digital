@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM Admin - System Transactions</title>
+    <title>SimPhix Admin - System Transactions</title>
 
     <div x-data="{ selectedTx: null }" class="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
         <!-- Page Header -->
@@ -11,7 +11,7 @@
                     </div>
                     Transactions
                 </h1>
-                <p class="text-sm text-slate-500 mt-1">Monitor, search, and audit all transaction activities across the entire SmartSIM platform.</p>
+                <p class="text-sm text-slate-500 mt-1">Monitor, search, and audit all transaction activities across the entire SimPhix platform.</p>
             </div>
         </div>
 

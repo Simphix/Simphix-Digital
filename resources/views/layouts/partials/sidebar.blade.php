@@ -19,7 +19,7 @@
     <div class="flex items-center justify-between gap-2 px-4 py-2 border-b border-slate-200">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
             <img src="{{ asset('assets/images/logo/favicon.png') }}" alt="" class="w-12 h-12 rounded-md shrink-0" aria-hidden="true">
-            <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 truncate text-sm font-bold text-slate-900 font-display">SmartSIM</span>
+            <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 truncate text-sm font-bold text-slate-900 font-display">SimPhix</span>
         </a>
         <button type="button" @click="sidebarCollapsed = !sidebarCollapsed"
                 class="hidden lg:inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"

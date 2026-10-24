@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support Desk Alert - SmartSIM</title>
+    <title>Support Desk Alert - SimPhix</title>
     <style>
         body {
             margin: 0;
@@ -134,7 +134,7 @@
     <div class="wrapper">
         <div class="container">
             <div class="header">
-                <span style="color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 1px;">SmartSIM Desk</span>
+                <span style="color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 1px;">SimPhix Desk</span>
             </div>
             <div class="content">
                 <h1 class="title">
@@ -146,7 +146,7 @@
                 </h1>
                 
                 <p class="text">
-                    A support action has been recorded in the SmartSIM dashboard. Please find the details below:
+                    A support action has been recorded in the SimPhix dashboard. Please find the details below:
                 </p>
                 
                 <div class="ticket-details">
@@ -181,7 +181,7 @@
                 </div>
             </div>
             <div class="footer">
-                <p class="footer-text">© {{ date('Y') }} SmartSIM Desk. Internal Use Only.</p>
+                <p class="footer-text">© {{ date('Y') }} SimPhix Desk. Internal Use Only.</p>
             </div>
         </div>
     </div>

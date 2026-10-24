@@ -58,6 +58,6 @@ class KycController extends Controller
 
         return redirect()->route('dashboard')
             ->with('success', 'Your KYC profile has been completed and verified successfully!')
-            ->with('welcome', "Welcome aboard, {$user->first_name}! Your account has been verified to Tier 1 status. Explore our top-tier data packages, instant wallet funding, and swift utility bill payments. Experience why SmartSIM is the best in the market!");
+            ->with('welcome', "Welcome aboard, {$user->first_name}! Your account has been verified to Tier 1 status. Explore our top-tier data packages, instant wallet funding, and swift utility bill payments. Experience why SimPhix is the best in the market!");
     }
 }

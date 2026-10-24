@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - CAC {{ $registration->reference }}</title>
+    <title>SimPhix - CAC {{ $registration->reference }}</title>
 
     @php
         $deliverables = $registration->documents->where('is_deliverable', true);
@@ -66,7 +66,7 @@
                                     @elseif ($e->type === 'upload')
                                         Documents uploaded
                                     @else
-                                        {{ $e->is_admin ? 'Message from SmartSIM' : 'You' }}
+                                        {{ $e->is_admin ? 'Message from SimPhix' : 'You' }}
                                     @endif
                                 </span>
                                 <span class="block text-[11px] text-slate-400 mt-0.5">{{ $e->created_at->format('M d, Y h:i A') }}</span>
