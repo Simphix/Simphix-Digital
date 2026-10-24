@@ -16,9 +16,9 @@
        class="fixed inset-y-0 left-0 z-50 w-64 bg-white text-slate-600 border-r border-slate-200 flex flex-col transform lg:translate-x-0 lg:static lg:h-screen transition-all duration-200 ease-in-out">
 
     <!-- Brand Header -->
-    <div class="flex items-center justify-between gap-2 px-4 py-4 border-b border-slate-200">
+    <div class="flex items-center justify-between gap-2 px-4 py-2 border-b border-slate-200">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
-            <img src="{{ asset('assets/images/logo/favicon.png') }}" alt="" class="w-8 h-8 rounded-md shrink-0" aria-hidden="true">
+            <img src="{{ asset('assets/images/logo/favicon.png') }}" alt="" class="w-12 h-12 rounded-md shrink-0" aria-hidden="true">
             <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 truncate text-sm font-bold text-slate-900 font-display">SmartSIM</span>
         </a>
         <button type="button" @click="sidebarCollapsed = !sidebarCollapsed"
