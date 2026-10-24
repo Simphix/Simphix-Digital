@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM Support Desk - Transaction Lookup</title>
+    <title>SimPhix Support Desk - Transaction Lookup</title>
 
     <div class="space-y-8 max-w-5xl mx-auto">
         <!-- Page Header -->

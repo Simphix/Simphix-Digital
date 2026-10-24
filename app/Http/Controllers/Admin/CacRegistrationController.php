@@ -185,7 +185,7 @@ class CacRegistrationController extends Controller
         foreach ($request->file('files') as $file) {
             $registration->documents()->create([
                 'slot' => 'deliverable',
-                'label' => $request->label ?: 'Document from SmartSIM',
+                'label' => $request->label ?: 'Document from SimPhix',
                 'path' => $file->store("cac/{$registration->id}", 'local'),
                 'original_name' => $file->getClientOriginalName(),
                 'uploaded_by' => 'admin',

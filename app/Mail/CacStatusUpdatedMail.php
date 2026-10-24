@@ -19,7 +19,7 @@ class CacStatusUpdatedMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'SmartSIM CAC Registration ' . $this->registration->reference . ' — Update');
+        return new Envelope(subject: 'SimPhix CAC Registration ' . $this->registration->reference . ' — Update');
     }
 
     public function content(): Content

@@ -818,7 +818,7 @@
                     <x-danger-button type="button"
                             x-data=""
                             x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')">
-                        Deactivate My SmartSIM Account
+                        Deactivate My SimPhix Account
                     </x-danger-button>
                 </div>
 

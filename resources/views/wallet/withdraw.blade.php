@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - {{ $title ?? 'Cash Out' }}</title>
+    <title>SimPhix - {{ $title ?? 'Cash Out' }}</title>
 
     <div class="max-w-3xl mx-auto space-y-6">
         <!-- Page Header -->

@@ -3,7 +3,7 @@
     <div class="container">
         <div class="section-header" id="features">
             <span class="badge badge-secondary">Designed For You</span>
-            <h2 class="section-subtitle">How SmartSIM Makes Your Life Easier</h2>
+            <h2 class="section-subtitle">How SimPhix Makes Your Life Easier</h2>
             <p class="section-description">Get connected with maximum value. We provide instant online activation, massive free welcome bonuses, and the lowest daily telecom rates.</p>
         </div>
 

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - My CAC Registrations</title>
+    <title>SimPhix - My CAC Registrations</title>
 
     <div class="max-w-5xl mx-auto space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Build Your SIM Order</title>
+    <title>SimPhix - Build Your SIM Order</title>
 
     <div class="max-w-3xl mx-auto space-y-6">
         <div>

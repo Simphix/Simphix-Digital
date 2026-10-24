@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activated SIMs Export - SmartSIM</title>
+    <title>Activated SIMs Export - SimPhix</title>
     <style>
         body {
             margin: 0;
@@ -91,12 +91,12 @@
     <div class="wrapper">
         <div class="container">
             <div class="header">
-                <span style="color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 1px;">SmartSIM</span>
+                <span style="color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 1px;">SimPhix</span>
             </div>
             <div class="content">
                 <h1 class="title">Activated SIMs Export</h1>
                 <p class="text">Hello,</p>
-                <p class="text">Attached is the CSV export of every SIM number currently activated on SmartSIM, generated on {{ $generatedAt->format('F d, Y \a\t h:i A') }}.</p>
+                <p class="text">Attached is the CSV export of every SIM number currently activated on SimPhix, generated on {{ $generatedAt->format('F d, Y \a\t h:i A') }}.</p>
 
                 <div class="stats">
                     <p class="stats-number">{{ number_format($count) }}</p>
@@ -108,7 +108,7 @@
                 </p>
             </div>
             <div class="footer">
-                <p class="footer-text">© {{ date('Y') }} SmartSIM. All rights reserved.</p>
+                <p class="footer-text">© {{ date('Y') }} SimPhix. All rights reserved.</p>
                 <p class="footer-text">Empowering Businesses Through Smart Connectivity.</p>
             </div>
         </div>

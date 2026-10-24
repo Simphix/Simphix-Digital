@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'SmartSIM') }}</title>
-    <meta name="description" content="SmartSIM — secure SIM services, affordable data and a smarter wallet.">
+    <title>{{ config('app.name', 'SimPhix') }}</title>
+    <meta name="description" content="SimPhix — secure SIM services, affordable data and a smarter wallet.">
     <link rel="shortcut icon" href="{{ asset('assets/images/logo/favicon.png') }}" type="image/png">
     @include('layouts.partials.pwa-head')
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,19 +16,19 @@
 </head>
 <body class="h-full bg-white font-sans text-[#14243a] antialiased">
     <main class="min-h-screen lg:grid lg:grid-cols-2">
-        <section class="relative hidden min-h-screen flex-col bg-white px-9 py-6 lg:flex" aria-label="SmartSIM introduction">
+        <section class="relative hidden min-h-screen flex-col bg-white px-9 py-6 lg:flex" aria-label="SimPhix introduction">
             <a href="/" class="relative z-10 inline-flex w-fit items-center">
-                <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SmartSIMSub" class="h-auto w-[170px]">
+                <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SimPhix" class="h-auto w-[170px]">
             </a>
 
             <div class="flex flex-1 flex-col items-center justify-center pb-16">
                 <img
                     src="{{ asset('assets/images/login-sim-wallet.png') }}"
-                    alt="SmartSIM wallet and SIM illustration"
-                    class="h-[350px] w-[350px] object-contain"
+                    alt="SimPhix wallet and SIM illustration"
+                    class="h-[700px] w-[700px] object-contain"
                 >
                 <h2 class="mt-3 max-w-md text-center text-[26px] font-bold leading-[1.25] tracking-[-0.025em] text-[#15253a]">
-                    Smart SIM Solutions.<br>Empowering Connections.
+                    SimPhix Solutions.<br>Empowering Connections.
                 </h2>
             </div>
         </section>
@@ -36,7 +36,7 @@
         <section class="relative flex min-h-screen items-center justify-center bg-[#f4f5f7] px-5 py-16 sm:px-10 sm:py-20">
             <div class="absolute left-5 top-6 sm:left-8 sm:top-8 lg:hidden">
                 <a href="/">
-                    <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SmartSIMSub" class="h-auto w-[145px]">
+                    <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SimPhix" class="h-auto w-[145px]">
                 </a>
             </div>
 

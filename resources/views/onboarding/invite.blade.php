@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Onboard a {{ str_replace('_', ' ', $nextRole) }}</title>
+    <title>SimPhix - Onboard a {{ str_replace('_', ' ', $nextRole) }}</title>
 
     <div class="max-w-xl mx-auto space-y-6">
         <!-- Page Header -->

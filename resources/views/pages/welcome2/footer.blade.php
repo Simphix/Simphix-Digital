@@ -3,7 +3,7 @@
         <div class="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
             <div class="lg:col-span-1">
                 <a href="{{ url('/') }}" class="inline-flex items-center">
-                    <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SmartSIM" class="h-8 w-auto">
+                    <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SimPhix" class="h-8 w-auto">
                 </a>
                 <p class="mt-4 max-w-xs text-sm leading-6 text-[var(--lp-text-soft)]">
                     Empowering businesses through smart connectivity. Professional telecom SIM card
@@ -79,7 +79,7 @@
         </div>
 
         <div class="mt-12 flex flex-col items-center justify-between gap-4 border-t pt-8 sm:flex-row" style="border-color: var(--lp-border);">
-            <p class="text-sm text-[var(--lp-text-faint)]">&copy; {{ date('Y') }} SmartSIMSub. All rights reserved.</p>
+            <p class="text-sm text-[var(--lp-text-faint)]">&copy; {{ date('Y') }} SimPhix. All rights reserved.</p>
             <div class="flex gap-6 text-sm text-[var(--lp-text-faint)]">
                 <a href="#" class="hover:text-[var(--lp-text)]">Privacy Policy</a>
                 <a href="#" class="hover:text-[var(--lp-text)]">Terms of Service</a>

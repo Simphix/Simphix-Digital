@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM Admin - CAC {{ $registration->reference }}</title>
+    <title>SimPhix Admin - CAC {{ $registration->reference }}</title>
 
     @php $locked = in_array($registration->status, \App\Models\CacRegistration::REFUND_STATUSES, true); @endphp
 

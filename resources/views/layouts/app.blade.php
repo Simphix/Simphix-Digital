@@ -6,7 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="vapid-public-key" content="{{ config('services.webpush.vapid.public_key') }}">
 
-        <title>{{ config('app.name', 'SmartSIM') }}</title>
+        <title>{{ config('app.name', 'SimPhix') }}</title>
 
         <!-- Favicon -->
         <link rel="shortcut icon" href="{{ asset('assets/images/logo/favicon.png') }}" type="image/png">
@@ -35,8 +35,8 @@
     </head>
     <body class="font-sans antialiased text-slate-800 h-full">
         <!-- Main Layout Container (Alpine.js State) -->
-        <div x-data="{ sidebarOpen: false, sidebarCollapsed: localStorage.getItem('smartsim-sidebar-collapsed') === 'true' }"
-             x-init="$watch('sidebarCollapsed', value => localStorage.setItem('smartsim-sidebar-collapsed', value))"
+           <div x-data="{ sidebarOpen: false, sidebarCollapsed: localStorage.getItem('simphix-sidebar-collapsed') === 'true' }"
+               x-init="$watch('sidebarCollapsed', value => localStorage.setItem('simphix-sidebar-collapsed', value))"
              class="h-full flex overflow-hidden">
             
             <!-- Sidebar Navigation -->

@@ -7,7 +7,7 @@
         </h1>
 
         <p class="mt-6 max-w-xl text-md leading-8 text-[var(--lp-text-soft)]">
-            Smart SIM solutions for POS terminals, cameras, routers, and trackers with airtime, data, KYC verification, and rewards all in one platform.
+            SimPhix solutions for POS terminals, cameras, routers, and trackers with airtime, data, KYC verification, and rewards all in one platform.
         </p>
 
         <div class="mt-8 flex flex-col gap-3 sm:flex-row">

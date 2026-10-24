@@ -186,7 +186,7 @@ class ProfileController extends Controller
         $code = $user->generatePhoneVerificationOtp();
         $sent = app(\App\Services\TermiiSmsApi::class)->sendSms(
             $user->phone,
-            "Your SmartSIM phone verification code is {$code}. Do not share this."
+            "Your SimPhix phone verification code is {$code}. Do not share this."
         );
 
         if (!$sent['success']) {

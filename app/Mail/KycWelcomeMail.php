@@ -26,7 +26,7 @@ class KycWelcomeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to SmartSIM - Profile Completed & Verified!',
+            subject: 'Welcome to SimPhix - Profile Completed & Verified!',
         );
     }
 

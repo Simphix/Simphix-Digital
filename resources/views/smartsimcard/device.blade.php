@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - {{ $device['label'] }}</title>
+    <title>SimPhix - {{ $device['label'] }}</title>
 
     <div class="max-w-5xl mx-auto space-y-6">
         <!-- Back Link -->

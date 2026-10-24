@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>You're Invited - SmartSIM</title>
+    <title>You're Invited - SimPhix</title>
     <style>
         body {
             margin: 0;
@@ -98,12 +98,12 @@
     <div class="wrapper">
         <div class="container">
             <div class="header">
-                <span style="color: #ffffff; font-size: 20px; font-weight: 800; letter-spacing: 1px;">SmartSIM</span>
+                <span style="color: #ffffff; font-size: 20px; font-weight: 800; letter-spacing: 1px;">SimPhix</span>
             </div>
             <div class="content">
                 <h1 class="title">You've Been Invited</h1>
                 <p class="text">
-                    {{ $onboarder->name }} has invited you to join SmartSIM as a
+                    {{ $onboarder->name }} has invited you to join SimPhix as a
                 </p>
                 <div class="role-badge">{{ str_replace('_', ' ', $invitee->role) }}</div>
                 <p class="text">Click below to set your password and activate your account.</p>
@@ -114,7 +114,7 @@
                 <p class="text" style="font-size: 14px; margin-top: 24px; margin-bottom: 0;">If you weren't expecting this invite, you can safely ignore this email.</p>
             </div>
             <div class="footer">
-                <p class="footer-text">© {{ date('Y') }} SmartSIM. All rights reserved.</p>
+                <p class="footer-text">© {{ date('Y') }} SimPhix. All rights reserved.</p>
                 <p class="footer-text">Empowering Businesses Through Smart Connectivity.</p>
             </div>
         </div>

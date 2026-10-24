@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Ticket #{{ $ticket->id }}</title>
+    <title>SimPhix - Ticket #{{ $ticket->id }}</title>
 
     @push('styles')
     <style>

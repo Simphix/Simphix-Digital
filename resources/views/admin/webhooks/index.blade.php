@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Webhook Logs</title>
+    <title>SimPhix - Webhook Logs</title>
 
     @php
         // Shared by both the super_admin console (admin.webhooks.*) and

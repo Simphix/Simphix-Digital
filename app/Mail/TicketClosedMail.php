@@ -26,7 +26,7 @@ class TicketClosedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'SmartSIM Support - Ticket #' . $this->ticket->id . ' Closed',
+            subject: 'SimPhix Support - Ticket #' . $this->ticket->id . ' Closed',
         );
     }
 

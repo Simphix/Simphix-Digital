@@ -5,23 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0056D2">
 
-    <title>SmartSIM — Empowering Businesses Through Smart Connectivity</title>
-    <meta name="description" content="SmartSIM is a wholesale telecom platform: buy premium SIM cards loaded with free data and airtime, or become a distribution agent with wholesale rates, instant activation and real-time earnings tracking.">
-    <meta name="keywords" content="telecom, SIM card, wholesale SIM, sell SIMs, data welcome bonus, mobile network, SmartSIM, SmartSIMSub, Nigeria SIM, agent SIM distribution">
+    <title>SimPhix — Empowering Businesses Through Smart Connectivity</title>
+    <meta name="description" content="SimPhix is a wholesale telecom platform: buy premium SIM cards loaded with free data and airtime, or become a distribution agent with wholesale rates, instant activation and real-time earnings tracking.">
+    <meta name="keywords" content="telecom, SIM card, wholesale SIM, sell SIMs, data welcome bonus, mobile network, SimPhix, SimPhix, Nigeria SIM, agent SIM distribution">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ url('/') }}">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="SmartSIM">
-    <meta property="og:title" content="SmartSIM — Empowering Businesses Through Smart Connectivity">
+    <meta property="og:site_name" content="SimPhix">
+    <meta property="og:title" content="SimPhix — Empowering Businesses Through Smart Connectivity">
     <meta property="og:description" content="Premium SIM cards with massive data bonuses for the public, and wholesale distribution tools for agents.">
     <meta property="og:image" content="{{ asset('assets/images/logo/logo1.png') }}">
     <meta property="og:url" content="{{ url('/') }}">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="SmartSIM — Empowering Businesses Through Smart Connectivity">
+    <meta name="twitter:title" content="SimPhix — Empowering Businesses Through Smart Connectivity">
     <meta name="twitter:description" content="Premium SIM cards with massive data bonuses for the public, and wholesale distribution tools for agents.">
     <meta name="twitter:image" content="{{ asset('assets/images/logo/logo1.png') }}">
 
@@ -42,7 +42,7 @@
     {
         "@@context": "https://schema.org",
         "@@type": "Organization",
-        "name": "SmartSIM",
+        "name": "SimPhix",
         "url": "{{ url('/') }}",
         "logo": "{{ asset('assets/images/logo/logo1.png') }}",
         "email": "Support@smartsimsub.com",
@@ -65,7 +65,7 @@
          With no saved preference, default to dark during Lagos night hours (7pm-6am WAT). -->
     <script>
         (function () {
-            var stored = localStorage.getItem('smartsim-theme');
+            var stored = localStorage.getItem('simphix-theme');
             var dark;
             if (stored) {
                 dark = stored === 'dark';

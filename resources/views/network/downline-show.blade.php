@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - {{ $user->first_name }} {{ $user->last_name }}</title>
+    <title>SimPhix - {{ $user->first_name }} {{ $user->last_name }}</title>
 
     <div class="space-y-6 max-w-6xl mx-auto" x-data="{ activeTab: 'info' }">
 

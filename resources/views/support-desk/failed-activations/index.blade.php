@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM Support Desk - Failed Activations</title>
+    <title>SimPhix Support Desk - Failed Activations</title>
 
     <div class="space-y-6 max-w-7xl mx-auto">
         <div>

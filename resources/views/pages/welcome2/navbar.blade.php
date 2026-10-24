@@ -5,7 +5,7 @@
         toggleDark() {
             this.dark = !this.dark;
             document.documentElement.classList.toggle('dark', this.dark);
-            localStorage.setItem('smartsim-theme', this.dark ? 'dark' : 'light');
+            localStorage.setItem('simphix-theme', this.dark ? 'dark' : 'light');
         },
     }"
     class="sticky top-0 z-50 border-b bg-[var(--lp-nav)] backdrop-blur"
@@ -13,7 +13,7 @@
 >
     <nav class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8" aria-label="Primary">
         <a href="{{ url('/') }}" class="inline-flex items-center">
-            <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SmartSIM" class="h-12 w-auto">
+            <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SimPhix" class="h-12 w-auto">
         </a>
 
         <!-- Desktop nav -->

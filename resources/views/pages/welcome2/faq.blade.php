@@ -13,8 +13,8 @@
             'a' => 'Yes. Agents get wholesale SIM pricing, bulk allocation tools, and a live dashboard to track activations and earnings. Reach out via the support section below to get set up.',
         ],
         [
-            'q' => 'Which networks does SmartSIM support?',
-            'a' => 'SmartSIM works across MTN, Airtel, Glo, and 9mobile, so you can pick the network that fits your coverage needs.',
+            'q' => 'Which networks does SimPhix support?',
+            'a' => 'SimPhix works across MTN, Airtel, Glo, and 9mobile, so you can pick the network that fits your coverage needs.',
         ],
     ];
 @endphp

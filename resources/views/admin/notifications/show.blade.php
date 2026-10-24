@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - {{ $notification->title }}</title>
+    <title>SimPhix - {{ $notification->title }}</title>
 
     <div class="max-w-4xl mx-auto space-y-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

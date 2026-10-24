@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Push Notifications</title>
+    <title>SimPhix - Push Notifications</title>
 
     <div class="max-w-6xl mx-auto space-y-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Wallet Funding & Rewards</title>
+    <title>SimPhix - Wallet Funding & Rewards</title>
 
     <div class="max-w-7xl mx-auto space-y-6">
         <!-- Page Header -->
@@ -191,7 +191,7 @@
                             </div>
                             <h4 class="font-bold text-slate-800 text-sm">Transfer & Receive Credits Instantly</h4>
                             <p class="text-xs text-slate-400 leading-relaxed">
-                                Simply transfer funds from any bank app to your unique virtual bank account below to credit your SmartSIM wallet.
+                                Simply transfer funds from any bank app to your unique virtual bank account below to credit your SimPhix wallet.
                             </p>
                         </div>
 

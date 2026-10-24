@@ -1,7 +1,7 @@
 {
-  "name": "SmartSIM",
-  "short_name": "SmartSIM",
-  "description": "SmartSIM — secure SIM services, affordable data and a smarter wallet.",
+  "name": "SimPhix",
+  "short_name": "SimPhix",
+  "description": "SimPhix — secure SIM services, affordable data and a smarter wallet.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

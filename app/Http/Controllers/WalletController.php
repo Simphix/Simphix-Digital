@@ -236,7 +236,7 @@ class WalletController extends Controller
                     'bank_code' => $report->bank_code ?? '',
                     'account_no' => $report->account_number,
                     'account_name' => $report->account_name,
-                    'bank_name' => $report->bank_name ?? 'SmartSIM Wallet',
+                    'bank_name' => $report->bank_name ?? 'SimPhix Wallet',
                     'bank_url' => null
                 ];
             })
@@ -488,7 +488,7 @@ class WalletController extends Controller
                 'account_number' => $request->wallet_id,
                 'account_name' => $recipientName,
                 'bank_code' => 'p2p',
-                'bank_name' => 'SmartSIM Wallet',
+                'bank_name' => 'SimPhix Wallet',
                 'network' => 'P2P',
                 'ref' => $transferRef,
                 'amount' => $request->amount,
@@ -507,7 +507,7 @@ class WalletController extends Controller
                 'account_number' => $senderWallet->wallet_number,
                 'account_name' => $senderName,
                 'bank_code' => 'p2p',
-                'bank_name' => 'SmartSIM Wallet',
+                'bank_name' => 'SimPhix Wallet',
                 'network' => 'P2P',
                 'ref' => $transferRef . '-REC',
                 'amount' => $request->amount,

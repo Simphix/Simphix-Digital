@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - {{ $title ?? 'P2P Wallet Transfer' }}</title>
+    <title>SimPhix - {{ $title ?? 'P2P Wallet Transfer' }}</title>
 
     <div class="max-w-7xl mx-auto space-y-6">
         <!-- Page Header -->
@@ -11,7 +11,7 @@
                     </div>
                     P2P Transfer
                 </h1>
-                <p class="text-sm text-slate-500 mt-1">Send funds instantly to any registered SmartSIM user's wallet with zero fees.</p>
+                <p class="text-sm text-slate-500 mt-1">Send funds instantly to any registered SimPhix user's wallet with zero fees.</p>
             </div>
             
             <div class="flex items-center gap-3">
@@ -118,7 +118,7 @@
                                             </div>
                                             <div class="space-y-0.5">
                                                 <h6 id="recipientName" class="font-bold text-xs text-slate-800"></h6>
-                                                <span class="block text-xs text-slate-400 font-semibold uppercase tracking-wider">Verified SmartSIM User</span>
+                                                <span class="block text-xs text-slate-400 font-semibold uppercase tracking-wider">Verified SimPhix User</span>
                                             </div>
                                         </div>
                                     </div>
@@ -354,7 +354,7 @@
 
             // Populate Modal Fields (from pages.pin)
             document.getElementById('confirmAccountName').textContent = verifiedRecipient.user_name;
-            document.getElementById('confirmBankName').textContent = 'SmartSIM Wallet';
+            document.getElementById('confirmBankName').textContent = 'SimPhix Wallet';
             document.getElementById('confirmAccountNo').textContent = verifiedRecipient.wallet_id;
             document.getElementById('confirmAmount').textContent = '₦' + parseFloat(amount).toLocaleString(undefined, {minimumFractionDigits: 2});
 

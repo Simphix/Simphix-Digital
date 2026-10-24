@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - {{ $def['label'] }} Registration</title>
+    <title>SimPhix - {{ $def['label'] }} Registration</title>
 
     @php
         $kind = $def['kind'];

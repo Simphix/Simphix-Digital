@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Buy Data Bundle</title>
+    <title>SimPhix - Buy Data Bundle</title>
 
     {{-- Custom Styles --}}
     @push('styles')
@@ -244,7 +244,7 @@
                     <div class="mt-8 border-t border-slate-100 pt-4 text-center">
                         <span class="text-xs text-slate-400 font-semibold inline-flex items-center gap-1.5">
                             <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i>
-                            Protected by SmartSIM Multi-Factor Authentication
+                            Protected by SimPhix Multi-Factor Authentication
                         </span>
                     </div>
                 </div>

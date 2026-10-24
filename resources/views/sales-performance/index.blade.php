@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Sales Performance</title>
+    <title>SimPhix - Sales Performance</title>
 
     <div class="max-w-4xl mx-auto space-y-6">
         <!-- Page Header -->

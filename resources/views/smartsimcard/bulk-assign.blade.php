@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Bulk Assign SIM</title>
+    <title>SimPhix - Bulk Assign SIM</title>
 
     <div class="max-w-3xl mx-auto space-y-6"
          x-data="{

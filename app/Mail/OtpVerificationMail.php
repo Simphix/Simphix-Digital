@@ -25,7 +25,7 @@ class OtpVerificationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Email Verification OTP - SmartSIM',
+            subject: 'Email Verification OTP - SimPhix',
         );
     }
 

@@ -6,7 +6,7 @@
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="footer-brand">
                     <a href="#" class="logo-link" style="color: #FFF;">
-                        <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SmartSIM Logo" class="logo-img">
+                        <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SimPhix Logo" class="logo-img">
                     </a>
                     <p class="footer-desc">Empowering Businesses Through Smart Connectivity. Professional telecom SIM card selling and bulk agent distribution system.</p>
                     <div class="footer-socials">
@@ -64,7 +64,7 @@
         <!-- Footer Bottom -->
         <div class="footer-bottom">
             <div class="footer-copy">
-                &copy; {{ date('Y') }} SmartSIMSub. All rights reserved.
+                &copy; {{ date('Y') }} SimPhix. All rights reserved.
             </div>
             <div class="footer-bottom-links">
                 <a href="#" class="footer-bottom-link">Privacy Policy</a>

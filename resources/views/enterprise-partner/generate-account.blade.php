@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SmartSIM - Generate Payment Account</title>
+    <title>SimPhix - Generate Payment Account</title>
 
     <div class="max-w-2xl mx-auto space-y-6">
         <div>
