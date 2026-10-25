@@ -40,7 +40,7 @@
 
         @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true))
             @php
-                $walletActive = request()->routeIs('wallet', 'transfer', 'withdraw');
+                $walletActive = request()->routeIs('wallet', 'withdraw');
             @endphp
             <div x-data="{ open: {{ $walletActive ? 'true' : 'false' }} }">
                 <button type="button"
@@ -65,11 +65,8 @@
                      class="mt-1 ml-[22px] space-y-0.5 border-l border-slate-200 pl-2.5" style="display: none;">
 
                     @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('wallet'), 'icon' => 'wallet', 'label' => __('My Wallet'), 'active' => request()->routeIs('wallet')])
-                    @if (auth()->user()->role !== 'agent')
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('transfer'), 'icon' => 'send', 'label' => __('P2P Transfer'), 'active' => request()->routeIs('transfer')])
-                        @if (auth()->user()->role !== 'personal' && \App\Models\CashoutSettings::enabled())
-                            @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('withdraw'), 'icon' => 'banknote', 'label' => __('Cash Out'), 'active' => request()->routeIs('withdraw')])
-                        @endif
+                    @if (auth()->user()->role !== 'agent' && auth()->user()->role !== 'personal' && \App\Models\CashoutSettings::enabled())
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('withdraw'), 'icon' => 'banknote', 'label' => __('Cash Out'), 'active' => request()->routeIs('withdraw')])
                     @endif
                 </div>
             </div>

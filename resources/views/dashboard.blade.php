@@ -104,11 +104,6 @@
                             ₦{{ number_format($walletData['balance'] ?? 0.00, 2) }}
                         </p>
                     </div>
-                    @if (auth()->user()->role !== 'agent')
-                        <a href="{{ route('transfer') }}" class="shrink-0 text-xs font-semibold text-primary no-underline hover:underline">
-                            Send
-                        </a>
-                    @endif
                 </div>
             </div>
 
@@ -226,19 +221,6 @@
                     </div>
 
                     @endif
-
-                    <!-- Service 5: P2P Transfer -->
-                    <div class="col">
-                        <a href="{{ route('transfer') }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
-                            <div class="p-2 rounded-lg bg-primary/10 text-primary flex items-center justify-center w-10 h-10">
-                                <i data-lucide="send" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800 mb-0 font-display text-sm">P2P Send</h4>
-                                <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">Free P2P transfer</p>
-                            </div>
-                        </a>
-                    </div>
                 @endif
 
                 @if (\App\Support\UtilityAccess::canVerify(auth()->user()))

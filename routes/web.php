@@ -33,10 +33,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/virtual-account/create', [\App\Http\Controllers\WalletController::class, 'createWallet'])->name('virtual.account.create');
     Route::get('/wallet/balance', [\App\Http\Controllers\WalletController::class, 'getBalance'])->name('wallet.balance');
 
-    // P2P Transfer Routes
-    Route::get('/transfer', [\App\Http\Controllers\WalletController::class, 'p2p'])->name('transfer');
-    Route::post('/transfer/verify', [\App\Http\Controllers\WalletController::class, 'verifyUser'])->name('transfer.verify');
-    Route::post('/transfer/process', [\App\Http\Controllers\WalletController::class, 'processTransfer'])->name('transfer.process');
+    // PIN Verification Route
     Route::post('/verify/pin', [\App\Http\Controllers\WalletController::class, 'verifyPin'])->name('verify.pin')->middleware('throttle:5,1');
 
     // Withdraw Routes

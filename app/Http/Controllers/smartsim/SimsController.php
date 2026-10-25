@@ -882,7 +882,7 @@ class SimsController extends Controller
 
         $partner = Auth::user();
         if (!$partner || !in_array($partner->role, ['partner', 'business_agent'], true)) {
-            return back()->with('error', 'Only partners or business agents can activate a SIM.');
+            abort(403, 'Only partners or business agents can activate a SIM.');
         }
 
         PhoneNumber::normalizeRequestInput($request);
