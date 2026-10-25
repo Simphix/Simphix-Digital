@@ -475,7 +475,7 @@
                             'assigned_to_rm'              => 'In RM',
                             'assigned_to_coordinator'     => 'In Coord',
                             'assigned_to_partner'         => 'In Partner',
-                            'assigned_to_business'        => 'In EP',
+                            'assigned_to_business'        => 'In EB',
                             'assigned_to_business_agent'  => 'In Agent',
                             'activated'                   => 'Activated',
                             'suspended'                   => 'Suspended',

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SimPhix - Invite Enterprise Partner</title>
+    <title>SimPhix - Invite Enterprise Business</title>
 
     <div class="max-w-2xl mx-auto space-y-6">
         <div>
@@ -7,7 +7,7 @@
                 <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                     <i data-lucide="handshake" class="w-5 h-5"></i>
                 </div>
-                Invite an Enterprise Partner
+                Invite an Enterprise Business
             </h1>
             <p class="text-sm text-slate-500 mt-1">
                 Share this link with a business that wants to run its own SIM distribution network. They'll register,
@@ -31,7 +31,7 @@
         <div class="bg-amber-50/70 border border-amber-100 rounded-xl p-4 text-amber-800 flex items-start gap-3">
             <i data-lucide="info" class="w-5 h-5 text-amber-500 shrink-0 mt-0.5"></i>
             <p class="text-xs leading-relaxed">
-                Eligibility to become an Enterprise Partner requires purchasing a minimum of 100 SIM cards, mixing any
+                Eligibility to become an Enterprise Business requires purchasing a minimum of 100 SIM cards, mixing any
                 categories/networks currently in stock. Their dashboard stays locked until that payment clears.
             </p>
         </div>

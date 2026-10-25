@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SimPhix - SIM Inventory</title>
+    <title>SimPhix - All SIMs</title>
 
     <div class="max-w-6xl mx-auto space-y-6">
         <!-- Page Header -->
@@ -9,7 +9,7 @@
                     <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                         <i data-lucide="database" class="w-5 h-5"></i>
                     </div>
-                    SIM Inventory
+                    All SIMs
                 </h1>
                 <p class="text-sm text-slate-500 mt-1">SIM numbers currently and previously assigned to you.</p>
             </div>

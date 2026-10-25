@@ -7,7 +7,7 @@
             'Partner' => $sim->partner,
             'Coordinator' => $sim->coordinator,
             'Regional Manager' => $sim->regionalManager,
-            'Enterprise Partner' => $sim->business,
+            'Enterprise Business' => $sim->business,
             'Business Agent' => $sim->businessAgent,
         ];
     @endphp

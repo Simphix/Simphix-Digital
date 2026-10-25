@@ -108,7 +108,7 @@
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.activate.page'), 'icon' => 'zap', 'label' => __('Activate SIM'), 'active' => request()->routeIs('sims.activate*')])
                     @endif
                     @if (\App\Support\SimAccess::canBrowseCatalog(auth()->user()))
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.inventory'), 'icon' => 'database', 'label' => __('Inventory'), 'active' => request()->routeIs('sims.inventory')])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.inventory'), 'icon' => 'database', 'label' => __('All SIMs'), 'active' => request()->routeIs('sims.inventory')])
                     @endif
                     @if (\App\Support\SimAccess::canViewMine(auth()->user()))
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.mine'), 'icon' => 'smartphone', 'label' => __('My SIM'), 'active' => request()->routeIs('sims.mine')])
@@ -255,8 +255,8 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sme-plans.index'), 'icon' => 'wifi', 'label' => 'SME Data Plans', 'active' => request()->routeIs('admin.sme-plans*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-plan.index'), 'icon' => 'settings', 'label' => 'SIM Plans', 'active' => request()->routeIs('admin.sim-plan*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-data-topup.index'), 'icon' => 'battery-charging', 'label' => 'SIM Data Top-Up', 'active' => request()->routeIs('admin.sim-data-topup*')])
-                @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.fulfillment.index'), 'icon' => 'package-check', 'label' => 'EP Fulfillment', 'active' => request()->routeIs('admin.enterprise-partners.fulfillment*')])
-                @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.referral-settings.edit'), 'icon' => 'handshake', 'label' => 'EP Referral Settings', 'active' => request()->routeIs('admin.enterprise-partners.referral-settings*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.fulfillment.index'), 'icon' => 'package-check', 'label' => 'EB Fulfillment', 'active' => request()->routeIs('admin.enterprise-partners.fulfillment*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.referral-settings.edit'), 'icon' => 'handshake', 'label' => 'EB Referral Settings', 'active' => request()->routeIs('admin.enterprise-partners.referral-settings*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.agent-upgrade-settings.edit'), 'icon' => 'trending-up', 'label' => 'Agent Upgrade Settings', 'active' => request()->routeIs('admin.agent-upgrade-settings*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.cash-out.index'), 'icon' => 'banknote', 'label' => 'Cash Out Approvals', 'active' => request()->routeIs('admin.cash-out*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.cash-out.settings.edit'), 'icon' => 'toggle-right', 'label' => 'Cash Out Control', 'active' => request()->routeIs('admin.cash-out.settings*')])
