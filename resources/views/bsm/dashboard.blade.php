@@ -59,7 +59,7 @@
                 </button>
                 <a href="{{ route('bsm.reports.jurisdictions.export', request()->query()) }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold shadow-sm hover:bg-slate-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                     <i data-lucide="download" class="w-4 h-4 text-slate-500"></i>
-                    <span>Export Jurisdiction Report</span>
+                    <span>Export Territory Report</span>
                 </a>
             </div>
         </div>
@@ -197,7 +197,7 @@
         </button>
         <button type="button" @click="activeTab = 'jurisdictions'" :class="activeTab === 'jurisdictions' ? 'border-primary text-primary font-semibold' : 'border-transparent text-slate-500 hover:text-slate-700'" class="px-4 py-3 border-b-2 text-sm whitespace-nowrap transition flex items-center gap-2">
             <i data-lucide="map-pin" class="w-4 h-4"></i>
-            <span>Active Jurisdictions Reports</span>
+            <span>Active Territories Reports</span>
         </button>
         <button type="button" @click="activeTab = 'lifecycle'" :class="activeTab === 'lifecycle' ? 'border-primary text-primary font-semibold' : 'border-transparent text-slate-500 hover:text-slate-700'" class="px-4 py-3 border-b-2 text-sm whitespace-nowrap transition flex items-center gap-2">
             <i data-lucide="cpu" class="w-4 h-4"></i>
@@ -228,7 +228,7 @@
                         <p class="text-xs text-slate-500">Live sales, allocations, and conversion across active platform regions</p>
                     </div>
                     <button type="button" @click="activeTab = 'jurisdictions'" class="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-                        <span>View All Jurisdictions</span>
+                        <span>View All Territories</span>
                         <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                     </button>
                 </div>
@@ -349,7 +349,7 @@
 
             <!-- Regions Section -->
             <div class="mb-8">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">1. Regional Jurisdiction Overview</h3>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">1. Regional Territory Overview</h3>
                 <div class="overflow-x-auto border border-slate-100 rounded-xl">
                     <table class="w-full text-left text-sm">
                         <thead class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100">

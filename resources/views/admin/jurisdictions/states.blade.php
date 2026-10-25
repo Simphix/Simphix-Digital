@@ -6,7 +6,7 @@
     }" class="space-y-6 max-w-6xl mx-auto">
 
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">Jurisdictions</h1>
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">Territories</h1>
             <p class="text-xs text-slate-400 mt-1">Assign geographic coverage to Regional Managers (one Region each) and Coordinators (one Senatorial District each). Moving a State to a different Region automatically remaps every Coordinator whose district sits in it.</p>
         </div>
 
@@ -39,7 +39,7 @@
             <div class="p-6 border-b border-slate-100 flex items-center justify-between">
                 <div>
                     <h3 class="text-md font-bold text-slate-800 font-display">States</h3>
-                    <p class="text-xs text-slate-400 mt-1">Reassigning a state's Region here is the "remap" action — it instantly changes the effective jurisdiction of every Coordinator whose district is in this state.</p>
+                    <p class="text-xs text-slate-400 mt-1">Reassigning a state's Region here is the "remap" action — it instantly changes the effective territory of every Coordinator whose district is in this state.</p>
                 </div>
                 <x-primary-button @click="addModalOpen = true" class="!px-3 !py-2 !text-xs">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>

@@ -7,7 +7,7 @@
     }" class="space-y-6 max-w-6xl mx-auto">
 
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">Jurisdictions</h1>
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">Territories</h1>
             <p class="text-xs text-slate-400 mt-1">Assign geographic coverage to Regional Managers (one Region each) and Coordinators (one Senatorial District each). Moving a State to a different Region automatically remaps every Coordinator whose district sits in it.</p>
         </div>
 

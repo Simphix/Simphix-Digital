@@ -186,7 +186,7 @@
                 <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Sales Administration</span>
 
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard'), 'icon' => 'layout-dashboard', 'label' => 'BSM Dashboard', 'active' => request()->routeIs('bsm.dashboard') && (!request('tab') || request('tab') === 'overview')])
-                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'jurisdictions']), 'icon' => 'map-pin', 'label' => 'Jurisdictions Report', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'jurisdictions'])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'jurisdictions']), 'icon' => 'map-pin', 'label' => 'Territories Report', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'jurisdictions'])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'lifecycle']), 'icon' => 'cpu', 'label' => 'SIM Lifecycle', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'lifecycle'])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'customers']), 'icon' => 'user-check', 'label' => 'Customer Desk', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'customers'])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'acceleration']), 'icon' => 'zap', 'label' => 'Sales Acceleration', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'acceleration'])
@@ -249,7 +249,7 @@
                     </div>
                 </div>
 
-                @include('layouts.partials.sidebar-link', ['href' => route('admin.jurisdictions.regions.index'), 'icon' => 'map', 'label' => 'Jurisdictions', 'active' => request()->routeIs('admin.jurisdictions*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.jurisdictions.regions.index'), 'icon' => 'map', 'label' => 'Territories', 'active' => request()->routeIs('admin.jurisdictions*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.reconciliation.index'), 'icon' => 'scale', 'label' => 'Reconciliation', 'active' => request()->routeIs('admin.reconciliation*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.services.index'), 'icon' => 'server', 'label' => 'Services Pricing', 'active' => request()->routeIs('admin.services*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sme-plans.index'), 'icon' => 'wifi', 'label' => 'SME Data Plans', 'active' => request()->routeIs('admin.sme-plans*')])

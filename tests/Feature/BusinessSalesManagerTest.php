@@ -138,7 +138,7 @@ test('BSM can export jurisdiction report as CSV', function () {
     $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     $content = $response->getContent();
 
-    expect($content)->toContain('SIMPHIX BUSINESS SALES MANAGER - JURISDICTION & SALES REPORT');
+    expect($content)->toContain('SIMPHIX BUSINESS SALES MANAGER - TERRITORY & SALES REPORT');
     expect($content)->toContain('EXECUTIVE OVERVIEW');
     expect($content)->toContain('REGIONAL SALES BREAKDOWN');
     expect($content)->toContain('SENATORIAL DISTRICTS BREAKDOWN');

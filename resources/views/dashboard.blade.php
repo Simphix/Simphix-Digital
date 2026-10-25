@@ -58,7 +58,7 @@
                         @else
                             <span class="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 rounded-md py-1 px-2.5 flex items-center gap-1">
                                 <i data-lucide="map-pin-off" class="w-3 h-3"></i>
-                                Jurisdiction unassigned
+                                Territory unassigned
                             </span>
                         @endif
                     @endif

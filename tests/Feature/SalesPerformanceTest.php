@@ -102,7 +102,7 @@ test('regional manager sees overview and breakdown of sales by downline jurisdic
     $response->assertOk();
     $response->assertSee('Sales Performance');
     $response->assertSee('Executive Overview');
-    $response->assertSee('Sales Breakdown by Jurisdiction & Downline', false);
+    $response->assertSee('Sales Breakdown by Territory & Downline', false);
     $response->assertSee($this->district->name);
     $response->assertSee($this->state->name);
     $response->assertSee('Adebayo Johnson');
@@ -125,7 +125,7 @@ test('coordinator sees their senatorial district partner breakdown', function ()
 
     $response->assertOk();
     $response->assertSee('Executive Overview');
-    $response->assertSee('Sales Breakdown by Jurisdiction');
+    $response->assertSee('Sales Breakdown by Territory');
     $response->assertSee($this->partner->first_name);
     $response->assertSee($sim->number);
 });
@@ -155,9 +155,9 @@ test('catalog users can export sales performance report to CSV', function () {
     $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     $content = $response->getContent();
 
-    expect($content)->toContain('SIMPHIX SALES PERFORMANCE & JURISDICTION REPORT');
+    expect($content)->toContain('SIMPHIX SALES PERFORMANCE & TERRITORY REPORT');
     expect($content)->toContain('OVERVIEW SUMMARY');
-    expect($content)->toContain('JURISDICTION & DOWNLINE BREAKDOWN');
+    expect($content)->toContain('TERRITORY & DOWNLINE BREAKDOWN');
     expect($content)->toContain('ITEMIZED ACTIVATED SIMS (SALES RECORDS)');
     expect($content)->toContain($sim->number);
     expect($content)->toContain('Kudirat Alabi');

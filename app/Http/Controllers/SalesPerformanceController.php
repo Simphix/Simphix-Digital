@@ -74,9 +74,9 @@ class SalesPerformanceController extends Controller
         $data = $this->buildReportData($user, $request);
 
         $csv = "\xEF\xBB\xBF"; // UTF-8 BOM for Microsoft Excel
-        $csv .= "\"SIMPHIX SALES PERFORMANCE & JURISDICTION REPORT\"\n";
+        $csv .= "\"SIMPHIX SALES PERFORMANCE & TERRITORY REPORT\"\n";
         $csv .= "\"Generated For\",\"" . str_replace('"', '""', $user->name) . " (" . ucfirst(str_replace('_', ' ', $user->role)) . ")\"\n";
-        $csv .= "\"Jurisdiction / Scope\",\"" . str_replace('"', '""', $user->jurisdictionLabel() ?? 'All Managed Territories') . "\"\n";
+        $csv .= "\"Territory / Scope\",\"" . str_replace('"', '""', $user->jurisdictionLabel() ?? 'All Managed Territories') . "\"\n";
         $csv .= "\"Reporting Period\",\"" . str_replace('"', '""', $data['rangeLabel']) . "\"\n";
         $csv .= "\"Generated At\",\"" . now()->format('Y-m-d H:i:s') . "\"\n";
         $csv .= "\n";
@@ -91,8 +91,8 @@ class SalesPerformanceController extends Controller
         $csv .= "\"Pending Stock\",\"" . $data['pendingCount'] . "\"\n";
         $csv .= "\"Dormant Stock (7+ days)\",\"" . $data['dormantCount'] . "\"\n";
         $csv .= "\n";
-        $csv .= "\"JURISDICTION & DOWNLINE BREAKDOWN\"\n";
-        $csv .= "\"Jurisdiction / Territory\",\"Level / Type\",\"Assigned Lead\",\"Contact Phone\",\"Allocated SIMs\",\"Activated Sales\",\"Sales Volume (NGN)\",\"Conversion Rate (%)\",\"Pending Stock\",\"Dormant Stock\"\n";
+        $csv .= "\"TERRITORY & DOWNLINE BREAKDOWN\"\n";
+        $csv .= "\"Territory\",\"Level / Type\",\"Assigned Lead\",\"Contact Phone\",\"Allocated SIMs\",\"Activated Sales\",\"Sales Volume (NGN)\",\"Conversion Rate (%)\",\"Pending Stock\",\"Dormant Stock\"\n";
 
         foreach ($data['jurisdictionRows'] as $row) {
             $csv .= implode(',', array_map(fn ($v) => '"' . str_replace('"', '""', (string) $v) . '"', [
@@ -124,7 +124,7 @@ class SalesPerformanceController extends Controller
         ])) . "\n";
         $csv .= "\n";
         $csv .= "\"ITEMIZED ACTIVATED SIMS (SALES RECORDS)\"\n";
-        $csv .= "\"SIM Number\",\"Category\",\"Provider\",\"Status\",\"Customer Name\",\"Customer Phone\",\"Activated Date\",\"Activated By\",\"Seller Role\",\"Jurisdiction\",\"Sales Amount (NGN)\"\n";
+        $csv .= "\"SIM Number\",\"Category\",\"Provider\",\"Status\",\"Customer Name\",\"Customer Phone\",\"Activated Date\",\"Activated By\",\"Seller Role\",\"Territory\",\"Sales Amount (NGN)\"\n";
 
         foreach ($data['activatedSimsList'] as $sim) {
             $customerName = $sim->customer?->full_name

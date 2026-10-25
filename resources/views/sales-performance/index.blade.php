@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SimPhix - Sales Performance & Jurisdiction Breakdown</title>
+    <title>SimPhix - Sales Performance & Territory Breakdown</title>
 
     <div class="max-w-6xl mx-auto space-y-6">
         <!-- Page Header & Action Toolbar -->
@@ -12,7 +12,7 @@
                     Sales Performance
                 </h1>
                 <p class="text-sm text-slate-500 mt-1">
-                    {{ $isPersonal ? 'Your direct SIM sales, activations, and category summary.' : 'Comprehensive summary and jurisdiction breakdown of sales by you and your downline.' }}
+                    {{ $isPersonal ? 'Your direct SIM sales, activations, and category summary.' : 'Comprehensive summary and territory breakdown of sales by you and your downline.' }}
                 </p>
             </div>
 
@@ -272,20 +272,20 @@
             </div>
         </div>
 
-        <!-- SECTION 2: BREAKDOWN BY JURISDICTIONS TABLE -->
+        <!-- SECTION 2: BREAKDOWN BY TERRITORIES TABLE -->
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-slate-100">
                 <div>
                     <h2 class="text-base font-bold font-display text-slate-800 flex items-center gap-2">
                         <i data-lucide="map-pin" class="w-5 h-5 text-primary"></i>
-                        Sales Breakdown by Jurisdiction & Downline
+                        Sales Breakdown by Territory & Downline
                     </h2>
                     <p class="text-xs text-slate-400 mt-0.5">
-                        Performance and sales metrics for geographic jurisdictions and downline personnel under your administration
+                        Performance and sales metrics for geographic territories and downline personnel under your administration
                     </p>
                 </div>
                 <div class="text-xs text-slate-500 font-semibold bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60 w-fit">
-                    {{ count($jurisdictionRows) }} Jurisdictions / Territories
+                    {{ count($jurisdictionRows) }} Territories
                 </div>
             </div>
 
@@ -293,7 +293,7 @@
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr class="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[11px]">
-                            <th class="py-3 px-2">Jurisdiction / Territory</th>
+                            <th class="py-3 px-2">Territory</th>
                             <th class="py-3 px-2">Level / Role</th>
                             <th class="py-3 px-2">Assigned Officer</th>
                             <th class="py-3 px-2 text-center">Allocated</th>
@@ -354,7 +354,7 @@
                         @empty
                             <tr>
                                 <td colspan="9" class="py-8 text-center text-slate-400 font-medium">
-                                    No jurisdiction records found under your scope.
+                                    No territory records found under your scope.
                                 </td>
                             </tr>
                         @endforelse
@@ -420,7 +420,7 @@
                                 <th class="py-2.5 px-2">Network</th>
                                 <th class="py-2.5 px-2">Customer</th>
                                 <th class="py-2.5 px-2">Activated By</th>
-                                <th class="py-2.5 px-2">Jurisdiction</th>
+                                <th class="py-2.5 px-2">Territory</th>
                                 <th class="py-2.5 px-2">Date</th>
                                 <th class="py-2.5 px-2 text-right">Sale Amount</th>
                             </tr>
