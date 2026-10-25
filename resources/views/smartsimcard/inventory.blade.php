@@ -73,7 +73,26 @@
         </div>
 
         <!-- Your SIMs -->
-        <div x-data="{ currentTab: 'activated', downlineUsersMap: {{ \Illuminate\Support\Js::from($downlineUsers->mapWithKeys(fn ($du) => [trim($du->first_name . ' ' . $du->last_name) . ' · ' . ($du->phone ?? '') . ' #' . $du->id => $du->id]))->toHtml() }} }" class="space-y-4">
+        <div x-data="{
+            currentTab: 'activated',
+            detailsModalOpen: false,
+            selectedSim: null,
+            copiedKey: null,
+            copy(text, key) {
+                if (!text || text === 'N/A') return;
+                navigator.clipboard.writeText(text);
+                this.copiedKey = key;
+                setTimeout(() => this.copiedKey = null, 2000);
+            },
+            openDetails(data) {
+                this.selectedSim = data;
+                this.detailsModalOpen = true;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            },
+            downlineUsersMap: {{ \Illuminate\Support\Js::from($downlineUsers->mapWithKeys(fn ($du) => [trim($du->first_name . ' ' . $du->last_name) . ' · ' . ($du->phone ?? '') . ' #' . $du->id => $du->id]))->toHtml() }}
+        }" class="space-y-4">
             <!-- Navigation Tabs -->
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-2 flex gap-1">
                 <button type="button" @click="currentTab = 'activated'" :class="currentTab === 'activated' ? 'bg-[#0056D2] text-white' : 'text-slate-500 hover:bg-slate-50'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5">
@@ -91,7 +110,10 @@
 
             <!-- Tab: Activated -->
             <div x-show="currentTab === 'activated'" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
-                <h3 class="font-bold text-slate-800 font-display pb-3 border-b border-slate-100">Activated SIMs</h3>
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h3 class="font-bold text-slate-800 font-display">Activated SIMs</h3>
+                    <span class="text-xs text-slate-400">Click any row to view customer and SIM details</span>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
@@ -101,18 +123,44 @@
                                 <th class="py-2.5">Category</th>
                                 <th class="py-2.5">Network</th>
                                 <th class="py-2.5">Status</th>
+                                <th class="py-2.5 text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($activatedSims as $sim)
-                                <tr class="border-b border-slate-50 hover:bg-slate-50/50">
-                                    <td class="py-3 font-bold text-slate-800">{{ $sim->number }}</td>
+                                @php
+                                    $customerName = $sim->customer?->full_name ?? ($sim->user && $sim->user_id !== $sim->partner_id ? trim($sim->user->first_name . ' ' . $sim->user->last_name) : null);
+                                    $customerPhone = $sim->customer?->phone_number ?? ($sim->user && $sim->user_id !== $sim->partner_id ? $sim->user->phone : null);
+                                    $customerEmail = $sim->customer?->email ?? ($sim->user && $sim->user_id !== $sim->partner_id ? $sim->user->email : null);
+                                    $customerAddress = $sim->customer?->address ?? null;
+                                    $activatedAt = $sim->customer?->created_at?->format('M d, Y · h:i A') ?? $sim->updated_at?->format('M d, Y · h:i A');
+                                    $simPayload = [
+                                        'number' => $sim->number,
+                                        'category' => $sim->category,
+                                        'provider' => strtoupper($sim->provider),
+                                        'status' => \App\Support\SimStatus::label($sim->status),
+                                        'statusClass' => \App\Support\SimStatus::badgeClasses($sim->status),
+                                        'activatedAt' => $activatedAt,
+                                        'customerName' => $customerName,
+                                        'customerPhone' => $customerPhone,
+                                        'customerEmail' => $customerEmail,
+                                        'customerAddress' => $customerAddress,
+                                    ];
+                                @endphp
+                                <tr class="border-b border-slate-50 hover:bg-slate-50/80 cursor-pointer transition-colors group"
+                                    @click="openDetails(@js($simPayload))">
+                                    <td class="py-3 font-bold text-slate-800">
+                                        <button type="button" class="text-primary group-hover:underline flex items-center gap-1 font-mono text-left">
+                                            {{ $sim->number }}
+                                            <i data-lucide="eye" class="w-3 h-3 opacity-60"></i>
+                                        </button>
+                                    </td>
                                     <td class="py-3 text-slate-700">
-                                        @if ($sim->customer)
-                                            <span class="font-semibold text-slate-800 block">{{ $sim->customer->full_name }}</span>
-                                            <span class="text-[11px] text-slate-400 font-mono">{{ $sim->customer->phone_number }}</span>
-                                        @elseif ($sim->user && $sim->user_id !== $sim->partner_id)
-                                            <span class="font-semibold text-slate-800">{{ $sim->user->first_name }} {{ $sim->user->last_name }}</span>
+                                        @if ($customerName)
+                                            <span class="font-semibold text-slate-800 block">{{ $customerName }}</span>
+                                            @if ($customerPhone)
+                                                <span class="text-[11px] text-slate-400 font-mono">{{ $customerPhone }}</span>
+                                            @endif
                                         @else
                                             <span class="text-slate-400">—</span>
                                         @endif
@@ -124,10 +172,18 @@
                                             {{ \App\Support\SimStatus::label($sim->status) }}
                                         </span>
                                     </td>
+                                    <td class="py-3 text-right">
+                                        <button type="button"
+                                                @click.stop="openDetails(@js($simPayload))"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 group-hover:bg-primary/10 group-hover:text-primary text-slate-600 text-xs font-semibold transition-colors">
+                                            <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                                            Details
+                                        </button>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="py-8 text-center text-slate-400 font-semibold">No activated SIMs yet.</td>
+                                    <td colspan="6" class="py-8 text-center text-slate-400 font-semibold">No activated SIMs yet.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -354,6 +410,171 @@
                     {{ $assignedToOthersSims->links('vendor.pagination.custom') }}
                 </div>
             @endif
+
+            <!-- Activated SIM & Customer Details Modal -->
+            <div x-show="detailsModalOpen"
+                 x-cloak
+                 class="fixed inset-0 z-50 overflow-y-auto"
+                 aria-labelledby="modal-sim-details-title" role="dialog" aria-modal="true">
+                <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <div x-show="detailsModalOpen"
+                         x-transition:enter="ease-out duration-300"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="ease-in duration-200"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
+                         @click="detailsModalOpen = false" aria-hidden="true"></div>
+
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                    <div x-show="detailsModalOpen"
+                         x-transition:enter="ease-out duration-300"
+                         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave="ease-in duration-200"
+                         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                         class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-200">
+
+                        <template x-if="selectedSim">
+                            <div class="p-6 space-y-5">
+                                <!-- Modal Header -->
+                                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                            <i data-lucide="smartphone" class="w-5 h-5"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-base font-bold text-slate-800 font-display" id="modal-sim-details-title">
+                                                SIM & Customer Details
+                                            </h3>
+                                            <p class="text-xs text-slate-400">Activated profile and onboarding details</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" @click="detailsModalOpen = false" class="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                                        <i data-lucide="x" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+
+                                <!-- SIM Details Card -->
+                                <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100 space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">SIM Information</span>
+                                        <span :class="selectedSim.statusClass" class="px-2 py-0.5 rounded-full text-[11px] font-bold border" x-text="selectedSim.status"></span>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-3 text-xs">
+                                        <div>
+                                            <span class="text-slate-400 block text-[11px]">Phone Number</span>
+                                            <div class="flex items-center gap-1.5 mt-0.5">
+                                                <span class="font-bold text-slate-800 font-mono text-sm" x-text="selectedSim.number"></span>
+                                                <button type="button"
+                                                        @click="copy(selectedSim.number, 'sim_number')"
+                                                        class="text-slate-400 hover:text-primary transition-colors p-0.5"
+                                                        title="Copy number">
+                                                    <i data-lucide="copy" class="w-3.5 h-3.5" x-show="copiedKey !== 'sim_number'"></i>
+                                                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600" x-show="copiedKey === 'sim_number'"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <span class="text-slate-400 block text-[11px]">Network Provider</span>
+                                            <span class="font-bold text-slate-800 uppercase mt-0.5 block" x-text="selectedSim.provider"></span>
+                                        </div>
+
+                                        <div>
+                                            <span class="text-slate-400 block text-[11px]">SIM Category</span>
+                                            <span class="font-semibold text-slate-800 mt-0.5 block" x-text="selectedSim.category"></span>
+                                        </div>
+
+                                        <div>
+                                            <span class="text-slate-400 block text-[11px]">Activation Date</span>
+                                            <span class="font-medium text-slate-600 mt-0.5 block" x-text="selectedSim.activatedAt || 'N/A'"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Customer Details Card -->
+                                <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100 space-y-3">
+                                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Customer Information</span>
+
+                                    <template x-if="selectedSim.customerName || selectedSim.customerPhone">
+                                        <div class="space-y-2.5 text-xs">
+                                            <div class="flex items-start gap-2.5">
+                                                <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
+                                                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <span class="text-[11px] text-slate-400 block">Full Name</span>
+                                                    <span class="font-bold text-slate-800" x-text="selectedSim.customerName || 'N/A'"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-start gap-2.5">
+                                                <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
+                                                    <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <span class="text-[11px] text-slate-400 block">Phone Number</span>
+                                                    <div class="flex items-center gap-1.5">
+                                                        <span class="font-semibold text-slate-800 font-mono" x-text="selectedSim.customerPhone || 'N/A'"></span>
+                                                        <button type="button"
+                                                                x-show="selectedSim.customerPhone"
+                                                                @click="copy(selectedSim.customerPhone, 'cust_phone')"
+                                                                class="text-slate-400 hover:text-primary transition-colors p-0.5"
+                                                                title="Copy phone">
+                                                            <i data-lucide="copy" class="w-3.5 h-3.5" x-show="copiedKey !== 'cust_phone'"></i>
+                                                            <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600" x-show="copiedKey === 'cust_phone'"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-start gap-2.5">
+                                                <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
+                                                    <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <span class="text-[11px] text-slate-400 block">Email Address</span>
+                                                    <span class="font-medium text-slate-700 break-all" x-text="selectedSim.customerEmail || 'Not provided'"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-start gap-2.5">
+                                                <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
+                                                    <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <span class="text-[11px] text-slate-400 block">Physical Address</span>
+                                                    <span class="font-medium text-slate-700" x-text="selectedSim.customerAddress || 'Not provided'"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <template x-if="!selectedSim.customerName && !selectedSim.customerPhone">
+                                        <div class="py-3 px-3 bg-white rounded-lg border border-slate-200 text-slate-400 text-center text-xs">
+                                            No customer profile was recorded for this SIM.
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Footer -->
+                                <div class="flex items-center justify-end pt-3 border-t border-slate-100">
+                                    <button type="button"
+                                            @click="detailsModalOpen = false"
+                                            class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200 transition-colors">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
         </div>
 
         @if (in_array(auth()->user()->role, ['regional_manager', 'coordinator'], true))

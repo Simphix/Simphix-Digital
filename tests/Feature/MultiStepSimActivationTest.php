@@ -268,3 +268,24 @@ test('requests page renders incoming and my requests tabs and lists my requests'
     $response->assertSee('Request SIM Cards');
     $response->assertSee('POS SIM');
 });
+
+test('inventory page displays activated SIMs with clickable customer and SIM details modal', function () {
+    $this->sim->update(['status' => SimStatus::ACTIVATED]);
+    SimCustomer::create([
+        'sim_id'       => $this->sim->id,
+        'partner_id'   => $this->partner->id,
+        'full_name'    => 'Chinedu Eze',
+        'phone_number' => '08033334444',
+        'email'        => 'chinedu@example.com',
+        'address'      => '45 Marina Street, Lagos Island',
+    ]);
+
+    $response = $this->actingAs($this->partner)->get(route('sims.inventory', ['tab' => 'activated']));
+
+    $response->assertOk();
+    $response->assertSee($this->simNumber);
+    $response->assertSee('Chinedu Eze');
+    $response->assertSee('08033334444');
+    $response->assertSee('openDetails');
+    $response->assertSee('Customer Details');
+});
