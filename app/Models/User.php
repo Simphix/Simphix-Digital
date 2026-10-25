@@ -133,11 +133,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Check if the user is a staff-level or above.
+     * Check if the user is an internal staff-level or above.
      */
     public function isStaff(): bool
     {
-        return in_array($this->role, ['staff', 'checker', 'super_admin', 'business_sales_manager'], true);
+        return in_array($this->role, ['super_admin', 'business_sales_manager', 'support'], true);
     }
 
     /**

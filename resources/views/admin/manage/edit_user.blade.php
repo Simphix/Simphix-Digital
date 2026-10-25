@@ -66,9 +66,9 @@
                             <option value="partner" {{ old('role', $user->role) == 'partner' ? 'selected' : '' }}>Partner</option>
                             <option value="coordinator" {{ old('role', $user->role) == 'coordinator' ? 'selected' : '' }}>Coordinator</option>
                             <option value="regional_manager" {{ old('role', $user->role) == 'regional_manager' ? 'selected' : '' }}>Regional Manager</option>
-                            <option value="business" {{ old('role', $user->role) == 'business' ? 'selected' : '' }}>Business</option>
-                            <option value="staff" {{ old('role', $user->role) == 'staff' ? 'selected' : '' }}>Staff</option>
-                            <option value="checker" {{ old('role', $user->role) == 'checker' ? 'selected' : '' }}>Checker</option>
+                            <option value="business" {{ old('role', $user->role) == 'business' ? 'selected' : '' }}>Enterprise Business</option>
+                            <option value="business_agent" {{ old('role', $user->role) == 'business_agent' ? 'selected' : '' }}>Business Agent</option>
+                            <option value="business_sales_manager" {{ old('role', $user->role) == 'business_sales_manager' ? 'selected' : '' }}>Business Sales Manager</option>
                             <option value="support" {{ old('role', $user->role) == 'support' ? 'selected' : '' }}>Support</option>
                             <option value="super_admin" {{ old('role', $user->role) == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
                         </x-select-input>

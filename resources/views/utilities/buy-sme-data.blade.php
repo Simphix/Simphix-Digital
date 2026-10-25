@@ -370,7 +370,7 @@
                         let price = parseFloat(response[i]["personal_price"]);
                         if (userRole === 'agent') price = parseFloat(response[i]["agent_price"]);
                         else if (userRole === 'partner') price = parseFloat(response[i]["partner_price"]);
-                        else if (['business', 'staff', 'checker', 'super_admin'].includes(userRole)) price = parseFloat(response[i]["business_price"]);
+                        else if (['business', 'business_agent', 'business_sales_manager', 'support', 'super_admin'].includes(userRole)) price = parseFloat(response[i]["business_price"]);
 
                         var plan_text = response[i]["size"] + " - ₦" + price.toFixed(2) + " (" + response[i]["validity"] + " Days)";
                         var id = response[i]["data_id"];

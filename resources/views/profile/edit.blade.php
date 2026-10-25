@@ -1,6 +1,6 @@
 <x-app-layout>
     @php
-        // Internal/back-office accounts (staff, checker, support,
+        // Internal/back-office accounts (support, business_sales_manager,
         // super_admin) get none of the customer self-service tabs —
         // withdrawal account, upgrade, and delete are all no-ops for them,
         // and personal info is managed by a super_admin via Manage Access,

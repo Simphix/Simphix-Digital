@@ -256,7 +256,7 @@ class DashboardController extends Controller
             'agent'    => User::where('role', 'agent')->count(),
             'partner'  => User::where('role', 'partner')->count(),
             'business' => User::where('role', 'business')->count(),
-            'admins'   => User::whereIn('role', ['super_admin', 'staff', 'checker'])->count(),
+            'admins'   => User::whereIn('role', ['super_admin', 'business_sales_manager', 'support'])->count(),
         ];
 
         return view('admin.admin_dashboard', compact(

@@ -38,8 +38,7 @@ class RoleAccountsSeeder extends Seeder
         $this->makeUser('agent', 'Ade', 'Agent', $password, $partner->id);
         $this->makeUser('business', 'Bola', 'Business', $password, $partner->id);
         $this->makeUser('business_sales_manager', 'Brian', 'SalesManager', $password);
-        $this->makeUser('staff', 'Sam', 'Staff', $password);
-        $this->makeUser('checker', 'Chika', 'Checker', $password);
+        $this->makeUser('support', 'Sule', 'Support', $password);
         $this->makeUser('super_admin', 'Ada', 'Admin', $password);
     }
 

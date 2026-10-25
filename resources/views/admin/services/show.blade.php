@@ -471,11 +471,12 @@
                                     <option value="personal">Personal</option>
                                     <option value="agent">Agent</option>
                                     <option value="partner">Partner</option>
-                                    <option value="business">Business</option>
                                     <option value="coordinator">Coordinator</option>
                                     <option value="regional_manager">Regional Manager</option>
-                                    <option value="staff">Staff</option>
-                                    <option value="checker">Checker</option>
+                                    <option value="business">Enterprise Business</option>
+                                    <option value="business_agent">Business Agent</option>
+                                    <option value="business_sales_manager">Business Sales Manager</option>
+                                    <option value="support">Support</option>
                                     <option value="super_admin">Super Admin</option>
                                 </x-select-input>
                             </div>
@@ -575,11 +576,12 @@
                                     <option value="personal">Personal</option>
                                     <option value="agent">Agent</option>
                                     <option value="partner">Partner</option>
-                                    <option value="business">Business</option>
                                     <option value="coordinator">Coordinator</option>
                                     <option value="regional_manager">Regional Manager</option>
-                                    <option value="staff">Staff</option>
-                                    <option value="checker">Checker</option>
+                                    <option value="business">Enterprise Business</option>
+                                    <option value="business_agent">Business Agent</option>
+                                    <option value="business_sales_manager">Business Sales Manager</option>
+                                    <option value="support">Support</option>
                                     <option value="super_admin">Super Admin</option>
                                 </x-select-input>
                             </div>

@@ -5,7 +5,7 @@ namespace App\Support;
 use App\Models\User;
 
 /**
- * Internal/back-office roles — staff, checker, support, and super_admin —
+ * Internal/back-office roles — support, business_sales_manager, and super_admin —
  * none of which are real customers. They have no wallet/cash-out to manage
  * and no upline in the referral sense (even if their underlying `users` row
  * still carries a `referred_by` from before they were promoted), so the
@@ -16,7 +16,7 @@ use App\Models\User;
  */
 class StaffAccess
 {
-    public const ROLES = ['staff', 'checker', 'support', 'super_admin', 'business_sales_manager'];
+    public const ROLES = ['support', 'business_sales_manager', 'super_admin'];
 
     public static function isInternal(User $user): bool
     {

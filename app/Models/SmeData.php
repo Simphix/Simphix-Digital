@@ -45,8 +45,8 @@ class SmeData extends Model
         return match ($role) {
             'agent' => (float) $this->agent_price,
             'partner' => (float) $this->partner_price,
-            'business' => (float) $this->business_price,
-            'staff', 'checker', 'super_admin' => (float) $this->business_price,
+            'business', 'business_agent' => (float) $this->business_price,
+            'business_sales_manager', 'support', 'super_admin' => (float) $this->business_price,
             default => (float) $this->personal_price,
         };
     }

@@ -11,7 +11,7 @@
         <div class="pricing-toggle-wrapper">
             <span class="pricing-toggle-label">Public Retail Cost</span>
             <div class="toggle-switch"></div>
-            <span class="pricing-toggle-label">Staff Wholesale Cost</span>
+            <span class="pricing-toggle-label">Partner Wholesale Cost</span>
         </div>
 
         <!-- Pricing Grid -->
