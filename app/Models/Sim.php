@@ -152,4 +152,12 @@ class Sim extends Model
 
         return $query;
     }
+
+    /**
+     * Get whole rounded days since creation/holding with no floating number.
+     */
+    public function daysHeld(): int
+    {
+        return (int) round($this->created_at ? $this->created_at->diffInDays(now()) : 0);
+    }
 }

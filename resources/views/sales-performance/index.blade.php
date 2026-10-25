@@ -505,7 +505,7 @@
                                             {{ $row['holder'] ? trim($row['holder']->first_name . ' ' . $row['holder']->last_name) : 'In Hand' }}
                                         </td>
                                     @endunless
-                                    <td class="py-3 px-2 text-slate-500 font-medium">{{ $row['days_held'] }} days</td>
+                                    <td class="py-3 px-2 text-slate-500 font-medium">{{ (int) round($row['days_held']) }} days</td>
                                     <td class="py-3 px-2 text-right">
                                         @if ($row['is_dormant'])
                                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-50 text-rose-600 border border-rose-100">

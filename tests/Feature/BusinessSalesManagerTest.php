@@ -284,3 +284,27 @@ test('BSM can approve a pending partner SIM purchase request', function () {
     expect($request->fresh()->status)->toBe('approved');
     expect($sim->fresh()->status)->toBe(SimStatus::ASSIGNED_TO_PARTNER);
 });
+
+test('BSM dashboard renders days held and idle days as rounded whole numbers without decimals', function () {
+    $stuckSim = Sim::create([
+        'number'     => '080' . random_int(10000000, 99999999),
+        'category'   => 'POS SIM',
+        'provider'   => 'mtn',
+        'partner_id' => $this->partner->id,
+        'user_id'    => $this->partner->id,
+        'status'     => SimStatus::ASSIGNED_TO_PARTNER,
+    ]);
+    $stuckSim->forceFill([
+        'created_at' => now()->subDays(10)->subHours(5)->subMinutes(30),
+        'updated_at' => now()->subDays(10)->subHours(5)->subMinutes(30),
+    ])->save();
+
+    expect($stuckSim->daysHeld())->toBe(10);
+
+    $response = $this->actingAs($this->bsm)
+        ->get(route('bsm.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('10d idle');
+    $response->assertSee('10 days');
+});

@@ -519,7 +519,8 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($lifecycleSims as $sim)
                             @php
-                                $isDormant = $sim->status !== \App\Support\SimStatus::ACTIVATED && $sim->status !== \App\Support\SimStatus::UNASSIGNED && $sim->created_at->diffInDays(now()) >= 7;
+                                $daysHeld = $sim->daysHeld();
+                                $isDormant = $sim->status !== \App\Support\SimStatus::ACTIVATED && $sim->status !== \App\Support\SimStatus::UNASSIGNED && $daysHeld >= 7;
                                 $holder = match ($sim->status) {
                                     \App\Support\SimStatus::ASSIGNED_TO_RM => $sim->regionalManager,
                                     \App\Support\SimStatus::ASSIGNED_TO_COORDINATOR => $sim->coordinator,
@@ -570,12 +571,12 @@
                                     @if ($isDormant)
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
                                             <i data-lucide="clock" class="w-3 h-3"></i>
-                                            <span>{{ $sim->created_at->diffInDays(now()) }}d idle</span>
+                                            <span>{{ $daysHeld }}d idle</span>
                                         </span>
                                     @elseif ($sim->status === \App\Support\SimStatus::ACTIVATED)
                                         <span class="text-xs text-emerald-600 font-semibold">Active</span>
                                     @else
-                                        <span class="text-xs text-slate-400">{{ $sim->created_at->diffInDays(now()) }}d</span>
+                                        <span class="text-xs text-slate-400">{{ $daysHeld }}d</span>
                                     @endif
                                 </td>
                                 <td class="py-3 px-3 text-right">
@@ -745,7 +746,7 @@
                                         <p class="text-[10px] text-slate-400">{{ ucfirst(str_replace('_', ' ', $dHolder?->role ?? '')) }} &bull; {{ $dHolder?->phone ?? '—' }}</p>
                                     </td>
                                     <td class="py-2.5 px-3 text-xs font-bold text-rose-600">
-                                        {{ $dSim->created_at->diffInDays(now()) }} days
+                                        {{ $dSim->daysHeld() }} days
                                     </td>
                                     <td class="py-2.5 px-3 text-right">
                                         <button type="button" @click="selectedSimId = '{{ $dSim->id }}'; selectedSimNumber = '{{ $dSim->number }}'; currentHolderName = '{{ $dHolder?->name }}'; currentHolderRole = '{{ $dHolder?->role }}'; showReassignModal = true" class="px-2 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold">

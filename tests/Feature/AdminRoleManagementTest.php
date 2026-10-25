@@ -4,6 +4,9 @@ use App\Models\AdminNotification;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\StaffAccess;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+
+uses(DatabaseTransactions::class);
 
 beforeEach(function () {
     $this->admin = User::factory()->create([
@@ -71,11 +74,10 @@ test('StaffAccess::isInternal reflects only active internal roles', function () 
 });
 
 test('admin service price reject staff and checker and accept business_sales_manager', function () {
-    $service = Service::create([
-        'name' => 'mtn_sme_data',
-        'display_name' => 'MTN SME Data',
-        'status' => 'active',
-    ]);
+    $service = Service::firstOrCreate(
+        ['name' => 'mtn_sme_data'],
+        ['display_name' => 'MTN SME Data', 'status' => 'active']
+    );
 
     $responseStale = $this->actingAs($this->admin)->post(route('admin.services.prices.store', $service), [
         'price_target' => 'role',

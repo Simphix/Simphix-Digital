@@ -256,11 +256,11 @@ class SalesPerformanceController extends Controller
             $unactivatedQuery->with('user');
         }
         $unactivatedSimsCollection = (clone $unactivatedQuery)->get();
-        $dormantCount = $unactivatedSimsCollection->filter(fn ($s) => $s->created_at->diffInDays(now()) >= self::DORMANT_DAYS)->count();
+        $dormantCount = $unactivatedSimsCollection->filter(fn ($s) => $s->daysHeld() >= self::DORMANT_DAYS)->count();
         $pendingCount = $unactivatedSimsCollection->count();
 
         $unactivatedSimsList = $unactivatedSimsCollection->take(20)->map(function (Sim $sim) use ($isPersonal) {
-            $daysHeld = (int) $sim->created_at->diffInDays(now());
+            $daysHeld = $sim->daysHeld();
 
             return [
                 'sim'        => $sim,
@@ -438,7 +438,7 @@ class SalesPerformanceController extends Controller
             $salesVolume = $activatedSlice->sum(fn ($s) => $this->getSimPrice($s, $priceMap));
             $conversionRate = $allocated > 0 ? round(($activated / $allocated) * 100, 1) : 0;
             $pending = $allocated - $activated;
-            $dormant = $simsSlice->filter(fn ($s) => $s->status !== SimStatus::ACTIVATED && $s->created_at->diffInDays(now()) >= self::DORMANT_DAYS)->count();
+            $dormant = $simsSlice->filter(fn ($s) => $s->status !== SimStatus::ACTIVATED && $s->daysHeld() >= self::DORMANT_DAYS)->count();
 
             return [
                 'jurisdiction'    => $jurisdiction,
