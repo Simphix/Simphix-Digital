@@ -213,6 +213,19 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Business Sales Manager (BSM) Console
+Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('bsm')->name('bsm.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('/reports/jurisdictions/export', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'exportJurisdictionReport'])->name('reports.jurisdictions.export');
+    Route::post('/lifecycle/assign', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'assignSim'])->name('lifecycle.assign');
+    Route::post('/lifecycle/reassign', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'reassignSim'])->name('lifecycle.reassign');
+    Route::post('/lifecycle/revert', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'revertSim'])->name('lifecycle.revert');
+    Route::post('/lifecycle/{sim}/status', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'updateSimStatus'])->name('lifecycle.status');
+    Route::post('/customers/quick-activate', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'quickActivate'])->name('customers.quick-activate');
+    Route::post('/requests/{simRequest}/approve', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'approveRequest'])->name('requests.approve');
+    Route::post('/failed-activations/{report}/retry', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'retryFailedActivation'])->name('failed-activations.retry');
+});
+
 Route::middleware(['auth', 'verified', 'support_staff'])->prefix('support-desk')->name('support-desk.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Support\DashboardController::class, 'index'])->name('dashboard');
 

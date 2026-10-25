@@ -50,7 +50,8 @@
                 <!-- Main Content Slot -->
                 <main class="flex-grow py-8 px-8 sm:py-4 sm:px-4 md:py-8 md:px-10 lg:py-10 lg:px-16 xl:px-24 bg-slate-50/50">
                     <div class="mx-auto max-w-[1800px]">
-                        {{ $slot }}
+                        {{ $slot ?? '' }}
+                        @yield('content')
                     </div>
                 </main>
             </div>

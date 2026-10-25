@@ -37,6 +37,7 @@ class RoleAccountsSeeder extends Seeder
         // Standalone legacy / admin roles, unrelated to the hierarchy chain.
         $this->makeUser('agent', 'Ade', 'Agent', $password, $partner->id);
         $this->makeUser('business', 'Bola', 'Business', $password, $partner->id);
+        $this->makeUser('business_sales_manager', 'Brian', 'SalesManager', $password);
         $this->makeUser('staff', 'Sam', 'Staff', $password);
         $this->makeUser('checker', 'Chika', 'Checker', $password);
         $this->makeUser('super_admin', 'Ada', 'Admin', $password);

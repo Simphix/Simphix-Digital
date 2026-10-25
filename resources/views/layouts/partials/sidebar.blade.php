@@ -31,14 +31,19 @@
     <!-- Navigation Menu -->
     <nav class="flex-grow px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden" aria-label="Main navigation">
 
+        @php
+            $dashboardRoute = auth()->user() && auth()->user()->role === 'business_sales_manager'
+                ? route('bsm.dashboard')
+                : (auth()->user() && auth()->user()->role === 'support' ? route('support-desk.dashboard') : route('dashboard'));
+        @endphp
         @include('layouts.partials.sidebar-link', [
-            'href' => route('dashboard'),
+            'href' => $dashboardRoute,
             'icon' => 'layout-dashboard',
             'label' => __('Dashboard'),
-            'active' => request()->routeIs('dashboard'),
+            'active' => request()->routeIs('dashboard', 'bsm.dashboard', 'support-desk.dashboard') && !request('tab'),
         ])
 
-        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true))
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true))
             @php
                 $walletActive = request()->routeIs('wallet', 'withdraw');
             @endphp
@@ -72,7 +77,7 @@
             </div>
         @endif
 
-        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true) && auth()->user()->role !== 'agent')
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true) && auth()->user()->role !== 'agent')
             @php
                 $simsActive = request()->routeIs('sims.*');
             @endphp
@@ -152,10 +157,10 @@
             </div>
         @endif
 
-        @if (auth()->user() && auth()->user()->role !== 'support')
+        @if (auth()->user() && !in_array(auth()->user()->role, ['support', 'business_sales_manager'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('transactions'), 'icon' => 'history', 'label' => __('Transaction'), 'active' => request()->routeIs('transactions')])
         @endif
-        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true))
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('network'), 'icon' => 'users', 'label' => __('My Network'), 'active' => request()->routeIs('network')])
         @endif
         @if (auth()->user() && (\App\Support\SimAccess::canBrowseCatalog(auth()->user()) || auth()->user()->hasRole('super_admin')))
@@ -170,10 +175,23 @@
         @if (auth()->user() && !\App\Support\StaffAccess::isInternal(auth()->user()))
             @include('layouts.partials.sidebar-link', ['href' => route('cac.overview'), 'icon' => 'file-badge', 'label' => __('CAC Registration'), 'active' => request()->routeIs('cac.*')])
         @endif
-        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true))
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('support'), 'icon' => 'help-circle', 'label' => __('Support'), 'active' => request()->routeIs('support')])
         @endif
         @include('layouts.partials.sidebar-link', ['href' => route('profile.edit'), 'icon' => 'user-cog', 'label' => __('Profile Settings'), 'active' => request()->routeIs('profile.edit')])
+
+        @if (auth()->user() && auth()->user()->role === 'business_sales_manager')
+            <!-- Business Sales Manager Section -->
+            <div class="pt-4 mt-4 border-t border-slate-200">
+                <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Sales Administration</span>
+
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard'), 'icon' => 'layout-dashboard', 'label' => 'BSM Dashboard', 'active' => request()->routeIs('bsm.dashboard') && (!request('tab') || request('tab') === 'overview')])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'jurisdictions']), 'icon' => 'map-pin', 'label' => 'Jurisdictions Report', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'jurisdictions'])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'lifecycle']), 'icon' => 'cpu', 'label' => 'SIM Lifecycle', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'lifecycle'])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'customers']), 'icon' => 'user-check', 'label' => 'Customer Desk', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'customers'])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'acceleration']), 'icon' => 'zap', 'label' => 'Sales Acceleration', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'acceleration'])
+            </div>
+        @endif
 
         @if (auth()->user() && auth()->user()->role === 'support')
             <!-- Support Desk Section -->
@@ -255,6 +273,7 @@
             <div class="pt-4 mt-4 border-t border-slate-200">
                 <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Advanced Dashboard</span>
 
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard'), 'icon' => 'briefcase', 'label' => 'BSM Console', 'active' => request()->routeIs('bsm.*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sims-operations.index'), 'icon' => 'bar-chart-3', 'label' => 'SIMs Operations', 'active' => request()->routeIs('admin.sims-operations*')])
             </div>
         @endif

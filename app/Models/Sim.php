@@ -99,6 +99,14 @@ class Sim extends Model
     }
 
     /**
+     * Alias for history().
+     */
+    public function histories(): HasMany
+    {
+        return $this->hasMany(SimHistory::class, 'sim_id')->latest();
+    }
+
+    /**
      * Get the swap requests filed for this SIM.
      */
     public function swapRequests(): HasMany

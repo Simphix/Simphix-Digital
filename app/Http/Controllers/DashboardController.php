@@ -32,6 +32,10 @@ class DashboardController extends Controller
             return $this->adminDashboard($request);
         }
 
+        if ($user->hasRole('business_sales_manager')) {
+            return redirect()->route('bsm.dashboard');
+        }
+
         // Support staff have their own read-mostly console — see
         // Support\DashboardController — never the personal wallet dashboard.
         if ($user->hasRole('support')) {

@@ -16,7 +16,7 @@ use App\Models\User;
  */
 class StaffAccess
 {
-    public const ROLES = ['staff', 'checker', 'support', 'super_admin'];
+    public const ROLES = ['staff', 'checker', 'support', 'super_admin', 'business_sales_manager'];
 
     public static function isInternal(User $user): bool
     {

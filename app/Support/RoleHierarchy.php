@@ -26,7 +26,7 @@ class RoleHierarchy
     ];
 
     /** Roles that bypass the hierarchy for admin operations. */
-    public const BYPASS_ROLES = ['super_admin', 'staff'];
+    public const BYPASS_ROLES = ['super_admin', 'staff', 'business_sales_manager'];
 
     /** The role directly beneath the given role in the chain, or null if it's the base level. */
     public static function nextRole(string $role): ?string
