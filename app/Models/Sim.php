@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Sim extends Model
 {
@@ -71,6 +72,14 @@ class Sim extends Model
     public function businessAgent(): BelongsTo
     {
         return $this->belongsTo(User::class, 'business_agent_id');
+    }
+
+    /**
+     * Get the customer information recorded upon activation.
+     */
+    public function customer(): HasOne
+    {
+        return $this->hasOne(SimCustomer::class, 'sim_id');
     }
 
     /**

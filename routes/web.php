@@ -153,6 +153,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/sims/mine', [\App\Http\Controllers\smartsim\SimsController::class, 'mine'])->name('sims.mine');
     Route::get('/sims/available-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'getAvailableNumbers'])->name('sims.available');
     Route::post('/sims/request', [\App\Http\Controllers\smartsim\SimsController::class, 'requestSim'])->name('sims.request');
+    Route::get('/sims/activate', [\App\Http\Controllers\smartsim\SimsController::class, 'activationPage'])->name('sims.activate.page');
     Route::post('/sims/activate', [\App\Http\Controllers\smartsim\SimsController::class, 'activateSim'])->name('sims.activate');
     Route::post('/sims/activate-for-user', [\App\Http\Controllers\smartsim\SimsController::class, 'activateForDownlineUser'])->name('sims.activate-for-user');
     Route::post('/partner/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('partner.sims.assign');
@@ -165,6 +166,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/sims/downline-users/search', [\App\Http\Controllers\smartsim\SimsController::class, 'searchUsers'])->name('sims.downline-users.search');
     Route::post('/sims/request-swap', [\App\Http\Controllers\smartsim\SimsController::class, 'requestSwap'])->name('sims.request-swap');
     Route::get('/sims/downline-requests', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequests'])->name('sims.downline-requests');
+    Route::get('/sims/requests', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequests'])->name('sims.requests');
     Route::get('/sims/downline-requests/available-sims', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequestAvailableSims'])->name('sims.downline-requests.available-sims');
     Route::post('/sims/downline-requests/{simRequest}/fulfill', [\App\Http\Controllers\smartsim\SimsController::class, 'fulfillDownlineRequest'])->name('sims.downline-requests.fulfill');
     Route::post('/sims/downline-requests/{simRequest}/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveDownlineRequestNumbers'])->name('sims.downline-requests.resolve-numbers');

@@ -188,14 +188,14 @@
 
         </div>
 
-        <!-- QUICK SERVICES PANEL (5 core actions on one line using Bootstrap row-cols-3 and row-cols-md-5) -->
+        <!-- QUICK SERVICES PANEL (4 items per row on desktop) -->
         <div class="dash-card p-4 mb-4">
             <h3 class="text-sm font-semibold text-slate-800 font-display mb-3 flex items-center gap-2">
                 <i data-lucide="grid" class="text-primary w-5 h-5"></i>
                 Quick Transaction Services
             </h3>
 
-            <div class="row row-cols-3 row-cols-md-6 g-2 g-md-4 justify-content-center">
+            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-2 g-md-4">
 
                 @if (auth()->user()->role !== 'agent')
                     <!-- Service 3: SIM Services -->
@@ -306,20 +306,6 @@
                             <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">Register your business</p>
                         </div>
                     </a>
-                </div>
-
-                <!-- Service 12: Own Your Website (Coming Soon) -->
-                <div class="col">
-                    <div class="service-btn relative p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2 opacity-60 cursor-not-allowed" aria-disabled="true">
-                        <span class="absolute top-1.5 right-1.5 text-[8px] font-bold uppercase tracking-wide text-slate-500 bg-slate-100 border border-slate-200 rounded-full px-1.5 py-0.5 leading-none">Coming Soon</span>
-                        <div class="p-2 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center w-10 h-10">
-                            <i data-lucide="globe" class="w-5 h-5"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-slate-500 mb-0 font-display text-sm">Own Your Website</h4>
-                            <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">Get your own website</p>
-                        </div>
-                    </div>
                 </div>
 
             </div>

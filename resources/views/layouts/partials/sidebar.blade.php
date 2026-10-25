@@ -102,17 +102,17 @@
                      class="mt-1 ml-[22px] space-y-0.5 border-l border-slate-200 pl-2.5" style="display: none;">
 
                     @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.index'), 'icon' => 'layout-grid', 'label' => __('Overview'), 'active' => request()->routeIs('sims.index')])
+                    @if (in_array(auth()->user()->role, ['partner', 'business_agent'], true))
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.activate.page'), 'icon' => 'zap', 'label' => __('Activate SIM'), 'active' => request()->routeIs('sims.activate*')])
+                    @endif
                     @if (\App\Support\SimAccess::canBrowseCatalog(auth()->user()))
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.pos'), 'icon' => 'credit-card', 'label' => __('POS SIM'), 'active' => request()->routeIs('sims.pos')])
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.cctv'), 'icon' => 'video', 'label' => __('CCTV SIM'), 'active' => request()->routeIs('sims.cctv')])
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.router'), 'icon' => 'router', 'label' => __('Router SIM'), 'active' => request()->routeIs('sims.router')])
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.inventory'), 'icon' => 'database', 'label' => __('Inventory'), 'active' => request()->routeIs('sims.inventory')])
                     @endif
                     @if (\App\Support\SimAccess::canViewMine(auth()->user()))
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.mine'), 'icon' => 'smartphone', 'label' => __('My SIM'), 'active' => request()->routeIs('sims.mine')])
                     @endif
                     @if (in_array(auth()->user()->role, ['partner', 'coordinator', 'regional_manager', 'business', 'business_agent'], true))
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.downline-requests'), 'icon' => 'inbox', 'label' => __('Downline Requests'), 'active' => request()->routeIs('sims.downline-requests'), 'badge' => $pendingDownlineRequestsBadge ?? 0])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.downline-requests'), 'icon' => 'inbox', 'label' => __('Requests'), 'active' => request()->routeIs('sims.downline-requests*', 'sims.requests*'), 'badge' => $pendingDownlineRequestsBadge ?? 0])
                     @endif
                     @if (auth()->user()->role === 'business')
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.business.commission-rates.index'), 'icon' => 'badge-percent', 'label' => __('Commission Rates'), 'active' => request()->routeIs('sims.business.commission-rates.*')])

@@ -13,6 +13,25 @@
             <p class="text-sm text-slate-500 mt-1">Pick the SIM built for what you're connecting. Each device has its own activation fee and instant setup.</p>
         </div>
 
+        @if (in_array(auth()->user()->role, ['partner', 'business_agent'], true))
+            <div class="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-primary text-white flex items-center justify-center shadow-sm shrink-0">
+                        <i data-lucide="zap" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-slate-800 font-display">Fast SIM Activation</h2>
+                        <p class="text-xs text-slate-500">Activate any held SIM card for a customer in 3 easy steps.</p>
+                    </div>
+                </div>
+                <a href="{{ route('sims.activate.page') }}"
+                   class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold shadow-sm transition-all hover:bg-primary/90 shrink-0">
+                    <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                    Activate a SIM
+                </a>
+            </div>
+        @endif
+
         {{-- Flash Messages --}}
         @if (session('success'))
             <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-emerald-800 flex items-start gap-3 shadow-sm">

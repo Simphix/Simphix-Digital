@@ -44,6 +44,10 @@ return new class extends Migration
     {
         $connection = Schema::getConnection();
 
+        if ($connection->getDriverName() === 'sqlite') {
+            return false;
+        }
+
         return $connection->table('information_schema.TABLE_CONSTRAINTS')
             ->where('CONSTRAINT_SCHEMA', $connection->getDatabaseName())
             ->where('TABLE_NAME', $table)

@@ -97,6 +97,7 @@
                         <thead>
                             <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase">
                                 <th class="py-2.5">Number</th>
+                                <th class="py-2.5">Customer</th>
                                 <th class="py-2.5">Category</th>
                                 <th class="py-2.5">Network</th>
                                 <th class="py-2.5">Status</th>
@@ -106,6 +107,16 @@
                             @forelse ($activatedSims as $sim)
                                 <tr class="border-b border-slate-50 hover:bg-slate-50/50">
                                     <td class="py-3 font-bold text-slate-800">{{ $sim->number }}</td>
+                                    <td class="py-3 text-slate-700">
+                                        @if ($sim->customer)
+                                            <span class="font-semibold text-slate-800 block">{{ $sim->customer->full_name }}</span>
+                                            <span class="text-[11px] text-slate-400 font-mono">{{ $sim->customer->phone_number }}</span>
+                                        @elseif ($sim->user && $sim->user_id !== $sim->partner_id)
+                                            <span class="font-semibold text-slate-800">{{ $sim->user->first_name }} {{ $sim->user->last_name }}</span>
+                                        @else
+                                            <span class="text-slate-400">—</span>
+                                        @endif
+                                    </td>
                                     <td class="py-3 font-semibold text-slate-700">{{ $sim->category }}</td>
                                     <td class="py-3 text-slate-500 uppercase">{{ $sim->provider }}</td>
                                     <td class="py-3">
@@ -116,7 +127,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="py-8 text-center text-slate-400 font-semibold">No activated SIMs yet.</td>
+                                    <td colspan="5" class="py-8 text-center text-slate-400 font-semibold">No activated SIMs yet.</td>
                                 </tr>
                             @endforelse
                         </tbody>
