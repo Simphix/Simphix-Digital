@@ -16,13 +16,23 @@
        class="fixed inset-y-0 left-0 z-50 w-64 bg-white text-slate-600 border-r border-slate-200 flex flex-col transform lg:translate-x-0 lg:static lg:h-screen transition-all duration-200 ease-in-out">
 
     <!-- Brand Header -->
-    <div class="flex items-center justify-between gap-2 px-4 py-2 border-b border-slate-200">
-        <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
-            <img src="{{ asset('assets/images/logo/favicon.png') }}" alt="" class="w-12 h-12 rounded-md shrink-0" aria-hidden="true">
-            <span x-show="!sidebarCollapsed" x-cloak class="min-w-0 truncate text-sm font-bold text-slate-900 font-display">SimPhix</span>
+    <div :class="sidebarCollapsed ? 'px-2 py-3 flex-col justify-center items-center gap-2' : 'px-4 py-3 justify-between items-center'"
+         class="flex border-b border-slate-200 transition-all duration-200">
+        <!-- Logo when expanded -->
+        <a x-show="!sidebarCollapsed" href="{{ route('dashboard') }}" class="flex items-center gap-2.5 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
+            <img src="{{ asset('assets/images/logo/favicon.png') }}" alt="SimPhix" class="w-9 h-9 rounded-lg shrink-0 object-contain" aria-hidden="true">
+            <span class="min-w-0 truncate text-base font-bold text-slate-900 font-display tracking-tight">SimPhix</span>
         </a>
+
+        <!-- Logo when collapsed (mini sidebar) -->
+        <a x-show="sidebarCollapsed" x-cloak href="{{ route('dashboard') }}" title="SimPhix Dashboard" class="flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl group">
+            <img src="{{ asset('assets/images/logo/favicon.png') }}" alt="SimPhix" class="w-10 h-10 rounded-xl object-contain shadow-sm group-hover:scale-105 transition-transform shrink-0">
+        </a>
+
+        <!-- Expand / Collapse button -->
         <button type="button" @click="sidebarCollapsed = !sidebarCollapsed"
                 class="hidden lg:inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
                 :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
             <i data-lucide="chevron-left" class="w-4 h-4 transition-transform duration-200" :class="sidebarCollapsed ? 'rotate-180' : ''" aria-hidden="true"></i>
         </button>

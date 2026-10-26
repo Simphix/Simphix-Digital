@@ -9,6 +9,15 @@
             <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
 
+        <!-- Sidebar Toggle (Desktop only) -->
+        <button @click="sidebarCollapsed = !sidebarCollapsed" 
+                type="button" 
+                class="hidden lg:inline-flex p-2 -ml-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none transition-colors"
+                :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+                :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+
         <!-- Inline Search Bar (Desktop only) -->
         <div x-data="{
             query: '',
