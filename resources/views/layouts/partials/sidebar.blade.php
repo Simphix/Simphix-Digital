@@ -16,8 +16,8 @@
        class="fixed inset-y-0 left-0 z-50 w-64 bg-white text-slate-600 border-r border-slate-200 flex flex-col transform lg:translate-x-0 lg:static lg:h-screen transition-all duration-200 ease-in-out">
 
     <!-- Brand Header -->
-    <div :class="sidebarCollapsed ? 'px-2 py-3 flex-col justify-center items-center gap-2' : 'px-4 py-3 justify-between items-center'"
-         class="flex border-b border-slate-200 transition-all duration-200">
+    <div :class="sidebarCollapsed ? 'px-2 justify-center' : 'px-4'"
+         class="flex h-16 shrink-0 items-center border-b border-slate-200 transition-all duration-200">
         <!-- Logo when expanded -->
         <a x-show="!sidebarCollapsed" href="{{ route('dashboard') }}" class="flex items-center gap-2.5 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
             <img src="{{ asset('assets/images/logo/favicon.png') }}" alt="SimPhix" class="w-9 h-9 rounded-lg shrink-0 object-contain" aria-hidden="true">
@@ -28,14 +28,6 @@
         <a x-show="sidebarCollapsed" x-cloak href="{{ route('dashboard') }}" title="SimPhix Dashboard" class="flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl group">
             <img src="{{ asset('assets/images/logo/favicon.png') }}" alt="SimPhix" class="w-10 h-10 rounded-xl object-contain shadow-sm group-hover:scale-105 transition-transform shrink-0">
         </a>
-
-        <!-- Expand / Collapse button -->
-        <button type="button" @click="sidebarCollapsed = !sidebarCollapsed"
-                class="hidden lg:inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-                :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
-            <i data-lucide="chevron-left" class="w-4 h-4 transition-transform duration-200" :class="sidebarCollapsed ? 'rotate-180' : ''" aria-hidden="true"></i>
-        </button>
     </div>
 
     <!-- Navigation Menu -->
