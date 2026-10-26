@@ -28,7 +28,7 @@ class SimPlanController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Sim::with(['user', 'partner']);
+        $query = Sim::with(['user', 'partner', 'regionalManager', 'coordinator']);
 
         // Search by SIM Number
         if ($request->filled('search')) {
@@ -52,13 +52,15 @@ class SimPlanController extends Controller
 
         $sims = $query->latest()->paginate(10, ['*'], 'sims_page')->appends(request()->query());
 
-        // Fetch requests
-        $pendingRequests = SimRequest::with('user', 'sim', 'upline')->where('status', 'pending')->latest()->get();
-        $resolvedRequests = SimRequest::with('user', 'sim')->where('status', '!=', 'pending')->latest()->paginate(10, ['*'], 'requests_page')->appends(request()->query());
-
-        // Fetch swap requests
-        $pendingSwaps = SimSwapRequest::with('sim', 'requester', 'fromHolder', 'toHolder')->where('status', 'pending')->latest()->get();
-        $resolvedSwaps = SimSwapRequest::with('sim', 'requester', 'fromHolder', 'toHolder', 'approver')->where('status', '!=', 'pending')->latest()->paginate(10, ['*'], 'swaps_page')->appends(request()->query());
+        // Header statistics
+        $totalUploaded = Sim::count();
+        $totalAssigned = Sim::whereIn('status', [
+            SimStatus::ASSIGNED_TO_RM,
+            SimStatus::ASSIGNED_TO_COORDINATOR,
+            SimStatus::ASSIGNED_TO_PARTNER,
+        ])->count();
+        $totalAvailable = Sim::where('status', SimStatus::UNASSIGNED)->count();
+        $totalActivated = Sim::where('status', SimStatus::ACTIVATED)->count();
 
         // Fetch assignable users (excluding super_admin role)
         $assignableUsers = User::where('role', '!=', 'super_admin')
@@ -71,6 +73,31 @@ class SimPlanController extends Controller
         $categories = $simService ? $categoryFields->pluck('field_name')->toArray() : ['POS SIM', 'CAMERA SIM', 'CCTV', 'ROUTER SIM', 'GPS SIM'];
         $providers = ['mtn', 'airtel', 'glo', '9mobile'];
 
+        // If AJAX request for filtering / pagination, return JSON with rendered inventory partial
+        if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest' || $request->has('ajax')) {
+            return response()->json([
+                'status' => 'success',
+                'html' => view('admin.sim-plan.partials.inventory-content', compact(
+                    'sims', 'assignableUsers', 'categories', 'providers'
+                ))->render(),
+                'total' => $sims->total(),
+                'counts' => [
+                    'totalUploaded' => $totalUploaded,
+                    'totalAssigned' => $totalAssigned,
+                    'totalAvailable' => $totalAvailable,
+                    'totalActivated' => $totalActivated,
+                ],
+            ]);
+        }
+
+        // Fetch requests
+        $pendingRequests = SimRequest::with('user', 'sim', 'upline')->where('status', 'pending')->latest()->get();
+        $resolvedRequests = SimRequest::with('user', 'sim')->where('status', '!=', 'pending')->latest()->paginate(10, ['*'], 'requests_page')->appends(request()->query());
+
+        // Fetch swap requests
+        $pendingSwaps = SimSwapRequest::with('sim', 'requester', 'fromHolder', 'toHolder')->where('status', 'pending')->latest()->get();
+        $resolvedSwaps = SimSwapRequest::with('sim', 'requester', 'fromHolder', 'toHolder', 'approver')->where('status', '!=', 'pending')->latest()->paginate(10, ['*'], 'swaps_page')->appends(request()->query());
+
         // Failed activation-bonus-data top-ups, written by GrantActivationBonusData
         // to the shared reports table — same source every other purchase-attempt log uses.
         // 'retrying' rows are a retry claimed but not yet resolved — still
@@ -81,16 +108,6 @@ class SimPlanController extends Controller
             ->latest()
             ->paginate(10, ['*'], 'failed_page')
             ->appends(request()->query());
-
-        // Header statistics
-        $totalUploaded = Sim::count();
-        $totalAssigned = Sim::whereIn('status', [
-            SimStatus::ASSIGNED_TO_RM,
-            SimStatus::ASSIGNED_TO_COORDINATOR,
-            SimStatus::ASSIGNED_TO_PARTNER,
-        ])->count();
-        $totalAvailable = Sim::where('status', SimStatus::UNASSIGNED)->count();
-        $totalActivated = Sim::where('status', SimStatus::ACTIVATED)->count();
 
         return view('admin.sim-plan.index', compact(
             'sims', 'pendingRequests', 'resolvedRequests', 'pendingSwaps', 'resolvedSwaps', 'assignableUsers', 'categories', 'categoryFields', 'providers',
