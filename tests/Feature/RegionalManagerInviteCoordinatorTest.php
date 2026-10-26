@@ -7,13 +7,14 @@ use App\Models\Region;
 use App\Models\SenatorialDistrict;
 use App\Models\State;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class RegionalManagerInviteCoordinatorTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected function setUp(): void
     {
@@ -23,18 +24,19 @@ class RegionalManagerInviteCoordinatorTest extends TestCase
 
     public function test_regional_manager_sees_territory_assignment_section_on_invite_page(): void
     {
+        $suffix = strtolower(Str::random(6));
         $rm = User::factory()->create(['role' => 'regional_manager']);
-        $region = Region::create(['name' => 'South West', 'regional_manager_id' => $rm->id]);
-        $state = State::create(['name' => 'Lagos', 'region_id' => $region->id]);
-        $district = SenatorialDistrict::create(['name' => 'Lagos West', 'state_id' => $state->id]);
+        $region = Region::create(['name' => 'Region ' . $suffix, 'regional_manager_id' => $rm->id]);
+        $state = State::create(['name' => 'State ' . $suffix, 'region_id' => $region->id]);
+        $district = SenatorialDistrict::create(['name' => 'District ' . $suffix, 'state_id' => $state->id]);
 
         $response = $this->actingAs($rm)->get(route('onboarding.invite'));
 
         $response->assertOk();
         $response->assertSee('Territory / Senatorial District Assignment');
-        $response->assertSee('South West Region');
-        $response->assertSee('Lagos West');
-        $response->assertSee('Lagos');
+        $response->assertSee($region->name);
+        $response->assertSee($district->name);
+        $response->assertSee($state->name);
         $response->assertSee('Create New District');
     }
 
@@ -50,16 +52,18 @@ class RegionalManagerInviteCoordinatorTest extends TestCase
 
     public function test_regional_manager_can_invite_coordinator_with_existing_district(): void
     {
+        $suffix = strtolower(Str::random(6));
         $rm = User::factory()->create(['role' => 'regional_manager']);
-        $region = Region::create(['name' => 'South West', 'regional_manager_id' => $rm->id]);
-        $state = State::create(['name' => 'Lagos', 'region_id' => $region->id]);
-        $district = SenatorialDistrict::create(['name' => 'Lagos Central', 'state_id' => $state->id]);
+        $region = Region::create(['name' => 'Region ' . $suffix, 'regional_manager_id' => $rm->id]);
+        $state = State::create(['name' => 'State ' . $suffix, 'region_id' => $region->id]);
+        $district = SenatorialDistrict::create(['name' => 'District ' . $suffix, 'state_id' => $state->id]);
+        $email = 'coord_' . $suffix . '@example.com';
 
         $response = $this->actingAs($rm)->post(route('onboarding.invite.send'), [
             'first_name' => 'Babatunde',
             'last_name' => 'Fashola',
-            'email' => 'tunde@example.com',
-            'phone' => '08023456789',
+            'email' => $email,
+            'phone' => '0802' . rand(1000000, 9999999),
             'territory_mode' => 'existing',
             'district_id' => $district->id,
         ]);
@@ -67,7 +71,7 @@ class RegionalManagerInviteCoordinatorTest extends TestCase
         $response->assertRedirect(route('network'));
         $response->assertSessionHas('success');
 
-        $coordinator = User::where('email', 'tunde@example.com')->first();
+        $coordinator = User::where('email', $email)->first();
         $this->assertNotNull($coordinator);
         $this->assertEquals('coordinator', $coordinator->role);
         $this->assertEquals('invited', $coordinator->status);
@@ -85,32 +89,35 @@ class RegionalManagerInviteCoordinatorTest extends TestCase
 
     public function test_regional_manager_can_create_and_assign_new_district_from_same_page(): void
     {
+        $suffix = strtolower(Str::random(6));
         $rm = User::factory()->create(['role' => 'regional_manager']);
-        $region = Region::create(['name' => 'South East', 'regional_manager_id' => $rm->id]);
-        $state = State::create(['name' => 'Enugu', 'region_id' => $region->id]);
+        $region = Region::create(['name' => 'Region ' . $suffix, 'regional_manager_id' => $rm->id]);
+        $state = State::create(['name' => 'State ' . $suffix, 'region_id' => $region->id]);
+        $email = 'coord_new_' . $suffix . '@example.com';
+        $newDistrictName = 'District New ' . $suffix;
 
         $response = $this->actingAs($rm)->post(route('onboarding.invite.send'), [
             'first_name' => 'Chinedu',
             'last_name' => 'Okeke',
-            'email' => 'chinedu@example.com',
-            'phone' => '08034567890',
+            'email' => $email,
+            'phone' => '0803' . rand(1000000, 9999999),
             'territory_mode' => 'new',
-            'new_district_name' => 'Enugu North',
+            'new_district_name' => $newDistrictName,
             'new_district_state_id' => $state->id,
         ]);
 
         $response->assertRedirect(route('network'));
         $response->assertSessionHas('success');
 
-        $coordinator = User::where('email', 'chinedu@example.com')->first();
+        $coordinator = User::where('email', $email)->first();
         $this->assertNotNull($coordinator);
         $this->assertEquals('coordinator', $coordinator->role);
 
-        $newDistrict = SenatorialDistrict::where('name', 'Enugu North')->first();
+        $newDistrict = SenatorialDistrict::where('name', $newDistrictName)->first();
         $this->assertNotNull($newDistrict);
         $this->assertEquals($state->id, $newDistrict->state_id);
         $this->assertEquals($coordinator->id, $newDistrict->coordinator_id);
-        $this->assertEquals('Enugu North · Enugu · South East', $coordinator->jurisdictionLabel());
+        $this->assertEquals("{$newDistrictName} · State {$suffix} · Region {$suffix}", $coordinator->jurisdictionLabel());
 
         Mail::assertSent(OnboardingInviteMail::class, function ($mail) use ($coordinator) {
             return $mail->invitee->id === $coordinator->id;
@@ -119,112 +126,125 @@ class RegionalManagerInviteCoordinatorTest extends TestCase
 
     public function test_cannot_assign_district_belonging_to_another_region(): void
     {
+        $suffix1 = strtolower(Str::random(6));
+        $suffix2 = strtolower(Str::random(6));
         $rm1 = User::factory()->create(['role' => 'regional_manager']);
-        $region1 = Region::create(['name' => 'North Central', 'regional_manager_id' => $rm1->id]);
-        $state1 = State::create(['name' => 'Benue', 'region_id' => $region1->id]);
+        $region1 = Region::create(['name' => 'Region ' . $suffix1, 'regional_manager_id' => $rm1->id]);
+        $state1 = State::create(['name' => 'State ' . $suffix1, 'region_id' => $region1->id]);
 
         $rm2 = User::factory()->create(['role' => 'regional_manager']);
-        $region2 = Region::create(['name' => 'North West', 'regional_manager_id' => $rm2->id]);
-        $state2 = State::create(['name' => 'Kano', 'region_id' => $region2->id]);
-        $otherDistrict = SenatorialDistrict::create(['name' => 'Kano Central', 'state_id' => $state2->id]);
+        $region2 = Region::create(['name' => 'Region ' . $suffix2, 'regional_manager_id' => $rm2->id]);
+        $state2 = State::create(['name' => 'State ' . $suffix2, 'region_id' => $region2->id]);
+        $otherDistrict = SenatorialDistrict::create(['name' => 'District ' . $suffix2, 'state_id' => $state2->id]);
 
+        $email = 'ahmad_' . $suffix1 . '@example.com';
         $response = $this->actingAs($rm1)->post(route('onboarding.invite.send'), [
             'first_name' => 'Ahmad',
             'last_name' => 'Sani',
-            'email' => 'ahmad@example.com',
-            'phone' => '08045678901',
+            'email' => $email,
+            'phone' => '0804' . rand(1000000, 9999999),
             'territory_mode' => 'existing',
             'district_id' => $otherDistrict->id,
         ]);
 
         $response->assertSessionHasErrors('district_id');
-        $this->assertDatabaseMissing('users', ['email' => 'ahmad@example.com']);
+        $this->assertDatabaseMissing('users', ['email' => $email]);
     }
 
     public function test_cannot_assign_district_already_assigned_to_another_coordinator(): void
     {
+        $suffix = strtolower(Str::random(6));
         $rm = User::factory()->create(['role' => 'regional_manager']);
-        $region = Region::create(['name' => 'South South', 'regional_manager_id' => $rm->id]);
-        $state = State::create(['name' => 'Rivers', 'region_id' => $region->id]);
+        $region = Region::create(['name' => 'Region ' . $suffix, 'regional_manager_id' => $rm->id]);
+        $state = State::create(['name' => 'State ' . $suffix, 'region_id' => $region->id]);
 
         $existingCoordinator = User::factory()->create(['role' => 'coordinator']);
         $district = SenatorialDistrict::create([
-            'name' => 'Rivers South East',
+            'name' => 'District ' . $suffix,
             'state_id' => $state->id,
             'coordinator_id' => $existingCoordinator->id,
         ]);
 
+        $email = 'nnamdi_' . $suffix . '@example.com';
         $response = $this->actingAs($rm)->post(route('onboarding.invite.send'), [
             'first_name' => 'Nnamdi',
             'last_name' => 'Asuni',
-            'email' => 'nnamdi@example.com',
-            'phone' => '08056789012',
+            'email' => $email,
+            'phone' => '0805' . rand(1000000, 9999999),
             'territory_mode' => 'existing',
             'district_id' => $district->id,
         ]);
 
         $response->assertSessionHasErrors('district_id');
-        $this->assertDatabaseMissing('users', ['email' => 'nnamdi@example.com']);
+        $this->assertDatabaseMissing('users', ['email' => $email]);
     }
 
     public function test_cannot_create_district_with_state_outside_region(): void
     {
+        $suffix1 = strtolower(Str::random(6));
+        $suffix2 = strtolower(Str::random(6));
         $rm = User::factory()->create(['role' => 'regional_manager']);
-        $region = Region::create(['name' => 'South West', 'regional_manager_id' => $rm->id]);
-        State::create(['name' => 'Ogun', 'region_id' => $region->id]);
+        $region = Region::create(['name' => 'Region ' . $suffix1, 'regional_manager_id' => $rm->id]);
+        State::create(['name' => 'State ' . $suffix1, 'region_id' => $region->id]);
 
-        $otherRegion = Region::create(['name' => 'North East']);
-        $otherState = State::create(['name' => 'Borno', 'region_id' => $otherRegion->id]);
+        $otherRegion = Region::create(['name' => 'Other ' . $suffix2]);
+        $otherState = State::create(['name' => 'OtherState ' . $suffix2, 'region_id' => $otherRegion->id]);
 
+        $email = 'titi_' . $suffix1 . '@example.com';
         $response = $this->actingAs($rm)->post(route('onboarding.invite.send'), [
             'first_name' => 'Titi',
             'last_name' => 'Ade',
-            'email' => 'titi@example.com',
-            'phone' => '08067890123',
+            'email' => $email,
+            'phone' => '0806' . rand(1000000, 9999999),
             'territory_mode' => 'new',
-            'new_district_name' => 'Borno North',
+            'new_district_name' => 'District ' . $suffix1,
             'new_district_state_id' => $otherState->id,
         ]);
 
         $response->assertSessionHasErrors('new_district_state_id');
-        $this->assertDatabaseMissing('users', ['email' => 'titi@example.com']);
+        $this->assertDatabaseMissing('users', ['email' => $email]);
     }
 
     public function test_cannot_create_district_with_duplicate_name(): void
     {
+        $suffix = strtolower(Str::random(6));
         $rm = User::factory()->create(['role' => 'regional_manager']);
-        $region = Region::create(['name' => 'South West', 'regional_manager_id' => $rm->id]);
-        $state = State::create(['name' => 'Oyo', 'region_id' => $region->id]);
+        $region = Region::create(['name' => 'Region ' . $suffix, 'regional_manager_id' => $rm->id]);
+        $state = State::create(['name' => 'State ' . $suffix, 'region_id' => $region->id]);
 
-        SenatorialDistrict::create(['name' => 'Oyo South', 'state_id' => $state->id]);
+        $existingName = 'District Dup ' . $suffix;
+        SenatorialDistrict::create(['name' => $existingName, 'state_id' => $state->id]);
 
+        $email = 'gbenga_' . $suffix . '@example.com';
         $response = $this->actingAs($rm)->post(route('onboarding.invite.send'), [
             'first_name' => 'Gbenga',
             'last_name' => 'Daniel',
-            'email' => 'gbenga@example.com',
-            'phone' => '08078901234',
+            'email' => $email,
+            'phone' => '0807' . rand(1000000, 9999999),
             'territory_mode' => 'new',
-            'new_district_name' => 'Oyo South',
+            'new_district_name' => $existingName,
             'new_district_state_id' => $state->id,
         ]);
 
         $response->assertSessionHasErrors('new_district_name');
-        $this->assertDatabaseMissing('users', ['email' => 'gbenga@example.com']);
+        $this->assertDatabaseMissing('users', ['email' => $email]);
     }
 
     public function test_coordinator_onboarding_partner_does_not_require_district(): void
     {
+        $suffix = strtolower(Str::random(6));
         $coordinator = User::factory()->create(['role' => 'coordinator']);
+        $email = 'partner_' . $suffix . '@example.com';
 
         $response = $this->actingAs($coordinator)->post(route('onboarding.invite.send'), [
             'first_name' => 'Partner',
             'last_name' => 'User',
-            'email' => 'partner@example.com',
-            'phone' => '08089012345',
+            'email' => $email,
+            'phone' => '0808' . rand(1000000, 9999999),
         ]);
 
         $response->assertRedirect(route('network'));
-        $partner = User::where('email', 'partner@example.com')->first();
+        $partner = User::where('email', $email)->first();
         $this->assertNotNull($partner);
         $this->assertEquals('partner', $partner->role);
     }
