@@ -58,6 +58,11 @@ return [
         'api_token' => env('AREWA_API_TOKEN'),
     ],
 
+    'gogoz' => [
+        'base_url' => env('GOGOZ_BASE_URL', 'https://www.gongozconcept.com/api/data/'),
+        'api_key'  => env('GOGOZ_API_KEY'),
+    ],
+
     'smedata' => [
         'base_url' => env('BASE_URL', 'https://fadeelposdatasub.com.ng/api/data/purchase'),
         'api_key'  => env('API_KEYS'),
@@ -66,14 +71,6 @@ return [
     'smeplug' => [
         'base_url' => env('SMEPLUG_BASE_URL', 'https://smeplug.ng/api/v1'),
         'api_key'  => env('SMEPLUG_API_KEY'),
-    ],
-
-    'ninepsb' => [
-        'auth_base_url' => env('NINEPSB_AUTH_BASE_URL', 'https://middleware.9psb.com.ng/identity/api/v1'),
-        'base_url'      => env('NINEPSB_BASE_URL', 'https://middleware.9psb.com.ng/vas/api/v1'),
-        'api_key'       => env('NINEPSB_API_KEY'),
-        'secret_key'    => env('NINEPSB_SECRET_KEY'),
-        'debit_account' => env('NINEPSB_DEBIT_ACCOUNT'),
     ],
 
     'amsub' => [

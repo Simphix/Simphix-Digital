@@ -56,7 +56,7 @@
             </div>
         @endif
 
-        @php $vendorLabels = ['legacy' => 'Legacy (Fadeelposdatasub)', 'smeplug' => 'SME Plug', '9psb' => '9PSB Data', 'amsub' => 'AMSUB']; @endphp
+        @php $vendorLabels = ['gogoz' => 'Gogoz Concept', 'smeplug' => 'SME Plug', 'amsub' => 'AMSUB', 'legacy' => 'Fadeelposdatasub (Legacy)']; @endphp
 
         <!-- Activation Bonus Settings -->
         <div class="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
@@ -188,14 +188,14 @@
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                             <div class="sm:col-span-1">
-                                <x-input-label :value="$providerKey === '9psb' ? 'VAS Base URL' : 'Base URL'" />
+                                <x-input-label value="Base URL" />
                                 <x-text-input type="url" name="base_url" form="provider-settings-form-{{ $providerKey }}"
                                        value="{{ old('base_url', $vendorSettings->base_url) }}" required
                                        class="rounded-xl !text-xs" />
                             </div>
                             <div class="sm:col-span-1">
-                                <x-input-label :value="$providerKey === '9psb' ? 'Username' : 'API Key'" />
-                                <x-text-input :type="$providerKey === '9psb' ? 'text' : 'password'" name="api_key" form="provider-settings-form-{{ $providerKey }}"
+                                <x-input-label value="API Key" />
+                                <x-text-input type="password" name="api_key" form="provider-settings-form-{{ $providerKey }}"
                                        placeholder="{{ $vendorSettings->api_key ? '•••••••• (leave blank to keep current)' : 'Not set' }}"
                                        class="rounded-xl !text-xs" />
                             </div>
@@ -205,26 +205,6 @@
                                     Save
                                 </x-primary-button>
                             </div>
-                            @if ($providerKey === '9psb')
-                                <div class="sm:col-span-1">
-                                    <x-input-label value="Auth Base URL" />
-                                    <x-text-input type="url" name="auth_base_url" form="provider-settings-form-{{ $providerKey }}"
-                                           value="{{ old('auth_base_url', $vendorSettings->auth_base_url) }}" required
-                                           class="rounded-xl !text-xs" />
-                                </div>
-                                <div class="sm:col-span-1">
-                                    <x-input-label value="Password" />
-                                    <x-text-input type="password" name="secret_key" form="provider-settings-form-{{ $providerKey }}"
-                                           placeholder="{{ $vendorSettings->secret_key ? '•••••••• (leave blank to keep current)' : 'Not set' }}"
-                                           class="rounded-xl !text-xs" />
-                                </div>
-                                <div class="sm:col-span-1">
-                                    <x-input-label value="Debit Account" />
-                                    <x-text-input type="text" name="debit_account" form="provider-settings-form-{{ $providerKey }}"
-                                           value="{{ old('debit_account', $vendorSettings->debit_account) }}"
-                                           class="rounded-xl !text-xs" />
-                                </div>
-                            @endif
                         </div>
                     </div>
                 @endforeach
@@ -288,10 +268,10 @@
                             <x-select-input name="provider" onchange="this.form.submit()"
                                     class="pl-3 pr-8 rounded-2xl !text-xs font-bold text-slate-600 shadow-sm appearance-none cursor-pointer">
                                 <option value="">All Vendors</option>
-                                <option value="legacy" {{ request('provider') === 'legacy' ? 'selected' : '' }}>Legacy</option>
+                                <option value="gogoz" {{ request('provider') === 'gogoz' ? 'selected' : '' }}>Gogoz Concept</option>
                                 <option value="smeplug" {{ request('provider') === 'smeplug' ? 'selected' : '' }}>SME Plug</option>
-                                <option value="9psb" {{ request('provider') === '9psb' ? 'selected' : '' }}>9PSB Data</option>
                                 <option value="amsub" {{ request('provider') === 'amsub' ? 'selected' : '' }}>AMSUB</option>
+                                <option value="legacy" {{ request('provider') === 'legacy' ? 'selected' : '' }}>Legacy</option>
                             </x-select-input>
                             <div class="absolute right-3.5 top-4 pointer-events-none text-slate-400">
                                 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
@@ -395,13 +375,15 @@
                                 <td class="py-4 px-6">
                                     <span class="inline-flex items-center px-2.5 py-1 text-xs font-extrabold rounded-full uppercase tracking-wider
                                         {{ match ($plan->provider) {
+                                            'gogoz' => 'bg-emerald-50 text-emerald-700 border border-emerald-100',
                                             'smeplug' => 'bg-purple-50 text-purple-700 border border-purple-100',
-                                            '9psb' => 'bg-sky-50 text-sky-700 border border-sky-100',
+                                            'amsub' => 'bg-indigo-50 text-indigo-700 border border-indigo-100',
                                             default => 'bg-slate-100 text-slate-600 border border-slate-200',
                                         } }}">
                                         {{ match ($plan->provider) {
+                                            'gogoz' => 'Gogoz Concept',
                                             'smeplug' => 'SME Plug',
-                                            '9psb' => '9PSB Data',
+                                            'amsub' => 'AMSUB',
                                             default => 'Legacy',
                                         } }}
                                     </span>
@@ -542,10 +524,10 @@
                             <div>
                                 <x-input-label value="Vendor" />
                                 <x-select-input name="provider" x-model="addProvider" required class="rounded-2xl bg-slate-50/50">
-                                    <option value="legacy">Legacy (Fadeelposdatasub)</option>
+                                    <option value="gogoz">Gogoz Concept</option>
                                     <option value="smeplug">SME Plug</option>
-                                    <option value="9psb">9PSB Data</option>
                                     <option value="amsub">AMSUB</option>
+                                    <option value="legacy">Legacy (Fadeelposdatasub)</option>
                                 </x-select-input>
                             </div>
 
@@ -603,13 +585,6 @@
                                     <x-text-input type="number" step="0.01" name="partner_price" required placeholder="7300.00"
                                            class="rounded-2xl bg-slate-50/50" />
                                 </div>
-                            </div>
-
-                            <!-- Vendor Amount (9PSB only) -->
-                            <div x-show="addProvider === '9psb'" x-cloak>
-                                <x-input-label value="Vendor Amount (₦) — 9PSB's own price for this productId" />
-                                <x-text-input type="number" step="0.01" name="vendor_amount" placeholder="e.g., 200.00"
-                                       class="rounded-2xl bg-slate-50/50" />
                             </div>
 
                             <!-- Status Toggle -->
@@ -681,10 +656,10 @@
                             <div>
                                 <x-input-label value="Vendor" />
                                 <x-select-input name="provider" x-model="editPlan.provider" required class="rounded-2xl bg-slate-50/50">
-                                    <option value="legacy">Legacy (Fadeelposdatasub)</option>
+                                    <option value="gogoz">Gogoz Concept</option>
                                     <option value="smeplug">SME Plug</option>
-                                    <option value="9psb">9PSB Data</option>
                                     <option value="amsub">AMSUB</option>
+                                    <option value="legacy">Legacy (Fadeelposdatasub)</option>
                                 </x-select-input>
                             </div>
 
@@ -742,13 +717,6 @@
                                     <x-text-input type="number" step="0.01" name="partner_price" x-bind:value="editPlan.partner_price" required
                                            class="rounded-2xl bg-slate-50/50" />
                                 </div>
-                            </div>
-
-                            <!-- Vendor Amount (9PSB only) -->
-                            <div x-show="editPlan.provider === '9psb'" x-cloak>
-                                <x-input-label value="Vendor Amount (₦) — 9PSB's own price for this productId" />
-                                <x-text-input type="number" step="0.01" name="vendor_amount" x-bind:value="editPlan.vendor_amount"
-                                       class="rounded-2xl bg-slate-50/50" />
                             </div>
 
                             <!-- Status Toggle -->

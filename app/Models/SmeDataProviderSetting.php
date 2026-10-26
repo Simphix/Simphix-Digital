@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 
 class SmeDataProviderSetting extends Model
 {
-    public const PROVIDERS = ['legacy', 'smeplug', '9psb', 'amsub'];
+    public const PROVIDERS = ['gogoz', 'smeplug', 'amsub', 'legacy'];
 
     protected $fillable = [
         'provider',
@@ -27,28 +27,23 @@ class SmeDataProviderSetting extends Model
     ];
 
     /**
-     * One row per vendor, created on first access. The 'legacy' vendor's
-     * base_url/api_key are seeded from its existing .env-backed config so
-     * nothing breaks before an admin fills in the DB row, and it starts
-     * out active (it's the only vendor that existed before this feature).
+     * One row per vendor, created on first access. 'gogoz' is the primary
+     * #1 vendor and starts active by default.
      */
     public static function forProvider(string $provider): self
     {
         return static::firstOrCreate(
             ['provider' => $provider],
             match ($provider) {
-                'legacy' => [
+                'gogoz' => [
                     'is_active' => true,
+                    'base_url' => config('services.gogoz.base_url', 'https://www.gongozconcept.com/api/data/'),
+                    'api_key' => config('services.gogoz.api_key'),
+                ],
+                'legacy' => [
+                    'is_active' => false,
                     'base_url' => config('services.smedata.base_url'),
                     'api_key' => config('services.smedata.api_key'),
-                ],
-                '9psb' => [
-                    'is_active' => false,
-                    'base_url' => config('services.ninepsb.base_url'),
-                    'auth_base_url' => config('services.ninepsb.auth_base_url'),
-                    'api_key' => config('services.ninepsb.api_key'),
-                    'secret_key' => config('services.ninepsb.secret_key'),
-                    'debit_account' => config('services.ninepsb.debit_account'),
                 ],
                 'amsub' => [
                     'is_active' => false,
@@ -79,7 +74,7 @@ class SmeDataProviderSetting extends Model
 
     public static function activeProvider(): string
     {
-        return static::where('is_active', true)->value('provider') ?? 'legacy';
+        return static::where('is_active', true)->value('provider') ?? 'gogoz';
     }
 
     /**

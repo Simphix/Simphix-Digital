@@ -25,10 +25,11 @@ class SmeDataProviderFactory
         $settings = SmeDataProviderSetting::forProvider($provider);
 
         return match ($provider) {
+            'gogoz'   => new GogozDataApi($settings),
             'smeplug' => new SmePlugApi($settings),
-            '9psb'    => new NinePsbDataApi($settings),
             'amsub'   => new AmsubApi($settings),
-            default   => new SmeDataPurchaseApi($settings),
+            'legacy'  => new SmeDataPurchaseApi($settings),
+            default   => new GogozDataApi($settings),
         };
     }
 }
