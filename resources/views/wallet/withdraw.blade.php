@@ -132,8 +132,8 @@
                             <div id="amount_in_words" class="text-xs font-bold text-[#0056D2] bg-[#0056D2]/5 px-3 py-2 rounded-xl mt-1.5 hidden leading-normal"></div>
 
                             <div class="flex justify-between items-center text-xs text-slate-400 font-semibold pt-1">
-                                <span>Min: ₦100.00</span>
-                                <span>Daily Limit: ₦{{ number_format($user->limit, 2) }}</span>
+                                <span>Min: ₦{{ number_format($roleLimits['min'] ?? 100, 2) }}</span>
+                                <span>Max Limit: ₦{{ number_format($roleLimits['max'] ?? 500000, 2) }}</span>
                             </div>
                         </div>
 
@@ -339,15 +339,29 @@
         try { pinModal = new bootstrap.Modal(document.getElementById('pinModal')); }
         catch (e) { console.error('Modal init failed:', e); }
 
+        const roleMinAmount = {{ (float) ($roleLimits['min'] ?? 100) }};
+        const roleMaxAmount = {{ (float) ($roleLimits['max'] ?? 500000) }};
+
         /* ── Proceed Button → Open Modal ──────────────── */
         proceedBtn.addEventListener('click', function () {
             const amount = amountInput.value;
+            const numAmount = parseFloat(amount);
 
-            if (!amount || parseFloat(amount) < 100) {
+            if (!amount || isNaN(numAmount) || numAmount < roleMinAmount) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Invalid Amount',
-                    text: 'Please enter a valid amount (Min ₦100).',
+                    text: 'Please enter a valid amount (Min ₦' + roleMinAmount.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ').',
+                    confirmButtonColor: '#0056D2',
+                });
+                return;
+            }
+
+            if (numAmount > roleMaxAmount) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Limit Exceeded',
+                    text: 'Amount exceeds the maximum cash out limit of ₦' + roleMaxAmount.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' for your role.',
                     confirmButtonColor: '#0056D2',
                 });
                 return;

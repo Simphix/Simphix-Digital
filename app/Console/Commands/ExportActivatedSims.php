@@ -10,20 +10,18 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 /**
- * Emails a CSV of every currently-activated SIM number to whichever inbox
+ * Emails a CSV of SIM numbers activated in the past 24 hours to whichever inbox
  * is configured in Admin > SIMs Operations — nothing happens if that
  * export is turned off or no recipient is set, so this is always safe to
  * run on a schedule regardless of the toggle's state. Intended to be
- * triggered by an external cron entry (no Laravel scheduler wired up in
- * this app — same convention as sim:grant-bulk-activation-bonus and
- * notifications:dispatch-due; see docs/sim-export-scheduling.md), e.g.:
+ * triggered by an external cron entry (e.g. nightly):
  *   0 0 * * * cd /path/to/app && php artisan sims:export-activated
  */
 class ExportActivatedSims extends Command
 {
-    protected $signature = 'sims:export-activated';
+    protected $signature = 'sims:export-activated {--all : Export all currently activated SIMs instead of only those activated in the past 24 hours}';
 
-    protected $description = 'Emails a CSV of every activated SIM number to the recipient configured in Admin > SIMs Operations, if that export is turned on.';
+    protected $description = 'Emails a CSV of SIM numbers activated in the past 24 hours to the recipient configured in Admin > SIMs Operations.';
 
     public function handle(ActivatedSimsExportService $exporter): int
     {
@@ -42,11 +40,14 @@ class ExportActivatedSims extends Command
             return self::SUCCESS;
         }
 
-        $count = $exporter->count();
-        $csv = $exporter->toCsvString();
+        $exportAll = (bool) $this->option('all');
+        $since = $exportAll ? null : now()->subHours(24);
+
+        $count = $exporter->count($since);
+        $csv = $exporter->toCsvString($since);
 
         try {
-            Mail::to($settings->recipient_email)->send(new ActivatedSimsExportMail($csv, $count, now()));
+            Mail::to($settings->recipient_email)->send(new ActivatedSimsExportMail($csv, $count, now(), $since));
         } catch (\Exception $e) {
             $this->error('Failed to send the export email: ' . $e->getMessage());
             Log::error('sims:export-activated failed to send: ' . $e->getMessage());
@@ -54,7 +55,8 @@ class ExportActivatedSims extends Command
             return self::FAILURE;
         }
 
-        $this->info("Sent {$count} activated SIM number(s) to {$settings->recipient_email}.");
+        $periodLabel = $exportAll ? 'all-time' : 'past 24 hours';
+        $this->info("Sent {$count} activated SIM number(s) ({$periodLabel}) to {$settings->recipient_email}.");
 
         return self::SUCCESS;
     }

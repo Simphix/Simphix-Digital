@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Mail\OnboardingInviteMail;
+use App\Models\Region;
+use App\Models\SenatorialDistrict;
+use App\Models\State;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Support\RoleHierarchy;
@@ -13,6 +16,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 
 class OnboardingController extends Controller
@@ -32,7 +36,23 @@ class OnboardingController extends Controller
             abort(403, 'Your role cannot onboard a subordinate.');
         }
 
-        return view('onboarding.invite', compact('user', 'nextRole'));
+        $region = null;
+        $states = collect();
+        $districts = collect();
+
+        if ($nextRole === 'coordinator') {
+            $region = $user->regionAsManager;
+            if ($region) {
+                $states = $region->states()->orderBy('name')->get();
+                $districts = SenatorialDistrict::whereIn('state_id', $states->pluck('id'))
+                    ->whereNull('coordinator_id')
+                    ->with('state')
+                    ->orderBy('name')
+                    ->get();
+            }
+        }
+
+        return view('onboarding.invite', compact('user', 'nextRole', 'region', 'states', 'districts'));
     }
 
     /**
@@ -52,11 +72,55 @@ class OnboardingController extends Controller
 
         \App\Support\PhoneNumber::normalizeRequestInput($request);
 
-        $request->validate([
+        $rules = [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name'  => ['required', 'string', 'max:255'],
             'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'phone'      => ['nullable', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), 'unique:users,phone'],
+        ];
+
+        $region = null;
+        $regionStateIds = [];
+
+        if ($nextRole === 'coordinator') {
+            $region = $user->regionAsManager;
+            if (!$region) {
+                return back()->withInput()->with('error', 'You must have a region assigned to your account before onboarding a coordinator.');
+            }
+
+            $regionStateIds = $region->states()->pluck('id')->all();
+            if (empty($regionStateIds)) {
+                return back()->withInput()->with('error', 'Your region does not have any states assigned yet.');
+            }
+
+            $territoryMode = $request->input('territory_mode', 'existing');
+
+            if ($territoryMode === 'new') {
+                $rules['new_district_name'] = ['required', 'string', 'max:255', 'unique:senatorial_districts,name'];
+                $rules['new_district_state_id'] = [
+                    'required',
+                    'integer',
+                    Rule::in($regionStateIds),
+                ];
+            } else {
+                $rules['district_id'] = [
+                    'required',
+                    'integer',
+                    Rule::exists('senatorial_districts', 'id')->where(function ($query) use ($regionStateIds) {
+                        $query->whereIn('state_id', $regionStateIds)
+                              ->whereNull('coordinator_id');
+                    }),
+                ];
+            }
+        }
+
+        $request->validate($rules, [
+            'district_id.required' => 'Please select a senatorial district to assign.',
+            'district_id.exists' => 'The selected district is invalid, already assigned to another coordinator, or outside your region.',
+            'new_district_name.required' => 'Please enter a name for the new district.',
+            'new_district_name.unique' => 'A senatorial district with this name already exists.',
+            'new_district_state_id.required' => 'Please select a state under your region for the new district.',
+            'new_district_state_id.in' => 'The selected state does not belong to your managed region.',
         ]);
 
         DB::beginTransaction();
@@ -90,6 +154,27 @@ class OnboardingController extends Controller
                 'last_activity'  => now(),
             ]);
 
+            $assignedDistrict = null;
+            if ($nextRole === 'coordinator') {
+                if ($request->input('territory_mode') === 'new') {
+                    $assignedDistrict = SenatorialDistrict::create([
+                        'name' => trim($request->new_district_name),
+                        'state_id' => $request->new_district_state_id,
+                        'coordinator_id' => $invitee->id,
+                    ]);
+                } else {
+                    $assignedDistrict = SenatorialDistrict::where('id', $request->district_id)
+                        ->whereIn('state_id', $regionStateIds)
+                        ->whereNull('coordinator_id')
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    $assignedDistrict->update([
+                        'coordinator_id' => $invitee->id,
+                    ]);
+                }
+            }
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -100,7 +185,9 @@ class OnboardingController extends Controller
 
         Mail::to($invitee->email)->send(new OnboardingInviteMail($invitee, $user, $acceptUrl));
 
-        return redirect()->route('network')->with('success', "Invite sent to {$invitee->email}.");
+        $districtNotice = $assignedDistrict ? " and assigned to {$assignedDistrict->name} district" : '';
+
+        return redirect()->route('network')->with('success', "Invite sent to {$invitee->email}{$districtNotice}.");
     }
 
     /**

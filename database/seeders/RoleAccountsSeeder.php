@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Region;
+use App\Models\SenatorialDistrict;
+use App\Models\State;
 use App\Models\User;
 use App\Models\Wallet;
 use Illuminate\Database\Seeder;
@@ -40,6 +43,64 @@ class RoleAccountsSeeder extends Seeder
         $this->makeUser('business_sales_manager', 'Brian', 'SalesManager', $password);
         $this->makeUser('support', 'Sule', 'Support', $password);
         $this->makeUser('super_admin', 'Ada', 'Admin', $password);
+
+        $this->seedJurisdictions($regionalManager, $coordinator);
+    }
+
+    private function seedJurisdictions(User $regionalManager, User $coordinator): void
+    {
+        // 6 Geopolitical Zones with States
+        $regions = [
+            'South West' => ['Lagos', 'Ogun', 'Oyo', 'Osun', 'Ondo', 'Ekiti'],
+            'South East' => ['Abia', 'Anambra', 'Ebonyi', 'Enugu', 'Imo'],
+            'South South' => ['Akwa Ibom', 'Bayelsa', 'Cross River', 'Delta', 'Edo', 'Rivers'],
+            'North Central' => ['Benue', 'Kogi', 'Kwara', 'Nasarawa', 'Niger', 'Plateau', 'FCT'],
+            'North West' => ['Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Jigawa', 'Sokoto', 'Zamfara'],
+            'North East' => ['Adamawa', 'Bauchi', 'Borno', 'Gombe', 'Taraba', 'Yobe'],
+        ];
+
+        foreach ($regions as $regionName => $stateNames) {
+            $region = Region::firstOrCreate(
+                ['name' => $regionName],
+                ['regional_manager_id' => $regionName === 'South West' ? $regionalManager->id : null]
+            );
+
+            if ($regionName === 'South West' && $region->regional_manager_id !== $regionalManager->id) {
+                $region->update(['regional_manager_id' => $regionalManager->id]);
+            }
+
+            foreach ($stateNames as $stateName) {
+                State::firstOrCreate(
+                    ['name' => $stateName],
+                    ['region_id' => $region->id]
+                );
+            }
+        }
+
+        // Seed sample Senatorial Districts
+        $lagos = State::where('name', 'Lagos')->first();
+        if ($lagos) {
+            SenatorialDistrict::updateOrCreate(
+                ['name' => 'Lagos Central'],
+                ['state_id' => $lagos->id, 'coordinator_id' => $coordinator->id]
+            );
+            SenatorialDistrict::firstOrCreate(
+                ['name' => 'Lagos West'],
+                ['state_id' => $lagos->id, 'coordinator_id' => null]
+            );
+            SenatorialDistrict::firstOrCreate(
+                ['name' => 'Lagos East'],
+                ['state_id' => $lagos->id, 'coordinator_id' => null]
+            );
+        }
+
+        $ogun = State::where('name', 'Ogun')->first();
+        if ($ogun) {
+            SenatorialDistrict::firstOrCreate(
+                ['name' => 'Ogun Central'],
+                ['state_id' => $ogun->id, 'coordinator_id' => null]
+            );
+        }
     }
 
     private function makeUser(string $role, string $firstName, string $lastName, string $password, ?int $referredBy = null): User

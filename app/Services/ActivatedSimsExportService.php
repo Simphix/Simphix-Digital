@@ -4,41 +4,59 @@ namespace App\Services;
 
 use App\Models\Sim;
 use App\Support\SimStatus;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\LazyCollection;
 
 /**
- * The single source of truth for "every activated SIM number" — backs both
- * the on-demand "Export All Activated Numbers" button
- * (Admin\SimsOperationsDashboardController::exportActivatedNumbersCsv) and
- * the nightly emailed export (sims:export-activated / ActivatedSimsExportMail),
- * so the two never drift apart.
+ * The single source of truth for activated SIM numbers.
+ * Supports both:
+ * 1. The on-demand "Export All Activated Numbers" button
+ *    (Admin\SimsOperationsDashboardController::exportActivatedNumbersCsv) - exports all activated numbers.
+ * 2. The nightly emailed export (sims:export-activated / ActivatedSimsExportMail)
+ *    which exports only numbers activated in the past 24 hours.
  */
 class ActivatedSimsExportService
 {
     /**
-     * Lazy, memory-safe stream of every activated SIM's number, distinct
+     * Base query for activated SIMs, optionally filtered to those
+     * activated since a given timestamp (e.g. past 24 hours).
+     */
+    public function query(?Carbon $since = null): Builder
+    {
+        $query = Sim::query()
+            ->where('status', SimStatus::ACTIVATED)
+            ->whereNotNull('number')
+            ->where('number', '!=', '');
+
+        if ($since) {
+            $query->where(function (Builder $q) use ($since) {
+                $q->where('updated_at', '>=', $since)
+                  ->orWhereHas('history', fn ($h) => $h->where('to_status', SimStatus::ACTIVATED)->where('created_at', '>=', $since));
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * Lazy, memory-safe stream of activated SIM numbers, distinct
      * and ordered. Callers iterate this directly (streamed HTTP download)
      * or via toCsvString() (materialized, for an email attachment).
      */
-    public function activatedNumbers(): LazyCollection
+    public function activatedNumbers(?Carbon $since = null): LazyCollection
     {
-        return Sim::query()
-            ->where('status', SimStatus::ACTIVATED)
-            ->whereNotNull('number')
-            ->where('number', '!=', '')
+        return $this->query($since)
             ->select('number')
             ->distinct()
             ->orderBy('number')
             ->lazy(1000);
     }
 
-    /** How many distinct activated SIM numbers exist right now. */
-    public function count(): int
+    /** How many distinct activated SIM numbers exist matching the criteria. */
+    public function count(?Carbon $since = null): int
     {
-        return Sim::query()
-            ->where('status', SimStatus::ACTIVATED)
-            ->whereNotNull('number')
-            ->where('number', '!=', '')
+        return $this->query($since)
             ->distinct('number')
             ->count('number');
     }
@@ -48,12 +66,12 @@ class ActivatedSimsExportService
      * list of phone numbers), unlike the streamed HTTP download, which
      * writes straight to the response instead.
      */
-    public function toCsvString(): string
+    public function toCsvString(?Carbon $since = null): string
     {
         $handle = fopen('php://temp', 'r+');
         fputcsv($handle, ['Sim Number'], ',', '"', '');
 
-        foreach ($this->activatedNumbers() as $sim) {
+        foreach ($this->activatedNumbers($since) as $sim) {
             fputcsv($handle, [$this->escapeForCsv((string) $sim->number)], ',', '"', '');
         }
 

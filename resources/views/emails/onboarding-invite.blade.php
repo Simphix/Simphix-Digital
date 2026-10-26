@@ -115,6 +115,11 @@
                     {{ $onboarder->name }} has invited you to join SimPhix as a
                 </p>
                 <div class="role-badge">{{ str_replace('_', ' ', $invitee->role) }}</div>
+                @if ($invitee->jurisdictionLabel())
+                    <p class="text" style="font-size: 13px; color: #475569; margin: -12px 0 20px 0;">
+                        <strong>Territory:</strong> {{ $invitee->jurisdictionLabel() }}
+                    </p>
+                @endif
                 <p class="text">Click below to set your password and activate your account.</p>
 
                 <a href="{{ $acceptUrl }}" class="cta-button">Accept Invite &amp; Set Password</a>

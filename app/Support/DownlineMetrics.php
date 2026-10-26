@@ -17,14 +17,18 @@ class DownlineMetrics
 {
     private const HOLDER_FK = [
         'regional_manager' => 'regional_manager_id',
-        'coordinator' => 'coordinator_id',
-        'partner' => 'partner_id',
+        'coordinator'      => 'coordinator_id',
+        'partner'          => 'partner_id',
+        'business'         => 'business_id',
+        'business_agent'   => 'business_agent_id',
     ];
 
     private const ASSIGNED_STATUS = [
         'regional_manager' => SimStatus::ASSIGNED_TO_RM,
-        'coordinator' => SimStatus::ASSIGNED_TO_COORDINATOR,
-        'partner' => SimStatus::ASSIGNED_TO_PARTNER,
+        'coordinator'      => SimStatus::ASSIGNED_TO_COORDINATOR,
+        'partner'          => SimStatus::ASSIGNED_TO_PARTNER,
+        'business'         => SimStatus::ASSIGNED_TO_BUSINESS,
+        'business_agent'   => SimStatus::ASSIGNED_TO_BUSINESS_AGENT,
     ];
 
     public static function forUser(User $user): array
@@ -34,6 +38,8 @@ class DownlineMetrics
 
         $personalQuery = match (true) {
             $user->role === 'partner' => Sim::where('partner_id', $user->id)->whereColumn('user_id', 'partner_id'),
+            $user->role === 'business_agent' => Sim::where('business_agent_id', $user->id)->whereColumn('user_id', 'business_agent_id'),
+            $user->role === 'business' => Sim::where('business_id', $user->id)->whereNull('business_agent_id'),
             $isCatalogRole => Sim::where($fk, $user->id)->where('status', self::ASSIGNED_STATUS[$user->role]),
             default => Sim::where('user_id', $user->id),
         };
@@ -59,6 +65,9 @@ class DownlineMetrics
             ->where('sim_histories.to_status', SimStatus::ACTIVATED)
             ->where($activationScopeColumn, $user->id)
             ->count();
+
+        // Ensure totalActivations reflects at least the currently activated SIMs in scope
+        $totalActivations = max($totalActivations, $teamActivated ?? $personalActivated);
 
         $settings = LeaderboardSettings::current();
         $period = $settings->periodBounds();
