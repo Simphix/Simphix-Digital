@@ -116,9 +116,57 @@ test('Business Sales Manager can access BSM dashboard and sees executive KPIs', 
 
     $response->assertOk()
         ->assertSee('Business Sales Manager Console')
-        ->assertSee('SIM Lifecycle Governance')
-        ->assertSee('Active Regional Performance')
+        ->assertSee('SIM Lifecycle Desk')
+        ->assertSee('Top Performing Territories Snapshot')
         ->assertSee($this->region->name);
+});
+
+test('BSM can access all decoupled dedicated desks and tabs redirect smoothly', function () {
+    // 1. Territories desk
+    $this->actingAs($this->bsm)
+        ->get(route('bsm.territories'))
+        ->assertOk()
+        ->assertSee('Regional Sales Performance')
+        ->assertSee('Senatorial Districts Breakdown');
+
+    // 2. SIM Lifecycle desk
+    $this->actingAs($this->bsm)
+        ->get(route('bsm.lifecycle'))
+        ->assertOk()
+        ->assertSee('SIM Lifecycle Governance')
+        ->assertSee('Lifecycle Status')
+        ->assertSee('Current Holder');
+
+    // 3. Customer Handling desk
+    $this->actingAs($this->bsm)
+        ->get(route('bsm.customers'))
+        ->assertOk()
+        ->assertSee('Customer Handling Desk')
+        ->assertSee('Quick Onboard & Activate', false);
+
+    // 4. Sales Acceleration desk
+    $this->actingAs($this->bsm)
+        ->get(route('bsm.acceleration'))
+        ->assertOk()
+        ->assertSee('Sales Acceleration &amp; Interventions Desk', false)
+        ->assertSee('Stalled Field Stock (≥ 7 Days)', false);
+
+    // 5. Backward compatibility query param redirects
+    $this->actingAs($this->bsm)
+        ->get(route('bsm.dashboard', ['tab' => 'territories']))
+        ->assertRedirect(route('bsm.territories'));
+
+    $this->actingAs($this->bsm)
+        ->get(route('bsm.dashboard', ['tab' => 'lifecycle']))
+        ->assertRedirect(route('bsm.lifecycle'));
+
+    $this->actingAs($this->bsm)
+        ->get(route('bsm.dashboard', ['tab' => 'customers']))
+        ->assertRedirect(route('bsm.customers'));
+
+    $this->actingAs($this->bsm)
+        ->get(route('bsm.dashboard', ['tab' => 'acceleration']))
+        ->assertRedirect(route('bsm.acceleration'));
 });
 
 test('Super Admin can also access BSM console', function () {
@@ -285,7 +333,7 @@ test('BSM can approve a pending partner SIM purchase request', function () {
     expect($sim->fresh()->status)->toBe(SimStatus::ASSIGNED_TO_PARTNER);
 });
 
-test('BSM dashboard renders days held and idle days as rounded whole numbers without decimals', function () {
+test('BSM desks render days held and idle days as rounded whole numbers without decimals', function () {
     $stuckSim = Sim::create([
         'number'     => '080' . random_int(10000000, 99999999),
         'category'   => 'POS SIM',
@@ -301,10 +349,156 @@ test('BSM dashboard renders days held and idle days as rounded whole numbers wit
 
     expect($stuckSim->daysHeld())->toBe(10);
 
+    // Check lifecycle desk for rounded idle badge
+    $this->actingAs($this->bsm)
+        ->get(route('bsm.lifecycle'))
+        ->assertOk()
+        ->assertSee('10d idle');
+
+    // Check acceleration desk for rounded days held
+    $this->actingAs($this->bsm)
+        ->get(route('bsm.acceleration'))
+        ->assertOk()
+        ->assertSee('10 days');
+});
+
+test('BSM can access SIM Cards & Plans Management but uploading SIMs is disabled', function () {
+    // 1. BSM can view the SIM Cards & Plans management index
     $response = $this->actingAs($this->bsm)
-        ->get(route('bsm.dashboard'));
+        ->get(route('admin.sim-plan.index'));
 
     $response->assertOk();
-    $response->assertSee('10d idle');
-    $response->assertSee('10 days');
+    $response->assertSee('SIM Cards & Plans Management', false);
+    $response->assertSee('SIM Uploading Disabled');
+    $response->assertSee('Uploading new inventory batches is restricted to Super Admins');
+    $response->assertDontSee('Upload Numbers');
+
+    // 2. Direct single SIM store endpoint is forbidden for BSM
+    $this->actingAs($this->bsm)
+        ->post(route('admin.sim-plan.store'), [
+            'provider'   => 'mtn',
+            'sim_number' => '08012345678',
+            'category'   => 'POS SIM',
+            'cost_price' => 500,
+        ])
+        ->assertForbidden();
+
+    // 3. Excel import endpoint is forbidden for BSM
+    $this->actingAs($this->bsm)
+        ->post(route('admin.sim-plan.import'))
+        ->assertForbidden();
+
+    // 4. Super Admin can view index with upload forms active
+    $admin = User::factory()->create(['role' => 'super_admin', 'email_verified_at' => now()]);
+
+    $adminResponse = $this->actingAs($admin)
+        ->get(route('admin.sim-plan.index'));
+
+    $adminResponse->assertOk();
+    $adminResponse->assertSee('SIM Cards & Plans Management', false);
+    $adminResponse->assertDontSee('SIM Uploading Disabled');
+    $adminResponse->assertSee('Upload Numbers');
+});
+
+test('BSM can perform deep territory drilldown down the hierarchy: Region -> District -> Partner -> Agent -> SIMs', function () {
+    // Set up a full downline hierarchy:
+    // Region ($this->region) -> District ($this->district) -> Coordinator ($this->coordinator)
+    // -> Partner ($this->partner) -> Agent ($agent) -> Sim with Customer
+    $agent = User::factory()->create([
+        'role'        => 'business_agent',
+        'referred_by' => $this->partner->id,
+        'status'      => 'active',
+    ]);
+
+    $sim = Sim::create([
+        'number'              => '080' . random_int(10000000, 99999999),
+        'category'            => 'POS SIM',
+        'provider'            => 'mtn',
+        'regional_manager_id' => $this->rm->id,
+        'coordinator_id'      => $this->coordinator->id,
+        'partner_id'          => $this->partner->id,
+        'business_agent_id'   => $agent->id,
+        'user_id'             => $agent->id,
+        'status'              => SimStatus::ACTIVATED,
+    ]);
+
+    $customer = SimCustomer::create([
+        'sim_id'       => $sim->id,
+        'partner_id'   => $this->partner->id,
+        'full_name'    => 'Hauwa Ibrahim',
+        'phone_number' => '08011223344',
+        'email'        => 'hauwa@example.com',
+    ]);
+
+    // 1. Level: Region -> Senatorial Districts
+    $resRegion = $this->actingAs($this->bsm)->getJson(route('bsm.territories.drilldown', [
+        'level' => 'region',
+        'id'    => $this->region->id,
+    ]));
+
+    $resRegion->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('level', 'region')
+        ->assertJsonPath('entity.name', $this->region->name);
+
+    $districts = $resRegion->json('items');
+    expect($districts)->toBeArray()->not->toBeEmpty();
+    expect($districts[0]['district'])->toBe($this->district->name);
+    expect($districts[0]['coordinator_name'])->toBe($this->coordinator->name);
+    expect($districts[0]['activated'])->toBeGreaterThanOrEqual(1);
+
+    // 2. Level: Coordinator -> Partners
+    $resCoord = $this->actingAs($this->bsm)->getJson(route('bsm.territories.drilldown', [
+        'level' => 'coordinator',
+        'id'    => $this->coordinator->id,
+    ]));
+
+    $resCoord->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('level', 'coordinator')
+        ->assertJsonPath('entity.name', $this->coordinator->name);
+
+    $partners = $resCoord->json('items');
+    expect($partners)->toBeArray()->not->toBeEmpty();
+    expect($partners[0]['name'])->toBe($this->partner->name);
+    expect($partners[0]['activated'])->toBeGreaterThanOrEqual(1);
+
+    // 3. Level: Partner -> Field Agents
+    $resPartner = $this->actingAs($this->bsm)->getJson(route('bsm.territories.drilldown', [
+        'level' => 'partner',
+        'id'    => $this->partner->id,
+    ]));
+
+    $resPartner->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('level', 'partner')
+        ->assertJsonPath('entity.name', $this->partner->name);
+
+    $agents = $resPartner->json('items');
+    expect($agents)->toBeArray()->not->toBeEmpty();
+    expect($agents[0]['name'])->toBe($agent->name);
+    expect($agents[0]['customer_count'])->toBe(1);
+
+    // 4. Level: Agent -> SIMs & Customers
+    $resAgent = $this->actingAs($this->bsm)->getJson(route('bsm.territories.drilldown', [
+        'level' => 'agent',
+        'id'    => $agent->id,
+    ]));
+
+    $resAgent->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('level', 'agent')
+        ->assertJsonPath('entity.name', $agent->name);
+
+    $sims = $resAgent->json('items');
+    expect($sims)->toBeArray()->not->toBeEmpty();
+    expect($sims[0]['number'])->toBe($sim->number);
+    expect($sims[0]['customer_name'])->toBe('Hauwa Ibrahim');
+    expect($sims[0]['customer_phone'])->toBe('08011223344');
+
+    // 5. Unauthorized access check
+    $personal = User::factory()->create(['role' => 'personal', 'email_verified_at' => now()]);
+    $this->actingAs($personal)
+        ->getJson(route('bsm.territories.drilldown', ['level' => 'region', 'id' => $this->region->id]))
+        ->assertForbidden();
 });

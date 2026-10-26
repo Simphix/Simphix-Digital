@@ -185,11 +185,12 @@
             <div class="pt-4 mt-4 border-t border-slate-200">
                 <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Sales Administration</span>
 
-                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard'), 'icon' => 'layout-dashboard', 'label' => 'BSM Dashboard', 'active' => request()->routeIs('bsm.dashboard') && (!request('tab') || request('tab') === 'overview')])
-                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'jurisdictions']), 'icon' => 'map-pin', 'label' => 'Territories Report', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'jurisdictions'])
-                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'lifecycle']), 'icon' => 'cpu', 'label' => 'SIM Lifecycle', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'lifecycle'])
-                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'customers']), 'icon' => 'user-check', 'label' => 'Customer Desk', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'customers'])
-                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard', ['tab' => 'acceleration']), 'icon' => 'zap', 'label' => 'Sales Acceleration', 'active' => request()->routeIs('bsm.dashboard') && request('tab') === 'acceleration'])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard'), 'icon' => 'layout-dashboard', 'label' => 'BSM Dashboard', 'active' => request()->routeIs('bsm.dashboard')])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.territories'), 'icon' => 'map-pin', 'label' => 'Territories Report', 'active' => request()->routeIs('bsm.territories')])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.lifecycle'), 'icon' => 'cpu', 'label' => 'SIM Lifecycle', 'active' => request()->routeIs('bsm.lifecycle')])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.customers'), 'icon' => 'user-check', 'label' => 'Customer Desk', 'active' => request()->routeIs('bsm.customers')])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.acceleration'), 'icon' => 'zap', 'label' => 'Sales Acceleration', 'active' => request()->routeIs('bsm.acceleration')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-plan.index'), 'icon' => 'settings', 'label' => 'SIMs & Plans Mgmt', 'active' => request()->routeIs('admin.sim-plan.*')])
             </div>
         @endif
 
