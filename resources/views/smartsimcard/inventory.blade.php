@@ -35,17 +35,23 @@
             </div>
         @endif
 
-        <!-- Stock Summary Cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-{{ max(count($categories), 1) }} gap-4">
-            @forelse ($categories as $cat)
-                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                    <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider truncate">{{ $cat['name'] }}</span>
-                    <span class="text-xl font-extrabold text-slate-800 font-display mt-0.5 block">{{ $stockCounts[$cat['name']] ?? 0 }}</span>
-                    <span class="text-[11px] text-slate-400">SIMs with you</span>
-                </div>
-            @empty
-                <div class="col-span-full text-center text-slate-400 text-sm py-6">No SIM categories configured yet.</div>
-            @endforelse
+        <!-- Stock Summary Metrics Cells (Single Line) -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="flex flex-row divide-x divide-slate-100 overflow-x-auto">
+                @forelse ($categories as $cat)
+                    <div class="flex-1 min-w-[130px] p-4 sm:p-5 transition-colors hover:bg-slate-50/50">
+                        <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate" title="{{ $cat['name'] }}">
+                            {{ $cat['name'] }}
+                        </span>
+                        <span class="text-xl sm:text-2xl font-extrabold text-slate-800 font-display mt-1 block">
+                            {{ $stockCounts[$cat['name']] ?? 0 }}
+                        </span>
+                        <span class="text-[11px] text-slate-400 font-medium">SIMs with you</span>
+                    </div>
+                @empty
+                    <div class="w-full text-center text-slate-400 text-sm py-5">No SIM categories configured yet.</div>
+                @endforelse
+            </div>
         </div>
 
         <!-- Filter Form -->
