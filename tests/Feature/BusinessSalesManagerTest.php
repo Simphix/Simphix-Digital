@@ -84,6 +84,25 @@ test('BSM user is redirected to BSM dashboard upon hitting /dashboard', function
         ->assertRedirect(route('bsm.dashboard'));
 });
 
+test('BSM user with missing KYC fields can access BSM dashboard without redirect loop', function () {
+    $bsmIncomplete = User::factory()->create([
+        'role'              => 'business_sales_manager',
+        'status'            => 'active',
+        'email_verified_at' => now(),
+        'state'             => null,
+        'lga'               => null,
+        'address'           => null,
+    ]);
+
+    // Hitting /dashboard redirects to /bsm/dashboard
+    $response = $this->actingAs($bsmIncomplete)->get(route('dashboard'));
+    $response->assertRedirect(route('bsm.dashboard'));
+
+    // Following redirect lands cleanly on /bsm/dashboard with 200 OK (no redirect loop back to /dashboard)
+    $follow = $this->actingAs($bsmIncomplete)->get(route('bsm.dashboard'));
+    $follow->assertOk();
+});
+
 test('Business Sales Manager can access BSM dashboard and sees executive KPIs', function () {
     // Create some SIMs in various statuses
     Sim::create([

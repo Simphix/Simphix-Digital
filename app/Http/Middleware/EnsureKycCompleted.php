@@ -17,8 +17,8 @@ class EnsureKycCompleted
         if (Auth::check()) {
             $user = Auth::user();
 
-            // Only enforce KYC check if the email is verified and role is not super_admin
-            if ($user->hasVerifiedEmail() && $user->role !== 'super_admin') {
+            // Only enforce KYC check for non-staff roles (super_admin, business_sales_manager, support are exempt)
+            if ($user->hasVerifiedEmail() && !$user->isStaff()) {
                 // Determine if any required KYC fields are empty
                 $kycFields = ['first_name', 'last_name', 'phone', 'state', 'lga', 'address'];
                 $incomplete = false;
