@@ -91,7 +91,21 @@ class BsmDashboardController extends Controller
 
         // Quick Intervention Alerts Counts
         $pendingRequestsCount = SimRequest::where('status', 'pending')->count();
-        $failedBonusCount = Report::where('type', 'activation_bonus_data')->whereIn('status', ['failed', 'retrying'])->count();
+
+        // Failed Activation SIMs
+        $failedActivationsQuery = Report::with('user')
+            ->where('type', 'activation_bonus_data')
+            ->whereIn('status', ['failed', 'retrying'])
+            ->when($selectedProvider, fn ($q) => $q->whereRaw('LOWER(network) = ?', [strtolower($selectedProvider)]));
+
+        $failedBonusCount = (clone $failedActivationsQuery)->where('status', 'failed')->count();
+        $retryingBonusCount = (clone $failedActivationsQuery)->where('status', 'retrying')->count();
+        $totalFailedActivationsCount = $failedBonusCount + $retryingBonusCount;
+
+        $failedActivations = (clone $failedActivationsQuery)
+            ->latest()
+            ->paginate(10, ['*'], 'failed_page')
+            ->withQueryString();
 
         // Top Regional Highlights
         $jurisdictionData = $this->buildJurisdictionData($priceMap, $rangeStart, $rangeEnd, $selectedCategory, $selectedProvider);
@@ -116,9 +130,12 @@ class BsmDashboardController extends Controller
             'totalCustomers'          => $totalCustomers,
             'totalSalesVolume'        => $totalSalesVolume,
             'activatedSalesCount'     => $activatedSalesCount,
-            'pendingRequestsCount'    => $pendingRequestsCount,
-            'failedBonusCount'        => $failedBonusCount,
-            'topRegions'              => $topRegions,
+            'pendingRequestsCount'        => $pendingRequestsCount,
+            'failedBonusCount'            => $failedBonusCount,
+            'retryingBonusCount'          => $retryingBonusCount,
+            'totalFailedActivationsCount' => $totalFailedActivationsCount,
+            'failedActivations'           => $failedActivations,
+            'topRegions'                  => $topRegions,
             'jurisdictionTotals'      => $jurisdictionData['totals'],
         ]);
     }

@@ -521,3 +521,60 @@ test('BSM can perform deep territory drilldown down the hierarchy: Region -> Dis
         ->getJson(route('bsm.territories.drilldown', ['level' => 'region', 'id' => $this->region->id]))
         ->assertForbidden();
 });
+
+test('BSM dashboard displays the Failed Activation SIM section below metrics cards', function () {
+    $failedReport = Report::create([
+        'user_id'      => $this->partner->id,
+        'phone_number' => '08099887766',
+        'network'      => 'MTN',
+        'ref'          => 'FAIL_BSM_' . uniqid(),
+        'amount'       => 0.00,
+        'status'       => 'failed',
+        'type'         => 'activation_bonus_data',
+        'description'  => 'Vendor API network timeout',
+        'old_balance'  => 0.00,
+        'new_balance'  => 0.00,
+    ]);
+
+    $response = $this->actingAs($this->bsm)->get(route('bsm.dashboard'));
+
+    $response->assertOk()
+        ->assertSee('Failed Activation SIM')
+        ->assertSee('08099887766')
+        ->assertSee('MTN')
+        ->assertSee('Vendor API network timeout')
+        ->assertSee('Retry Bonus');
+});
+
+test('BSM can retry a failed activation bonus from the dashboard', function () {
+    \Illuminate\Support\Facades\Queue::fake();
+
+    $sim = Sim::create([
+        'number'   => '080' . random_int(10000000, 99999999),
+        'category' => 'POS SIM',
+        'provider' => 'mtn',
+        'status'   => SimStatus::ACTIVATED,
+    ]);
+
+    $failedReport = Report::create([
+        'user_id'      => $this->partner->id,
+        'phone_number' => $sim->number,
+        'network'      => 'MTN',
+        'ref'          => 'FAIL_BSM_' . uniqid(),
+        'amount'       => 0.00,
+        'status'       => 'failed',
+        'type'         => 'activation_bonus_data',
+        'description'  => 'Vendor failure on first try',
+        'old_balance'  => 0.00,
+        'new_balance'  => 0.00,
+    ]);
+
+    $response = $this->actingAs($this->bsm)
+        ->post(route('bsm.failed-activations.retry', $failedReport));
+
+    $response->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect($failedReport->fresh()->status)->toBe('retrying');
+    \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\GrantActivationBonusData::class);
+});
