@@ -2,7 +2,7 @@
     <title>SimPhix - My Network</title>
 
     @php $canRestrict = \App\Support\SimAccess::canBrowseCatalog(auth()->user()); @endphp
-    <div x-data="{ openClaimModal: false, openClaimResultModal: {{ session('claim_result') ? 'true' : 'false' }}, currentTab: 'invited', editInviteModal: false, editingInvite: null }" class="max-w-5xl mx-auto space-y-6">
+    <div x-data="{ openClaimModal: false, openClaimResultModal: {{ session('claim_result') ? 'true' : 'false' }}, currentTab: '{{ request()->has('invited_page') ? 'invited' : 'active' }}', editInviteModal: false, editingInvite: null }" class="max-w-5xl mx-auto space-y-6">
         <!-- Page Header -->
         <div class="flex items-start justify-between gap-4 flex-wrap">
             <div>
@@ -95,23 +95,87 @@
             </div>
         @endif
 
-        <!-- Invited / Team Tabs -->
+        <!-- Active / Invited Tabs -->
         <x-card padding="p-6">
             <div class="flex items-center gap-2 pb-3 border-b border-slate-100 mb-4">
+                <button type="button" @click="currentTab = 'active'"
+                        :class="currentTab === 'active' ? 'bg-[#0056D2] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                        class="px-4 py-2 rounded-lg text-xs font-bold transition-colors">
+                    Active ({{ $team->total() }})
+                </button>
                 <button type="button" @click="currentTab = 'invited'"
                         :class="currentTab === 'invited' ? 'bg-[#0056D2] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
                         class="px-4 py-2 rounded-lg text-xs font-bold transition-colors">
                     Invited ({{ $invited->total() }})
                 </button>
-                <button type="button" @click="currentTab = 'team'"
-                        :class="currentTab === 'team' ? 'bg-[#0056D2] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                        class="px-4 py-2 rounded-lg text-xs font-bold transition-colors">
-                    Team ({{ $team->total() }})
-                </button>
+            </div>
+
+            <!-- Active Panel -->
+            <div x-show="currentTab === 'active'">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase">
+                                <th class="py-2.5">Member</th>
+                                <th class="py-2.5">Role</th>
+                                <th class="py-2.5">Status</th>
+                                <th class="py-2.5">Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($team as $ref)
+                                @php
+                                    $isLocked = $ref->wallet->is_locked ?? false;
+                                    $isSuspended = $ref->isSuspended();
+                                @endphp
+                                <tr class="border-b border-slate-50 hover:bg-slate-50/50 {{ $canRestrict ? 'cursor-pointer' : '' }}"
+                                    @if ($canRestrict)
+                                        onclick="window.location.href = '{{ route('network.downline.show', $ref) }}'"
+                                    @endif
+                                    >
+                                    <td class="py-3">
+                                        <span class="font-bold text-slate-800 block">{{ $ref->first_name ? $ref->first_name . ' ' . $ref->last_name : $ref->email }}</span>
+                                        <span class="text-xs text-slate-400">{{ $ref->email }}</span>
+                                    </td>
+                                    <td class="py-3">
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase bg-primary/10 text-primary">
+                                            {{ str_replace('_', ' ', $ref->role) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="flex flex-wrap items-center gap-1">
+                                            <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase
+                                                {{ $ref->status === 'active' ? 'bg-emerald-50 text-emerald-600' : ($ref->status === 'suspended' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600') }}">
+                                                {{ $ref->status }}
+                                            </span>
+                                            @if ($isLocked)
+                                                <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase bg-amber-50 text-amber-600">PND</span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td class="py-3 text-slate-400 font-medium">{{ $ref->created_at->format('M d, Y') }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="py-12 text-center text-slate-400">
+                                        <div class="bg-slate-50 rounded-2xl w-14 h-14 flex items-center justify-center mb-3 mx-auto border border-slate-100">
+                                            <i data-lucide="users" class="w-6 h-6 text-slate-400"></i>
+                                        </div>
+                                        <h6 class="font-bold text-slate-800 text-sm">No active members yet</h6>
+                                        <p class="text-xs text-slate-400 mt-1 max-w-[280px] mx-auto">
+                                            Once an invited member accepts, they'll appear here.
+                                        </p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                {{ $team->links('vendor.pagination.custom') }}
             </div>
 
             <!-- Invited Panel -->
-            <div x-show="currentTab === 'invited'">
+            <div x-show="currentTab === 'invited'" x-cloak>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
@@ -182,70 +246,6 @@
                     </table>
                 </div>
                 {{ $invited->links('vendor.pagination.custom') }}
-            </div>
-
-            <!-- Team Panel -->
-            <div x-show="currentTab === 'team'" x-cloak>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase">
-                                <th class="py-2.5">Member</th>
-                                <th class="py-2.5">Role</th>
-                                <th class="py-2.5">Status</th>
-                                <th class="py-2.5">Joined</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($team as $ref)
-                                @php
-                                    $isLocked = $ref->wallet->is_locked ?? false;
-                                    $isSuspended = $ref->isSuspended();
-                                @endphp
-                                <tr class="border-b border-slate-50 hover:bg-slate-50/50 {{ $canRestrict ? 'cursor-pointer' : '' }}"
-                                    @if ($canRestrict)
-                                        onclick="window.location.href = '{{ route('network.downline.show', $ref) }}'"
-                                    @endif
-                                    >
-                                    <td class="py-3">
-                                        <span class="font-bold text-slate-800 block">{{ $ref->first_name ? $ref->first_name . ' ' . $ref->last_name : $ref->email }}</span>
-                                        <span class="text-xs text-slate-400">{{ $ref->email }}</span>
-                                    </td>
-                                    <td class="py-3">
-                                        <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase bg-primary/10 text-primary">
-                                            {{ str_replace('_', ' ', $ref->role) }}
-                                        </span>
-                                    </td>
-                                    <td class="py-3">
-                                        <div class="flex flex-wrap items-center gap-1">
-                                            <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase
-                                                {{ $ref->status === 'active' ? 'bg-emerald-50 text-emerald-600' : ($ref->status === 'suspended' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600') }}">
-                                                {{ $ref->status }}
-                                            </span>
-                                            @if ($isLocked)
-                                                <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase bg-amber-50 text-amber-600">PND</span>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td class="py-3 text-slate-400 font-medium">{{ $ref->created_at->format('M d, Y') }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="py-12 text-center text-slate-400">
-                                        <div class="bg-slate-50 rounded-2xl w-14 h-14 flex items-center justify-center mb-3 mx-auto border border-slate-100">
-                                            <i data-lucide="users" class="w-6 h-6 text-slate-400"></i>
-                                        </div>
-                                        <h6 class="font-bold text-slate-800 text-sm">No team members yet</h6>
-                                        <p class="text-xs text-slate-400 mt-1 max-w-[280px] mx-auto">
-                                            Once an invited member accepts, they'll appear here.
-                                        </p>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                {{ $team->links('vendor.pagination.custom') }}
             </div>
         </x-card>
 

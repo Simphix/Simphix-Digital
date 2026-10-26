@@ -157,14 +157,14 @@
             <i data-lucide="search" class="w-5 h-5"></i>
         </button>
 
-        <!-- Invite Enterprise Partner -->
+        <!-- Invite Enterprise Business -->
         @if (auth()->user() && in_array(auth()->user()->role, ['partner', 'coordinator', 'regional_manager'], true))
-            <a href="{{ route('enterprise-partner.invite') }}" title="Invite Enterprise Partner"
+            <a href="{{ route('enterprise-partner.invite') }}" title="Invite Enterprise Business"
                class="hidden lg:inline-flex items-center gap-2 pl-3 pr-4 py-2 rounded-xl text-xs font-bold text-primary bg-primary/10 hover:bg-primary/15 transition-colors outline-none">
                 <i data-lucide="handshake" class="w-4 h-4"></i>
-                <span>Invite Enterprise Partner</span>
+                <span>Invite Enterprise Business</span>
             </a>
-            <a href="{{ route('enterprise-partner.invite') }}" title="Invite Enterprise Partner"
+            <a href="{{ route('enterprise-partner.invite') }}" title="Invite Enterprise Business"
                class="lg:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors outline-none">
                 <i data-lucide="handshake" class="w-5 h-5"></i>
             </a>
