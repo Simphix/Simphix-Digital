@@ -16,31 +16,32 @@
 </head>
 <body class="h-full bg-white font-sans text-[#14243a] antialiased">
     <main class="min-h-screen lg:grid lg:grid-cols-2">
-        <section class="relative hidden min-h-screen flex-col bg-white px-9 py-6 lg:flex" aria-label="SimPhix introduction">
-            <a href="/" class="relative z-10 inline-flex w-fit items-center">
-                <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SimPhix" class="h-auto w-[170px]">
-            </a>
-
-            <div class="flex flex-1 flex-col items-center justify-center pb-16">
-                <img
-                    src="{{ asset('assets/images/login-sim-wallet.png') }}"
-                    alt="SimPhix wallet and SIM illustration"
-                    class="h-[700px] w-[700px] object-contain"
-                >
-                <h2 class="mt-3 max-w-md text-center text-[26px] font-bold leading-[1.25] tracking-[-0.025em] text-[#15253a]">
+        <section class="relative hidden min-h-screen flex-col items-center justify-center bg-white px-8 py-12 lg:flex border-r border-slate-100" aria-label="SimPhix introduction">
+            <div class="flex flex-col items-center justify-center text-center max-w-lg w-full my-auto">
+                <a href="/" class="inline-block transition hover:opacity-95">
+                    <img
+                        src="{{ asset('assets/images/logo/simphix-banner.png') }}"
+                        alt="SimPhix"
+                        class="h-auto w-full max-w-[440px] object-contain mx-auto"
+                    >
+                </a>
+                <h2 class="mt-8 max-w-md text-center text-[26px] font-bold leading-[1.25] tracking-[-0.025em] text-[#15253a]">
                     SimPhix Solutions.<br>Empowering Connections.
                 </h2>
+                <p class="mt-3 max-w-sm text-center text-sm text-slate-500 leading-relaxed">
+                    Next-generation telecom infrastructure engineered for seamless connectivity, real-time access, and boundless scale.
+                </p>
             </div>
         </section>
 
-        <section class="relative flex min-h-screen items-center justify-center bg-[#f4f5f7] px-5 py-16 sm:px-10 sm:py-20">
-            <div class="absolute left-5 top-6 sm:left-8 sm:top-8 lg:hidden">
-                <a href="/">
-                    <img src="{{ asset('assets/images/logo/logo1.png') }}" alt="SimPhix" class="h-auto w-[145px]">
+        <section class="relative flex min-h-screen flex-col items-center justify-center bg-[#f4f5f7] px-5 py-12 sm:px-10">
+            <div class="mb-8 flex justify-center lg:hidden">
+                <a href="/" class="inline-flex items-center justify-center">
+                    <img src="{{ asset('assets/images/logo/simphix-banner.png') }}" alt="SimPhix" class="h-auto w-[200px] object-contain mx-auto">
                 </a>
             </div>
 
-            <div class="mt-16 w-full max-w-[450px] rounded-xl bg-white px-6 py-8 shadow-[0_2px_5px_rgba(15,23,42,0.14)] sm:px-8 sm:py-10 lg:mt-0">
+            <div class="w-full max-w-[450px] rounded-xl bg-white px-6 py-8 shadow-[0_2px_5px_rgba(15,23,42,0.14)] sm:px-8 sm:py-10">
                 {{ $slot }}
             </div>
         </section>
