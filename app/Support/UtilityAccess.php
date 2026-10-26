@@ -13,8 +13,8 @@ use App\Models\User;
  * fully independent role list, not derived from canUse(), to avoid that
  * cutoff silently taking Verification with it. Partners get Verification
  * only, as a paid side-service they offer their downline/customers.
- * Coordinators, regional managers, and back-office roles (staff, checker,
- * super_admin) manage the catalog/platform instead and get none of these.
+ * Coordinators, regional managers, and back-office roles (business_sales_manager,
+ * support, super_admin) manage the catalog/platform instead and get none of these.
  */
 class UtilityAccess
 {

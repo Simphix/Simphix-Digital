@@ -17,8 +17,9 @@ class AdminNotification extends Model
      * App\Http\Controllers\Admin\ManageController's validation rules.
      */
     public const ROLES = [
-        'personal', 'agent', 'partner', 'business', 'staff', 'checker',
-        'super_admin', 'regional_manager', 'coordinator',
+        'personal', 'agent', 'partner', 'business', 'business_agent',
+        'regional_manager', 'coordinator', 'business_sales_manager',
+        'support', 'super_admin',
     ];
 
     protected $fillable = [

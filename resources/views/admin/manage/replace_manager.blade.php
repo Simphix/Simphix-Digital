@@ -11,7 +11,7 @@
                 <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">Replace Manager</h1>
                 <p class="text-xs text-slate-400 mt-1">
                     Hand {{ $outgoing->name }}'s entire {{ str_replace('_', ' ', $outgoing->role) }} seat &mdash;
-                    jurisdiction, downline, and SIM holdings &mdash; to a vacant account of the same role.
+                    territory, downline, and SIM holdings &mdash; to a vacant account of the same role.
                 </p>
             </div>
         </div>
@@ -47,7 +47,7 @@
                     <span class="block text-sm font-extrabold font-display text-slate-800 truncate" title="{{ $impact['jurisdiction_label'] ?? 'None' }}">
                         {{ $impact['jurisdiction_label'] ?? 'None' }}
                     </span>
-                    <span class="block text-[11px] text-slate-400 font-semibold uppercase">Jurisdiction</span>
+                    <span class="block text-[11px] text-slate-400 font-semibold uppercase">Territory</span>
                 </div>
                 @if ($outgoing->role === 'business')
                     <div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl text-center">

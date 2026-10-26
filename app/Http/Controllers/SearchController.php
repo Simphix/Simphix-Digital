@@ -261,7 +261,6 @@ class SearchController extends Controller
             // 5. Search Static Service Operations & Action Items (Correct verified paths)
             $services = [
                 ['title' => 'SIM Plans & Services', 'description' => 'Request new SIM number or perform activations.', 'url' => route('sims.index'), 'icon' => 'cpu'],
-                ['title' => 'Send Cash / Transfer', 'description' => 'Perform peer-to-peer wallet transfers to other users.', 'url' => route('transfer'), 'icon' => 'send'],
                 ['title' => 'Bank Withdrawal', 'description' => 'Payout money from wallet balance to your bank account.', 'url' => route('withdraw'), 'icon' => 'banknote'],
                 ['title' => 'My Transactions Statements', 'description' => 'Trace your history payments and download receipt statement.', 'url' => route('transactions'), 'icon' => 'receipt'],
                 ['title' => 'Support Helpdesk Tickets', 'description' => 'Get help or open support ticket for technical/billing queries.', 'url' => route('support'), 'icon' => 'message-square'],

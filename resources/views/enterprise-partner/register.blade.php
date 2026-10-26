@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-900 font-display">Become an Enterprise Partner</h1>
+        <h1 class="text-2xl font-bold text-slate-900 font-display">Become an Enterprise Business</h1>
         <p class="text-sm text-slate-500 mt-1">
             You were invited by <strong class="text-slate-900">{{ $inviter->name }}</strong>. Register your business below to get started.
         </p>
@@ -78,6 +78,6 @@
             <x-text-input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" class="w-full" />
         </div>
 
-        <x-primary-button class="w-full justify-center">Register as Enterprise Partner</x-primary-button>
+        <x-primary-button class="w-full justify-center">Register as Enterprise Business</x-primary-button>
     </form>
 </x-guest-layout>

@@ -58,7 +58,7 @@
                         @else
                             <span class="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 rounded-md py-1 px-2.5 flex items-center gap-1">
                                 <i data-lucide="map-pin-off" class="w-3 h-3"></i>
-                                Jurisdiction unassigned
+                                Territory unassigned
                             </span>
                         @endif
                     @endif
@@ -104,11 +104,6 @@
                             ₦{{ number_format($walletData['balance'] ?? 0.00, 2) }}
                         </p>
                     </div>
-                    @if (auth()->user()->role !== 'agent')
-                        <a href="{{ route('transfer') }}" class="shrink-0 text-xs font-semibold text-primary no-underline hover:underline">
-                            Send
-                        </a>
-                    @endif
                 </div>
             </div>
 
@@ -188,14 +183,14 @@
 
         </div>
 
-        <!-- QUICK SERVICES PANEL (5 core actions on one line using Bootstrap row-cols-3 and row-cols-md-5) -->
+        <!-- QUICK SERVICES PANEL (4 items per row on desktop) -->
         <div class="dash-card p-4 mb-4">
             <h3 class="text-sm font-semibold text-slate-800 font-display mb-3 flex items-center gap-2">
                 <i data-lucide="grid" class="text-primary w-5 h-5"></i>
                 Quick Transaction Services
             </h3>
 
-            <div class="row row-cols-3 row-cols-md-6 g-2 g-md-4 justify-content-center">
+            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-2 g-md-4">
 
                 @if (auth()->user()->role !== 'agent')
                     <!-- Service 3: SIM Services -->
@@ -226,19 +221,6 @@
                     </div>
 
                     @endif
-
-                    <!-- Service 5: P2P Transfer -->
-                    <div class="col">
-                        <a href="{{ route('transfer') }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
-                            <div class="p-2 rounded-lg bg-primary/10 text-primary flex items-center justify-center w-10 h-10">
-                                <i data-lucide="send" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800 mb-0 font-display text-sm">P2P Send</h4>
-                                <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">Free P2P transfer</p>
-                            </div>
-                        </a>
-                    </div>
                 @endif
 
                 @if (\App\Support\UtilityAccess::canVerify(auth()->user()))
@@ -306,20 +288,6 @@
                             <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">Register your business</p>
                         </div>
                     </a>
-                </div>
-
-                <!-- Service 12: Own Your Website (Coming Soon) -->
-                <div class="col">
-                    <div class="service-btn relative p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2 opacity-60 cursor-not-allowed" aria-disabled="true">
-                        <span class="absolute top-1.5 right-1.5 text-[8px] font-bold uppercase tracking-wide text-slate-500 bg-slate-100 border border-slate-200 rounded-full px-1.5 py-0.5 leading-none">Coming Soon</span>
-                        <div class="p-2 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center w-10 h-10">
-                            <i data-lucide="globe" class="w-5 h-5"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-slate-500 mb-0 font-display text-sm">Own Your Website</h4>
-                            <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">Get your own website</p>
-                        </div>
-                    </div>
                 </div>
 
             </div>

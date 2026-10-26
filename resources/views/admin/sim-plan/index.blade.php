@@ -181,7 +181,7 @@
 
         <!-- Grid Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            <!-- Left Side: Upload Numbers Form -->
+            <!-- Left Side: Numbers Inflow & Form -->
             <div class="lg:col-span-4 space-y-6" x-data="{ uploadTab: 'manual' }">
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                     <div class="flex items-center gap-3 pb-4 border-b border-slate-100 mb-4">
@@ -194,6 +194,17 @@
                         </div>
                     </div>
 
+                    @if (auth()->user()?->role === 'business_sales_manager')
+                        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-center my-2 space-y-2">
+                            <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center mx-auto">
+                                <i data-lucide="lock" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800">SIM Uploading Disabled</h4>
+                            <p class="text-[11px] text-slate-500 leading-relaxed max-w-xs mx-auto">
+                                Uploading new inventory batches is restricted to Super Admins. You have full access to management, assignments, requests, and controls below.
+                            </p>
+                        </div>
+                    @else
                     <!-- Upload Toggle Tabs -->
                     <div class="flex bg-slate-50 p-1 rounded-xl mb-4 text-xs font-semibold">
                         <button type="button" @click="uploadTab = 'manual'" :class="uploadTab === 'manual' ? 'bg-[#0056D2] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="flex-1 py-1.5 rounded-lg transition-all text-center">Manual Text</button>
@@ -270,6 +281,7 @@
                             Import Excel SIMs
                         </x-primary-button>
                     </form>
+                    @endif
                 </div>
 
                 <!-- Activation Controls -->

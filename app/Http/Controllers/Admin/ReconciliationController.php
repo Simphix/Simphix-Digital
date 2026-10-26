@@ -16,7 +16,7 @@ use Illuminate\View\View;
  */
 class ReconciliationController extends Controller
 {
-    public function index(Request $request, string $tab = 'p2p'): View
+    public function index(Request $request, string $tab = 'deposits'): View
     {
         abort_unless(array_key_exists($tab, ReconciliationEngine::RECONCILERS), 404);
 

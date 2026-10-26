@@ -268,7 +268,7 @@ test('an assigned regional manager sees their region label on dashboard and prof
 test('an unassigned coordinator sees an unassigned jurisdiction indicator on dashboard and profile', function () {
     $coordinator = User::factory()->create(['role' => 'coordinator']);
 
-    $this->actingAs($coordinator)->get(route('dashboard'))->assertOk()->assertSee('Jurisdiction unassigned');
+    $this->actingAs($coordinator)->get(route('dashboard'))->assertOk()->assertSee('Territory unassigned');
     $this->actingAs($coordinator)->get(route('profile.edit'))->assertOk()->assertSee('Unassigned');
 });
 
@@ -287,5 +287,5 @@ test('a coordinator with an assigned district sees the full district/state/regio
 test('roles without jurisdiction show no jurisdiction chip on dashboard', function () {
     $partner = User::factory()->create(['role' => 'partner']);
 
-    $this->actingAs($partner)->get(route('dashboard'))->assertOk()->assertDontSee('Jurisdiction unassigned');
+    $this->actingAs($partner)->get(route('dashboard'))->assertOk()->assertDontSee('Territory unassigned');
 });

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Sim extends Model
 {
@@ -74,6 +75,14 @@ class Sim extends Model
     }
 
     /**
+     * Get the customer information recorded upon activation.
+     */
+    public function customer(): HasOne
+    {
+        return $this->hasOne(SimCustomer::class, 'sim_id');
+    }
+
+    /**
      * Get the requests associated with the SIM.
      */
     public function requests(): HasMany
@@ -85,6 +94,14 @@ class Sim extends Model
      * Get the assignment/activation history log for this SIM.
      */
     public function history(): HasMany
+    {
+        return $this->hasMany(SimHistory::class, 'sim_id')->latest();
+    }
+
+    /**
+     * Alias for history().
+     */
+    public function histories(): HasMany
     {
         return $this->hasMany(SimHistory::class, 'sim_id')->latest();
     }
@@ -134,5 +151,13 @@ class Sim extends Model
         }
 
         return $query;
+    }
+
+    /**
+     * Get whole rounded days since creation/holding with no floating number.
+     */
+    public function daysHeld(): int
+    {
+        return (int) round($this->created_at ? $this->created_at->diffInDays(now()) : 0);
     }
 }

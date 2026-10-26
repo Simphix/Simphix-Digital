@@ -102,7 +102,7 @@
                     </div>
 
                     <!-- Role Filter -->
-                    <div class="w-full md:w-44">
+                    <div class="w-full md:w-52">
                         <x-select-input name="role" class="rounded-xl !text-xs font-bold text-slate-600 shadow-sm">
                             <option value="">All Roles</option>
                             <option value="personal" {{ request('role') === 'personal' ? 'selected' : '' }}>Personal</option>
@@ -110,9 +110,10 @@
                             <option value="partner" {{ request('role') === 'partner' ? 'selected' : '' }}>Partner</option>
                             <option value="coordinator" {{ request('role') === 'coordinator' ? 'selected' : '' }}>Coordinator</option>
                             <option value="regional_manager" {{ request('role') === 'regional_manager' ? 'selected' : '' }}>Regional Manager</option>
-                            <option value="business" {{ request('role') === 'business' ? 'selected' : '' }}>Business</option>
-                            <option value="staff" {{ request('role') === 'staff' ? 'selected' : '' }}>Staff</option>
-                            <option value="checker" {{ request('role') === 'checker' ? 'selected' : '' }}>Checker</option>
+                            <option value="business" {{ request('role') === 'business' ? 'selected' : '' }}>Enterprise Business</option>
+                            <option value="business_agent" {{ request('role') === 'business_agent' ? 'selected' : '' }}>Business Agent</option>
+                            <option value="business_sales_manager" {{ request('role') === 'business_sales_manager' ? 'selected' : '' }}>Business Sales Manager</option>
+                            <option value="support" {{ request('role') === 'support' ? 'selected' : '' }}>Support</option>
                             <option value="super_admin" {{ request('role') === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
                         </x-select-input>
                     </div>

@@ -33,10 +33,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/virtual-account/create', [\App\Http\Controllers\WalletController::class, 'createWallet'])->name('virtual.account.create');
     Route::get('/wallet/balance', [\App\Http\Controllers\WalletController::class, 'getBalance'])->name('wallet.balance');
 
-    // P2P Transfer Routes
-    Route::get('/transfer', [\App\Http\Controllers\WalletController::class, 'p2p'])->name('transfer');
-    Route::post('/transfer/verify', [\App\Http\Controllers\WalletController::class, 'verifyUser'])->name('transfer.verify');
-    Route::post('/transfer/process', [\App\Http\Controllers\WalletController::class, 'processTransfer'])->name('transfer.process');
+    // PIN Verification Route
     Route::post('/verify/pin', [\App\Http\Controllers\WalletController::class, 'verifyPin'])->name('verify.pin')->middleware('throttle:5,1');
 
     // Withdraw Routes
@@ -98,6 +95,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/leaderboard', [\App\Http\Controllers\LeaderboardController::class, 'index'])->name('leaderboard');
     Route::get('/commissions/dashboard', [\App\Http\Controllers\CommissionDashboardController::class, 'index'])->name('commissions.dashboard');
     Route::get('/sales-performance', [\App\Http\Controllers\SalesPerformanceController::class, 'index'])->name('sales-performance.index');
+    Route::get('/sales-performance/export', [\App\Http\Controllers\SalesPerformanceController::class, 'export'])->name('sales-performance.export');
 
     // Airtime, SME Data & Verification Routes — restricted to Personal/Business
     // account roles (App\Support\UtilityAccess); resellers and back-office
@@ -153,6 +151,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/sims/mine', [\App\Http\Controllers\smartsim\SimsController::class, 'mine'])->name('sims.mine');
     Route::get('/sims/available-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'getAvailableNumbers'])->name('sims.available');
     Route::post('/sims/request', [\App\Http\Controllers\smartsim\SimsController::class, 'requestSim'])->name('sims.request');
+    Route::get('/sims/activate', [\App\Http\Controllers\smartsim\SimsController::class, 'activationPage'])->name('sims.activate.page');
     Route::post('/sims/activate', [\App\Http\Controllers\smartsim\SimsController::class, 'activateSim'])->name('sims.activate');
     Route::post('/sims/activate-for-user', [\App\Http\Controllers\smartsim\SimsController::class, 'activateForDownlineUser'])->name('sims.activate-for-user');
     Route::post('/partner/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('partner.sims.assign');
@@ -165,6 +164,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/sims/downline-users/search', [\App\Http\Controllers\smartsim\SimsController::class, 'searchUsers'])->name('sims.downline-users.search');
     Route::post('/sims/request-swap', [\App\Http\Controllers\smartsim\SimsController::class, 'requestSwap'])->name('sims.request-swap');
     Route::get('/sims/downline-requests', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequests'])->name('sims.downline-requests');
+    Route::get('/sims/requests', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequests'])->name('sims.requests');
     Route::get('/sims/downline-requests/available-sims', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequestAvailableSims'])->name('sims.downline-requests.available-sims');
     Route::post('/sims/downline-requests/{simRequest}/fulfill', [\App\Http\Controllers\smartsim\SimsController::class, 'fulfillDownlineRequest'])->name('sims.downline-requests.fulfill');
     Route::post('/sims/downline-requests/{simRequest}/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveDownlineRequestNumbers'])->name('sims.downline-requests.resolve-numbers');
@@ -211,6 +211,24 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/upgrade', [ProfileController::class, 'requestUpgrade'])->name('profile.upgrade.request');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Business Sales Manager (BSM) Console
+Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('bsm')->name('bsm.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('/territories', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'territories'])->name('territories');
+    Route::get('/territories/drilldown', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'territoryDrilldown'])->name('territories.drilldown');
+    Route::get('/lifecycle', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'lifecycle'])->name('lifecycle');
+    Route::get('/customers', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'customers'])->name('customers');
+    Route::get('/acceleration', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'acceleration'])->name('acceleration');
+    Route::get('/reports/jurisdictions/export', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'exportJurisdictionReport'])->name('reports.jurisdictions.export');
+    Route::post('/lifecycle/assign', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'assignSim'])->name('lifecycle.assign');
+    Route::post('/lifecycle/reassign', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'reassignSim'])->name('lifecycle.reassign');
+    Route::post('/lifecycle/revert', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'revertSim'])->name('lifecycle.revert');
+    Route::post('/lifecycle/{sim}/status', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'updateSimStatus'])->name('lifecycle.status');
+    Route::post('/customers/quick-activate', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'quickActivate'])->name('customers.quick-activate');
+    Route::post('/requests/{simRequest}/approve', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'approveRequest'])->name('requests.approve');
+    Route::post('/failed-activations/{report}/retry', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'retryFailedActivation'])->name('failed-activations.retry');
 });
 
 Route::middleware(['auth', 'verified', 'support_staff'])->prefix('support-desk')->name('support-desk.')->group(function () {
@@ -424,39 +442,42 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::put('/{plan}', [\App\Http\Controllers\Admin\SmePlanController::class, 'update'])->name('update');
         Route::delete('/{plan}', [\App\Http\Controllers\Admin\SmePlanController::class, 'destroy'])->name('destroy');
     });
+});
 
-    // Admin SIM Plans / SIMs Management
-    Route::prefix('admin/sim-plan')->name('admin.sim-plan.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\SimPlanController::class, 'index'])->name('index');
-        Route::post('/store', [\App\Http\Controllers\Admin\SimPlanController::class, 'store'])->name('store');
-        Route::post('/assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'assign'])->name('assign');
-        Route::post('/direct-assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'directAssign'])->name('direct-assign');
-        Route::post('/unassign/{sim}', [\App\Http\Controllers\Admin\SimPlanController::class, 'unassign'])->name('unassign');
-        Route::post('/activate/{sim}', [\App\Http\Controllers\Admin\SimPlanController::class, 'activate'])->name('activate');
-        Route::post('/requests/{simRequest}/approve', [\App\Http\Controllers\Admin\SimPlanController::class, 'approveRequest'])->name('requests.approve');
-        Route::post('/requests/{simRequest}/reject', [\App\Http\Controllers\Admin\SimPlanController::class, 'rejectRequest'])->name('requests.reject');
-        Route::post('/requests/{simRequest}/resolve-numbers', [\App\Http\Controllers\Admin\SimPlanController::class, 'resolveRequestNumbers'])->name('requests.resolve-numbers');
-        Route::post('/import-excel', [\App\Http\Controllers\Admin\SimPlanController::class, 'importExcel'])->name('import');
-        Route::get('/download-sample', [\App\Http\Controllers\Admin\SimPlanController::class, 'downloadSample'])->name('download-sample');
-        Route::get('/available-sims', [\App\Http\Controllers\Admin\SimPlanController::class, 'availableSims'])->name('available-sims');
+// SIM Cards & Plans Management (accessible to Super Admin and Business Sales Manager)
+Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('admin/sim-plan')->name('admin.sim-plan.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\SimPlanController::class, 'index'])->name('index');
+    Route::post('/store', [\App\Http\Controllers\Admin\SimPlanController::class, 'store'])->name('store');
+    Route::post('/assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'assign'])->name('assign');
+    Route::post('/direct-assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'directAssign'])->name('direct-assign');
+    Route::post('/unassign/{sim}', [\App\Http\Controllers\Admin\SimPlanController::class, 'unassign'])->name('unassign');
+    Route::post('/activate/{sim}', [\App\Http\Controllers\Admin\SimPlanController::class, 'activate'])->name('activate');
+    Route::post('/requests/{simRequest}/approve', [\App\Http\Controllers\Admin\SimPlanController::class, 'approveRequest'])->name('requests.approve');
+    Route::post('/requests/{simRequest}/reject', [\App\Http\Controllers\Admin\SimPlanController::class, 'rejectRequest'])->name('requests.reject');
+    Route::post('/requests/{simRequest}/resolve-numbers', [\App\Http\Controllers\Admin\SimPlanController::class, 'resolveRequestNumbers'])->name('requests.resolve-numbers');
+    Route::post('/import-excel', [\App\Http\Controllers\Admin\SimPlanController::class, 'importExcel'])->name('import');
+    Route::get('/download-sample', [\App\Http\Controllers\Admin\SimPlanController::class, 'downloadSample'])->name('download-sample');
+    Route::get('/available-sims', [\App\Http\Controllers\Admin\SimPlanController::class, 'availableSims'])->name('available-sims');
 
-        Route::get('/bulk-assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'bulkAssignPage'])->name('bulk-assign');
-        Route::post('/bulk-assign/resolve-numbers', [\App\Http\Controllers\Admin\SimPlanController::class, 'resolveBulkAssignNumbers'])->name('bulk-assign.resolve-numbers');
+    Route::get('/bulk-assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'bulkAssignPage'])->name('bulk-assign');
+    Route::post('/bulk-assign/resolve-numbers', [\App\Http\Controllers\Admin\SimPlanController::class, 'resolveBulkAssignNumbers'])->name('bulk-assign.resolve-numbers');
 
-        Route::get('/bulk-collect', [\App\Http\Controllers\Admin\SimPlanController::class, 'bulkCollectPage'])->name('bulk-collect');
-        Route::post('/bulk-collect/resolve-numbers', [\App\Http\Controllers\Admin\SimPlanController::class, 'resolveBulkCollectNumbers'])->name('bulk-collect.resolve-numbers');
-        Route::post('/bulk-collect', [\App\Http\Controllers\Admin\SimPlanController::class, 'bulkCollect'])->name('bulk-collect.execute');
+    Route::get('/bulk-collect', [\App\Http\Controllers\Admin\SimPlanController::class, 'bulkCollectPage'])->name('bulk-collect');
+    Route::post('/bulk-collect/resolve-numbers', [\App\Http\Controllers\Admin\SimPlanController::class, 'resolveBulkCollectNumbers'])->name('bulk-collect.resolve-numbers');
+    Route::post('/bulk-collect', [\App\Http\Controllers\Admin\SimPlanController::class, 'bulkCollect'])->name('bulk-collect.execute');
 
-        Route::get('/users/search', [\App\Http\Controllers\Admin\SimPlanController::class, 'searchUsers'])->name('users.search');
+    Route::get('/users/search', [\App\Http\Controllers\Admin\SimPlanController::class, 'searchUsers'])->name('users.search');
 
-        Route::prefix('swaps')->name('swaps.')->group(function () {
-            Route::post('/{simSwapRequest}/approve', [\App\Http\Controllers\Admin\SimSwapController::class, 'approve'])->name('approve');
-            Route::post('/{simSwapRequest}/reject', [\App\Http\Controllers\Admin\SimSwapController::class, 'reject'])->name('reject');
-        });
-
-        Route::post('/categories/{field}/toggle-activation', [\App\Http\Controllers\Admin\SimPlanController::class, 'toggleActivation'])->name('categories.toggle-activation');
-        Route::post('/failed-activations/{report}/retry', [\App\Http\Controllers\Admin\SimPlanController::class, 'retryActivationBonus'])->name('failed-activations.retry');
+    Route::prefix('swaps')->name('swaps.')->group(function () {
+        Route::post('/{simSwapRequest}/approve', [\App\Http\Controllers\Admin\SimSwapController::class, 'approve'])->name('approve');
+        Route::post('/{simSwapRequest}/reject', [\App\Http\Controllers\Admin\SimSwapController::class, 'reject'])->name('reject');
     });
+
+    Route::post('/categories/{field}/toggle-activation', [\App\Http\Controllers\Admin\SimPlanController::class, 'toggleActivation'])->name('categories.toggle-activation');
+    Route::post('/failed-activations/{report}/retry', [\App\Http\Controllers\Admin\SimPlanController::class, 'retryActivationBonus'])->name('failed-activations.retry');
+});
+
+Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
 
     // Admin SIM Data Top-Up — free, admin-granted top-ups via whichever
     // SME-data vendor is currently active, unrestricted by the

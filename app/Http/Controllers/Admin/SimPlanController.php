@@ -133,6 +133,8 @@ class SimPlanController extends Controller
      */
     public function store(Request $request)
     {
+        abort_if($request->user()->role === 'business_sales_manager', 403, 'SIM card uploading is disabled for Business Sales Managers.');
+
         $request->validate([
             'category' => 'required|string',
             'provider' => 'required|string',
@@ -858,6 +860,8 @@ class SimPlanController extends Controller
      */
     public function importExcel(Request $request)
     {
+        abort_if($request->user()->role === 'business_sales_manager', 403, 'SIM card uploading is disabled for Business Sales Managers.');
+
         $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv,txt|max:5120',
         ]);

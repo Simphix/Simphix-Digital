@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>SimPhix - Enterprise Partner Fulfillment</title>
+    <title>SimPhix - Enterprise Business Fulfillment</title>
 
     <div class="max-w-6xl mx-auto space-y-6" x-data="{ currentTab: 'pending' }">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -8,7 +8,7 @@
                     <div class="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-[#0056D2] border border-indigo-100/50 shadow-sm">
                         <i data-lucide="package-check" class="w-5 h-5"></i>
                     </div>
-                    Enterprise Partner Fulfillment
+                    Enterprise Business Fulfillment
                 </h1>
                 <p class="text-sm text-slate-500 mt-1">A paid order is a request — decide how many of each SIM to actually grant, up to what was ordered and what's in stock.</p>
             </div>
@@ -85,7 +85,7 @@
                                         </tr>
                                         @if ($stock < $item->quantity)
                                             <tr>
-                                                <td colspan="4" class="pb-2 text-[11px] text-rose-500">Only {{ $stock }} in stock — this EP will receive less than requested unless more stock is added first.</td>
+                                                <td colspan="4" class="pb-2 text-[11px] text-rose-500">Only {{ $stock }} in stock — this EB will receive less than requested unless more stock is added first.</td>
                                             </tr>
                                         @endif
                                     @endforeach

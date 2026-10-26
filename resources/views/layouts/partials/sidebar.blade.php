@@ -31,16 +31,21 @@
     <!-- Navigation Menu -->
     <nav class="flex-grow px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden" aria-label="Main navigation">
 
+        @php
+            $dashboardRoute = auth()->user() && auth()->user()->role === 'business_sales_manager'
+                ? route('bsm.dashboard')
+                : (auth()->user() && auth()->user()->role === 'support' ? route('support-desk.dashboard') : route('dashboard'));
+        @endphp
         @include('layouts.partials.sidebar-link', [
-            'href' => route('dashboard'),
+            'href' => $dashboardRoute,
             'icon' => 'layout-dashboard',
             'label' => __('Dashboard'),
-            'active' => request()->routeIs('dashboard'),
+            'active' => request()->routeIs('dashboard', 'bsm.dashboard', 'support-desk.dashboard') && !request('tab'),
         ])
 
-        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true))
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true))
             @php
-                $walletActive = request()->routeIs('wallet', 'transfer', 'withdraw');
+                $walletActive = request()->routeIs('wallet', 'withdraw');
             @endphp
             <div x-data="{ open: {{ $walletActive ? 'true' : 'false' }} }">
                 <button type="button"
@@ -65,17 +70,14 @@
                      class="mt-1 ml-[22px] space-y-0.5 border-l border-slate-200 pl-2.5" style="display: none;">
 
                     @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('wallet'), 'icon' => 'wallet', 'label' => __('My Wallet'), 'active' => request()->routeIs('wallet')])
-                    @if (auth()->user()->role !== 'agent')
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('transfer'), 'icon' => 'send', 'label' => __('P2P Transfer'), 'active' => request()->routeIs('transfer')])
-                        @if (auth()->user()->role !== 'personal' && \App\Models\CashoutSettings::enabled())
-                            @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('withdraw'), 'icon' => 'banknote', 'label' => __('Cash Out'), 'active' => request()->routeIs('withdraw')])
-                        @endif
+                    @if (auth()->user()->role !== 'agent' && auth()->user()->role !== 'personal' && \App\Models\CashoutSettings::enabled())
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('withdraw'), 'icon' => 'banknote', 'label' => __('Cash Out'), 'active' => request()->routeIs('withdraw')])
                     @endif
                 </div>
             </div>
         @endif
 
-        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true) && auth()->user()->role !== 'agent')
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true) && auth()->user()->role !== 'agent')
             @php
                 $simsActive = request()->routeIs('sims.*');
             @endphp
@@ -102,17 +104,17 @@
                      class="mt-1 ml-[22px] space-y-0.5 border-l border-slate-200 pl-2.5" style="display: none;">
 
                     @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.index'), 'icon' => 'layout-grid', 'label' => __('Overview'), 'active' => request()->routeIs('sims.index')])
+                    @if (in_array(auth()->user()->role, ['partner', 'business_agent'], true))
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.activate.page'), 'icon' => 'zap', 'label' => __('Activate SIM'), 'active' => request()->routeIs('sims.activate*')])
+                    @endif
                     @if (\App\Support\SimAccess::canBrowseCatalog(auth()->user()))
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.pos'), 'icon' => 'credit-card', 'label' => __('POS SIM'), 'active' => request()->routeIs('sims.pos')])
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.cctv'), 'icon' => 'video', 'label' => __('CCTV SIM'), 'active' => request()->routeIs('sims.cctv')])
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.router'), 'icon' => 'router', 'label' => __('Router SIM'), 'active' => request()->routeIs('sims.router')])
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.inventory'), 'icon' => 'database', 'label' => __('Inventory'), 'active' => request()->routeIs('sims.inventory')])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.inventory'), 'icon' => 'database', 'label' => __('All SIMs'), 'active' => request()->routeIs('sims.inventory')])
                     @endif
                     @if (\App\Support\SimAccess::canViewMine(auth()->user()))
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.mine'), 'icon' => 'smartphone', 'label' => __('My SIM'), 'active' => request()->routeIs('sims.mine')])
                     @endif
                     @if (in_array(auth()->user()->role, ['partner', 'coordinator', 'regional_manager', 'business', 'business_agent'], true))
-                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.downline-requests'), 'icon' => 'inbox', 'label' => __('Downline Requests'), 'active' => request()->routeIs('sims.downline-requests'), 'badge' => $pendingDownlineRequestsBadge ?? 0])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.downline-requests'), 'icon' => 'inbox', 'label' => __('Requests'), 'active' => request()->routeIs('sims.downline-requests*', 'sims.requests*'), 'badge' => $pendingDownlineRequestsBadge ?? 0])
                     @endif
                     @if (auth()->user()->role === 'business')
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('sims.business.commission-rates.index'), 'icon' => 'badge-percent', 'label' => __('Commission Rates'), 'active' => request()->routeIs('sims.business.commission-rates.*')])
@@ -155,10 +157,10 @@
             </div>
         @endif
 
-        @if (auth()->user() && auth()->user()->role !== 'support')
+        @if (auth()->user() && !in_array(auth()->user()->role, ['support', 'business_sales_manager'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('transactions'), 'icon' => 'history', 'label' => __('Transaction'), 'active' => request()->routeIs('transactions')])
         @endif
-        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true))
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('network'), 'icon' => 'users', 'label' => __('My Network'), 'active' => request()->routeIs('network')])
         @endif
         @if (auth()->user() && (\App\Support\SimAccess::canBrowseCatalog(auth()->user()) || auth()->user()->hasRole('super_admin')))
@@ -173,10 +175,24 @@
         @if (auth()->user() && !\App\Support\StaffAccess::isInternal(auth()->user()))
             @include('layouts.partials.sidebar-link', ['href' => route('cac.overview'), 'icon' => 'file-badge', 'label' => __('CAC Registration'), 'active' => request()->routeIs('cac.*')])
         @endif
-        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support'], true))
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('support'), 'icon' => 'help-circle', 'label' => __('Support'), 'active' => request()->routeIs('support')])
         @endif
         @include('layouts.partials.sidebar-link', ['href' => route('profile.edit'), 'icon' => 'user-cog', 'label' => __('Profile Settings'), 'active' => request()->routeIs('profile.edit')])
+
+        @if (auth()->user() && auth()->user()->role === 'business_sales_manager')
+            <!-- Business Sales Manager Section -->
+            <div class="pt-4 mt-4 border-t border-slate-200">
+                <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Sales Administration</span>
+
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard'), 'icon' => 'layout-dashboard', 'label' => 'BSM Dashboard', 'active' => request()->routeIs('bsm.dashboard')])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.territories'), 'icon' => 'map-pin', 'label' => 'Territories Report', 'active' => request()->routeIs('bsm.territories')])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.lifecycle'), 'icon' => 'cpu', 'label' => 'SIM Lifecycle', 'active' => request()->routeIs('bsm.lifecycle')])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.customers'), 'icon' => 'user-check', 'label' => 'Customer Desk', 'active' => request()->routeIs('bsm.customers')])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.acceleration'), 'icon' => 'zap', 'label' => 'Sales Acceleration', 'active' => request()->routeIs('bsm.acceleration')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-plan.index'), 'icon' => 'settings', 'label' => 'SIMs & Plans Mgmt', 'active' => request()->routeIs('admin.sim-plan.*')])
+            </div>
+        @endif
 
         @if (auth()->user() && auth()->user()->role === 'support')
             <!-- Support Desk Section -->
@@ -234,14 +250,14 @@
                     </div>
                 </div>
 
-                @include('layouts.partials.sidebar-link', ['href' => route('admin.jurisdictions.regions.index'), 'icon' => 'map', 'label' => 'Jurisdictions', 'active' => request()->routeIs('admin.jurisdictions*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.jurisdictions.regions.index'), 'icon' => 'map', 'label' => 'Territories', 'active' => request()->routeIs('admin.jurisdictions*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.reconciliation.index'), 'icon' => 'scale', 'label' => 'Reconciliation', 'active' => request()->routeIs('admin.reconciliation*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.services.index'), 'icon' => 'server', 'label' => 'Services Pricing', 'active' => request()->routeIs('admin.services*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sme-plans.index'), 'icon' => 'wifi', 'label' => 'SME Data Plans', 'active' => request()->routeIs('admin.sme-plans*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-plan.index'), 'icon' => 'settings', 'label' => 'SIM Plans', 'active' => request()->routeIs('admin.sim-plan*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-data-topup.index'), 'icon' => 'battery-charging', 'label' => 'SIM Data Top-Up', 'active' => request()->routeIs('admin.sim-data-topup*')])
-                @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.fulfillment.index'), 'icon' => 'package-check', 'label' => 'EP Fulfillment', 'active' => request()->routeIs('admin.enterprise-partners.fulfillment*')])
-                @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.referral-settings.edit'), 'icon' => 'handshake', 'label' => 'EP Referral Settings', 'active' => request()->routeIs('admin.enterprise-partners.referral-settings*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.fulfillment.index'), 'icon' => 'package-check', 'label' => 'EB Fulfillment', 'active' => request()->routeIs('admin.enterprise-partners.fulfillment*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.referral-settings.edit'), 'icon' => 'handshake', 'label' => 'EB Referral Settings', 'active' => request()->routeIs('admin.enterprise-partners.referral-settings*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.agent-upgrade-settings.edit'), 'icon' => 'trending-up', 'label' => 'Agent Upgrade Settings', 'active' => request()->routeIs('admin.agent-upgrade-settings*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.cash-out.index'), 'icon' => 'banknote', 'label' => 'Cash Out Approvals', 'active' => request()->routeIs('admin.cash-out*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.cash-out.settings.edit'), 'icon' => 'toggle-right', 'label' => 'Cash Out Control', 'active' => request()->routeIs('admin.cash-out.settings*')])
@@ -258,6 +274,7 @@
             <div class="pt-4 mt-4 border-t border-slate-200">
                 <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Advanced Dashboard</span>
 
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard'), 'icon' => 'briefcase', 'label' => 'BSM Console', 'active' => request()->routeIs('bsm.*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sims-operations.index'), 'icon' => 'bar-chart-3', 'label' => 'SIMs Operations', 'active' => request()->routeIs('admin.sims-operations*')])
             </div>
         @endif

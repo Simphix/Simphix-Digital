@@ -95,7 +95,7 @@ class VerificationSeeder extends Seeder
         ];
 
         // 3. User roles to generate default service prices
-        $roles = ['personal', 'agent', 'partner', 'business', 'staff', 'checker', 'super_admin'];
+        $roles = ['personal', 'agent', 'partner', 'business', 'business_agent', 'regional_manager', 'coordinator', 'business_sales_manager', 'support', 'super_admin'];
 
         foreach ($fields as $fieldData) {
             // Create or update the ServiceField by code

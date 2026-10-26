@@ -3,12 +3,20 @@
 namespace App\Http\Controllers\smartsim;
 
 use App\Http\Controllers\Controller;
+use App\Models\Report;
+use App\Models\Service;
+use App\Models\ServiceField;
+use App\Models\ServicePrice;
 use App\Models\Sim;
+use App\Models\SimCustomer;
 use App\Models\SimRequest;
 use App\Models\SimSwapRequest;
+use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Services\SimAssignmentService;
 use App\Support\EnterprisePricing;
+use App\Support\PhoneNumber;
 use App\Support\RoleHierarchy;
 use App\Support\SimAccess;
 use App\Support\SimStatus;
@@ -153,6 +161,53 @@ class SimsController extends Controller
     }
 
     /**
+     * Formats a held SIM with its activation fee, commission, provider, and category details
+     * for the multi-step activation wizard.
+     */
+    private function formatHeldSim(Sim $sim, User $user): array
+    {
+        $category = $sim->category;
+        $simService = Service::where('name', 'simcard')->first();
+        $field = $simService ? ServiceField::where('service_id', $simService->id)->where('field_name', $category)->first() : null;
+
+        $price = null;
+        if ($user->role === 'business_agent') {
+            $price = EnterprisePricing::customerPrice(EnterprisePricing::businessIdFor($user), $category);
+        }
+        if ($price === null && $field) {
+            $price = (float) (ServicePrice::where('service_fields_id', $field->id)->where('user_type', 'personal')->whereNull('user_id')->value('price') ?? $field->base_price);
+        }
+
+        $commission = 0.00;
+        if ($user->role === 'business_agent') {
+            $commission = EnterprisePricing::earningFor($user, $category) ?? 0.00;
+        } else {
+            $commission = $this->resolveCommissionForRole($user, $category) ?? 0.00;
+        }
+
+        $activationDisabled = (bool) ($field->activation_disabled ?? false);
+
+        return [
+            'id'                  => $sim->id,
+            'number'              => $sim->number,
+            'category'            => $sim->category,
+            'provider'            => $sim->provider,
+            'price'               => (float) ($price ?? 0.00),
+            'commission'          => (float) ($commission ?? 0.00),
+            'formatted_price'     => number_format((float) ($price ?? 0.00), 2),
+            'formatted_commission'=> number_format((float) ($commission ?? 0.00), 2),
+            'activation_disabled' => $activationDisabled,
+        ];
+    }
+
+    private function isActivationDisabledForSim(string $category): bool
+    {
+        return (bool) (ServiceField::whereHas('service', fn ($q) => $q->where('name', 'simcard'))
+            ->where('field_name', $category)
+            ->value('activation_disabled') ?? false);
+    }
+
+    /**
      * Shared renderer for a single device's request/activation page. The
      * left-panel action differs by role: Regional Manager / Coordinator only
      * distribute a held SIM down to their next-tier downline; Partner
@@ -230,6 +285,8 @@ class SimsController extends Controller
             'providers' => $providers,
             'mode' => $mode,
             'heldSims' => $heldSims,
+            'simsData' => $heldSims->map(fn ($s) => $this->formatHeldSim($s, $user)),
+            'wallet' => $user->wallet ?? Wallet::firstOrCreateForUser($user->id),
             'downlineUsers' => $downlineUsers,
             'activationDisabled' => $activationDisabled,
         ]);
@@ -352,6 +409,7 @@ class SimsController extends Controller
         };
 
         $activatedSims = $baseQuery()
+            ->with(['customer', 'user'])
             ->whereIn('status', [SimStatus::ACTIVATED, SimStatus::DEACTIVATED, SimStatus::SUSPENDED])
             ->orderBy('category')->orderBy('provider')
             ->paginate(15, ['*'], 'activated_page')->withQueryString();
@@ -784,17 +842,187 @@ class SimsController extends Controller
     }
 
     /**
-     * User submits request to activate their assigned SIM.
+     * Unified multi-step SIM activation page for Partners and Business Agents.
      */
+    public function activationPage(Request $request)
+    {
+        $this->authorizeCatalogAccess();
+        $user = Auth::user();
+
+        if (!in_array($user->role, ['partner', 'business_agent'], true)) {
+            return redirect()->route('sims.index')->with('error', 'SIM activation is only available for Partners and Business Agents.');
+        }
+
+        $heldSims = (match ($user->role) {
+            'business_agent' => Sim::where('business_agent_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_BUSINESS_AGENT),
+            default          => Sim::where('partner_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_PARTNER),
+        })->latest()->get();
+
+        $simsData = $heldSims->map(fn ($s) => $this->formatHeldSim($s, $user));
+        $wallet = $user->wallet ?? Wallet::firstOrCreateForUser($user->id);
+
+        return view('smartsimcard.activate', [
+            'user'     => $user,
+            'heldSims' => $heldSims,
+            'simsData' => $simsData,
+            'wallet'   => $wallet,
+        ]);
+    }
+
     /**
-     * This action was always exclusively Agent's self-activation flow — now
-     * that Agent no longer distributes/holds SIMs at all (it's a
-     * discount-only tier, see AgentUpgradeController), no role reaches this
-     * successfully anymore.
+     * Multi-step SIM activation endpoint for Partners and Business Agents.
+     * Replaces the old activation UX with a 3-step customer onboarding flow.
      */
     public function activateSim(Request $request)
     {
-        abort(403, 'Self-activation is no longer available. Regional Managers and Coordinators distribute SIMs down the chain; Partners activate for their downline Users.');
+        // Support backward compatibility for legacy calls passing 'user_id' without customer details
+        if ($request->has('user_id') && !$request->has('full_name')) {
+            return $this->activateForDownlineUser($request);
+        }
+
+        $partner = Auth::user();
+        if (!$partner || !in_array($partner->role, ['partner', 'business_agent'], true)) {
+            abort(403, 'Only partners or business agents can activate a SIM.');
+        }
+
+        PhoneNumber::normalizeRequestInput($request);
+
+        $validated = $request->validate([
+            'sim_id'        => 'required|exists:sims,id',
+            'full_name'     => 'required|string|max:255',
+            'email'         => 'nullable|email|max:255',
+            'phone_number'  => ['required', 'string', 'max:20', PhoneNumber::validationRule()],
+            'address'       => 'nullable|string|max:1000',
+            'wallet_source' => 'required|in:main,bonus',
+        ]);
+
+        $holderColumn = $partner->role === 'business_agent' ? 'business_agent_id' : 'partner_id';
+
+        try {
+            $activatedSim = DB::transaction(function () use ($validated, $partner, $holderColumn) {
+                $sim = Sim::where('id', $validated['sim_id'])->lockForUpdate()->first();
+
+                if (!$sim || $sim->{$holderColumn} !== $partner->id) {
+                    throw new \Exception('You can only activate numbers currently allocated to you.');
+                }
+
+                if ($sim->status === SimStatus::ACTIVATED) {
+                    throw new \Exception('This SIM card is already active.');
+                }
+
+                if ($this->isActivationDisabledForSim($sim->category)) {
+                    throw new \Exception('Activation is currently disabled for this SIM category.');
+                }
+
+                $this->performPartnerActivation($sim, $partner, $validated);
+
+                return $sim;
+            });
+
+            return back()->with('success', "SIM {$activatedSim->number} successfully activated for {$validated['full_name']}.");
+        } catch (\Exception $e) {
+            Log::error('SIM activation failed.', [
+                'sim_id'     => $validated['sim_id'] ?? null,
+                'partner_id' => $partner->id,
+                'exception'  => $e->getMessage(),
+            ]);
+
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Process wallet debit from main or bonus balance, customer record creation, and trigger activation cascade.
+     */
+    private function performPartnerActivation(Sim $sim, User $partner, array $data): void
+    {
+        $simService = Service::where('name', 'simcard')->first();
+        $serviceField = $simService
+            ? ServiceField::where('service_id', $simService->id)->where('field_name', $sim->category)->first()
+            : null;
+
+        $payableAmount = EnterprisePricing::customerPrice($sim->business_id, $sim->category)
+            ?? ($serviceField
+                ? (float) (ServicePrice::where('service_fields_id', $serviceField->id)->where('user_type', 'personal')->whereNull('user_id')->value('price') ?? $serviceField->base_price)
+                : 0.00);
+
+        $wallet = Wallet::where('user_id', $partner->id)->lockForUpdate()->first();
+        if (!$wallet) {
+            throw new \Exception('Wallet not found for your account.');
+        }
+
+        $source = $data['wallet_source'];
+        $balanceField = $source === 'bonus' ? 'bonus' : 'balance';
+        $sourceLabel = $source === 'bonus' ? 'Commission Balance' : 'Main Balance';
+
+        if ($source === 'main') {
+            if ($wallet->is_locked) {
+                throw new \Exception('Your wallet is currently locked.');
+            }
+            if (($wallet->balance - (float) $wallet->lien_amount) < $payableAmount) {
+                throw new \Exception("Insufficient Main Balance. You need ₦" . number_format($payableAmount, 2) . " (Available: ₦" . number_format(max(0, $wallet->balance - (float) $wallet->lien_amount), 2) . ").");
+            }
+        } else {
+            if ($wallet->bonus < $payableAmount) {
+                throw new \Exception("Insufficient Commission Balance. You need ₦" . number_format($payableAmount, 2) . " (Available: ₦" . number_format($wallet->bonus, 2) . ").");
+            }
+        }
+
+        $oldBalance = (float) $wallet->{$balanceField};
+        $wallet->decrement($balanceField, $payableAmount);
+        $newBalance = (float) $wallet->{$balanceField};
+
+        $ref = 'ACT-' . time() . '-' . rand(1000, 9999);
+
+        Transaction::create([
+            'transaction_ref' => $ref,
+            'user_id'         => $partner->id,
+            'amount'          => $payableAmount,
+            'fee'             => 0.00,
+            'net_amount'      => $payableAmount,
+            'description'     => "SIM Card Activation: {$sim->number} ({$sim->category}, " . strtoupper($sim->provider) . ") for {$data['full_name']} paid via {$sourceLabel}",
+            'type'            => 'debit',
+            'status'          => 'completed',
+            'performed_by'    => $partner->first_name . ' ' . $partner->last_name,
+            'metadata'        => json_encode([
+                'sim_id'        => $sim->id,
+                'sim_number'    => $sim->number,
+                'category'      => $sim->category,
+                'provider'      => $sim->provider,
+                'customer_name' => $data['full_name'],
+                'customer_phone'=> $data['phone_number'],
+                'wallet_source' => $source,
+            ]),
+        ]);
+
+        Report::create([
+            'user_id'      => $partner->id,
+            'phone_number' => $sim->number,
+            'network'      => $sim->provider,
+            'ref'          => $ref,
+            'amount'       => $payableAmount,
+            'status'       => 'completed',
+            'type'         => 'sim_activation',
+            'description'  => "SIM Card Activation: {$sim->number} ({$sim->category}) for {$data['full_name']} paid via {$sourceLabel}",
+            'old_balance'  => $oldBalance,
+            'new_balance'  => $newBalance,
+            'service_id'   => $simService ? $simService->id : null,
+        ]);
+
+        SimCustomer::create([
+            'sim_id'       => $sim->id,
+            'partner_id'   => $partner->id,
+            'full_name'    => $data['full_name'],
+            'email'        => $data['email'] ?? null,
+            'phone_number' => $data['phone_number'],
+            'address'      => $data['address'] ?? null,
+        ]);
+
+        if (!$sim->user_id) {
+            $sim->update(['user_id' => $partner->id]);
+        }
+
+        app(SimAssignmentService::class)->activate($sim, $partner);
     }
 
     /**
@@ -1297,22 +1525,35 @@ class SimsController extends Controller
      * many matching SIMs the upline currently holds so they immediately
      * know whether they can fulfill it themselves.
      */
-    public function downlineRequests()
+    public function downlineRequests(Request $request)
     {
         $user = $this->authorizeUplineFulfiller();
 
-        $requests = SimRequest::with('user')
+        $incomingRequests = SimRequest::with('user')
             ->where('upline_id', $user->id)
             ->where('status', 'pending')
             ->latest()
-            ->get()
-            ->map(function (SimRequest $req) use ($user) {
+            ->paginate(15, ['*'], 'incoming_page')
+            ->through(function (SimRequest $req) use ($user) {
                 $req->held_count = $this->heldStockQuery($user, $req->category, $req->provider)->count();
 
                 return $req;
             });
 
-        return view('smartsimcard.downline-requests', ['requests' => $requests]);
+        $myRequests = SimRequest::with(['upline', 'sim'])
+            ->where('user_id', $user->id)
+            ->latest()
+            ->paginate(15, ['*'], 'my_page');
+
+        return view('smartsimcard.downline-requests', [
+            'user'             => $user,
+            'requests'         => $incomingRequests,
+            'incomingRequests' => $incomingRequests,
+            'myRequests'       => $myRequests,
+            'categories'       => $this->resolveCategories($user),
+            'providers'        => ['mtn', 'airtel', 'glo', '9mobile'],
+            'maxQuantity'      => \App\Support\SimRequestLimits::maxFor($user),
+        ]);
     }
 
     /**

@@ -126,7 +126,7 @@ class DeviceChallengeController extends Controller
 
         $user->forceFill(['last_login_at' => now(), 'last_login_ip' => $request->ip()])->save();
 
-        if (!in_array($user->role, ['super_admin', 'staff', 'checker', 'support'], true)) {
+        if (!\App\Support\StaffAccess::isInternal($user)) {
             session()->flash('pos_sim_notice', true);
         }
 

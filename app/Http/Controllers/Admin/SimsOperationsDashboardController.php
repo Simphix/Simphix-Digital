@@ -91,7 +91,7 @@ class SimsOperationsDashboardController extends Controller
 
         $rows = $this->activationEvents($base, $rangeStart, $rangeEnd)->get();
 
-        $csv = "Date,Sim Number,Category,Provider,Activated For,Jurisdiction,Activated By\n";
+        $csv = "Date,Sim Number,Category,Provider,Activated For,Territory,Activated By\n";
         foreach ($rows as $history) {
             $sim = $history->sim;
             $jurisdiction = $this->resolveJurisdictionLabel($sim);

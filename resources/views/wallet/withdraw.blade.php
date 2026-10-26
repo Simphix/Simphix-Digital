@@ -19,10 +19,6 @@
                     <i data-lucide="wallet" class="w-3.5 h-3.5 text-slate-400"></i>
                     My Wallet
                 </a>
-                <a href="{{ route('transfer') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold shadow-sm transition-all duration-200 hover:-translate-y-0.5">
-                    <i data-lucide="send" class="w-3.5 h-3.5 text-slate-400"></i>
-                    P2P Transfer
-                </a>
             </div>
         </div>
 

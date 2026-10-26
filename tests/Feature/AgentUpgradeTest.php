@@ -298,25 +298,20 @@ test('a partner assigning a SIM to an agent no longer takes the legacy path and 
     expect($sim->fresh()->user_id)->toBeNull();
 });
 
-test('agent is blocked from Cash Out and P2P Transfer (GET and POST)', function () {
+test('agent is blocked from Cash Out (GET and POST)', function () {
     $agent = makeUserWithWallet('agent', 50000.00);
 
     $this->actingAs($agent)->get(route('withdraw'))->assertForbidden();
     $this->actingAs($agent)->post(route('withdraw.verifyAccount'), [])->assertForbidden();
     $this->actingAs($agent)->post(route('withdraw.process'), [])->assertForbidden();
-
-    $this->actingAs($agent)->get(route('transfer'))->assertForbidden();
-    $this->actingAs($agent)->post(route('transfer.verify'), [])->assertForbidden();
-    $this->actingAs($agent)->post(route('transfer.process'), [])->assertForbidden();
 });
 
-test('a personal user cannot cash out but retains P2P Transfer access', function () {
+test('a personal user cannot cash out', function () {
     $personal = makeUserWithWallet('personal', 50000.00);
 
     $this->actingAs($personal)->get(route('withdraw'))->assertForbidden();
     $this->actingAs($personal)->post(route('withdraw.verifyAccount'), [])->assertForbidden();
     $this->actingAs($personal)->post(route('withdraw.process'), [])->assertForbidden();
-    $this->actingAs($personal)->get(route('transfer'))->assertOk();
     $this->actingAs($personal)->get(route('dashboard'))->assertOk()->assertDontSee(route('withdraw'), false);
     $this->actingAs($personal)->get(route('wallet'))->assertOk()->assertDontSee(route('withdraw'), false);
     // Airtime access is covered separately in UtilitiesSuspensionTest — it's

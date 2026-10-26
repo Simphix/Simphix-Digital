@@ -150,10 +150,11 @@ class GrantActivationBonusData implements ShouldQueue
     {
         // No wallet is touched for this bonus — old/new balance just reflect
         // the recipient's current balance, unchanged, to satisfy the audit trail.
-        $balance = \App\Models\Wallet::where('user_id', $sim->user_id)->value('balance') ?? 0.00;
+        $recipientId = $sim->user_id ?? $sim->partner_id ?? $sim->business_id ?? $sim->coordinator_id ?? $sim->regional_manager_id;
+        $balance = $recipientId ? (\App\Models\Wallet::where('user_id', $recipientId)->value('balance') ?? 0.00) : 0.00;
 
         $attributes = [
-            'user_id'      => $sim->user_id,
+            'user_id'      => $recipientId,
             'phone_number' => $sim->number,
             'network'      => $plan->network,
             'ref'          => $ref,

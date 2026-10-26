@@ -1,8 +1,8 @@
 <x-app-layout>
     <div class="max-w-2xl mx-auto space-y-6">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">Enterprise Partner Referral Settings</h1>
-            <p class="text-xs text-slate-400 mt-1">Set the one-time bonus paid to whoever invited a newly-activated Enterprise Partner, by the inviter's role.</p>
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">Enterprise Business Referral Settings</h1>
+            <p class="text-xs text-slate-400 mt-1">Set the one-time bonus paid to whoever invited a newly-activated Enterprise Business, by the inviter's role.</p>
         </div>
 
         @if (session('success'))
@@ -17,7 +17,7 @@
                 <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 shrink-0 mt-0.5"></i>
                 <div class="text-xs leading-relaxed">
                     <strong class="text-sm block mb-0.5">Referral bonuses are switched off</strong>
-                    Check the box below and save to resume paying inviters when an Enterprise Partner activates.
+                    Check the box below and save to resume paying inviters when an Enterprise Business activates.
                 </div>
             </div>
         @endif

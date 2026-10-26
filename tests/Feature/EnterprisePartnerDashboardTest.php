@@ -82,11 +82,11 @@ test('EP bulk-assigns held SIMs to their business_agent, who can then activate o
     $service = Service::firstOrCreate(['name' => 'simcard'], ['status' => 'active']);
     $field = ServiceField::firstOrCreate(
         ['service_id' => $service->id, 'field_name' => 'POS SIM'],
-        ['base_price' => 1500, 'activation_disabled' => false]
+        ['field_code' => 'pos_sim', 'base_price' => 1500, 'activation_disabled' => false]
     );
     ServicePrice::updateOrCreate(
         ['service_fields_id' => $field->id, 'user_type' => 'personal', 'user_id' => null],
-        ['price' => 1500, 'commission' => 0]
+        ['service_id' => $service->id, 'price' => 1500, 'commission' => 0]
     );
 
     $response = $this->actingAs($this->agent)->post(route('sims.activate-for-user'), [

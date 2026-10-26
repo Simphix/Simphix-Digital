@@ -136,7 +136,7 @@
                 <p class="text-xs text-slate-400 mt-1">{{ $periodStart }} — {{ $periodEnd }}</p>
             </div>
             <div class="bg-white border border-slate-200 rounded-2xl p-5 md:col-span-2">
-                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">By Jurisdiction</span>
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">By Territory</span>
                 <div class="mt-2 space-y-1.5">
                     @forelse ($byJurisdiction as $label => $count)
                         <div class="flex items-center justify-between text-xs">
@@ -179,7 +179,7 @@
                             <th class="py-4 px-6">Category</th>
                             <th class="py-4 px-6">Provider</th>
                             <th class="py-4 px-6">Activated For</th>
-                            <th class="py-4 px-6">Jurisdiction</th>
+                            <th class="py-4 px-6">Territory</th>
                             <th class="py-4 px-6">Activated By</th>
                             <th class="py-4 px-6 text-right">SIM Record</th>
                         </tr>
