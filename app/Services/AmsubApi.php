@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * The AMSUB (amsubapi.com) data-purchase vendor call — a fourth vendor
- * behind SmeDataProviderInterface, alongside SmeDataPurchaseApi, SmePlugApi,
- * and NinePsbDataApi.
+ * behind SmeDataProviderInterface, alongside GogozDataApi, SmeDataPurchaseApi,
+ * and SmePlugApi.
  */
 class AmsubApi implements SmeDataProviderInterface
 {
