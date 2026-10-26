@@ -84,6 +84,17 @@
             detailsModalOpen: false,
             selectedSim: null,
             copiedKey: null,
+            isEditingCustomer: false,
+            editForm: {
+                full_name: '',
+                phone_number: '',
+                email: '',
+                address: ''
+            },
+            isSavingCustomer: false,
+            isPushingEmail: false,
+            editError: '',
+
             copy(text, key) {
                 if (!text || text === 'N/A') return;
                 navigator.clipboard.writeText(text);
@@ -92,10 +103,257 @@
             },
             openDetails(data) {
                 this.selectedSim = data;
+                this.isEditingCustomer = false;
+                this.editError = '';
                 this.detailsModalOpen = true;
                 this.$nextTick(() => {
                     if (window.lucide) lucide.createIcons();
                 });
+            },
+            openEditModal(data) {
+                this.selectedSim = data;
+                this.startEditCustomer();
+                this.detailsModalOpen = true;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            },
+            startEditCustomer() {
+                this.editForm = {
+                    full_name: this.selectedSim.customerName || '',
+                    phone_number: this.selectedSim.customerPhone || '',
+                    email: this.selectedSim.customerEmail || '',
+                    address: this.selectedSim.customerAddress || ''
+                };
+                this.editError = '';
+                this.isEditingCustomer = true;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            },
+            cancelEditCustomer() {
+                this.isEditingCustomer = false;
+                this.editError = '';
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            },
+            async pushFromEdit() {
+                this.editError = '';
+                if (!this.editForm.full_name.trim()) {
+                    this.editError = 'Customer full name is required.';
+                    return;
+                }
+                if (!this.editForm.address.trim()) {
+                    this.editError = 'Full address is required.';
+                    return;
+                }
+                if (!this.editForm.email || !this.editForm.email.trim()) {
+                    this.editError = 'Customer email address is required to push activation details.';
+                    return;
+                }
+
+                this.isSavingCustomer = true;
+                this.isPushingEmail = true;
+                try {
+                    const saveRes = await fetch(this.selectedSim.updateUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(this.editForm)
+                    });
+                    const saveData = await saveRes.json();
+                    if (!saveRes.ok || !saveData.success) {
+                        this.editError = saveData.message || (saveData.errors ? Object.values(saveData.errors).flat().join(' ') : 'Failed to save customer details before pushing.');
+                        this.isSavingCustomer = false;
+                        this.isPushingEmail = false;
+                        return;
+                    }
+
+                    // Update selectedSim state
+                    this.selectedSim.customerName = saveData.customer.full_name;
+                    this.selectedSim.customerPhone = saveData.customer.phone_number;
+                    this.selectedSim.customerEmail = saveData.customer.email;
+                    this.selectedSim.customerAddress = saveData.customer.address;
+
+                    // Update table row DOM
+                    const rowNameEl = document.getElementById('cust_name_row_' + this.selectedSim.id);
+                    if (rowNameEl) rowNameEl.textContent = saveData.customer.full_name;
+                    const rowPhoneEl = document.getElementById('cust_phone_row_' + this.selectedSim.id);
+                    if (rowPhoneEl) rowPhoneEl.textContent = saveData.customer.phone_number || '';
+
+                    this.isSavingCustomer = false;
+
+                    // Send email
+                    const pushRes = await fetch(this.selectedSim.pushUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    });
+                    const pushData = await pushRes.json();
+                    if (!pushRes.ok || !pushData.success) {
+                        if (window.Swal) {
+                            Swal.fire('Error', pushData.message || 'Failed to push activation email.', 'error');
+                        } else {
+                            alert(pushData.message || 'Failed to push activation email.');
+                        }
+                        return;
+                    }
+
+                    this.isEditingCustomer = false;
+
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Details Saved & Email Pushed',
+                            text: pushData.message || 'Activation details successfully sent to customer email.',
+                            timer: 2500,
+                            showConfirmButton: false
+                        });
+                    }
+                } catch (err) {
+                    this.editError = err.message || 'An unexpected error occurred.';
+                } finally {
+                    this.isSavingCustomer = false;
+                    this.isPushingEmail = false;
+                    this.$nextTick(() => {
+                        if (window.lucide) lucide.createIcons();
+                    });
+                }
+            },
+            async saveCustomer() {
+                if (!this.editForm.full_name.trim()) {
+                    this.editError = 'Customer full name is required.';
+                    return;
+                }
+                if (!this.editForm.address.trim()) {
+                    this.editError = 'Full address is required.';
+                    return;
+                }
+                this.isSavingCustomer = true;
+                this.editError = '';
+
+                try {
+                    const res = await fetch(this.selectedSim.updateUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(this.editForm)
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        this.editError = data.message || (data.errors ? Object.values(data.errors).flat().join(' ') : 'Failed to update customer details.');
+                        this.isSavingCustomer = false;
+                        return;
+                    }
+
+                    // Update selectedSim state
+                    this.selectedSim.customerName = data.customer.full_name;
+                    this.selectedSim.customerPhone = data.customer.phone_number;
+                    this.selectedSim.customerEmail = data.customer.email;
+                    this.selectedSim.customerAddress = data.customer.address;
+                    this.isEditingCustomer = false;
+
+                    // Update table row DOM if present
+                    const rowNameEl = document.getElementById('cust_name_row_' + this.selectedSim.id);
+                    if (rowNameEl) rowNameEl.textContent = data.customer.full_name;
+                    const rowPhoneEl = document.getElementById('cust_phone_row_' + this.selectedSim.id);
+                    if (rowPhoneEl) rowPhoneEl.textContent = data.customer.phone_number || '';
+
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Customer Updated',
+                            text: 'Customer details updated successfully.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                } catch (err) {
+                    this.editError = err.message || 'An unexpected network error occurred.';
+                } finally {
+                    this.isSavingCustomer = false;
+                    this.$nextTick(() => {
+                        if (window.lucide) lucide.createIcons();
+                    });
+                }
+            },
+            async pushEmail(sim) {
+                const targetSim = sim || this.selectedSim;
+                if (!targetSim) return;
+
+                if (!targetSim.customerEmail) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Email Address Required',
+                            text: 'This customer does not have an email address on file. Please update customer details with an email address first.',
+                            confirmButtonText: 'Edit Details',
+                            showCancelButton: true,
+                            confirmButtonColor: '#0056D2'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                if (!this.detailsModalOpen) {
+                                    this.openDetails(targetSim);
+                                }
+                                this.startEditCustomer();
+                            }
+                        });
+                    } else {
+                        alert('Customer has no email address. Please update details with an email first.');
+                    }
+                    return;
+                }
+
+                this.isPushingEmail = true;
+                try {
+                    const res = await fetch(targetSim.pushUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        if (window.Swal) {
+                            Swal.fire('Error', data.message || 'Failed to send activation email.', 'error');
+                        } else {
+                            alert(data.message || 'Failed to send activation email.');
+                        }
+                        return;
+                    }
+
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Push Sent',
+                            text: data.message || 'Activation details pushed to customer email.',
+                            timer: 2500,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        alert(data.message || 'Activation details sent!');
+                    }
+                } catch (err) {
+                    if (window.Swal) {
+                        Swal.fire('Error', err.message || 'Failed to push activation email.', 'error');
+                    } else {
+                        alert(err.message || 'Failed to push activation email.');
+                    }
+                } finally {
+                    this.isPushingEmail = false;
+                }
             },
             downlineUsersMap: {{ \Illuminate\Support\Js::from($downlineUsers->mapWithKeys(fn ($du) => [trim($du->first_name . ' ' . $du->last_name) . ' · ' . ($du->phone ?? '') . ' #' . $du->id => $du->id]))->toHtml() }}
         }" class="space-y-4">
@@ -141,6 +399,7 @@
                                     $customerAddress = $sim->customer?->address ?? null;
                                     $activatedAt = $sim->customer?->created_at?->format('M d, Y · h:i A') ?? $sim->updated_at?->format('M d, Y · h:i A');
                                     $simPayload = [
+                                        'id' => $sim->id,
                                         'number' => $sim->number,
                                         'category' => $sim->category,
                                         'provider' => strtoupper($sim->provider),
@@ -151,6 +410,8 @@
                                         'customerPhone' => $customerPhone,
                                         'customerEmail' => $customerEmail,
                                         'customerAddress' => $customerAddress,
+                                        'updateUrl' => route('sims.activated.update-customer', $sim),
+                                        'pushUrl' => route('sims.activated.push-email', $sim),
                                     ];
                                 @endphp
                                 <tr class="border-b border-slate-50 hover:bg-slate-50/80 cursor-pointer transition-colors group"
@@ -163,12 +424,12 @@
                                     </td>
                                     <td class="py-3 text-slate-700">
                                         @if ($customerName)
-                                            <span class="font-semibold text-slate-800 block">{{ $customerName }}</span>
+                                            <span class="font-semibold text-slate-800 block" id="cust_name_row_{{ $sim->id }}">{{ $customerName }}</span>
                                             @if ($customerPhone)
-                                                <span class="text-[11px] text-slate-400 font-mono">{{ $customerPhone }}</span>
+                                                <span class="text-[11px] text-slate-400 font-mono" id="cust_phone_row_{{ $sim->id }}">{{ $customerPhone }}</span>
                                             @endif
                                         @else
-                                            <span class="text-slate-400">—</span>
+                                            <span class="text-slate-400" id="cust_name_row_{{ $sim->id }}">—</span>
                                         @endif
                                     </td>
                                     <td class="py-3 font-semibold text-slate-700">{{ $sim->category }}</td>
@@ -179,12 +440,21 @@
                                         </span>
                                     </td>
                                     <td class="py-3 text-right">
-                                        <button type="button"
-                                                @click.stop="openDetails(@js($simPayload))"
-                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 group-hover:bg-primary/10 group-hover:text-primary text-slate-600 text-xs font-semibold transition-colors">
-                                            <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                                            Details
-                                        </button>
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            <button type="button"
+                                                    @click.stop="openEditModal(@js($simPayload))"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors shadow-sm"
+                                                    title="Edit customer details">
+                                                <i data-lucide="edit-3" class="w-3.5 h-3.5 text-slate-400"></i>
+                                                Edit
+                                            </button>
+                                            <button type="button"
+                                                    @click.stop="openDetails(@js($simPayload))"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 group-hover:bg-primary/10 group-hover:text-primary text-slate-600 text-xs font-semibold transition-colors">
+                                                <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                                                Details
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -505,65 +775,139 @@
 
                                 <!-- Customer Details Card -->
                                 <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100 space-y-3">
-                                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Customer Information</span>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Customer Information</span>
+                                        <div class="flex items-center gap-1.5" x-show="!isEditingCustomer">
+                                            <button type="button"
+                                                    @click="startEditCustomer()"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors shadow-sm">
+                                                <i data-lucide="edit-3" class="w-3 h-3 text-slate-400"></i>
+                                                Edit Details
+                                            </button>
+                                        </div>
+                                    </div>
 
-                                    <template x-if="selectedSim.customerName || selectedSim.customerPhone">
-                                        <div class="space-y-2.5 text-xs">
-                                            <div class="flex items-start gap-2.5">
-                                                <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
-                                                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                                                </div>
-                                                <div class="min-w-0 flex-1">
-                                                    <span class="text-[11px] text-slate-400 block">Full Name</span>
-                                                    <span class="font-bold text-slate-800" x-text="selectedSim.customerName || 'N/A'"></span>
-                                                </div>
-                                            </div>
+                                    <!-- VIEW MODE -->
+                                    <template x-if="!isEditingCustomer">
+                                        <div>
+                                            <template x-if="selectedSim.customerName || selectedSim.customerPhone || selectedSim.customerAddress">
+                                                <div class="space-y-2.5 text-xs">
+                                                    <div class="flex items-start gap-2.5">
+                                                        <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
+                                                            <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                                        </div>
+                                                        <div class="min-w-0 flex-1">
+                                                            <span class="text-[11px] text-slate-400 block">Full Name</span>
+                                                            <span class="font-bold text-slate-800" x-text="selectedSim.customerName || 'N/A'"></span>
+                                                        </div>
+                                                    </div>
 
-                                            <div class="flex items-start gap-2.5">
-                                                <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
-                                                    <i data-lucide="phone" class="w-3.5 h-3.5"></i>
-                                                </div>
-                                                <div class="min-w-0 flex-1">
-                                                    <span class="text-[11px] text-slate-400 block">Phone Number</span>
-                                                    <div class="flex items-center gap-1.5">
-                                                        <span class="font-semibold text-slate-800 font-mono" x-text="selectedSim.customerPhone || 'N/A'"></span>
-                                                        <button type="button"
-                                                                x-show="selectedSim.customerPhone"
-                                                                @click="copy(selectedSim.customerPhone, 'cust_phone')"
-                                                                class="text-slate-400 hover:text-primary transition-colors p-0.5"
-                                                                title="Copy phone">
-                                                            <i data-lucide="copy" class="w-3.5 h-3.5" x-show="copiedKey !== 'cust_phone'"></i>
-                                                            <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600" x-show="copiedKey === 'cust_phone'"></i>
-                                                        </button>
+                                                    <div class="flex items-start gap-2.5">
+                                                        <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
+                                                            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                                                        </div>
+                                                        <div class="min-w-0 flex-1">
+                                                            <span class="text-[11px] text-slate-400 block">Full Address</span>
+                                                            <span class="font-medium text-slate-700" x-text="selectedSim.customerAddress || 'Not provided'"></span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex items-start gap-2.5">
+                                                        <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
+                                                            <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                                                        </div>
+                                                        <div class="min-w-0 flex-1">
+                                                            <span class="text-[11px] text-slate-400 block">Phone Number</span>
+                                                            <div class="flex items-center gap-1.5">
+                                                                <span class="font-semibold text-slate-800 font-mono" x-text="selectedSim.customerPhone || 'Not provided'"></span>
+                                                                <button type="button"
+                                                                        x-show="selectedSim.customerPhone"
+                                                                        @click="copy(selectedSim.customerPhone, 'cust_phone')"
+                                                                        class="text-slate-400 hover:text-primary transition-colors p-0.5"
+                                                                        title="Copy phone">
+                                                                    <i data-lucide="copy" class="w-3.5 h-3.5" x-show="copiedKey !== 'cust_phone'"></i>
+                                                                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600" x-show="copiedKey === 'cust_phone'"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex items-start gap-2.5">
+                                                        <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
+                                                            <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+                                                        </div>
+                                                        <div class="min-w-0 flex-1">
+                                                            <span class="text-[11px] text-slate-400 block">Email Address</span>
+                                                            <div class="flex items-center gap-2">
+                                                                <span class="font-medium text-slate-700 break-all" x-text="selectedSim.customerEmail || 'Not provided'"></span>
+                                                                <span x-show="!selectedSim.customerEmail" class="text-[10px] text-amber-600 font-semibold">(Add email to enable push)</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </template>
 
-                                            <div class="flex items-start gap-2.5">
-                                                <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
-                                                    <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+                                            <template x-if="!selectedSim.customerName && !selectedSim.customerPhone && !selectedSim.customerAddress">
+                                                <div class="py-3 px-3 bg-white rounded-lg border border-slate-200 text-slate-400 text-center text-xs space-y-2">
+                                                    <div>No customer profile was recorded for this SIM.</div>
+                                                    <button type="button" @click="startEditCustomer()" class="text-primary font-bold hover:underline">Add Customer Details</button>
                                                 </div>
-                                                <div class="min-w-0 flex-1">
-                                                    <span class="text-[11px] text-slate-400 block">Email Address</span>
-                                                    <span class="font-medium text-slate-700 break-all" x-text="selectedSim.customerEmail || 'Not provided'"></span>
-                                                </div>
-                                            </div>
-
-                                            <div class="flex items-start gap-2.5">
-                                                <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
-                                                    <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
-                                                </div>
-                                                <div class="min-w-0 flex-1">
-                                                    <span class="text-[11px] text-slate-400 block">Physical Address</span>
-                                                    <span class="font-medium text-slate-700" x-text="selectedSim.customerAddress || 'Not provided'"></span>
-                                                </div>
-                                            </div>
+                                            </template>
                                         </div>
                                     </template>
 
-                                    <template x-if="!selectedSim.customerName && !selectedSim.customerPhone">
-                                        <div class="py-3 px-3 bg-white rounded-lg border border-slate-200 text-slate-400 text-center text-xs">
-                                            No customer profile was recorded for this SIM.
+                                    <!-- EDIT MODE -->
+                                    <template x-if="isEditingCustomer">
+                                        <div class="space-y-3 pt-1">
+                                            <div x-show="editError" x-text="editError" class="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold"></div>
+
+                                            <div class="space-y-1">
+                                                <label class="block text-[11px] font-bold text-slate-600 uppercase">Customer Full Name <span class="text-rose-500">*</span></label>
+                                                <input type="text" x-model="editForm.full_name" placeholder="e.g. Adebayo Ogunlesi" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
+                                            </div>
+
+                                            <div class="space-y-1">
+                                                <label class="block text-[11px] font-bold text-slate-600 uppercase">Full Address <span class="text-rose-500">*</span></label>
+                                                <textarea rows="2" x-model="editForm.address" placeholder="Physical Address" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary"></textarea>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                <div class="space-y-1">
+                                                    <label class="block text-[11px] font-bold text-slate-600 uppercase">Phone Number <span class="text-slate-400 font-normal lowercase">(optional)</span></label>
+                                                    <input type="tel" x-model="editForm.phone_number" placeholder="e.g. 08012345678" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
+                                                </div>
+                                                <div class="space-y-1">
+                                                    <label class="block text-[11px] font-bold text-slate-600 uppercase">Email Address <span class="text-slate-400 font-normal lowercase">(optional)</span></label>
+                                                    <input type="email" x-model="editForm.email" placeholder="customer@example.com" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
+                                                </div>
+                                            </div>
+
+                                            <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-200/60">
+                                                <button type="button"
+                                                        @click="pushFromEdit()"
+                                                        :disabled="isPushingEmail || isSavingCustomer"
+                                                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
+                                                        title="Save details and email SIM activation info to customer">
+                                                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                                                    <span x-text="isPushingEmail ? 'Pushing...' : 'Push'"></span>
+                                                </button>
+
+                                                <div class="flex items-center gap-2">
+                                                    <button type="button"
+                                                            @click="cancelEditCustomer()"
+                                                            :disabled="isSavingCustomer || isPushingEmail"
+                                                            class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-100 transition-colors">
+                                                        Cancel
+                                                    </button>
+                                                    <button type="button"
+                                                            @click="saveCustomer()"
+                                                            :disabled="isSavingCustomer || isPushingEmail"
+                                                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50">
+                                                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                                        <span x-text="isSavingCustomer ? 'Saving...' : 'Save'"></span>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>

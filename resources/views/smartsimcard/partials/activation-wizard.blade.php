@@ -25,6 +25,7 @@
         isSubmitting: false,
         nameError: '',
         phoneError: '',
+        addressError: '',
 
         init() {
             if (this.selectedSimId) {
@@ -86,19 +87,22 @@
         goToStep3() {
             this.nameError = '';
             this.phoneError = '';
+            this.addressError = '';
 
             if (!this.customerName.trim()) {
                 this.nameError = 'Please enter the customer\'s full name.';
             }
 
-            const cleanPhone = this.customerPhone.replace(/\s+/g, '');
-            if (!cleanPhone) {
-                this.phoneError = 'Please enter the customer\'s phone number.';
-            } else if (cleanPhone.length < 10) {
+            if (!this.customerAddress.trim()) {
+                this.addressError = 'Please enter the customer\'s full address.';
+            }
+
+            const cleanPhone = this.customerPhone ? this.customerPhone.replace(/\s+/g, '') : '';
+            if (cleanPhone && cleanPhone.length < 10) {
                 this.phoneError = 'Please enter a valid phone number (at least 10 digits).';
             }
 
-            if (this.nameError || this.phoneError) return;
+            if (this.nameError || this.phoneError || this.addressError) return;
 
             // Auto-select affordable wallet if preferred
             const price = this.selectedSim ? this.selectedSim.price : 0;
@@ -464,10 +468,24 @@
                         <p x-show="nameError" x-text="nameError" class="text-xs font-semibold text-rose-500"></p>
                     </div>
 
-                    <!-- Phone Number (Required) -->
+                    <!-- Full Address (Required, moved up) -->
+                    <div class="space-y-1.5 sm:col-span-2">
+                        <label for="cust_address" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            Full Address <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea id="cust_address"
+                                  rows="2"
+                                  x-model="customerAddress"
+                                  placeholder="e.g. 15 Marina Boulevard, Victoria Island, Lagos"
+                                  class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                  :class="addressError ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' : ''"></textarea>
+                        <p x-show="addressError" x-text="addressError" class="text-xs font-semibold text-rose-500"></p>
+                    </div>
+
+                    <!-- Customer Phone Number (Optional, moved down) -->
                     <div class="space-y-1.5">
                         <label for="cust_phone_number" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                            Customer Phone Number <span class="text-rose-500">*</span>
+                            Customer Phone Number <span class="text-slate-400 font-normal lowercase">(optional)</span>
                         </label>
                         <input type="tel"
                                id="cust_phone_number"
@@ -476,10 +494,10 @@
                                class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                                :class="phoneError ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' : ''">
                         <p x-show="phoneError" x-text="phoneError" class="text-xs font-semibold text-rose-500"></p>
-                        <p class="text-[11px] text-slate-400">Customer contact number for SMS receipts and service notifications.</p>
+                        <p class="text-[11px] text-slate-400">Optional: Customer contact number for SMS notifications.</p>
                     </div>
 
-                    <!-- Email (Optional) -->
+                    <!-- Email Address (Optional, moved down) -->
                     <div class="space-y-1.5">
                         <label for="cust_email" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                             Email Address <span class="text-slate-400 font-normal lowercase">(optional)</span>
@@ -489,19 +507,7 @@
                                x-model="customerEmail"
                                placeholder="e.g. adebayo@example.com"
                                class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
-                        <p class="text-[11px] text-slate-400">Optional: Used to email customer invoice and details.</p>
-                    </div>
-
-                    <!-- Full Address (Optional) -->
-                    <div class="space-y-1.5 sm:col-span-2">
-                        <label for="cust_address" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                            Full Address <span class="text-slate-400 font-normal lowercase">(optional)</span>
-                        </label>
-                        <textarea id="cust_address"
-                                  rows="2"
-                                  x-model="customerAddress"
-                                  placeholder="e.g. 15 Marina Boulevard, Victoria Island, Lagos"
-                                  class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"></textarea>
+                        <p class="text-[11px] text-slate-400">Optional: Used to email customer activation details.</p>
                     </div>
                 </div>
 
@@ -577,15 +583,15 @@
                                 </div>
                                 <div>
                                     <span class="text-slate-400 block text-[11px]">Phone Number</span>
-                                    <span class="font-bold text-slate-800 font-mono" x-text="customerPhone"></span>
+                                    <span class="font-bold text-slate-800 font-mono" x-text="customerPhone || 'Not provided'"></span>
                                 </div>
-                                <div x-show="customerEmail">
-                                    <span class="text-slate-400 block text-[11px]">Email</span>
-                                    <span class="font-semibold text-slate-700" x-text="customerEmail"></span>
-                                </div>
-                                <div x-show="customerAddress" class="col-span-2">
+                                <div class="col-span-2">
                                     <span class="text-slate-400 block text-[11px]">Address</span>
                                     <span class="font-semibold text-slate-700" x-text="customerAddress"></span>
+                                </div>
+                                <div x-show="customerEmail" class="col-span-2">
+                                    <span class="text-slate-400 block text-[11px]">Email</span>
+                                    <span class="font-semibold text-slate-700" x-text="customerEmail"></span>
                                 </div>
                             </div>
                         </div>
