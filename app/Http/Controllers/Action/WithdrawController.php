@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Action;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashoutSettings;
 use App\Models\Service;
 use App\Models\ServiceField;
 use App\Models\Transaction;
@@ -74,8 +75,9 @@ class WithdrawController extends Controller
         $withdrawalFee = $feeField ? $feeField->priceForUser($user) : 0;
 
         $withdrawalAccount = $user->withdrawalAccount;
+        $roleLimits = CashoutSettings::limitsForRole($user->role);
 
-        return view('wallet.withdraw', compact('user', 'totalVolume', 'eligibilityAmount', 'withdrawalFee', 'withdrawalAccount'));
+        return view('wallet.withdraw', compact('user', 'totalVolume', 'eligibilityAmount', 'withdrawalFee', 'withdrawalAccount', 'roleLimits'));
     }
 
     /**
@@ -139,12 +141,18 @@ class WithdrawController extends Controller
     {
         $this->blockRestrictedRoles();
 
-        $request->validate([
-            'amount' => 'required|numeric|min:100', // Minimum 100 NGN
-            'pin' => 'required|digits:4',
-        ]);
-
         $user = Auth::user();
+        $roleLimits = CashoutSettings::limitsForRole($user->role);
+        $minAmount = (float) $roleLimits['min'];
+        $maxAmount = (float) $roleLimits['max'];
+
+        $request->validate([
+            'amount' => ['required', 'numeric', "min:{$minAmount}", "max:{$maxAmount}"],
+            'pin' => 'required|digits:4',
+        ], [
+            'amount.min' => 'The minimum cash out amount for your role is ₦' . number_format($minAmount, 2) . '.',
+            'amount.max' => 'Amount exceeds your maximum cash out limit of ₦' . number_format($maxAmount, 2) . '.',
+        ]);
 
         $account = $user->withdrawalAccount;
         if (!$account) {
@@ -264,9 +272,13 @@ class WithdrawController extends Controller
                 return back()->with('error', 'You must perform at least ' . number_format($eligibilityAmount, 2) . ' in total transactions to be eligible for withdrawal.');
             }
 
-            // 4. Withdrawal Limit Check
-            if ($request->amount > $user->limit) {
-                return back()->with('error', 'Amount exceeds your withdrawal limit of ' . number_format($user->limit, 2));
+            // 4. Role-Based Withdrawal Limit Check
+            if ($request->amount < $minAmount) {
+                return back()->with('error', 'The minimum cash out amount for your role is ₦' . number_format($minAmount, 2) . '.');
+            }
+
+            if ($request->amount > $maxAmount) {
+                return back()->with('error', 'Amount exceeds your maximum cash out limit of ₦' . number_format($maxAmount, 2) . '.');
             }
 
             // Phase 1: Deduct Wallet & Create Pending Records safely inside a DB lock
