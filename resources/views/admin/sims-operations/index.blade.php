@@ -110,7 +110,7 @@
                     <x-toggle-switch name="is_active" :checked="old('is_active', $exportSettings->is_active)" />
                     <div>
                         <span class="block text-xs font-bold text-slate-700">Nightly Export Email</span>
-                        <span class="block text-[11px] text-slate-400">Emails every activated SIM number each night (<code class="text-[10px]">sims:export-activated</code>).</span>
+                        <span class="block text-[11px] text-slate-400">Emails SIM numbers activated in the past 24 hours each night (<code class="text-[10px]">sims:export-activated</code>).</span>
                     </div>
                 </div>
 

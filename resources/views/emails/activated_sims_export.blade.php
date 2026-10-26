@@ -103,13 +103,17 @@
                 </a>
             </div>
             <div class="content">
-                <h1 class="title">Activated SIMs Export</h1>
+                <h1 class="title">{{ isset($since) && $since ? 'Daily Activated SIMs Export' : 'Activated SIMs Export' }}</h1>
                 <p class="text">Hello,</p>
-                <p class="text">Attached is the CSV export of every SIM number currently activated on SimPhix, generated on {{ $generatedAt->format('F d, Y \a\t h:i A') }}.</p>
+                @if (isset($since) && $since)
+                    <p class="text">Attached is the daily CSV export of SIM numbers activated in the past 24 hours on SimPhix (from {{ $since->format('F d, Y \a\t h:i A') }} to {{ $generatedAt->format('F d, Y \a\t h:i A') }}).</p>
+                @else
+                    <p class="text">Attached is the CSV export of every SIM number currently activated on SimPhix, generated on {{ $generatedAt->format('F d, Y \a\t h:i A') }}.</p>
+                @endif
 
                 <div class="stats">
                     <p class="stats-number">{{ number_format($count) }}</p>
-                    <p class="stats-label">Activated SIM Numbers</p>
+                    <p class="stats-label">{{ isset($since) && $since ? 'SIM Numbers Activated (Past 24 Hours)' : 'Activated SIM Numbers' }}</p>
                 </div>
 
                 <p class="text" style="font-size: 13px; color: #64748b;">

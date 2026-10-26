@@ -12,10 +12,8 @@ use Illuminate\Queue\SerializesModels;
 
 /**
  * The nightly (or on-demand, via `php artisan sims:export-activated`)
- * export of every activated SIM number, sent to whichever inbox is
- * configured in Admin > SIMs Operations (SimExportSettings). The CSV is
- * generated once by the caller and handed in as a plain string — this
- * class never touches the database itself.
+ * export of activated SIM numbers, sent to whichever inbox is
+ * configured in Admin > SIMs Operations (SimExportSettings).
  */
 class ActivatedSimsExportMail extends Mailable
 {
@@ -25,13 +23,18 @@ class ActivatedSimsExportMail extends Mailable
         public string $csv,
         public int $count,
         public Carbon $generatedAt,
+        public ?Carbon $since = null,
     ) {
     }
 
     public function envelope(): Envelope
     {
+        $subject = $this->since
+            ? 'SimPhix - Daily Activated SIMs Export (' . $this->generatedAt->format('M d, Y') . ')'
+            : 'SimPhix - Activated SIMs Export (' . $this->generatedAt->format('M d, Y') . ')';
+
         return new Envelope(
-            subject: 'SimPhix - Activated SIMs Export (' . $this->generatedAt->format('M d, Y') . ')',
+            subject: $subject,
         );
     }
 
@@ -39,6 +42,12 @@ class ActivatedSimsExportMail extends Mailable
     {
         return new Content(
             view: 'emails.activated_sims_export',
+            with: [
+                'csv' => $this->csv,
+                'count' => $this->count,
+                'generatedAt' => $this->generatedAt,
+                'since' => $this->since,
+            ],
         );
     }
 
@@ -47,8 +56,10 @@ class ActivatedSimsExportMail extends Mailable
      */
     public function attachments(): array
     {
+        $prefix = $this->since ? 'daily-activated-sims-' : 'activated-sim-numbers-';
+
         return [
-            Attachment::fromData(fn () => $this->csv, 'activated-sim-numbers-' . $this->generatedAt->format('Y-m-d') . '.csv')
+            Attachment::fromData(fn () => $this->csv, $prefix . $this->generatedAt->format('Y-m-d') . '.csv')
                 ->withMime('text/csv'),
         ];
     }
