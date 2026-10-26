@@ -25,6 +25,9 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         
+        <!-- Font Awesome 6 Solid CDN -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
         <!-- Lucide Icons CDN -->
         <script src="https://unpkg.com/lucide@latest"></script>
         
@@ -35,8 +38,7 @@
     </head>
     <body class="font-sans antialiased text-slate-800 h-full">
         <!-- Main Layout Container (Alpine.js State) -->
-           <div x-data="{ sidebarOpen: false, sidebarCollapsed: localStorage.getItem('simphix-sidebar-collapsed') === 'true' }"
-               x-init="$watch('sidebarCollapsed', value => localStorage.setItem('simphix-sidebar-collapsed', value))"
+        <div x-data="{ sidebarOpen: false, sidebarCollapsed: true }"
              class="h-full flex overflow-hidden">
             
             <!-- Sidebar Navigation -->

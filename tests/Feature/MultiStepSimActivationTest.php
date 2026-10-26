@@ -131,7 +131,7 @@ test('happy path: partner can activate sim with commission/bonus balance debit',
         'full_name'     => 'Fatima Aliyu',
         'phone_number'  => '08123456789',
         'email'         => null,
-        'address'       => null,
+        'address'       => '10 Kano Road, Kaduna',
         'wallet_source' => 'bonus',
     ];
 
@@ -154,6 +154,7 @@ test('happy path: partner can activate sim with commission/bonus balance debit',
     $customer = SimCustomer::where('sim_id', $this->sim->id)->first();
     expect($customer)->not->toBeNull();
     expect($customer->full_name)->toBe('Fatima Aliyu');
+    expect($customer->address)->toBe('10 Kano Road, Kaduna');
 });
 
 test('activation fails when main balance is insufficient', function () {
@@ -163,6 +164,7 @@ test('activation fails when main balance is insufficient', function () {
         'sim_id'        => $this->sim->id,
         'full_name'     => 'John Doe',
         'phone_number'  => '08011112222',
+        'address'       => '12 Test Street, Lagos',
         'wallet_source' => 'main',
     ];
 
@@ -183,6 +185,7 @@ test('activation fails when bonus balance is insufficient', function () {
         'sim_id'        => $this->sim->id,
         'full_name'     => 'Jane Doe',
         'phone_number'  => '08011113333',
+        'address'       => '12 Test Street, Lagos',
         'wallet_source' => 'bonus',
     ];
 
@@ -202,6 +205,7 @@ test('cannot activate a sim that is already activated', function () {
         'sim_id'        => $this->sim->id,
         'full_name'     => 'Double Activate',
         'phone_number'  => '08099998888',
+        'address'       => '12 Test Street, Lagos',
         'wallet_source' => 'main',
     ];
 
@@ -224,6 +228,7 @@ test('partner cannot activate a sim held by another partner', function () {
         'sim_id'        => $this->sim->id,
         'full_name'     => 'Sneaky Activation',
         'phone_number'  => '08099997777',
+        'address'       => '12 Test Street, Lagos',
         'wallet_source' => 'main',
     ];
 
@@ -288,4 +293,110 @@ test('inventory page displays activated SIMs with clickable customer and SIM det
     $response->assertSee('08033334444');
     $response->assertSee('openDetails');
     $response->assertSee('Customer Details');
+    $response->assertSee('Push');
+    $response->assertSee('Edit Details');
+});
+
+test('partner can activate a sim with optional phone number omitted when address is provided', function () {
+    $payload = [
+        'sim_id'        => $this->sim->id,
+        'full_name'     => 'Bello Abubakar',
+        'phone_number'  => null,
+        'email'         => 'bello@example.com',
+        'address'       => 'Suite 4, Silver Plaza, Abuja',
+        'wallet_source' => 'main',
+    ];
+
+    $response = $this->actingAs($this->partner)
+        ->post(route('sims.activate'), $payload);
+
+    $response->assertRedirect()
+        ->assertSessionHas('success');
+
+    $customer = SimCustomer::where('sim_id', $this->sim->id)->first();
+    expect($customer)->not->toBeNull();
+    expect($customer->full_name)->toBe('Bello Abubakar');
+    expect($customer->phone_number)->toBeNull();
+    expect($customer->address)->toBe('Suite 4, Silver Plaza, Abuja');
+});
+
+test('partner can update customer details of an activated sim', function () {
+    $this->sim->update(['status' => SimStatus::ACTIVATED]);
+    $customer = SimCustomer::create([
+        'sim_id'       => $this->sim->id,
+        'partner_id'   => $this->partner->id,
+        'full_name'    => 'Initial Name',
+        'phone_number' => '08012345678',
+        'email'        => 'old@example.com',
+        'address'      => 'Old Address, Ibadan',
+    ]);
+
+    $response = $this->actingAs($this->partner)
+        ->postJson(route('sims.activated.update-customer', $this->sim), [
+            'full_name'    => 'Updated Name',
+            'phone_number' => '08098765432',
+            'email'        => 'updated@example.com',
+            'address'      => 'New Address, Victoria Island, Lagos',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => true,
+            'customer' => [
+                'full_name'    => 'Updated Name',
+                'phone_number' => '08098765432',
+                'email'        => 'updated@example.com',
+                'address'      => 'New Address, Victoria Island, Lagos',
+            ],
+        ]);
+
+    $customer->refresh();
+    expect($customer->full_name)->toBe('Updated Name');
+    expect($customer->address)->toBe('New Address, Victoria Island, Lagos');
+});
+
+test('partner can push sim activation details email to customer', function () {
+    \Illuminate\Support\Facades\Mail::fake();
+
+    $this->sim->update(['status' => SimStatus::ACTIVATED]);
+    SimCustomer::create([
+        'sim_id'       => $this->sim->id,
+        'partner_id'   => $this->partner->id,
+        'full_name'    => 'Push Target Customer',
+        'phone_number' => '08011223344',
+        'email'        => 'pushtarget@example.com',
+        'address'      => '42 Push Ave, Lagos',
+    ]);
+
+    $response = $this->actingAs($this->partner)
+        ->postJson(route('sims.activated.push-email', $this->sim));
+
+    $response->assertOk()
+        ->assertJson(['success' => true]);
+
+    \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\SimActivationDetailsMail::class, function ($mail) {
+        return $mail->hasTo('pushtarget@example.com');
+    });
+});
+
+test('push fails with validation error if customer has no email', function () {
+    \Illuminate\Support\Facades\Mail::fake();
+
+    $this->sim->update(['status' => SimStatus::ACTIVATED]);
+    SimCustomer::create([
+        'sim_id'       => $this->sim->id,
+        'partner_id'   => $this->partner->id,
+        'full_name'    => 'No Email Customer',
+        'phone_number' => '08011223344',
+        'email'        => null,
+        'address'      => 'No Email Road, Lagos',
+    ]);
+
+    $response = $this->actingAs($this->partner)
+        ->postJson(route('sims.activated.push-email', $this->sim));
+
+    $response->assertStatus(422)
+        ->assertJson(['success' => false]);
+
+    \Illuminate\Support\Facades\Mail::assertNothingSent();
 });

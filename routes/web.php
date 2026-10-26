@@ -154,6 +154,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/sims/activate', [\App\Http\Controllers\smartsim\SimsController::class, 'activationPage'])->name('sims.activate.page');
     Route::post('/sims/activate', [\App\Http\Controllers\smartsim\SimsController::class, 'activateSim'])->name('sims.activate');
     Route::post('/sims/activate-for-user', [\App\Http\Controllers\smartsim\SimsController::class, 'activateForDownlineUser'])->name('sims.activate-for-user');
+    Route::post('/sims/activated/{sim}/update-customer', [\App\Http\Controllers\smartsim\SimsController::class, 'updateCustomerDetails'])->name('sims.activated.update-customer');
+    Route::post('/sims/activated/{sim}/push-email', [\App\Http\Controllers\smartsim\SimsController::class, 'pushActivationDetailsEmail'])->name('sims.activated.push-email');
     Route::post('/partner/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('partner.sims.assign');
     Route::post('/sims/bulk-assign', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignSim'])->name('sims.bulk-assign');
     Route::get('/sims/bulk-assign/new', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignPage'])->name('sims.bulk-assign.page');

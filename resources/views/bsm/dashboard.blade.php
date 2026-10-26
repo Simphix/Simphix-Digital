@@ -26,9 +26,6 @@
         </div>
     @endif
 
-    <!-- Top Shared Navigation -->
-    @include('bsm.partials.nav')
-
     <!-- Header & Filter Bar -->
     <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">

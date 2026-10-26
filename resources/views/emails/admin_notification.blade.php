@@ -27,14 +27,21 @@
             background-color: #ffffff;
             border-radius: 16px;
             border: 1px solid #e2e8f0;
+            border-top: 4px solid #0056D2;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
             overflow: hidden;
         }
         .header {
-            background: linear-gradient(135deg, #1e293b 0%, #42517c 100%);
-            padding: 32px;
+            background-color: #ffffff;
+            padding: 28px 24px 22px;
             text-align: center;
+            border-bottom: 1px solid #f1f5f9;
             position: relative;
+        }
+        .header img {
+            height: 40px;
+            max-height: 40px;
+            width: auto;
         }
         .content {
             padding: 40px 32px;
@@ -134,7 +141,12 @@
     <div class="wrapper">
         <div class="container">
             <div class="header">
-                <span style="color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 1px;">SimPhix Desk</span>
+                <a href="{{ config('app.url') }}" target="_blank" style="text-decoration: none; display: inline-block;">
+                    <img src="{{ rtrim(config('app.url'), '/') . '/assets/images/logo/logo1.png' }}" alt="SimPhix" height="40" style="display: block; margin: 0 auto; height: 40px; max-height: 40px; width: auto; border: 0; outline: none; font-family: 'Outfit', -apple-system, sans-serif; font-size: 22px; font-weight: 800; color: #0056D2;" />
+                </a>
+                <div style="margin-top: 8px;">
+                    <span style="display: inline-block; background-color: #f1f5f9; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; padding: 3px 10px; border-radius: 9999px;">Support Desk</span>
+                </div>
             </div>
             <div class="content">
                 <h1 class="title">
@@ -181,7 +193,8 @@
                 </div>
             </div>
             <div class="footer">
-                <p class="footer-text">© {{ date('Y') }} SimPhix Desk. Internal Use Only.</p>
+                <p class="footer-text">© {{ date('Y') }} SimPhix Support Desk. Internal Use Only.</p>
+                <p class="footer-text">Empowering Businesses Through Smart Connectivity.</p>
             </div>
         </div>
     </div>

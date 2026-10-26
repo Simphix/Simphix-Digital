@@ -40,6 +40,24 @@ class ServiceField extends Model
      */
     public function priceForUser(User $user): float
     {
+        if ($this->relationLoaded('prices')) {
+            $userPrice = $this->prices->where('user_id', $user->id)->first();
+
+            if ($userPrice) {
+                return (float) $userPrice->price;
+            }
+
+            $rolePrice = $this->prices
+                ->whereNull('user_id')
+                ->firstWhere('user_type', $user->role);
+
+            if ($rolePrice) {
+                return (float) $rolePrice->price;
+            }
+
+            return (float) $this->base_price;
+        }
+
         // 1. Check for a price set specifically for this user
         $userPrice = $this->prices()
             ->where('user_id', $user->id)
@@ -70,13 +88,23 @@ class ServiceField extends Model
     public function getPriceForUserType(?string $role): float
     {
         if ($role) {
-            $rolePrice = $this->prices()
-                ->whereNull('user_id')
-                ->where('user_type', $role)
-                ->first();
+            if ($this->relationLoaded('prices')) {
+                $rolePrice = $this->prices
+                    ->whereNull('user_id')
+                    ->firstWhere('user_type', $role);
 
-            if ($rolePrice) {
-                return (float) $rolePrice->price;
+                if ($rolePrice) {
+                    return (float) $rolePrice->price;
+                }
+            } else {
+                $rolePrice = $this->prices()
+                    ->whereNull('user_id')
+                    ->where('user_type', $role)
+                    ->first();
+
+                if ($rolePrice) {
+                    return (float) $rolePrice->price;
+                }
             }
         }
 

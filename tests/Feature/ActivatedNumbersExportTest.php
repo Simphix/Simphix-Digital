@@ -3,9 +3,9 @@
 use App\Models\Sim;
 use App\Models\User;
 use App\Support\SimStatus;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 
-uses(RefreshDatabase::class);
+uses(DatabaseTransactions::class);
 
 test('activated numbers export includes every active number regardless of dashboard filters or pagination', function () {
     $numbers = [];

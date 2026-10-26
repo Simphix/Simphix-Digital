@@ -56,6 +56,7 @@ class RoleAccountsSeeder extends Seeder
                 'password' => $password,
                 'role' => $role,
                 'status' => 'active',
+                'device_registration_enabled' => false,
                 'email_verified_at' => now(),
                 'referral_code' => strtoupper(Str::random(8)),
                 'referred_by' => $referredBy,

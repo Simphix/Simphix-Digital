@@ -32,9 +32,6 @@
         </div>
     @endif
 
-    <!-- Top Shared Navigation -->
-    @include('bsm.partials.nav')
-
     <!-- Header -->
     <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <div class="flex items-center gap-3">

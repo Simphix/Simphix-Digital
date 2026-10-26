@@ -7,8 +7,9 @@
     <style>
         body { margin: 0; padding: 0; font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #334155; }
         .wrapper { width: 100%; background-color: #f8fafc; padding: 40px 20px; box-sizing: border-box; }
-        .container { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
-        .header { background: linear-gradient(135deg, #1e293b 0%, #42517c 100%); padding: 32px; text-align: center; }
+        .container { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; border-top: 4px solid #0056D2; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .header { background-color: #ffffff; padding: 28px 24px 22px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        .header img { height: 40px; max-height: 40px; width: auto; }
         .content { padding: 40px 32px; }
         .title { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 16px 0; text-align: center; }
         .text { font-size: 15px; line-height: 24px; color: #475569; margin: 0 0 20px 0; }
@@ -22,7 +23,11 @@
 <body>
     <div class="wrapper">
         <div class="container">
-            <div class="header"><span style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:1px;">SimPhix</span></div>
+            <div class="header">
+                <a href="{{ config('app.url') }}" target="_blank" style="text-decoration: none; display: inline-block;">
+                    <img src="{{ rtrim(config('app.url'), '/') . '/assets/images/logo/logo1.png' }}" alt="SimPhix" height="40" style="display: block; margin: 0 auto; height: 40px; max-height: 40px; width: auto; border: 0; outline: none; font-family: 'Outfit', -apple-system, sans-serif; font-size: 22px; font-weight: 800; color: #0056D2;" />
+                </a>
+            </div>
             <div class="content">
                 <h1 class="title">CAC Registration Update</h1>
                 <p class="text">Hello {{ $registration->user->first_name }},</p>
@@ -38,6 +43,7 @@
             </div>
             <div class="footer">
                 <p class="footer-text">© {{ date('Y') }} SimPhix. All rights reserved.</p>
+                <p class="footer-text">Empowering Businesses Through Smart Connectivity.</p>
             </div>
         </div>
     </div>

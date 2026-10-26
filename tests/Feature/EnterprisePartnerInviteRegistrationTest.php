@@ -37,13 +37,13 @@ beforeEach(function () {
     seedEligibleStock('POS SIM', 'mtn');
 });
 
-test('the Invite Enterprise Partner navbar button is visible to eligible roles and hidden from others', function () {
+test('the Invite Enterprise Business navbar button is visible to eligible roles and hidden from others', function () {
     $partner = User::factory()->create(['role' => 'partner']);
     $agent = User::factory()->create(['role' => 'agent']);
 
     $this->actingAs($partner)->get(route('dashboard'))->assertOk()
         ->assertSee(route('enterprise-partner.invite'), false)
-        ->assertSee('Invite Enterprise Partner');
+        ->assertSee('Invite Enterprise Business');
     $this->actingAs($agent)->get(route('dashboard'))->assertOk()->assertDontSee(route('enterprise-partner.invite'), false);
 });
 

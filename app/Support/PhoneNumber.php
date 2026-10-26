@@ -60,6 +60,9 @@ class PhoneNumber
     public static function validationRule(): \Closure
     {
         return function (string $attribute, mixed $value, \Closure $fail) {
+            if ($value === null || $value === '') {
+                return;
+            }
             if (!self::isValid((string) $value)) {
                 $fail('The :attribute must be a valid Nigerian phone number.');
             }
