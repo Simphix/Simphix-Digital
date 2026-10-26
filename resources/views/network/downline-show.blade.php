@@ -175,7 +175,9 @@
                         </div>
                         @forelse ($roleBreakdown as $role => $count)
                             <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl min-w-[120px]">
-                                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">{{ str_replace('_', ' ', $role) }}</span>
+                                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                    {{ $role === 'business' ? 'Enterprise Business' : ($role === 'business_agent' ? 'Business Agent' : str_replace('_', ' ', $role)) }}
+                                </span>
                                 <span class="text-xl font-extrabold font-display text-slate-800">{{ $count }}</span>
                             </div>
                         @empty

@@ -8,9 +8,25 @@
                 Back to {{ $user->first_name }}'s Profile
             </a>
 
-            <div>
-                <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">{{ $user->first_name }}'s Team</h1>
-                <p class="text-xs text-slate-400 mt-1">Everyone {{ $user->first_name }} has onboarded into their downline, invited or active.</p>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">{{ $user->first_name }}'s Team</h1>
+                    <p class="text-xs text-slate-400 mt-1">
+                        @if (request()->filled('role'))
+                            Showing downline members with role <strong class="text-slate-700">{{ request('role') === 'business' ? 'Enterprise Business' : (request('role') === 'business_agent' ? 'Business Agent' : str_replace('_', ' ', request('role'))) }}</strong>.
+                        @else
+                            Everyone {{ $user->first_name }} has onboarded into their downline, invited or active.
+                        @endif
+                    </p>
+                </div>
+                @if (request()->filled('role'))
+                    <div>
+                        <a href="{{ route('admin.manage.users.team', $user) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 shadow-xs">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            Clear Filter
+                        </a>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -38,7 +54,7 @@
                                             {{ substr($u->first_name, 0, 1) }}{{ substr($u->last_name, 0, 1) }}
                                         </div>
                                         <div>
-                                            <span class="block text-slate-800 font-bold font-display">{{ $u->first_name }} {{ $u->middle_name }} {{ $u->last_name }}</span>
+                                            <span class="block text-slate-800 font-bold font-display">{{ trim("{$u->first_name} {$u->middle_name} {$u->last_name}") }}</span>
                                         </div>
                                     </div>
                                 </td>
@@ -48,7 +64,7 @@
                                 </td>
                                 <td class="py-4 px-6">
                                     <span class="px-2.5 py-1 text-xs font-extrabold rounded-full bg-slate-100 text-slate-600 border border-slate-200/50 uppercase tracking-wider">
-                                        {{ str_replace('_', ' ', $u->role) }}
+                                        {{ $u->role === 'business' ? 'Enterprise Business' : ($u->role === 'business_agent' ? 'Business Agent' : str_replace('_', ' ', $u->role)) }}
                                     </span>
                                 </td>
                                 <td class="py-4 px-6">

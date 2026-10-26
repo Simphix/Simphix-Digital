@@ -113,9 +113,15 @@ class ManageController extends Controller
      * reached by drilling into the "Total Onboarded" number on their
      * Metrics tab. Each row links back into showUser() for that member.
      */
-    public function userTeam(User $user): View
+    public function userTeam(Request $request, User $user): View
     {
-        $team = $user->referrals()->with('wallet')->latest()->paginate(15)->withQueryString();
+        $query = $user->referrals()->with('wallet');
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        $team = $query->latest()->paginate(15)->withQueryString();
         return view('admin.manage.team', compact('user', 'team'));
     }
 

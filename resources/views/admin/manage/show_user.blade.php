@@ -43,7 +43,7 @@
                                 {{ $user->first_name }} {{ $user->middle_name }} {{ $user->last_name }}
                             </h1>
                             <span class="px-2.5 py-1 text-xs font-extrabold rounded-full bg-slate-100 text-slate-600 border border-slate-200/50 uppercase tracking-wider">
-                                {{ $user->role }}
+                                {{ $user->role === 'business' ? 'Enterprise Business' : ($user->role === 'business_agent' ? 'Business Agent' : str_replace('_', ' ', $user->role)) }}
                             </span>
                         </div>
                         <p class="text-xs text-slate-400 mt-1 flex items-center gap-2">
@@ -629,10 +629,13 @@
                                 <span class="text-xl font-extrabold font-display text-[#0056D2]">{{ $totalDownline }}</span>
                             </a>
                             @forelse ($roleBreakdown as $role => $count)
-                                <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl min-w-[120px]">
-                                    <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">{{ str_replace('_', ' ', $role) }}</span>
+                                <a href="{{ route('admin.manage.users.team', ['user' => $user, 'role' => $role]) }}"
+                                   class="p-4 bg-slate-50 border border-slate-100 rounded-2xl min-w-[120px] hover:bg-slate-100 transition-colors block">
+                                    <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        {{ $role === 'business' ? 'Enterprise Business' : ($role === 'business_agent' ? 'Business Agent' : str_replace('_', ' ', $role)) }}
+                                    </span>
                                     <span class="text-xl font-extrabold font-display text-slate-800">{{ $count }}</span>
-                                </div>
+                                </a>
                             @empty
                                 <p class="text-xs text-slate-400">Hasn't onboarded anyone yet.</p>
                             @endforelse
