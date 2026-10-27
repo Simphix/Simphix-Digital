@@ -16,18 +16,23 @@
        class="fixed inset-y-0 left-0 z-50 w-64 bg-white text-slate-600 border-r border-slate-200 flex flex-col transform lg:translate-x-0 lg:static lg:h-screen transition-all duration-200 ease-in-out">
 
     <!-- Brand Header -->
-    <div :class="sidebarCollapsed ? 'px-2 justify-center' : 'px-4'"
+    <div :class="sidebarCollapsed ? 'lg:px-2 lg:justify-center px-4 justify-between' : 'px-4 justify-between'"
          class="flex h-16 shrink-0 items-center border-b border-slate-200 transition-all duration-200">
-        <!-- Logo when expanded -->
-        <a x-show="!sidebarCollapsed" href="{{ route('dashboard') }}" class="flex items-center gap-2.5 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
+        <!-- Logo when expanded (or on mobile) -->
+        <a :class="sidebarCollapsed ? 'lg:hidden' : 'flex'" href="{{ route('dashboard') }}" class="flex items-center gap-2.5 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
             <img src="{{ asset('assets/images/logo/favicon.png') }}" alt="SimPhix" class="w-9 h-9 rounded-lg shrink-0 object-contain" aria-hidden="true">
             <span class="min-w-0 truncate text-base font-bold text-slate-900 font-display tracking-tight">SimPhix</span>
         </a>
 
-        <!-- Logo when collapsed (mini sidebar) -->
-        <a x-show="sidebarCollapsed" x-cloak href="{{ route('dashboard') }}" title="SimPhix Dashboard" class="flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl group">
+        <!-- Logo when collapsed (mini sidebar on desktop only) -->
+        <a :class="sidebarCollapsed ? 'lg:flex' : 'hidden'" href="{{ route('dashboard') }}" title="SimPhix Dashboard" class="hidden items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl group">
             <img src="{{ asset('assets/images/logo/favicon.png') }}" alt="SimPhix" class="w-10 h-10 rounded-xl object-contain shadow-sm group-hover:scale-105 transition-transform shrink-0">
         </a>
+
+        <!-- Mobile Drawer Close Button -->
+        <button @click="sidebarOpen = false" type="button" class="lg:hidden p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors" aria-label="Close sidebar">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
     </div>
 
     <!-- Navigation Menu -->
@@ -51,20 +56,20 @@
             @endphp
             <div x-data="{ open: {{ $walletActive ? 'true' : 'false' }} }">
                 <button type="button"
-                        @click="if (sidebarCollapsed) { sidebarCollapsed = false; open = true } else { open = !open }"
+                        @click="if (sidebarCollapsed && window.innerWidth >= 1024) { sidebarCollapsed = false; open = true } else { open = !open }"
                         :aria-expanded="open" aria-controls="sidebar-wallet-menu"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : 'justify-between'"
-                        class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-medium font-display transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {{ $walletActive ? 'text-slate-900' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                    <span class="flex items-center gap-3">
+                        class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-semibold font-display transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {{ $walletActive ? 'text-slate-900 font-bold bg-slate-100/70' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                    <span class="flex items-center gap-3 min-w-0">
                         <span class="w-5 h-5 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-wallet text-base {{ $walletActive ? 'text-slate-900' : 'text-slate-400' }}"></i>
+                            <i class="fa-solid fa-wallet text-base {{ $walletActive ? 'text-slate-900' : 'text-slate-500' }}"></i>
                         </span>
-                        <span x-show="!sidebarCollapsed" x-cloak>Wallet</span>
+                        <span :class="sidebarCollapsed ? 'lg:hidden' : ''" class="truncate font-medium">Wallet</span>
                     </span>
-                    <i x-show="!sidebarCollapsed" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" aria-hidden="true"></i>
+                    <i :class="[sidebarCollapsed ? 'lg:hidden' : '', open ? 'rotate-180' : '']" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" aria-hidden="true"></i>
                 </button>
 
-                <div id="sidebar-wallet-menu" x-show="open && !sidebarCollapsed"
+                <div id="sidebar-wallet-menu" x-show="open" :class="sidebarCollapsed ? 'lg:hidden' : ''"
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 -translate-y-1"
                      x-transition:enter-end="opacity-100 translate-y-0"
@@ -87,20 +92,20 @@
             @endphp
             <div x-data="{ open: {{ $simsActive ? 'true' : 'false' }} }">
                 <button type="button"
-                        @click="if (sidebarCollapsed) { sidebarCollapsed = false; open = true } else { open = !open }"
+                        @click="if (sidebarCollapsed && window.innerWidth >= 1024) { sidebarCollapsed = false; open = true } else { open = !open }"
                         :aria-expanded="open" aria-controls="sidebar-sims-menu"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : 'justify-between'"
-                        class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-medium font-display transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {{ $simsActive ? 'text-slate-900' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                    <span class="flex items-center gap-3">
+                        class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-semibold font-display transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {{ $simsActive ? 'text-slate-900 font-bold bg-slate-100/70' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                    <span class="flex items-center gap-3 min-w-0">
                         <span class="w-5 h-5 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-sim-card text-base {{ $simsActive ? 'text-slate-900' : 'text-slate-400' }}"></i>
+                            <i class="fa-solid fa-sim-card text-base {{ $simsActive ? 'text-slate-900' : 'text-slate-500' }}"></i>
                         </span>
-                        <span x-show="!sidebarCollapsed" x-cloak>{{ __('SIM Services') }}</span>
+                        <span :class="sidebarCollapsed ? 'lg:hidden' : ''" class="truncate font-medium">{{ __('SIM Services') }}</span>
                     </span>
-                    <i x-show="!sidebarCollapsed" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" aria-hidden="true"></i>
+                    <i :class="[sidebarCollapsed ? 'lg:hidden' : '', open ? 'rotate-180' : '']" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" aria-hidden="true"></i>
                 </button>
 
-                <div id="sidebar-sims-menu" x-show="open && !sidebarCollapsed"
+                <div id="sidebar-sims-menu" x-show="open" :class="sidebarCollapsed ? 'lg:hidden' : ''"
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 -translate-y-1"
                      x-transition:enter-end="opacity-100 translate-y-0"
@@ -135,20 +140,20 @@
             @endphp
             <div x-data="{ open: {{ $verificationActive ? 'true' : 'false' }} }">
                 <button type="button"
-                        @click="if (sidebarCollapsed) { sidebarCollapsed = false; open = true } else { open = !open }"
+                        @click="if (sidebarCollapsed && window.innerWidth >= 1024) { sidebarCollapsed = false; open = true } else { open = !open }"
                         :aria-expanded="open" aria-controls="sidebar-verification-menu"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : 'justify-between'"
-                        class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-medium font-display transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {{ $verificationActive ? 'text-slate-900' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                    <span class="flex items-center gap-3">
+                        class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-semibold font-display transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {{ $verificationActive ? 'text-slate-900 font-bold bg-slate-100/70' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                    <span class="flex items-center gap-3 min-w-0">
                         <span class="w-5 h-5 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-shield-halved text-base {{ $verificationActive ? 'text-slate-900' : 'text-slate-400' }}"></i>
+                            <i class="fa-solid fa-shield-halved text-base {{ $verificationActive ? 'text-slate-900' : 'text-slate-500' }}"></i>
                         </span>
-                        <span x-show="!sidebarCollapsed" x-cloak>Verification</span>
+                        <span :class="sidebarCollapsed ? 'lg:hidden' : ''" class="truncate font-medium">Verification</span>
                     </span>
-                    <i x-show="!sidebarCollapsed" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" aria-hidden="true"></i>
+                    <i :class="[sidebarCollapsed ? 'lg:hidden' : '', open ? 'rotate-180' : '']" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" aria-hidden="true"></i>
                 </button>
 
-                <div id="sidebar-verification-menu" x-show="open && !sidebarCollapsed"
+                <div id="sidebar-verification-menu" x-show="open" :class="sidebarCollapsed ? 'lg:hidden' : ''"
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 -translate-y-1"
                      x-transition:enter-end="opacity-100 translate-y-0"
@@ -191,7 +196,7 @@
         @if (auth()->user() && auth()->user()->role === 'business_sales_manager')
             <!-- Business Sales Manager Section -->
             <div class="pt-4 mt-4 border-t border-slate-200">
-                <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Sales Administration</span>
+                <span :class="sidebarCollapsed ? 'lg:hidden' : 'block'" class="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Sales Administration</span>
 
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard'), 'icon' => 'layout-dashboard', 'label' => 'BSM Dashboard', 'active' => request()->routeIs('bsm.dashboard')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.territories'), 'icon' => 'map-pin', 'label' => 'Territories Report', 'active' => request()->routeIs('bsm.territories')])
@@ -205,7 +210,7 @@
         @if (auth()->user() && auth()->user()->role === 'support')
             <!-- Support Desk Section -->
             <div class="pt-4 mt-4 border-t border-slate-200">
-                <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Support Desk</span>
+                <span :class="sidebarCollapsed ? 'lg:hidden' : 'block'" class="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Support Desk</span>
 
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.dashboard'), 'icon' => 'layout-dashboard', 'label' => 'Overview', 'active' => request()->routeIs('support-desk.dashboard')])
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.tickets.index'), 'icon' => 'message-square', 'label' => 'Support Tickets', 'active' => request()->routeIs('support-desk.tickets*'), 'badge' => $openTicketsBadge ?? 0])
@@ -222,7 +227,7 @@
         @if (auth()->user() && auth()->user()->role === 'super_admin')
             <!-- Admin Management Section -->
             <div class="pt-4 mt-4 border-t border-slate-200">
-                <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Administration</span>
+                <span :class="sidebarCollapsed ? 'lg:hidden' : 'block'" class="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Administration</span>
 
                 @php
                     $replaceManagerActive = request()->routeIs('admin.manage.replace-manager*', 'admin.manage.users.replace*');
@@ -231,20 +236,20 @@
                 @endphp
                 <div x-data="{ open: {{ $adminUsersActive ? 'true' : 'false' }} }">
                     <button type="button"
-                            @click="if (sidebarCollapsed) { sidebarCollapsed = false; open = true } else { open = !open }"
+                            @click="if (sidebarCollapsed && window.innerWidth >= 1024) { sidebarCollapsed = false; open = true } else { open = !open }"
                             :aria-expanded="open" aria-controls="sidebar-admin-users-menu"
                             :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : 'justify-between'"
-                            class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-medium font-display transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {{ $adminUsersActive ? 'text-slate-900' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                        <span class="flex items-center gap-3">
+                            class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-semibold font-display transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {{ $adminUsersActive ? 'text-slate-900 font-bold bg-slate-100/70' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                        <span class="flex items-center gap-3 min-w-0">
                             <span class="w-5 h-5 flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-users text-base {{ $adminUsersActive ? 'text-slate-900' : 'text-slate-400' }}"></i>
+                                <i class="fa-solid fa-users text-base {{ $adminUsersActive ? 'text-slate-900' : 'text-slate-500' }}"></i>
                             </span>
-                            <span x-show="!sidebarCollapsed" x-cloak>Users</span>
+                            <span :class="sidebarCollapsed ? 'lg:hidden' : ''" class="truncate font-medium">Users</span>
                         </span>
-                        <i x-show="!sidebarCollapsed" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" aria-hidden="true"></i>
+                        <i :class="[sidebarCollapsed ? 'lg:hidden' : '', open ? 'rotate-180' : '']" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" aria-hidden="true"></i>
                     </button>
 
-                    <div id="sidebar-admin-users-menu" x-show="open && !sidebarCollapsed"
+                    <div id="sidebar-admin-users-menu" x-show="open" :class="sidebarCollapsed ? 'lg:hidden' : ''"
                          x-transition:enter="transition ease-out duration-150"
                          x-transition:enter-start="opacity-0 -translate-y-1"
                          x-transition:enter-end="opacity-100 translate-y-0"
@@ -282,7 +287,7 @@
 
             <!-- Advanced Dashboard Section -->
             <div class="pt-4 mt-4 border-t border-slate-200">
-                <span x-show="!sidebarCollapsed" x-cloak class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-2">Advanced Dashboard</span>
+                <span :class="sidebarCollapsed ? 'lg:hidden' : 'block'" class="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Advanced Dashboard</span>
 
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard'), 'icon' => 'briefcase', 'label' => 'BSM Console', 'active' => request()->routeIs('bsm.*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sims-operations.index'), 'icon' => 'bar-chart-3', 'label' => 'SIMs Operations', 'active' => request()->routeIs('admin.sims-operations*')])
@@ -291,7 +296,7 @@
     </nav>
 
     <!-- Support promo card (disabled for now, kept for possible future use) -->
-    <div x-show="!sidebarCollapsed" x-cloak class="hidden px-3 pb-3">
+    <div :class="sidebarCollapsed ? 'lg:hidden' : ''" class="hidden px-3 pb-3">
         <a href="{{ route('support') }}" class="block rounded-lg border border-slate-200 bg-slate-50 p-3.5 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <div class="flex h-8 w-8 items-center justify-center rounded-md bg-white border border-slate-200 text-slate-500">
                 <i class="fa-solid fa-life-ring text-sm"></i>
@@ -308,20 +313,20 @@
     @if (($sidebarUpline ?? null) && auth()->user()->role !== 'business' && !\App\Support\StaffAccess::isInternal(auth()->user()))
     <div class="border-t border-slate-200 p-3" x-data="{ open: false }">
         <button type="button"
-                @click="if (sidebarCollapsed) { sidebarCollapsed = false; open = true } else { open = !open }"
+                @click="if (sidebarCollapsed && window.innerWidth >= 1024) { sidebarCollapsed = false; open = true } else { open = !open }"
                 :aria-expanded="open" aria-controls="sidebar-upline-panel"
                 :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : 'justify-between'"
-                class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-medium font-display text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-            <span class="flex items-center gap-3">
+                class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-semibold font-display text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <span class="flex items-center gap-3 min-w-0">
                 <span class="w-5 h-5 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-user-check text-base text-slate-400"></i>
+                    <i class="fa-solid fa-user-check text-base text-slate-500"></i>
                 </span>
-                <span x-show="!sidebarCollapsed" x-cloak>{{ __('Upline Manager') }}</span>
+                <span :class="sidebarCollapsed ? 'lg:hidden' : ''" class="truncate font-medium">{{ __('Upline Manager') }}</span>
             </span>
-            <i x-show="!sidebarCollapsed" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" aria-hidden="true"></i>
+            <i :class="[sidebarCollapsed ? 'lg:hidden' : '', open ? 'rotate-180' : '']" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" aria-hidden="true"></i>
         </button>
 
-        <div id="sidebar-upline-panel" x-show="open && !sidebarCollapsed"
+        <div id="sidebar-upline-panel" x-show="open" :class="sidebarCollapsed ? 'lg:hidden' : ''"
              x-transition:enter="transition ease-out duration-150"
              x-transition:enter-start="opacity-0 -translate-y-1"
              x-transition:enter-end="opacity-100 translate-y-0"
@@ -351,11 +356,11 @@
             @csrf
             <button type="submit"
                     :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''"
-                    class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-medium font-display text-rose-600 hover:bg-rose-50 transition-colors border-0 cursor-pointer bg-transparent text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                    class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-semibold font-display text-rose-600 hover:bg-rose-50 transition-colors border-0 cursor-pointer bg-transparent text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 <span class="w-5 h-5 flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-right-from-bracket text-base"></i>
                 </span>
-                <span x-show="!sidebarCollapsed" x-cloak>{{ __('Log Out') }}</span>
+                <span :class="sidebarCollapsed ? 'lg:hidden' : ''" class="truncate font-semibold">{{ __('Log Out') }}</span>
             </button>
         </form>
     </div>
