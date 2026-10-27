@@ -62,7 +62,7 @@ test('activated numbers export is restricted to super admins', function () {
         ->get(route('admin.sims-operations.activated-numbers.export'))->assertForbidden();
 });
 
-test('export service filters to numbers activated in the past 24 hours only', function () {
+test('export service filters to numbers activated in the given window without updated_at false positives', function () {
     $oldSim = Sim::create([
         'number'     => '08021111111',
         'category'   => 'POS SIM',
@@ -71,8 +71,13 @@ test('export service filters to numbers activated in the past 24 hours only', fu
     ]);
     Sim::where('id', $oldSim->id)->update([
         'created_at' => now()->subDays(5),
-        'updated_at' => now()->subDays(5),
+        'updated_at' => now()->subHours(1), // Updated recently (e.g. top-up) but activated 5 days ago!
     ]);
+    $hOld = SimHistory::create([
+        'sim_id'     => $oldSim->id,
+        'to_status'  => SimStatus::ACTIVATED,
+    ]);
+    SimHistory::where('id', $hOld->id)->update(['created_at' => now()->subDays(5)]);
 
     $recentSim = Sim::create([
         'number'     => '08022222222',
@@ -95,18 +100,20 @@ test('export service filters to numbers activated in the past 24 hours only', fu
         'created_at' => now()->subDays(10),
         'updated_at' => now()->subDays(10),
     ]);
-    SimHistory::create([
+    $hRecent = SimHistory::create([
         'sim_id'     => $historyRecentSim->id,
         'to_status'  => SimStatus::ACTIVATED,
-        'created_at' => now()->subHours(4),
     ]);
+    SimHistory::where('id', $hRecent->id)->update(['created_at' => now()->subHours(4)]);
 
     $exporter = app(ActivatedSimsExportService::class);
     $since = now()->subHours(24);
+    $until = now();
 
-    $past24hNumbers = $exporter->activatedNumbers($since)->pluck('number')->all();
+    $past24hNumbers = $exporter->activatedNumbers($since, $until)->pluck('number')->all();
     expect($past24hNumbers)->toContain('08022222222');
     expect($past24hNumbers)->toContain('08023333333');
+    // Old SIM updated 1h ago MUST NOT be included because its activation was 5 days ago!
     expect($past24hNumbers)->not->toContain('08021111111');
 
     $allNumbers = $exporter->activatedNumbers(null)->pluck('number')->all();
@@ -115,7 +122,7 @@ test('export service filters to numbers activated in the past 24 hours only', fu
     expect($allNumbers)->toContain('08023333333');
 });
 
-test('nightly sims:export-activated command emails only numbers activated in the past 24 hours', function () {
+test('nightly sims:export-activated command emails previous calendar day activations by default', function () {
     Mail::fake();
 
     $settings = SimExportSettings::current();
@@ -124,6 +131,24 @@ test('nightly sims:export-activated command emails only numbers activated in the
         'recipient_email' => 'ops@simphix.com',
     ]);
 
+    $yesterdayLagos = now('Africa/Lagos')->subDay()->setTime(14, 0);
+
+    $yesterdaySim = Sim::create([
+        'number'     => '08030000002',
+        'category'   => 'POS SIM',
+        'provider'   => 'mtn',
+        'status'     => SimStatus::ACTIVATED,
+    ]);
+    Sim::where('id', $yesterdaySim->id)->update([
+        'created_at' => $yesterdayLagos->copy()->setTimezone('UTC'),
+        'updated_at' => $yesterdayLagos->copy()->setTimezone('UTC'),
+    ]);
+    $hYesterday = SimHistory::create([
+        'sim_id'     => $yesterdaySim->id,
+        'to_status'  => SimStatus::ACTIVATED,
+    ]);
+    SimHistory::where('id', $hYesterday->id)->update(['created_at' => $yesterdayLagos->copy()->setTimezone('UTC')]);
+
     $oldSim = Sim::create([
         'number'     => '08030000001',
         'category'   => 'POS SIM',
@@ -131,29 +156,50 @@ test('nightly sims:export-activated command emails only numbers activated in the
         'status'     => SimStatus::ACTIVATED,
     ]);
     Sim::where('id', $oldSim->id)->update([
-        'created_at' => now()->subDays(3),
-        'updated_at' => now()->subDays(3),
+        'created_at' => now('Africa/Lagos')->subDays(4)->setTimezone('UTC'),
+        'updated_at' => now('Africa/Lagos')->subDays(4)->setTimezone('UTC'),
+    ]);
+
+    $this->artisan('sims:export-activated')
+        ->expectsOutputToContain($yesterdayLagos->format('M d, Y'))
+        ->assertSuccessful();
+
+    Mail::assertSent(ActivatedSimsExportMail::class, function (ActivatedSimsExportMail $mail) use ($yesterdayLagos) {
+        return $mail->hasTo('ops@simphix.com')
+            && str_contains($mail->csv, '08030000002')
+            && !str_contains($mail->csv, '08030000001')
+            && $mail->since !== null
+            && $mail->reportDate?->format('Y-m-d') === $yesterdayLagos->format('Y-m-d');
+    });
+});
+
+test('nightly sims:export-activated command with --hours emails rolling period', function () {
+    Mail::fake();
+
+    $settings = SimExportSettings::current();
+    $settings->update([
+        'is_active'       => true,
+        'recipient_email' => 'ops@simphix.com',
     ]);
 
     $recentSim = Sim::create([
-        'number'     => '08030000002',
+        'number'     => '08030000088',
         'category'   => 'POS SIM',
         'provider'   => 'mtn',
         'status'     => SimStatus::ACTIVATED,
     ]);
     Sim::where('id', $recentSim->id)->update([
-        'created_at' => now()->subHours(6),
-        'updated_at' => now()->subHours(6),
+        'created_at' => now()->subHours(3),
+        'updated_at' => now()->subHours(3),
     ]);
 
-    $this->artisan('sims:export-activated')
+    $this->artisan('sims:export-activated', ['--hours' => 24])
         ->expectsOutputToContain('past 24 hours')
         ->assertSuccessful();
 
     Mail::assertSent(ActivatedSimsExportMail::class, function (ActivatedSimsExportMail $mail) {
         return $mail->hasTo('ops@simphix.com')
-            && str_contains($mail->csv, '08030000002')
-            && !str_contains($mail->csv, '08030000001')
+            && str_contains($mail->csv, '08030000088')
             && $mail->since !== null;
     });
 });

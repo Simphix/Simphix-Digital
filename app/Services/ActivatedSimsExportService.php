@@ -20,19 +20,35 @@ class ActivatedSimsExportService
 {
     /**
      * Base query for activated SIMs, optionally filtered to those
-     * activated since a given timestamp (e.g. past 24 hours).
+     * activated within a given timestamp range (e.g. previous calendar day).
+     *
+     * Uses SimHistory records (to_status = ACTIVATED) as the authoritative
+     * source of activation events, or falls back to Sim::created_at for SIMs
+     * created directly in ACTIVATED status with no history.
+     * Does NOT use updated_at, preventing unrelated updates (e.g. top-ups, edits)
+     * from falsely counting as activations.
      */
-    public function query(?Carbon $since = null): Builder
+    public function query(?Carbon $since = null, ?Carbon $until = null): Builder
     {
         $query = Sim::query()
             ->where('status', SimStatus::ACTIVATED)
             ->whereNotNull('number')
             ->where('number', '!=', '');
 
-        if ($since) {
+        if ($since && $until) {
+            $query->where(function (Builder $q) use ($since, $until) {
+                $q->whereHas('history', fn ($h) => $h->where('to_status', SimStatus::ACTIVATED)->whereBetween('created_at', [$since, $until]))
+                  ->orWhere(fn ($q2) => $q2->whereDoesntHave('history')->whereBetween('created_at', [$since, $until]));
+            });
+        } elseif ($since) {
             $query->where(function (Builder $q) use ($since) {
-                $q->where('updated_at', '>=', $since)
-                  ->orWhereHas('history', fn ($h) => $h->where('to_status', SimStatus::ACTIVATED)->where('created_at', '>=', $since));
+                $q->whereHas('history', fn ($h) => $h->where('to_status', SimStatus::ACTIVATED)->where('created_at', '>=', $since))
+                  ->orWhere(fn ($q2) => $q2->whereDoesntHave('history')->where('created_at', '>=', $since));
+            });
+        } elseif ($until) {
+            $query->where(function (Builder $q) use ($until) {
+                $q->whereHas('history', fn ($h) => $h->where('to_status', SimStatus::ACTIVATED)->where('created_at', '<=', $until))
+                  ->orWhere(fn ($q2) => $q2->whereDoesntHave('history')->where('created_at', '<=', $until));
             });
         }
 
@@ -44,9 +60,9 @@ class ActivatedSimsExportService
      * and ordered. Callers iterate this directly (streamed HTTP download)
      * or via toCsvString() (materialized, for an email attachment).
      */
-    public function activatedNumbers(?Carbon $since = null): LazyCollection
+    public function activatedNumbers(?Carbon $since = null, ?Carbon $until = null): LazyCollection
     {
-        return $this->query($since)
+        return $this->query($since, $until)
             ->select('number')
             ->distinct()
             ->orderBy('number')
@@ -54,9 +70,9 @@ class ActivatedSimsExportService
     }
 
     /** How many distinct activated SIM numbers exist matching the criteria. */
-    public function count(?Carbon $since = null): int
+    public function count(?Carbon $since = null, ?Carbon $until = null): int
     {
-        return $this->query($since)
+        return $this->query($since, $until)
             ->distinct('number')
             ->count('number');
     }
@@ -66,12 +82,12 @@ class ActivatedSimsExportService
      * list of phone numbers), unlike the streamed HTTP download, which
      * writes straight to the response instead.
      */
-    public function toCsvString(?Carbon $since = null): string
+    public function toCsvString(?Carbon $since = null, ?Carbon $until = null): string
     {
         $handle = fopen('php://temp', 'r+');
         fputcsv($handle, ['Sim Number'], ',', '"', '');
 
-        foreach ($this->activatedNumbers($since) as $sim) {
+        foreach ($this->activatedNumbers($since, $until) as $sim) {
             fputcsv($handle, [$this->escapeForCsv((string) $sim->number)], ',', '"', '');
         }
 

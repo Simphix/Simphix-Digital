@@ -1,8 +1,8 @@
 # Nightly activated-SIMs export cron job
 
 Covers scheduling `php artisan sims:export-activated`
-(`app/Console/Commands/ExportActivatedSims.php`) so a CSV of every activated
-SIM number goes out by email automatically, every night.
+(`app/Console/Commands/ExportActivatedSims.php`) so a CSV of activated
+SIM numbers goes out by email automatically every night.
 
 ## What the command actually does
 
@@ -12,12 +12,33 @@ Operations** (`sim_export_settings`, via `App\Models\SimExportSettings`):
 - If the export is turned **off**, the command exits immediately and sends
   nothing.
 - If it's **on** but no recipient email is set, it logs a warning and exits.
-- Otherwise it builds the CSV (`App\Services\ActivatedSimsExportService` —
-  the same query and CSV shape as the "Export All Activated Numbers" button
-  on that page) and **sends the email synchronously**, right there in the
-  command — unlike the bulk-bonus/notification commands documented
+- By default, it exports all SIMs activated during the **previous full calendar day**
+  (`00:00:00` to `23:59:59` in `Africa/Lagos` / WAT). This means whether the cron
+  runs at midnight, 1:00 AM, or 3:00 AM overnight, it consistently reports on the
+  entire completed day without missing or duplicating hours.
+- It uses **`SimHistory` activation events** (`to_status = activated`) as the authoritative
+  source of truth, ensuring that older SIMs updated recently (e.g. via data top-ups,
+  plan edits, or reassignments) are never falsely included.
+- It builds the CSV (`App\Services\ActivatedSimsExportService`) and **sends the email synchronously**,
+  right there in the command — unlike the bulk-bonus/notification commands documented
   elsewhere in this directory, there is no queue involved here, so no
   separate queue-worker setup is needed for this one.
+
+### Command Flags
+
+```bash
+# Default: previous calendar day (00:00:00 to 23:59:59 WAT)
+php artisan sims:export-activated
+
+# Specific calendar day
+php artisan sims:export-activated --date=2026-10-26
+
+# Rolling past N hours (e.g. past 24 hours from right now)
+php artisan sims:export-activated --hours=24
+
+# All-time: export every activated SIM currently in the system
+php artisan sims:export-activated --all
+```
 
 This follows the same **direct cron entry per command** convention already
 established in `docs/cron-jobs.md` and `docs/push-notification-scheduling.md`,
