@@ -38,7 +38,7 @@
     </head>
     <body class="font-sans antialiased text-slate-800 h-full">
         <!-- Main Layout Container (Alpine.js State) -->
-        <div x-data="{ sidebarOpen: false, sidebarCollapsed: true }"
+        <div x-data="{ sidebarOpen: false, sidebarCollapsed: false }"
              class="h-full flex overflow-hidden">
             
             <!-- Sidebar Navigation -->
