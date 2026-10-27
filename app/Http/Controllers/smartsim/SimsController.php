@@ -887,14 +887,14 @@ class SimsController extends Controller
             abort(403, 'Only partners or business agents can activate a SIM.');
         }
 
-        PhoneNumber::normalizeRequestInput($request);
+        PhoneNumber::normalizeRequestInput($request, 'phone_number');
 
         $validated = $request->validate([
             'sim_id'        => 'required|exists:sims,id',
-            'full_name'     => 'required|string|max:255',
+            'full_name'     => 'nullable|string|max:255',
             'email'         => 'nullable|email|max:255',
             'phone_number'  => ['nullable', 'string', 'max:20', PhoneNumber::validationRule()],
-            'address'       => 'required|string|max:1000',
+            'address'       => 'nullable|string|max:1000',
             'wallet_source' => 'required|in:main,bonus',
         ]);
 
@@ -921,7 +921,8 @@ class SimsController extends Controller
                 return $sim;
             });
 
-            return back()->with('success', "SIM {$activatedSim->number} successfully activated for {$validated['full_name']}.");
+            $targetName = !empty($validated['full_name']) ? " for {$validated['full_name']}" : '';
+            return back()->with('success', "SIM {$activatedSim->number} successfully activated{$targetName}.");
         } catch (\Exception $e) {
             Log::error('SIM activation failed.', [
                 'sim_id'     => $validated['sim_id'] ?? null,
@@ -976,13 +977,16 @@ class SimsController extends Controller
 
         $ref = 'ACT-' . time() . '-' . rand(1000, 9999);
 
+        $customerName = !empty($data['full_name']) ? $data['full_name'] : null;
+        $targetDesc = $customerName ? " for {$customerName}" : '';
+
         Transaction::create([
             'transaction_ref' => $ref,
             'user_id'         => $partner->id,
             'amount'          => $payableAmount,
             'fee'             => 0.00,
             'net_amount'      => $payableAmount,
-            'description'     => "SIM Card Activation: {$sim->number} ({$sim->category}, " . strtoupper($sim->provider) . ") for {$data['full_name']} paid via {$sourceLabel}",
+            'description'     => "SIM Card Activation: {$sim->number} ({$sim->category}, " . strtoupper($sim->provider) . "){$targetDesc} paid via {$sourceLabel}",
             'type'            => 'debit',
             'status'          => 'completed',
             'performed_by'    => $partner->first_name . ' ' . $partner->last_name,
@@ -991,7 +995,7 @@ class SimsController extends Controller
                 'sim_number'    => $sim->number,
                 'category'      => $sim->category,
                 'provider'      => $sim->provider,
-                'customer_name' => $data['full_name'],
+                'customer_name' => $customerName,
                 'customer_phone'=> $data['phone_number'] ?? null,
                 'wallet_source' => $source,
             ]),
@@ -1005,7 +1009,7 @@ class SimsController extends Controller
             'amount'       => $payableAmount,
             'status'       => 'completed',
             'type'         => 'sim_activation',
-            'description'  => "SIM Card Activation: {$sim->number} ({$sim->category}) for {$data['full_name']} paid via {$sourceLabel}",
+            'description'  => "SIM Card Activation: {$sim->number} ({$sim->category}){$targetDesc} paid via {$sourceLabel}",
             'old_balance'  => $oldBalance,
             'new_balance'  => $newBalance,
             'service_id'   => $simService ? $simService->id : null,
@@ -1014,10 +1018,10 @@ class SimsController extends Controller
         SimCustomer::create([
             'sim_id'       => $sim->id,
             'partner_id'   => $partner->id,
-            'full_name'    => $data['full_name'],
+            'full_name'    => $customerName,
             'email'        => $data['email'] ?? null,
             'phone_number' => $data['phone_number'] ?? null,
-            'address'      => $data['address'],
+            'address'      => $data['address'] ?? null,
         ]);
 
         if (!$sim->user_id) {
