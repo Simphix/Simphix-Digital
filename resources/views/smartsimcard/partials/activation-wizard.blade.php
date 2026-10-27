@@ -89,20 +89,12 @@
             this.phoneError = '';
             this.addressError = '';
 
-            if (!this.customerName.trim()) {
-                this.nameError = 'Please enter the customer\'s full name.';
-            }
-
-            if (!this.customerAddress.trim()) {
-                this.addressError = 'Please enter the customer\'s full address.';
-            }
-
             const cleanPhone = this.customerPhone ? this.customerPhone.replace(/\s+/g, '') : '';
             if (cleanPhone && cleanPhone.length < 10) {
                 this.phoneError = 'Please enter a valid phone number (at least 10 digits).';
             }
 
-            if (this.nameError || this.phoneError || this.addressError) return;
+            if (this.phoneError) return;
 
             // Auto-select affordable wallet if preferred
             const price = this.selectedSim ? this.selectedSim.price : 0;
@@ -441,7 +433,7 @@
                         </div>
                         <div>
                             <h3 class="text-base font-bold text-slate-800 font-display">Step 2: Customer Information</h3>
-                            <p class="text-xs text-slate-500">Enter the customer details for whom this SIM card is being activated.</p>
+                            <p class="text-xs text-slate-500">Enter optional customer details for whom this SIM card is being activated, or skip blank to continue.</p>
                         </div>
                     </div>
 
@@ -454,35 +446,35 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Full Name (Required) -->
+                    <!-- Full Name (Optional) -->
                     <div class="space-y-1.5 sm:col-span-2">
                         <label for="cust_full_name" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                            Customer Full Name <span class="text-rose-500">*</span>
+                            Customer Full Name <span class="text-slate-400 font-normal lowercase">(optional)</span>
                         </label>
                         <input type="text"
                                id="cust_full_name"
                                x-model="customerName"
-                               placeholder="e.g. Adebayo Ogunlesi"
+                               placeholder="e.g. Adebayo Ogunlesi (optional)"
                                class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                                :class="nameError ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' : ''">
                         <p x-show="nameError" x-text="nameError" class="text-xs font-semibold text-rose-500"></p>
                     </div>
 
-                    <!-- Full Address (Required, moved up) -->
+                    <!-- Full Address (Optional) -->
                     <div class="space-y-1.5 sm:col-span-2">
                         <label for="cust_address" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                            Full Address <span class="text-rose-500">*</span>
+                            Full Address <span class="text-slate-400 font-normal lowercase">(optional)</span>
                         </label>
                         <textarea id="cust_address"
                                   rows="2"
                                   x-model="customerAddress"
-                                  placeholder="e.g. 15 Marina Boulevard, Victoria Island, Lagos"
+                                  placeholder="e.g. 15 Marina Boulevard, Victoria Island, Lagos (optional)"
                                   class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                                   :class="addressError ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' : ''"></textarea>
                         <p x-show="addressError" x-text="addressError" class="text-xs font-semibold text-rose-500"></p>
                     </div>
 
-                    <!-- Customer Phone Number (Optional, moved down) -->
+                    <!-- Customer Phone Number (Optional) -->
                     <div class="space-y-1.5">
                         <label for="cust_phone_number" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                             Customer Phone Number <span class="text-slate-400 font-normal lowercase">(optional)</span>
@@ -497,7 +489,7 @@
                         <p class="text-[11px] text-slate-400">Optional: Customer contact number for SMS notifications.</p>
                     </div>
 
-                    <!-- Email Address (Optional, moved down) -->
+                    <!-- Email Address (Optional) -->
                     <div class="space-y-1.5">
                         <label for="cust_email" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                             Email Address <span class="text-slate-400 font-normal lowercase">(optional)</span>
@@ -520,12 +512,19 @@
                         <span>Back</span>
                     </button>
 
-                    <button type="button"
-                            @click="goToStep3()"
-                            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white text-xs font-bold shadow-sm transition-all hover:bg-primary/90">
-                        <span>Continue to Summary</span>
-                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button"
+                                @click="customerName = ''; customerAddress = ''; customerPhone = ''; customerEmail = ''; goToStep3()"
+                                class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-xs font-semibold hover:bg-slate-100 transition-colors">
+                            <span>Skip Step</span>
+                        </button>
+                        <button type="button"
+                                @click="goToStep3()"
+                                class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white text-xs font-bold shadow-sm transition-all hover:bg-primary/90">
+                            <span x-text="(!customerName && !customerAddress && !customerPhone && !customerEmail) ? 'Skip & Continue to Summary' : 'Continue to Summary'"></span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -579,7 +578,7 @@
                             <div class="grid grid-cols-2 gap-3 text-xs">
                                 <div>
                                     <span class="text-slate-400 block text-[11px]">Full Name</span>
-                                    <span class="font-bold text-slate-800" x-text="customerName"></span>
+                                    <span class="font-bold text-slate-800" x-text="customerName || 'Not provided'"></span>
                                 </div>
                                 <div>
                                     <span class="text-slate-400 block text-[11px]">Phone Number</span>
@@ -587,11 +586,11 @@
                                 </div>
                                 <div class="col-span-2">
                                     <span class="text-slate-400 block text-[11px]">Address</span>
-                                    <span class="font-semibold text-slate-700" x-text="customerAddress"></span>
+                                    <span class="font-semibold text-slate-700" x-text="customerAddress || 'Not provided'"></span>
                                 </div>
                                 <div x-show="customerEmail" class="col-span-2">
                                     <span class="text-slate-400 block text-[11px]">Email</span>
-                                    <span class="font-semibold text-slate-700" x-text="customerEmail"></span>
+                                    <span class="font-semibold text-slate-700" x-text="customerEmail || 'Not provided'"></span>
                                 </div>
                             </div>
                         </div>

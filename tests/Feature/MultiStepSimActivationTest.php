@@ -320,6 +320,32 @@ test('partner can activate a sim with optional phone number omitted when address
     expect($customer->address)->toBe('Suite 4, Silver Plaza, Abuja');
 });
 
+test('partner can activate a sim with step 2 passed or skipped completely blank', function () {
+    $payload = [
+        'sim_id'        => $this->sim->id,
+        'full_name'     => null,
+        'phone_number'  => null,
+        'email'         => null,
+        'address'       => null,
+        'wallet_source' => 'main',
+    ];
+
+    $response = $this->actingAs($this->partner)
+        ->post(route('sims.activate'), $payload);
+
+    $response->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect($this->sim->fresh()->status)->toBe(SimStatus::ACTIVATED);
+
+    $customer = SimCustomer::where('sim_id', $this->sim->id)->first();
+    expect($customer)->not->toBeNull();
+    expect($customer->full_name)->toBeNull();
+    expect($customer->address)->toBeNull();
+    expect($customer->phone_number)->toBeNull();
+    expect($customer->email)->toBeNull();
+});
+
 test('partner can update customer details of an activated sim', function () {
     $this->sim->update(['status' => SimStatus::ACTIVATED]);
     $customer = SimCustomer::create([
