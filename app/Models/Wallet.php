@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'user_id',
     'balance',
     'bonus',
-    'virtual_promo',
     'hold_amount',
     'total_credited',
     'total_debited',
@@ -69,7 +68,6 @@ class Wallet extends Model
         return [
             'balance'        => 'decimal:2',
             'bonus'          => 'decimal:2',
-            'virtual_promo'  => 'decimal:2',
             'hold_amount'    => 'decimal:2',
             'total_credited' => 'decimal:2',
             'total_debited'  => 'decimal:2',
