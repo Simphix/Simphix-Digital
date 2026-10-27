@@ -24,14 +24,20 @@ class ActivatedSimsExportMail extends Mailable
         public int $count,
         public Carbon $generatedAt,
         public ?Carbon $since = null,
+        public ?Carbon $until = null,
+        public ?string $periodLabel = null,
+        public ?Carbon $reportDate = null,
     ) {
     }
 
     public function envelope(): Envelope
     {
-        $subject = $this->since
-            ? 'SimPhix - Daily Activated SIMs Export (' . $this->generatedAt->format('M d, Y') . ')'
-            : 'SimPhix - Activated SIMs Export (' . $this->generatedAt->format('M d, Y') . ')';
+        $subject = match (true) {
+            $this->periodLabel === 'all-time' => 'SimPhix - Activated SIMs Export (All-Time)',
+            !empty($this->reportDate) => 'SimPhix - Daily Activated SIMs Export (' . $this->reportDate->format('M d, Y') . ')',
+            !empty($this->since) => 'SimPhix - Daily Activated SIMs Export (' . $this->generatedAt->format('M d, Y') . ')',
+            default => 'SimPhix - Activated SIMs Export (' . $this->generatedAt->format('M d, Y') . ')',
+        };
 
         return new Envelope(
             subject: $subject,
@@ -47,6 +53,9 @@ class ActivatedSimsExportMail extends Mailable
                 'count' => $this->count,
                 'generatedAt' => $this->generatedAt,
                 'since' => $this->since,
+                'until' => $this->until,
+                'periodLabel' => $this->periodLabel,
+                'reportDate' => $this->reportDate,
             ],
         );
     }
@@ -56,10 +65,14 @@ class ActivatedSimsExportMail extends Mailable
      */
     public function attachments(): array
     {
+        $dateSuffix = $this->reportDate
+            ? $this->reportDate->format('Y-m-d')
+            : $this->generatedAt->format('Y-m-d');
+
         $prefix = $this->since ? 'daily-activated-sims-' : 'activated-sim-numbers-';
 
         return [
-            Attachment::fromData(fn () => $this->csv, $prefix . $this->generatedAt->format('Y-m-d') . '.csv')
+            Attachment::fromData(fn () => $this->csv, $prefix . $dateSuffix . '.csv')
                 ->withMime('text/csv'),
         ];
     }

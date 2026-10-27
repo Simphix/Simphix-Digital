@@ -106,14 +106,22 @@
                 <h1 class="title">{{ isset($since) && $since ? 'Daily Activated SIMs Export' : 'Activated SIMs Export' }}</h1>
                 <p class="text">Hello,</p>
                 @if (isset($since) && $since)
-                    <p class="text">Attached is the daily CSV export of SIM numbers activated in the past 24 hours on SimPhix (from {{ $since->format('F d, Y \a\t h:i A') }} to {{ $generatedAt->format('F d, Y \a\t h:i A') }}).</p>
+                    @php
+                        $lagosSince = $since->copy()->setTimezone('Africa/Lagos');
+                        $lagosUntil = isset($until) && $until ? $until->copy()->setTimezone('Africa/Lagos') : $generatedAt->copy()->setTimezone('Africa/Lagos');
+                    @endphp
+                    @if (isset($reportDate) && $reportDate)
+                        <p class="text">Attached is the daily CSV export of SIM numbers activated on SimPhix for <strong>{{ $reportDate->format('F d, Y') }}</strong> (full calendar day, from {{ $lagosSince->format('h:i A') }} to {{ $lagosUntil->format('h:i A') }} WAT).</p>
+                    @else
+                        <p class="text">Attached is the daily CSV export of SIM numbers activated on SimPhix (from {{ $lagosSince->format('F d, Y \a\t h:i A') }} to {{ $lagosUntil->format('F d, Y \a\t h:i A') }} WAT).</p>
+                    @endif
                 @else
-                    <p class="text">Attached is the CSV export of every SIM number currently activated on SimPhix, generated on {{ $generatedAt->format('F d, Y \a\t h:i A') }}.</p>
+                    <p class="text">Attached is the CSV export of every SIM number currently activated on SimPhix, generated on {{ $generatedAt->copy()->setTimezone('Africa/Lagos')->format('F d, Y \a\t h:i A') }} WAT.</p>
                 @endif
 
                 <div class="stats">
                     <p class="stats-number">{{ number_format($count) }}</p>
-                    <p class="stats-label">{{ isset($since) && $since ? 'SIM Numbers Activated (Past 24 Hours)' : 'Activated SIM Numbers' }}</p>
+                    <p class="stats-label">{{ isset($since) && $since ? (isset($reportDate) && $reportDate ? 'SIM Numbers Activated on ' . $reportDate->format('M d, Y') : 'SIM Numbers Activated') : 'Activated SIM Numbers' }}</p>
                 </div>
 
                 <p class="text" style="font-size: 13px; color: #64748b;">
