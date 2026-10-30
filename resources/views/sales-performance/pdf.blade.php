@@ -8,179 +8,256 @@
             font-family: helvetica, Arial, sans-serif;
             color: #1e293b;
             font-size: 8pt;
-            line-height: 1.35;
+            line-height: 1.45;
         }
-        .header-table {
+
+        /* Banner Container */
+        .banner-box {
             width: 100%;
-            border-bottom: 2px solid #0056D2;
-            padding-bottom: 8px;
-            margin-bottom: 12px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-top: 3px solid #0056D2;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
         }
         .header-title {
             font-size: 13pt;
             font-weight: bold;
             color: #0056D2;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
+            margin-bottom: 2px;
         }
         .meta-text {
             font-size: 7.5pt;
             color: #475569;
-            line-height: 1.4;
+            line-height: 1.45;
         }
-        .section-header {
-            font-size: 9.5pt;
+
+        /* Section Titles */
+        .section-bar {
+            margin-top: 14px;
+            margin-bottom: 6px;
+            padding-left: 6px;
+            border-left: 3px solid #0056D2;
+        }
+        .section-title {
+            font-size: 9pt;
             font-weight: bold;
             color: #0f172a;
-            border-left: 3px solid #0056D2;
-            padding-left: 6px;
-            margin-top: 10px;
-            margin-bottom: 5px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+        .section-desc {
+            font-size: 6.8pt;
+            color: #64748b;
+            margin-top: 1px;
+        }
+
+        /* KPI Cards Grid */
         .kpi-table {
             width: 100%;
             border-collapse: separate;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
-        .kpi-cell {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 6px 8px;
+        .kpi-card {
+            border-radius: 6px;
+            padding: 8px 10px;
             text-align: center;
         }
         .kpi-label {
             font-size: 6.5pt;
             font-weight: bold;
-            color: #64748b;
             text-transform: uppercase;
-            margin-bottom: 2px;
+            letter-spacing: 0.4px;
+            margin-bottom: 3px;
         }
-        .kpi-value {
-            font-size: 11pt;
+        .kpi-number {
+            font-size: 11.5pt;
             font-weight: bold;
-            color: #0056D2;
+            line-height: 1.2;
         }
-        .data-table {
+        .kpi-sub {
+            font-size: 6.8pt;
+            margin-top: 2px;
+        }
+
+        /* Table Styling - Airy, Light Colors, Good Edges */
+        .styled-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 4px;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
+            border: 1px solid #e2e8f0;
         }
-        .data-table th {
-            background-color: #0056D2;
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 7.5pt;
-            padding: 5px 6px;
-        }
-        .data-table td {
-            font-size: 7.5pt;
-            padding: 4.5px 6px;
-            border-bottom: 1px solid #e2e8f0;
-            color: #334155;
-        }
-        .data-table tr.even td {
+        .styled-table th {
             background-color: #f8fafc;
+            color: #334155;
+            font-weight: bold;
+            font-size: 7.2pt;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border-top: 2px solid #0056D2;
+            border-bottom: 1.5px solid #cbd5e1;
+            padding: 7px 8px;
         }
-        .data-table tr.totals-row td {
+        .styled-table td {
+            font-size: 7.5pt;
+            padding: 6px 8px;
+            border-bottom: 1px solid #eef2f6;
+            color: #334155;
+            vertical-align: middle;
+        }
+        .styled-table tr.even td {
+            background-color: #fafbfc;
+        }
+        .styled-table tr.totals-row td {
             background-color: #f1f5f9;
             font-weight: bold;
             color: #0f172a;
-            border-top: 1.5px solid #cbd5e1;
-            border-bottom: 1.5px solid #cbd5e1;
+            border-top: 2px solid #cbd5e1;
+            border-bottom: 2px solid #cbd5e1;
+            padding: 7px 8px;
         }
+
+        /* Subtle Badges */
         .badge {
             font-size: 6.5pt;
             font-weight: bold;
-            padding: 2px 4px;
-            border-radius: 3px;
+            padding: 2px 5px;
+            border-radius: 4px;
         }
-        .badge-success { background-color: #dcfce7; color: #15803d; }
-        .badge-warning { background-color: #fef3c7; color: #b45309; }
-        .badge-danger  { background-color: #fee2e2; color: #b91c1c; }
-        .badge-info    { background-color: #e0f2fe; color: #0369a1; }
+        .badge-success { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-info    { background-color: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .badge-warning { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+        .badge-danger  { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .badge-slate   { background-color: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+
+        .spacer-lg { height: 14px; }
+        .spacer-sm { height: 8px; }
     </style>
 </head>
 <body>
 
-    <!-- Header Section -->
-    <table class="header-table" cellpadding="0" cellspacing="0">
+    <!-- Executive Header Banner Box -->
+    <table class="banner-box" cellpadding="0" cellspacing="0">
         <tr>
-            <td width="35%">
+            <td width="32%" valign="middle">
                 @if (file_exists(public_path('assets/images/logo/logo1.png')))
                     <img src="{{ public_path('assets/images/logo/logo1.png') }}" height="32" /><br/>
                 @else
                     <span style="font-size:16pt; font-weight:bold; color:#0056D2;">SimPhix</span><br/>
                 @endif
-                <span style="font-size:7pt; color:#64748b;">Empowering Businesses Through Smart Connectivity</span>
+                <span style="font-size:6.8pt; color:#64748b; font-weight:500;">Empowering Businesses Through Smart Connectivity</span>
             </td>
-            <td width="65%" align="right">
+            <td width="68%" align="right" valign="middle">
                 <div class="header-title">SALES PERFORMANCE &amp; TERRITORY REPORT</div>
                 <div class="meta-text">
-                    <b>Generated For:</b> {{ $user->name }} ({{ ucfirst(str_replace('_', ' ', $user->role)) }}) &nbsp;|&nbsp;
+                    <b>Generated For:</b> {{ $user->name }} &nbsp;·&nbsp;
+                    <span style="color:#0056D2; font-weight:bold;">{{ ucfirst(str_replace('_', ' ', $user->role)) }}</span> &nbsp;·&nbsp;
                     <b>Scope:</b> {{ $user->jurisdictionLabel() ?? 'All Managed Territories' }}<br/>
-                    <b>Reporting Period:</b> {{ $rangeLabel }} &nbsp;|&nbsp;
-                    <b>Date Generated:</b> {{ now()->format('F d, Y · h:i A') }}
+                    <b>Reporting Window:</b> <span style="color:#0f172a; font-weight:bold;">{{ $rangeLabel }}</span> &nbsp;|&nbsp;
+                    <b>Generated:</b> {{ now()->format('F d, Y · h:i A') }}
                 </div>
             </td>
         </tr>
     </table>
 
-    <!-- Executive Overview KPIs -->
-    <div class="section-header">Executive Summary KPIs</div>
-    <table class="kpi-table" cellpadding="4" cellspacing="3">
+    <!-- Section 1: Executive KPI Summary -->
+    <div class="section-bar">
+        <span class="section-title">Executive Summary KPIs</span>
+        <div class="section-desc">Key performance indicators, sales velocity, and inventory status for the reporting window.</div>
+    </div>
+
+    <!-- KPI Grid (2 Balanced Rows with Light Pastel Backgrounds) -->
+    <table class="kpi-table" cellpadding="3" cellspacing="4">
+        <!-- Row 1 -->
         <tr>
-            <td class="kpi-cell" width="12.5%">
-                <div class="kpi-label">Allocated SIMs</div>
-                <div class="kpi-value" style="color:#0f172a;">{{ number_format($totalAllocatedSims) }}</div>
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                    <div class="kpi-label" style="color: #64748b;">Total Allocated SIMs</div>
+                    <div class="kpi-number" style="color: #0f172a;">{{ number_format($totalAllocatedSims) }}</div>
+                    <div class="kpi-sub" style="color: #64748b;">Entire stock in jurisdiction</div>
+                </div>
             </td>
-            <td class="kpi-cell" width="12.5%">
-                <div class="kpi-label">Activated Sales</div>
-                <div class="kpi-value" style="color:#0056D2;">{{ number_format($activatedSalesCount) }}</div>
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #eff6ff; border: 1px solid #bfdbfe;">
+                    <div class="kpi-label" style="color: #1e40af;">Activated Sales</div>
+                    <div class="kpi-number" style="color: #0056D2;">{{ number_format($activatedSalesCount) }}</div>
+                    <div class="kpi-sub" style="color: #2563eb;">Completed SIM activations</div>
+                </div>
             </td>
-            <td class="kpi-cell" width="16%">
-                <div class="kpi-label">Sales Volume</div>
-                <div class="kpi-value" style="color:#059669; font-size:10pt;">NGN {{ number_format($totalSalesVolume, 2) }}</div>
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
+                    <div class="kpi-label" style="color: #166534;">Total Sales Volume</div>
+                    <div class="kpi-number" style="color: #15803d; font-size: 11pt;">NGN {{ number_format($totalSalesVolume, 2) }}</div>
+                    <div class="kpi-sub" style="color: #16a34a;">Gross activation value</div>
+                </div>
             </td>
-            <td class="kpi-cell" width="11%">
-                <div class="kpi-label">Conversion</div>
-                <div class="kpi-value" style="color:#2563eb;">{{ $overallConversionRate }}%</div>
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #faf5ff; border: 1px solid #e9d5ff;">
+                    <div class="kpi-label" style="color: #7e22ce;">Overall Conversion</div>
+                    <div class="kpi-number" style="color: #6d28d9;">{{ $overallConversionRate }}%</div>
+                    <div class="kpi-sub" style="color: #9333ea;">All-time activation rate</div>
+                </div>
             </td>
-            <td class="kpi-cell" width="13%">
-                <div class="kpi-label">Direct Sales</div>
-                <div class="kpi-value" style="font-size:9pt; color:#334155;">{{ number_format($directSalesCount) }} <span style="font-size:6.5pt; color:#64748b;">(NGN {{ number_format($directSalesVolume) }})</span></div>
+        </tr>
+        <!-- Row 2 -->
+        <tr>
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                    <div class="kpi-label" style="color: #64748b;">Direct Sales</div>
+                    <div class="kpi-number" style="color: #334155; font-size: 10.5pt;">{{ number_format($directSalesCount) }} <span style="font-size: 7.5pt; font-weight: normal; color: #64748b;">SIMs</span></div>
+                    <div class="kpi-sub" style="color: #64748b;">NGN {{ number_format($directSalesVolume, 2) }}</div>
+                </div>
             </td>
-            <td class="kpi-cell" width="13%">
-                <div class="kpi-label">Downline Sales</div>
-                <div class="kpi-value" style="font-size:9pt; color:#334155;">{{ number_format($downlineSalesCount) }} <span style="font-size:6.5pt; color:#64748b;">(NGN {{ number_format($downlineSalesVolume) }})</span></div>
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                    <div class="kpi-label" style="color: #64748b;">Downline Sales</div>
+                    <div class="kpi-number" style="color: #334155; font-size: 10.5pt;">{{ number_format($downlineSalesCount) }} <span style="font-size: 7.5pt; font-weight: normal; color: #64748b;">SIMs</span></div>
+                    <div class="kpi-sub" style="color: #64748b;">NGN {{ number_format($downlineSalesVolume, 2) }}</div>
+                </div>
             </td>
-            <td class="kpi-cell" width="11%">
-                <div class="kpi-label">Commissions</div>
-                <div class="kpi-value" style="color:#7c3aed; font-size:9.5pt;">NGN {{ number_format($commissionThisPeriod, 2) }}</div>
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #f5f3ff; border: 1px solid #ddd6fe;">
+                    <div class="kpi-label" style="color: #6d28d9;">Commissions Earned</div>
+                    <div class="kpi-number" style="color: #7c3aed; font-size: 10.5pt;">NGN {{ number_format($commissionThisPeriod, 2) }}</div>
+                    <div class="kpi-sub" style="color: #8b5cf6;">In selected window</div>
+                </div>
             </td>
-            <td class="kpi-cell" width="11%">
-                <div class="kpi-label">Pending / Dormant</div>
-                <div class="kpi-value" style="font-size:9pt;">
-                    <span style="color:#d97706;">{{ number_format($pendingCount) }}</span>
-                    <span style="font-size:7.5pt; color:#94a3b8;">/</span>
-                    <span style="color:#dc2626;">{{ number_format($dormantCount) }}</span>
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #fffbeb; border: 1px solid #fde68a;">
+                    <div class="kpi-label" style="color: #92400e;">Stock Status</div>
+                    <div class="kpi-number" style="font-size: 10.5pt;">
+                        <span style="color: #d97706;">{{ number_format($pendingCount) }}</span>
+                        <span style="font-size: 7.5pt; color: #94a3b8; font-weight: normal;">pending &nbsp;·&nbsp;</span>
+                        <span style="color: #dc2626;">{{ number_format($dormantCount) }}</span>
+                        <span style="font-size: 7.5pt; color: #94a3b8; font-weight: normal;">dormant</span>
+                    </div>
+                    <div class="kpi-sub" style="color: #b45309;">Unactivated stock breakdown</div>
                 </div>
             </td>
         </tr>
     </table>
 
-    <!-- Category & Network Breakdown Tables (2-column layout) -->
+    <div style="height: 6px;"></div>
+
+    <!-- Section 2: Category & Network Breakdown Tables (Side-by-Side) -->
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
         <tr>
+            <!-- Category Column -->
             <td width="58%" valign="top">
-                <div class="section-header">Category Breakdown</div>
-                <table class="data-table" cellpadding="3">
+                <div class="section-bar">
+                    <span class="section-title">SIM Category Breakdown</span>
+                    <div class="section-desc">Performance segmented by device package type.</div>
+                </div>
+                <table class="styled-table" cellpadding="5">
                     <thead>
                         <tr>
                             <th width="32%"><b>Category</b></th>
-                            <th width="18%" align="center"><b>Allocated</b></th>
-                            <th width="18%" align="center"><b>Activated</b></th>
-                            <th width="18%" align="right"><b>Volume (NGN)</b></th>
+                            <th width="17%" align="center"><b>Allocated</b></th>
+                            <th width="17%" align="center"><b>Activated</b></th>
+                            <th width="20%" align="right"><b>Volume (NGN)</b></th>
                             <th width="14%" align="center"><b>Conv. %</b></th>
                         </tr>
                     </thead>
@@ -188,23 +265,32 @@
                         @forelse ($categoryBreakdown as $cat)
                             <tr class="{{ $loop->even ? 'even' : '' }}">
                                 <td><b>{{ $cat['category'] }}</b></td>
-                                <td align="center">{{ number_format($cat['allocated']) }}</td>
-                                <td align="center" style="color:#0056D2; font-weight:bold;">{{ number_format($cat['activated']) }}</td>
-                                <td align="right" style="color:#059669;">{{ number_format($cat['volume'], 2) }}</td>
-                                <td align="center">{{ $cat['conversion_rate'] }}%</td>
+                                <td align="center" style="color: #64748b;">{{ number_format($cat['allocated']) }}</td>
+                                <td align="center" style="color: #0056D2; font-weight: bold;">{{ number_format($cat['activated']) }}</td>
+                                <td align="right" style="color: #15803d; font-weight: bold;">{{ number_format($cat['volume'], 2) }}</td>
+                                <td align="center">
+                                    <span class="badge {{ $cat['conversion_rate'] >= 50 ? 'badge-success' : 'badge-slate' }}">
+                                        {{ $cat['conversion_rate'] }}%
+                                    </span>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" align="center" style="color:#64748b; padding:8px;">No category sales in this period.</td>
+                                <td colspan="5" align="center" style="color: #64748b; padding: 10px;">No category sales recorded in this period.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </td>
+            <!-- Gutter -->
             <td width="4%"></td>
+            <!-- Network Column -->
             <td width="38%" valign="top">
-                <div class="section-header">Network / Provider Breakdown</div>
-                <table class="data-table" cellpadding="3">
+                <div class="section-bar">
+                    <span class="section-title">Network / Provider</span>
+                    <div class="section-desc">Carrier distribution and market share.</div>
+                </div>
+                <table class="styled-table" cellpadding="5">
                     <thead>
                         <tr>
                             <th width="35%"><b>Network</b></th>
@@ -219,13 +305,15 @@
                             @php $share = $totalProvActive > 0 ? round(($prov['activated'] / $totalProvActive) * 100, 1) : 0; @endphp
                             <tr class="{{ $loop->even ? 'even' : '' }}">
                                 <td><b>{{ $prov['provider'] }}</b></td>
-                                <td align="center">{{ number_format($prov['allocated']) }}</td>
-                                <td align="center" style="color:#0056D2; font-weight:bold;">{{ number_format($prov['activated']) }}</td>
-                                <td align="center">{{ $share }}%</td>
+                                <td align="center" style="color: #64748b;">{{ number_format($prov['allocated']) }}</td>
+                                <td align="center" style="color: #0056D2; font-weight: bold;">{{ number_format($prov['activated']) }}</td>
+                                <td align="center">
+                                    <span class="badge badge-info">{{ $share }}%</span>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" align="center" style="color:#64748b; padding:8px;">No network sales recorded.</td>
+                                <td colspan="4" align="center" style="color: #64748b; padding: 10px;">No network sales recorded.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -234,38 +322,47 @@
         </tr>
     </table>
 
-    <!-- Territory & Downline Breakdown Table -->
-    <div class="section-header">Territory &amp; Downline Breakdown</div>
-    <table class="data-table" cellpadding="3.5">
+    <div style="height: 6px;"></div>
+
+    <!-- Section 3: Territory & Downline Breakdown Table -->
+    <div class="section-bar">
+        <span class="section-title">Territory &amp; Downline Breakdown</span>
+        <div class="section-desc">Comprehensive jurisdictional performance across districts, regional offices, and partner portfolios.</div>
+    </div>
+    <table class="styled-table" cellpadding="5.5">
         <thead>
             <tr>
                 <th width="24%"><b>Territory / Coverage</b></th>
                 <th width="14%"><b>Level / Type</b></th>
-                <th width="17%"><b>Assigned Lead</b></th>
+                <th width="16%"><b>Assigned Lead</b></th>
                 <th width="12%"><b>Contact Phone</b></th>
                 <th width="7%" align="center"><b>Alloc.</b></th>
                 <th width="7%" align="center"><b>Active</b></th>
                 <th width="10%" align="right"><b>Volume (NGN)</b></th>
-                <th width="5%" align="center"><b>Conv. %</b></th>
-                <th width="4%" align="center"><b>Pend.</b></th>
+                <th width="5%" align="center"><b>Conv.</b></th>
+                <th width="5%" align="center"><b>Pending</b></th>
             </tr>
         </thead>
         <tbody>
             @forelse ($jurisdictionRows as $row)
                 <tr class="{{ $loop->even ? 'even' : '' }}">
                     <td><b>{{ $row['jurisdiction'] }}</b></td>
-                    <td>{{ $row['type'] }}</td>
+                    <td style="color: #64748b;">{{ $row['type'] }}</td>
                     <td>{{ $row['lead_name'] }}</td>
-                    <td>{{ $row['lead_phone'] }}</td>
-                    <td align="center">{{ number_format($row['allocated']) }}</td>
-                    <td align="center" style="color:#0056D2; font-weight:bold;">{{ number_format($row['activated']) }}</td>
-                    <td align="right" style="color:#059669; font-weight:bold;">{{ number_format($row['sales_volume'], 2) }}</td>
-                    <td align="center">{{ $row['conversion_rate'] }}%</td>
-                    <td align="center" style="color:#d97706;">{{ number_format($row['pending']) }}</td>
+                    <td style="color: #64748b;">{{ $row['lead_phone'] }}</td>
+                    <td align="center" style="color: #64748b;">{{ number_format($row['allocated']) }}</td>
+                    <td align="center" style="color: #0056D2; font-weight: bold;">{{ number_format($row['activated']) }}</td>
+                    <td align="right" style="color: #15803d; font-weight: bold;">{{ number_format($row['sales_volume'], 2) }}</td>
+                    <td align="center">
+                        <span class="badge {{ $row['conversion_rate'] >= 50 ? 'badge-success' : 'badge-slate' }}">
+                            {{ $row['conversion_rate'] }}%
+                        </span>
+                    </td>
+                    <td align="center" style="color: #d97706;">{{ number_format($row['pending']) }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" align="center" style="color:#64748b; padding:8px;">No territory breakdown data available.</td>
+                    <td colspan="9" align="center" style="color: #64748b; padding: 12px;">No territory breakdown data available for this selection.</td>
                 </tr>
             @endforelse
 
@@ -274,18 +371,23 @@
                 <tr class="totals-row">
                     <td colspan="4"><b>TOTAL PORTFOLIO SUMMARY</b></td>
                     <td align="center"><b>{{ number_format($t['allocated']) }}</b></td>
-                    <td align="center" style="color:#0056D2;"><b>{{ number_format($t['activated']) }}</b></td>
-                    <td align="right" style="color:#059669;"><b>{{ number_format($t['sales_volume'], 2) }}</b></td>
-                    <td align="center"><b>{{ $t['conversion_rate'] }}%</b></td>
-                    <td align="center" style="color:#d97706;"><b>{{ number_format($t['pending']) }}</b></td>
+                    <td align="center" style="color: #0056D2;"><b>{{ number_format($t['activated']) }}</b></td>
+                    <td align="right" style="color: #15803d;"><b>{{ number_format($t['sales_volume'], 2) }}</b></td>
+                    <td align="center"><span class="badge badge-info">{{ $t['conversion_rate'] }}%</span></td>
+                    <td align="center" style="color: #d97706;"><b>{{ number_format($t['pending']) }}</b></td>
                 </tr>
             @endif
         </tbody>
     </table>
 
-    <!-- Itemized Sales Records -->
-    <div class="section-header">Itemized Activated SIMs (Recent Sales Records)</div>
-    <table class="data-table" cellpadding="3">
+    <div style="height: 6px;"></div>
+
+    <!-- Section 4: Itemized Sales Records Table -->
+    <div class="section-bar">
+        <span class="section-title">Itemized Activated SIMs (Recent Sales Records)</span>
+        <div class="section-desc">Line-item audit of SIM activations recorded within the reporting window.</div>
+    </div>
+    <table class="styled-table" cellpadding="5">
         <thead>
             <tr>
                 <th width="12%"><b>SIM Number</b></th>
@@ -318,25 +420,25 @@
                 <tr class="{{ $loop->even ? 'even' : '' }}">
                     <td><b>{{ $sim->number }}</b></td>
                     <td>{{ $sim->category }}</td>
-                    <td align="center">{{ strtoupper($sim->provider) }}</td>
+                    <td align="center"><span class="badge badge-slate">{{ strtoupper($sim->provider) }}</span></td>
                     <td>{{ $customerName }}</td>
-                    <td>{{ $customerPhone }}</td>
-                    <td>{{ $activatedDate }}</td>
+                    <td style="color: #64748b;">{{ $customerPhone }}</td>
+                    <td style="color: #64748b;">{{ $activatedDate }}</td>
                     <td>{{ $activatedBy }}</td>
-                    <td>{{ $jurisdiction }}</td>
-                    <td align="right" style="color:#059669; font-weight:bold;">{{ number_format($price, 2) }}</td>
+                    <td style="color: #64748b;">{{ $jurisdiction }}</td>
+                    <td align="right" style="color: #15803d; font-weight: bold;">{{ number_format($price, 2) }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" align="center" style="color:#64748b; padding:8px;">No activated SIM sales found in this period matching the selected criteria.</td>
+                    <td colspan="9" align="center" style="color: #64748b; padding: 12px;">No activated SIM sales found in this period matching the selected criteria.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 
     @if ($activatedSimsList->count() > $displayLimit)
-        <p style="font-size:7pt; color:#64748b; text-align:center; margin-top:4px;">
-            Showing first {{ $displayLimit }} of {{ number_format($activatedSimsList->count()) }} activated SIM records. Export as CSV for the full unrestricted dataset.
+        <p style="font-size: 6.8pt; color: #64748b; text-align: center; margin-top: 4px;">
+            Showing first {{ $displayLimit }} of {{ number_format($activatedSimsList->count()) }} activated SIM records. Export as CSV for the unrestricted raw dataset.
         </p>
     @endif
 
