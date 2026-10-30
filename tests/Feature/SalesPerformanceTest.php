@@ -163,3 +163,49 @@ test('catalog users can export sales performance report to CSV', function () {
     expect($content)->toContain('Kudirat Alabi');
     expect($content)->toContain($this->district->name);
 });
+
+test('catalog users can export sales performance report to PDF', function () {
+    $sim = Sim::create([
+        'number'              => '0803' . fake()->unique()->numerify('#######'),
+        'category'            => 'POS SIM',
+        'provider'            => 'mtn',
+        'status'              => SimStatus::ACTIVATED,
+        'regional_manager_id' => $this->rm->id,
+        'coordinator_id'      => $this->coordinator->id,
+        'partner_id'          => $this->partner->id,
+        'user_id'             => $this->partner->id,
+    ]);
+
+    SimCustomer::create([
+        'sim_id'       => $sim->id,
+        'partner_id'   => $this->partner->id,
+        'full_name'    => 'Emeka Okafor',
+        'phone_number' => '08077778888',
+    ]);
+
+    $response = $this->actingAs($this->rm)->get(route('sales-performance.export', [
+        'format' => 'pdf',
+        'range'  => '7days',
+    ]));
+
+    $response->assertOk();
+    $response->assertHeader('Content-Type', 'application/pdf');
+    $content = $response->getContent();
+
+    // Verify it is a valid PDF
+    expect(str_starts_with($content, '%PDF'))->toBeTrue();
+    expect(strlen($content))->toBeGreaterThan(1000);
+});
+
+test('sales performance page contains interactive export settings modal', function () {
+    $response = $this->actingAs($this->rm)->get(route('sales-performance.index'));
+
+    $response->assertOk();
+    $response->assertSee('Export Report');
+    $response->assertSee('Export Sales Performance');
+    $response->assertSee('Export PDF Report');
+    $response->assertSee('Export CSV Report');
+    $response->assertSee('Document Type');
+    $response->assertSee('Reporting Period');
+    $response->assertSee('Custom Date Range');
+});

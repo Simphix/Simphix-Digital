@@ -1,7 +1,16 @@
 <x-app-layout>
     <title>SimPhix - Sales Performance & Territory Breakdown</title>
 
-    <div class="max-w-6xl mx-auto space-y-6">
+    <div class="max-w-6xl mx-auto space-y-6"
+         x-data="{
+             showExportModal: false,
+             exportRange: '{{ $range }}',
+             exportFormat: 'pdf',
+             exportStart: '{{ $periodStart ?? '' }}',
+             exportEnd: '{{ $periodEnd ?? '' }}',
+             exportCat: '{{ $selectedCategory ?? '' }}',
+             exportProv: '{{ $selectedProvider ?? '' }}'
+         }">
         <!-- Page Header & Action Toolbar -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -18,11 +27,177 @@
 
             <!-- Export Report Button -->
             <div class="flex items-center gap-2.5">
-                <a href="{{ route('sales-performance.export', request()->all()) }}"
-                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm hover:shadow">
+                <button type="button"
+                        @click="showExportModal = true"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm hover:shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
                     <i data-lucide="download" class="w-4 h-4"></i>
-                    Export CSV Report
-                </a>
+                    <span>Export Report</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Export Settings Modal -->
+        <div x-show="showExportModal"
+             x-cloak
+             class="fixed inset-0 z-50 overflow-y-auto"
+             style="display: none;"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="export-modal-title">
+
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+                 @click="showExportModal = false"
+                 aria-hidden="true"></div>
+
+            <div class="min-h-full flex items-center justify-center p-4 sm:p-6 text-center">
+                <div class="relative w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl text-left overflow-hidden transform transition-all"
+                     @click.away="showExportModal = false">
+
+                    <!-- Modal Header -->
+                    <div class="p-6 pb-4 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <i data-lucide="file-output" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 id="export-modal-title" class="text-base font-bold font-display text-slate-800">Export Sales Performance</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">Configure your report settings, date range, and export format.</p>
+                            </div>
+                        </div>
+                        <button type="button"
+                                @click="showExportModal = false"
+                                class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body / Form -->
+                    <form action="{{ route('sales-performance.export') }}" method="GET" target="_blank" @submit="setTimeout(() => showExportModal = false, 500)">
+                        <div class="p-6 space-y-5">
+                            
+                            <!-- 1. Document Format (PDF vs CSV) -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Document Type</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <!-- PDF Option -->
+                                    <label class="relative flex flex-col p-3.5 rounded-2xl border cursor-pointer transition select-none"
+                                           :class="exportFormat === 'pdf' ? 'border-primary ring-2 ring-primary/20 bg-primary/[0.03]' : 'border-slate-200 hover:border-slate-300 bg-white'">
+                                        <input type="radio" name="format" value="pdf" x-model="exportFormat" class="sr-only">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                                            </div>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
+                                                Landscape A4
+                                            </span>
+                                        </div>
+                                        <span class="font-bold text-xs text-slate-800">Export PDF Report</span>
+                                        <span class="text-[11px] text-slate-500 mt-0.5 leading-snug">Executive landscape report with SimPhix branding &amp; tables</span>
+                                    </label>
+
+                                    <!-- CSV Option -->
+                                    <label class="relative flex flex-col p-3.5 rounded-2xl border cursor-pointer transition select-none"
+                                           :class="exportFormat === 'csv' ? 'border-primary ring-2 ring-primary/20 bg-primary/[0.03]' : 'border-slate-200 hover:border-slate-300 bg-white'">
+                                        <input type="radio" name="format" value="csv" x-model="exportFormat" class="sr-only">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                                <i data-lucide="table" class="w-4 h-4"></i>
+                                            </div>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+                                                Excel / Sheets
+                                            </span>
+                                        </div>
+                                        <span class="font-bold text-xs text-slate-800">Export CSV Report</span>
+                                        <span class="text-[11px] text-slate-500 mt-0.5 leading-snug">Raw data records for spreadsheet analysis</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 2. Date Range / Period -->
+                            <div>
+                                <label for="export_range" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Reporting Period</label>
+                                <select id="export_range"
+                                        name="range"
+                                        x-model="exportRange"
+                                        class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-800 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                    <option value="7days">Last 7 Days</option>
+                                    <option value="today">Today</option>
+                                    <option value="30days">Last 30 Days</option>
+                                    <option value="this_month">This Month</option>
+                                    <option value="all">All Time</option>
+                                    <option value="custom">Custom Date Range...</option>
+                                </select>
+                            </div>
+
+                            <!-- Custom Date Inputs (Conditional) -->
+                            <div x-show="exportRange === 'custom'" x-cloak class="grid grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Start Date</label>
+                                    <input type="date"
+                                           name="period_start"
+                                           x-model="exportStart"
+                                           class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">End Date</label>
+                                    <input type="date"
+                                           name="period_end"
+                                           x-model="exportEnd"
+                                           class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                </div>
+                            </div>
+
+                            <!-- 3. Scope Filters (Category & Network) -->
+                            <div class="grid grid-cols-2 gap-3 pt-1">
+                                <div>
+                                    <label for="export_cat" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Category</label>
+                                    <select id="export_cat"
+                                            name="category"
+                                            x-model="exportCat"
+                                            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                        <option value="">All Categories</option>
+                                        @foreach ($categories as $cat)
+                                            <option value="{{ $cat }}">{{ $cat }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="export_prov" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Network</label>
+                                    <select id="export_prov"
+                                            name="provider"
+                                            x-model="exportProv"
+                                            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                        <option value="">All Networks</option>
+                                        @foreach ($providers as $prov)
+                                            <option value="{{ $prov }}">{{ strtoupper($prov) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Actions -->
+                        <div class="p-4 px-6 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                            <button type="button"
+                                    @click="showExportModal = false"
+                                    class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 transition">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition shadow-sm hover:shadow">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                                <span x-text="exportFormat === 'pdf' ? 'Download PDF Report' : 'Download CSV Report'">Download Report</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 

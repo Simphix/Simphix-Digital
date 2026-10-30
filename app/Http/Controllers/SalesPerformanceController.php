@@ -73,6 +73,17 @@ class SalesPerformanceController extends Controller
 
         $data = $this->buildReportData($user, $request);
 
+        $format = strtolower($request->input('format', 'csv'));
+        if ($format === 'pdf') {
+            $pdfContent = $this->generatePdf($data, $user);
+            $filename = 'sales-performance-report-' . str_replace('_', '-', $user->role) . '-' . now()->format('Y-m-d') . '.pdf';
+
+            return response($pdfContent, 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]);
+        }
+
         $csv = "\xEF\xBB\xBF"; // UTF-8 BOM for Microsoft Excel
         $csv .= "\"SIMPHIX SALES PERFORMANCE & TERRITORY REPORT\"\n";
         $csv .= "\"Generated For\",\"" . str_replace('"', '""', $user->name) . " (" . ucfirst(str_replace('_', ' ', $user->role)) . ")\"\n";
@@ -159,7 +170,40 @@ class SalesPerformanceController extends Controller
         ]);
     }
 
-    private function buildReportData(User $user, Request $request): array
+    public function generatePdf(array $data, User $user): string
+    {
+        $data['controller'] = $this;
+
+        $html = view('sales-performance.pdf', $data)->render();
+
+        $pdf = new class('L', 'mm', 'A4', true, 'UTF-8', false) extends \TCPDF {
+            public function Footer()
+            {
+                $this->SetY(-10);
+                $this->SetFont('helvetica', 'I', 7.5);
+                $this->SetTextColor(148, 163, 184); // slate-400
+                $this->Cell(180, 6, 'SimPhix Sales Performance Report · Confidential & Proprietary · Generated ' . date('Y-m-d H:i'), 0, 0, 'L');
+                $this->Cell(0, 6, 'Page ' . $this->getAliasNumPage() . ' of ' . $this->getAliasNbPages(), 0, 0, 'R');
+            }
+        };
+
+        $pdf->SetCreator('SimPhix');
+        $pdf->SetAuthor('SimPhix Platform');
+        $pdf->SetTitle('Sales Performance & Territory Report - ' . $user->name);
+        $pdf->SetSubject('Sales Performance Report');
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(true);
+        $pdf->SetMargins(10, 8, 10);
+        $pdf->SetAutoPageBreak(true, 12);
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->AddPage();
+
+        $pdf->writeHTML($html, true, false, true, false, '');
+
+        return $pdf->Output('sales-performance-report.pdf', 'S');
+    }
+
+    public function buildReportData(User $user, Request $request): array
     {
         $fk = self::HOLDER_FK[$user->role] ?? 'user_id';
         $isPersonal = in_array($user->role, ['personal', 'agent', 'business_agent'], true);
@@ -414,7 +458,7 @@ class SalesPerformanceController extends Controller
         return $prices;
     }
 
-    private function getSimPrice(Sim $sim, array $priceMap): float
+    public function getSimPrice(Sim $sim, array $priceMap): float
     {
         return (float) ($priceMap[$sim->category] ?? 1000.00);
     }
@@ -612,7 +656,7 @@ class SalesPerformanceController extends Controller
         ];
     }
 
-    private function resolveSimJurisdictionLabel(Sim $sim): string
+    public function resolveSimJurisdictionLabel(Sim $sim): string
     {
         if ($sim->coordinator && $sim->coordinator->districtAsCoordinator) {
             $district = $sim->coordinator->districtAsCoordinator;
