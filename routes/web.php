@@ -90,6 +90,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/network/downline/{user}', [\App\Http\Controllers\DownlineDetailController::class, 'show'])->name('network.downline.show');
     Route::post('/network/downline/{user}/complete-onboarding', [\App\Http\Controllers\DownlineDetailController::class, 'completeOnboarding'])->name('network.downline.complete-onboarding');
     Route::post('/network/downline/{user}/virtual-account', [\App\Http\Controllers\DownlineDetailController::class, 'generateVirtualAccount'])->name('network.downline.virtual-account');
+    Route::post('/network/downline/{user}/assign-district', [\App\Http\Controllers\DownlineDetailController::class, 'assignDistrict'])->name('network.downline.assign-district');
+    Route::post('/network/downline/{user}/unassign-district', [\App\Http\Controllers\DownlineDetailController::class, 'unassignDistrict'])->name('network.downline.unassign-district');
 
     // Leaderboard & Commission Dashboard Routes
     Route::get('/leaderboard', [\App\Http\Controllers\LeaderboardController::class, 'index'])->name('leaderboard');
