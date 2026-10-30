@@ -67,28 +67,36 @@
                                     @endif
                                 </td>
                                 <td class="py-4 px-6 text-right">
-                                    <form method="POST" action="{{ route('admin.manage.access.update', $u) }}" class="inline-flex items-center gap-3">
-                                        @csrf
-                                        @method('PUT')
-                                        
-                                        <x-select-input name="role"
-                                                class="!w-auto !px-3 !py-1.5 rounded-xl !text-xs bg-slate-50 font-semibold">
-                                            <option value="personal" {{ $u->role === 'personal' ? 'selected' : '' }}>Personal</option>
-                                            <option value="agent" {{ $u->role === 'agent' ? 'selected' : '' }}>Agent</option>
-                                            <option value="partner" {{ $u->role === 'partner' ? 'selected' : '' }}>Partner</option>
-                                            <option value="coordinator" {{ $u->role === 'coordinator' ? 'selected' : '' }}>Coordinator</option>
-                                            <option value="regional_manager" {{ $u->role === 'regional_manager' ? 'selected' : '' }}>Regional Manager</option>
-                                            <option value="business" {{ $u->role === 'business' ? 'selected' : '' }}>Enterprise Business</option>
-                                            <option value="business_agent" {{ $u->role === 'business_agent' ? 'selected' : '' }}>Business Agent</option>
-                                            <option value="business_sales_manager" {{ $u->role === 'business_sales_manager' ? 'selected' : '' }}>Business Sales Manager</option>
-                                            <option value="support" {{ $u->role === 'support' ? 'selected' : '' }}>Support</option>
-                                            <option value="super_admin" {{ $u->role === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
-                                        </x-select-input>
+                                    @if ($u->role === 'super_admin')
+                                        <div class="inline-flex items-center gap-2">
+                                            <span class="inline-flex items-center px-2.5 py-1 text-xs font-extrabold rounded-xl bg-purple-50 text-purple-700 border border-purple-200 uppercase tracking-wider">
+                                                Super Admin
+                                            </span>
+                                            <span class="text-[11px] text-slate-400 italic font-medium">(CLI only)</span>
+                                        </div>
+                                    @else
+                                        <form method="POST" action="{{ route('admin.manage.access.update', $u) }}" class="inline-flex items-center gap-3">
+                                            @csrf
+                                            @method('PUT')
+                                            
+                                            <x-select-input name="role"
+                                                    class="!w-auto !px-3 !py-1.5 rounded-xl !text-xs bg-slate-50 font-semibold">
+                                                <option value="personal" {{ $u->role === 'personal' ? 'selected' : '' }}>Personal</option>
+                                                <option value="agent" {{ $u->role === 'agent' ? 'selected' : '' }}>Agent</option>
+                                                <option value="partner" {{ $u->role === 'partner' ? 'selected' : '' }}>Partner</option>
+                                                <option value="coordinator" {{ $u->role === 'coordinator' ? 'selected' : '' }}>Coordinator</option>
+                                                <option value="regional_manager" {{ $u->role === 'regional_manager' ? 'selected' : '' }}>Regional Manager</option>
+                                                <option value="business" {{ $u->role === 'business' ? 'selected' : '' }}>Enterprise Business</option>
+                                                <option value="business_agent" {{ $u->role === 'business_agent' ? 'selected' : '' }}>Business Agent</option>
+                                                <option value="business_sales_manager" {{ $u->role === 'business_sales_manager' ? 'selected' : '' }}>Business Sales Manager</option>
+                                                <option value="support" {{ $u->role === 'support' ? 'selected' : '' }}>Support</option>
+                                            </x-select-input>
 
-                                        <x-primary-button type="submit" class="!px-4 !py-1.5 !text-xs">
-                                            Save
-                                        </x-primary-button>
-                                    </form>
+                                            <x-primary-button type="submit" class="!px-4 !py-1.5 !text-xs">
+                                                Save
+                                            </x-primary-button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

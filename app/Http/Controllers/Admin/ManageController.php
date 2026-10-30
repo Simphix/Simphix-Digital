@@ -68,6 +68,12 @@ class ManageController extends Controller
     {
         \App\Support\PhoneNumber::normalizeRequestInput($request);
 
+        $assignableRoles = ['personal', 'agent', 'partner', 'business', 'business_agent', 'regional_manager', 'coordinator', 'business_sales_manager', 'support'];
+        
+        $roleRules = $user->role === 'super_admin'
+            ? ['required', 'string', 'in:super_admin']
+            : ['required', 'string', Rule::in($assignableRoles)];
+
         $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
             'middle_name' => ['nullable', 'string', 'max:100'],
@@ -75,7 +81,9 @@ class ManageController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
             'phone' => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), Rule::unique(User::class)->ignore($user->id)],
             'status' => ['required', 'string', 'in:active,suspended,inactive,banned'],
-            'role' => ['required', 'string', 'in:personal,agent,partner,business,business_agent,regional_manager,coordinator,business_sales_manager,support,super_admin'],
+            'role' => $roleRules,
+        ], [
+            'role.in' => 'Super Admin role cannot be assigned through the interface.',
         ]);
 
         $previousRole = $user->role;
@@ -183,6 +191,10 @@ class ManageController extends Controller
             return redirect()->back()->with('error', 'This user does not have a pending upgrade request.');
         }
 
+        if ($user->pending_role === 'super_admin') {
+            return redirect()->back()->with('error', 'Super Admin role cannot be granted via upgrade requests.');
+        }
+
         $user->forceFill([
             'role' => $user->pending_role,
             'upgrade_status' => 'approved',
@@ -234,8 +246,16 @@ class ManageController extends Controller
      */
     public function updateAccess(Request $request, User $user): RedirectResponse
     {
+        if ($user->role === 'super_admin') {
+            return redirect()->back()->with('error', 'Super Admin roles cannot be modified from the interface.');
+        }
+
+        $assignableRoles = ['personal', 'agent', 'partner', 'business', 'business_agent', 'regional_manager', 'coordinator', 'business_sales_manager', 'support'];
+
         $request->validate([
-            'role' => ['required', 'string', 'in:personal,agent,partner,business,business_agent,regional_manager,coordinator,business_sales_manager,support,super_admin'],
+            'role' => ['required', 'string', Rule::in($assignableRoles)],
+        ], [
+            'role.in' => 'Super Admin role cannot be assigned through the interface.',
         ]);
 
         $previousRole = $user->role;

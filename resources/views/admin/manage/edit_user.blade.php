@@ -60,18 +60,25 @@
                     </div>
                     <div>
                         <x-input-label value="System Role" />
-                        <x-select-input name="role">
-                            <option value="personal" {{ old('role', $user->role) == 'personal' ? 'selected' : '' }}>Personal (User)</option>
-                            <option value="agent" {{ old('role', $user->role) == 'agent' ? 'selected' : '' }}>Agent</option>
-                            <option value="partner" {{ old('role', $user->role) == 'partner' ? 'selected' : '' }}>Partner</option>
-                            <option value="coordinator" {{ old('role', $user->role) == 'coordinator' ? 'selected' : '' }}>Coordinator</option>
-                            <option value="regional_manager" {{ old('role', $user->role) == 'regional_manager' ? 'selected' : '' }}>Regional Manager</option>
-                            <option value="business" {{ old('role', $user->role) == 'business' ? 'selected' : '' }}>Enterprise Business</option>
-                            <option value="business_agent" {{ old('role', $user->role) == 'business_agent' ? 'selected' : '' }}>Business Agent</option>
-                            <option value="business_sales_manager" {{ old('role', $user->role) == 'business_sales_manager' ? 'selected' : '' }}>Business Sales Manager</option>
-                            <option value="support" {{ old('role', $user->role) == 'support' ? 'selected' : '' }}>Support</option>
-                            <option value="super_admin" {{ old('role', $user->role) == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
-                        </x-select-input>
+                        @if ($user->role === 'super_admin')
+                            <div class="mt-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-between">
+                                <span class="uppercase tracking-wider">Super Admin</span>
+                                <span class="text-[11px] font-normal text-slate-400 italic">Managed via CLI only</span>
+                            </div>
+                            <input type="hidden" name="role" value="super_admin">
+                        @else
+                            <x-select-input name="role">
+                                <option value="personal" {{ old('role', $user->role) == 'personal' ? 'selected' : '' }}>Personal (User)</option>
+                                <option value="agent" {{ old('role', $user->role) == 'agent' ? 'selected' : '' }}>Agent</option>
+                                <option value="partner" {{ old('role', $user->role) == 'partner' ? 'selected' : '' }}>Partner</option>
+                                <option value="coordinator" {{ old('role', $user->role) == 'coordinator' ? 'selected' : '' }}>Coordinator</option>
+                                <option value="regional_manager" {{ old('role', $user->role) == 'regional_manager' ? 'selected' : '' }}>Regional Manager</option>
+                                <option value="business" {{ old('role', $user->role) == 'business' ? 'selected' : '' }}>Enterprise Business</option>
+                                <option value="business_agent" {{ old('role', $user->role) == 'business_agent' ? 'selected' : '' }}>Business Agent</option>
+                                <option value="business_sales_manager" {{ old('role', $user->role) == 'business_sales_manager' ? 'selected' : '' }}>Business Sales Manager</option>
+                                <option value="support" {{ old('role', $user->role) == 'support' ? 'selected' : '' }}>Support</option>
+                            </x-select-input>
+                        @endif
                     </div>
                 </div>
 
