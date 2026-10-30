@@ -180,9 +180,9 @@ class SalesPerformanceController extends Controller
             public function Footer()
             {
                 $this->SetY(-10);
-                $this->SetFont('helvetica', 'I', 7.5);
+                $this->SetFont('dejavusans', '', 7.2);
                 $this->SetTextColor(148, 163, 184); // slate-400
-                $this->Cell(180, 6, 'SimPhix Sales Performance Report · Confidential & Proprietary · Generated ' . date('Y-m-d H:i'), 0, 0, 'L');
+                $this->Cell(190, 6, 'SimPhix Sales Performance Report · Confidential & Proprietary · Generated ' . date('Y-m-d H:i'), 0, 0, 'L');
                 $this->Cell(0, 6, 'Page ' . $this->getAliasNumPage() . ' of ' . $this->getAliasNbPages(), 0, 0, 'R');
             }
         };
@@ -193,9 +193,9 @@ class SalesPerformanceController extends Controller
         $pdf->SetSubject('Sales Performance Report');
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(true);
-        $pdf->SetMargins(10, 8, 10);
-        $pdf->SetAutoPageBreak(true, 12);
-        $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetMargins(12, 10, 12);
+        $pdf->SetAutoPageBreak(true, 14);
+        $pdf->SetFont('dejavusans', '', 8);
         $pdf->AddPage();
 
         $pdf->writeHTML($html, true, false, true, false, '');

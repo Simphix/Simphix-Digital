@@ -2,51 +2,47 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>SimPhix - Sales Performance &amp; Territory Report</title>
+    <title>SimPhix - Sales Performance and Territory Report</title>
     <style>
         body {
-            font-family: helvetica, Arial, sans-serif;
+            font-family: dejavusans, sans-serif;
             color: #1e293b;
             font-size: 8pt;
-            line-height: 1.45;
+            line-height: 1.5;
         }
 
-        /* Banner Container */
-        .banner-box {
+        /* Executive Header Banner */
+        .banner-card {
             width: 100%;
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-top: 3px solid #0056D2;
-            border-radius: 6px;
-            padding: 10px 14px;
-            margin-bottom: 14px;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
         }
         .header-title {
-            font-size: 13pt;
+            font-size: 13.5pt;
             font-weight: bold;
             color: #0056D2;
-            letter-spacing: 0.4px;
-            margin-bottom: 2px;
+            letter-spacing: 0.3px;
+            margin-bottom: 3px;
         }
-        .meta-text {
-            font-size: 7.5pt;
+        .header-meta {
+            font-size: 7.3pt;
             color: #475569;
-            line-height: 1.45;
+            line-height: 1.5;
         }
 
-        /* Section Titles */
-        .section-bar {
-            margin-top: 14px;
-            margin-bottom: 6px;
-            padding-left: 6px;
-            border-left: 3px solid #0056D2;
+        /* Clean Section Headings (No heavy colored lines) */
+        .section-wrap {
+            margin-top: 16px;
+            margin-bottom: 7px;
         }
         .section-title {
-            font-size: 9pt;
+            font-size: 9.5pt;
             font-weight: bold;
             color: #0f172a;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.2px;
         }
         .section-desc {
             font-size: 6.8pt;
@@ -54,11 +50,11 @@
             margin-top: 1px;
         }
 
-        /* KPI Cards Grid */
+        /* Executive KPI Cards Grid */
         .kpi-table {
             width: 100%;
             border-collapse: separate;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         .kpi-card {
             border-radius: 6px;
@@ -66,45 +62,45 @@
             text-align: center;
         }
         .kpi-label {
-            font-size: 6.5pt;
+            font-size: 6.6pt;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.3px;
             margin-bottom: 3px;
         }
         .kpi-number {
             font-size: 11.5pt;
             font-weight: bold;
-            line-height: 1.2;
+            line-height: 1.25;
         }
         .kpi-sub {
-            font-size: 6.8pt;
+            font-size: 6.7pt;
             margin-top: 2px;
         }
 
-        /* Table Styling - Airy, Light Colors, Good Edges */
+        /* Airy Tables with Light Colors and Good Edges */
         .styled-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 4px;
+            margin-top: 5px;
             margin-bottom: 14px;
             border: 1px solid #e2e8f0;
         }
         .styled-table th {
             background-color: #f8fafc;
-            color: #334155;
+            color: #475569;
             font-weight: bold;
             font-size: 7.2pt;
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            border-top: 2px solid #0056D2;
+            border-top: 1px solid #e2e8f0;
             border-bottom: 1.5px solid #cbd5e1;
             padding: 7px 8px;
         }
         .styled-table td {
             font-size: 7.5pt;
-            padding: 6px 8px;
-            border-bottom: 1px solid #eef2f6;
+            padding: 6.5px 8px;
+            border-bottom: 1px solid #f1f5f9;
             color: #334155;
             vertical-align: middle;
         }
@@ -115,16 +111,16 @@
             background-color: #f1f5f9;
             font-weight: bold;
             color: #0f172a;
-            border-top: 2px solid #cbd5e1;
-            border-bottom: 2px solid #cbd5e1;
-            padding: 7px 8px;
+            border-top: 1.5px solid #cbd5e1;
+            border-bottom: 1.5px solid #cbd5e1;
+            padding: 7.5px 8px;
         }
 
-        /* Subtle Badges */
+        /* Clean Soft Badges */
         .badge {
-            font-size: 6.5pt;
+            font-size: 6.6pt;
             font-weight: bold;
-            padding: 2px 5px;
+            padding: 2.5px 6px;
             border-radius: 4px;
         }
         .badge-success { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
@@ -132,17 +128,14 @@
         .badge-warning { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
         .badge-danger  { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
         .badge-slate   { background-color: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
-
-        .spacer-lg { height: 14px; }
-        .spacer-sm { height: 8px; }
     </style>
 </head>
 <body>
 
-    <!-- Executive Header Banner Box -->
-    <table class="banner-box" cellpadding="0" cellspacing="0">
+    <!-- Header Banner Card (Light, Rounded, Elegant) -->
+    <table class="banner-card" cellpadding="0" cellspacing="0">
         <tr>
-            <td width="32%" valign="middle">
+            <td width="30%" valign="middle">
                 @if (file_exists(public_path('assets/images/logo/logo1.png')))
                     <img src="{{ public_path('assets/images/logo/logo1.png') }}" height="32" /><br/>
                 @else
@@ -150,9 +143,9 @@
                 @endif
                 <span style="font-size:6.8pt; color:#64748b; font-weight:500;">Empowering Businesses Through Smart Connectivity</span>
             </td>
-            <td width="68%" align="right" valign="middle">
-                <div class="header-title">SALES PERFORMANCE &amp; TERRITORY REPORT</div>
-                <div class="meta-text">
+            <td width="70%" align="right" valign="middle">
+                <div class="header-title">Sales Performance and Territory Report</div>
+                <div class="header-meta">
                     <b>Generated For:</b> {{ $user->name }} &nbsp;·&nbsp;
                     <span style="color:#0056D2; font-weight:bold;">{{ ucfirst(str_replace('_', ' ', $user->role)) }}</span> &nbsp;·&nbsp;
                     <b>Scope:</b> {{ $user->jurisdictionLabel() ?? 'All Managed Territories' }}<br/>
@@ -164,13 +157,13 @@
     </table>
 
     <!-- Section 1: Executive KPI Summary -->
-    <div class="section-bar">
-        <span class="section-title">Executive Summary KPIs</span>
+    <div class="section-wrap">
+        <div class="section-title">Executive Summary</div>
         <div class="section-desc">Key performance indicators, sales velocity, and inventory status for the reporting window.</div>
     </div>
 
     <!-- KPI Grid (2 Balanced Rows with Light Pastel Backgrounds) -->
-    <table class="kpi-table" cellpadding="3" cellspacing="4">
+    <table class="kpi-table" cellpadding="3" cellspacing="5">
         <!-- Row 1 -->
         <tr>
             <td width="25%">
@@ -207,14 +200,14 @@
             <td width="25%">
                 <div class="kpi-card" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
                     <div class="kpi-label" style="color: #64748b;">Direct Sales</div>
-                    <div class="kpi-number" style="color: #334155; font-size: 10.5pt;">{{ number_format($directSalesCount) }} <span style="font-size: 7.5pt; font-weight: normal; color: #64748b;">SIMs</span></div>
+                    <div class="kpi-number" style="color: #334155; font-size: 10.5pt;">{{ number_format($directSalesCount) }} <span style="font-size: 7.2pt; font-weight: normal; color: #64748b;">SIMs</span></div>
                     <div class="kpi-sub" style="color: #64748b;">NGN {{ number_format($directSalesVolume, 2) }}</div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
                     <div class="kpi-label" style="color: #64748b;">Downline Sales</div>
-                    <div class="kpi-number" style="color: #334155; font-size: 10.5pt;">{{ number_format($downlineSalesCount) }} <span style="font-size: 7.5pt; font-weight: normal; color: #64748b;">SIMs</span></div>
+                    <div class="kpi-number" style="color: #334155; font-size: 10.5pt;">{{ number_format($downlineSalesCount) }} <span style="font-size: 7.2pt; font-weight: normal; color: #64748b;">SIMs</span></div>
                     <div class="kpi-sub" style="color: #64748b;">NGN {{ number_format($downlineSalesVolume, 2) }}</div>
                 </div>
             </td>
@@ -230,9 +223,9 @@
                     <div class="kpi-label" style="color: #92400e;">Stock Status</div>
                     <div class="kpi-number" style="font-size: 10.5pt;">
                         <span style="color: #d97706;">{{ number_format($pendingCount) }}</span>
-                        <span style="font-size: 7.5pt; color: #94a3b8; font-weight: normal;">pending &nbsp;·&nbsp;</span>
+                        <span style="font-size: 7.2pt; color: #94a3b8; font-weight: normal;">pending &nbsp;·&nbsp;</span>
                         <span style="color: #dc2626;">{{ number_format($dormantCount) }}</span>
-                        <span style="font-size: 7.5pt; color: #94a3b8; font-weight: normal;">dormant</span>
+                        <span style="font-size: 7.2pt; color: #94a3b8; font-weight: normal;">dormant</span>
                     </div>
                     <div class="kpi-sub" style="color: #b45309;">Unactivated stock breakdown</div>
                 </div>
@@ -240,18 +233,18 @@
         </tr>
     </table>
 
-    <div style="height: 6px;"></div>
+    <div style="height: 10px;"></div>
 
-    <!-- Section 2: Category & Network Breakdown Tables (Side-by-Side) -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
+    <!-- Section 2: Category and Network Breakdown Tables (Side-by-Side) -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
         <tr>
             <!-- Category Column -->
             <td width="58%" valign="top">
-                <div class="section-bar">
-                    <span class="section-title">SIM Category Breakdown</span>
+                <div class="section-wrap" style="margin-top: 0; margin-bottom: 6px;">
+                    <div class="section-title">SIM Category Breakdown</div>
                     <div class="section-desc">Performance segmented by device package type.</div>
                 </div>
-                <table class="styled-table" cellpadding="5">
+                <table class="styled-table" cellpadding="6">
                     <thead>
                         <tr>
                             <th width="32%"><b>Category</b></th>
@@ -276,7 +269,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" align="center" style="color: #64748b; padding: 10px;">No category sales recorded in this period.</td>
+                                <td colspan="5" align="center" style="color: #64748b; padding: 12px;">No category sales recorded in this period.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -286,11 +279,11 @@
             <td width="4%"></td>
             <!-- Network Column -->
             <td width="38%" valign="top">
-                <div class="section-bar">
-                    <span class="section-title">Network / Provider</span>
+                <div class="section-wrap" style="margin-top: 0; margin-bottom: 6px;">
+                    <div class="section-title">Network Distribution</div>
                     <div class="section-desc">Carrier distribution and market share.</div>
                 </div>
-                <table class="styled-table" cellpadding="5">
+                <table class="styled-table" cellpadding="6">
                     <thead>
                         <tr>
                             <th width="35%"><b>Network</b></th>
@@ -313,7 +306,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" align="center" style="color: #64748b; padding: 10px;">No network sales recorded.</td>
+                                <td colspan="4" align="center" style="color: #64748b; padding: 12px;">No network sales recorded.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -322,14 +315,14 @@
         </tr>
     </table>
 
-    <div style="height: 6px;"></div>
+    <div style="height: 10px;"></div>
 
-    <!-- Section 3: Territory & Downline Breakdown Table -->
-    <div class="section-bar">
-        <span class="section-title">Territory &amp; Downline Breakdown</span>
+    <!-- Section 3: Territory and Downline Breakdown Table -->
+    <div class="section-wrap">
+        <div class="section-title">Territory and Downline Breakdown</div>
         <div class="section-desc">Comprehensive jurisdictional performance across districts, regional offices, and partner portfolios.</div>
     </div>
-    <table class="styled-table" cellpadding="5.5">
+    <table class="styled-table" cellpadding="6.5">
         <thead>
             <tr>
                 <th width="24%"><b>Territory / Coverage</b></th>
@@ -362,7 +355,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" align="center" style="color: #64748b; padding: 12px;">No territory breakdown data available for this selection.</td>
+                    <td colspan="9" align="center" style="color: #64748b; padding: 14px;">No territory breakdown data available for this selection.</td>
                 </tr>
             @endforelse
 
@@ -380,14 +373,14 @@
         </tbody>
     </table>
 
-    <div style="height: 6px;"></div>
+    <div style="height: 10px;"></div>
 
-    <!-- Section 4: Itemized Sales Records Table -->
-    <div class="section-bar">
-        <span class="section-title">Itemized Activated SIMs (Recent Sales Records)</span>
+    <!-- Section 4: Itemized SIM Activations -->
+    <div class="section-wrap">
+        <div class="section-title">Itemized Activated SIMs (Recent Sales Records)</div>
         <div class="section-desc">Line-item audit of SIM activations recorded within the reporting window.</div>
     </div>
-    <table class="styled-table" cellpadding="5">
+    <table class="styled-table" cellpadding="6">
         <thead>
             <tr>
                 <th width="12%"><b>SIM Number</b></th>
@@ -430,14 +423,14 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" align="center" style="color: #64748b; padding: 12px;">No activated SIM sales found in this period matching the selected criteria.</td>
+                    <td colspan="9" align="center" style="color: #64748b; padding: 14px;">No activated SIM sales found in this period matching the selected criteria.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 
     @if ($activatedSimsList->count() > $displayLimit)
-        <p style="font-size: 6.8pt; color: #64748b; text-align: center; margin-top: 4px;">
+        <p style="font-size: 6.8pt; color: #64748b; text-align: center; margin-top: 6px;">
             Showing first {{ $displayLimit }} of {{ number_format($activatedSimsList->count()) }} activated SIM records. Export as CSV for the unrestricted raw dataset.
         </p>
     @endif
