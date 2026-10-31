@@ -143,6 +143,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/tracking/{reference}', [\App\Http\Controllers\TravelTourController::class, 'showTracking'])->name('track-reference');
     });
 
+    // Moniepoint POS Terminal Requests
+    Route::prefix('moniepoint/pos')->name('moniepoint.pos.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\MoniepointPosController::class, 'index'])->name('index');
+        Route::post('/request', [\App\Http\Controllers\MoniepointPosController::class, 'store'])->name('store');
+        Route::get('/tracking', [\App\Http\Controllers\MoniepointPosController::class, 'tracking'])->name('tracking');
+    });
+
+    // Business Loans (Exclusive for Moniepoint Business Owners)
+    Route::prefix('loans')->name('loans.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\LoanRequestController::class, 'index'])->name('index');
+        Route::post('/request', [\App\Http\Controllers\LoanRequestController::class, 'store'])->name('store');
+        Route::get('/tracking', [\App\Http\Controllers\LoanRequestController::class, 'tracking'])->name('tracking');
+    });
+
     // Support Tickets Routes
     Route::get('/support', [\App\Http\Controllers\SupportController::class, 'index'])->name('support');
     Route::post('/support', [\App\Http\Controllers\SupportController::class, 'store'])->name('support.store');
@@ -429,6 +443,20 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'index'])->name('index');
         Route::get('/{travelRequest}', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'show'])->name('show');
         Route::patch('/{travelRequest}/status', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'updateStatus'])->name('update-status');
+    });
+
+    // Moniepoint POS Terminal Requests (Super Admin)
+    Route::prefix('admin/moniepoint-pos')->name('admin.moniepoint-pos.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminMoniepointPosController::class, 'index'])->name('index');
+        Route::get('/{posRequest}', [\App\Http\Controllers\Admin\AdminMoniepointPosController::class, 'show'])->name('show');
+        Route::patch('/{posRequest}/status', [\App\Http\Controllers\Admin\AdminMoniepointPosController::class, 'updateStatus'])->name('update-status');
+    });
+
+    // Business Loan Requests (Super Admin)
+    Route::prefix('admin/loan-requests')->name('admin.loan-requests.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminLoanRequestController::class, 'index'])->name('index');
+        Route::get('/{loanRequest}', [\App\Http\Controllers\Admin\AdminLoanRequestController::class, 'show'])->name('show');
+        Route::patch('/{loanRequest}/status', [\App\Http\Controllers\Admin\AdminLoanRequestController::class, 'updateStatus'])->name('update-status');
     });
 
     // Advanced SIM Operations dashboard

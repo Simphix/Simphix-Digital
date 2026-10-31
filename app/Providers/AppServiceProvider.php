@@ -115,6 +115,8 @@ class AppServiceProvider extends ServiceProvider
             $failedActivationsBadge = 0;
             $newCacBadge = 0;
             $pendingTravelBadge = 0;
+            $pendingPosBadge = 0;
+            $pendingLoansBadge = 0;
             $sidebarUpline = null;
 
             if (auth()->check()) {
@@ -125,6 +127,8 @@ class AppServiceProvider extends ServiceProvider
                     $failedWebhooksBadge = \App\Models\WebhookLog::where('status', 'failed')->count();
                     $newCacBadge = \App\Models\CacRegistration::where('status', 'submitted')->count();
                     $pendingTravelBadge = \App\Models\TravelRequest::where('status', 'pending')->count();
+                    $pendingPosBadge = \App\Models\MoniepointPosRequest::where('status', 'pending')->count();
+                    $pendingLoansBadge = \App\Models\LoanRequest::where('status', 'pending')->count();
                 } elseif ($user->role === 'support') {
                     $openTicketsBadge = \App\Models\Ticket::where('status', 'open')->count();
                     $failedWebhooksBadge = \App\Models\WebhookLog::where('status', 'failed')->count();
@@ -144,6 +148,8 @@ class AppServiceProvider extends ServiceProvider
             $view->with('failedActivationsBadge', $failedActivationsBadge);
             $view->with('newCacBadge', $newCacBadge);
             $view->with('pendingTravelBadge', $pendingTravelBadge);
+            $view->with('pendingPosBadge', $pendingPosBadge);
+            $view->with('pendingLoansBadge', $pendingLoansBadge);
             $view->with('sidebarUpline', $sidebarUpline);
         });
     }
