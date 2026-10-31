@@ -8,6 +8,7 @@
      */
     $customBannerImage = asset('assets/images/travel-banner-bg.jpg');
     $hasLocalImage = file_exists(public_path('assets/images/travel-banner-bg.jpg'));
+    $planeCloudsImage = asset('assets/images/travel-plane-clouds.png');
 @endphp
 
 <!-- Balanced Landscape Ad Banner for Travel & Tours -->
@@ -38,6 +39,7 @@
                 -webkit-line-clamp: 1 !important;
                 -webkit-box-orient: vertical !important;
                 overflow: hidden !important;
+                margin-bottom: 6px !important;
             }
             .travel-banner-actions {
                 flex-direction: row !important;
@@ -53,20 +55,23 @@
                 width: 14px !important;
                 height: 14px !important;
             }
+            .travel-banner-plane {
+                display: none !important;
+            }
         }
     </style>
 
     <div class="relative overflow-hidden rounded-2xl shadow-md"
-         style="background-color: #07152f; background-image: linear-gradient(90deg, rgba(7, 21, 47, 0.94) 0%, rgba(12, 35, 75, 0.88) 55%, rgba(0, 86, 210, 0.78) 100%), url('{{ $customBannerImage }}'); background-size: cover; background-position: center; border: 1px solid rgba(30, 58, 138, 0.6);">
+         style="background-color: #07152f; background-image: linear-gradient(90deg, rgba(7, 21, 47, 0.95) 0%, rgba(12, 35, 75, 0.90) 55%, rgba(0, 86, 210, 0.82) 100%), url('{{ $customBannerImage }}'); background-size: cover; background-position: center; border: 1px solid rgba(30, 58, 138, 0.6);">
         
         <!-- Subtle Glow Element -->
         <div class="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full"
              style="background: radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0) 70%); filter: blur(20px);" aria-hidden="true"></div>
 
-        <!-- Banner Content Container (Large screen size fully reverted to original; mobile halved) -->
-        <div class="travel-banner-content relative z-10 w-full p-4 sm:p-5 lg:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 lg:gap-6">
+        <!-- Banner Content Container -->
+        <div class="travel-banner-content relative z-10 w-full p-4 sm:p-5 lg:p-6 flex flex-row items-center justify-between gap-4 lg:gap-6">
             
-            <!-- Left Information Block -->
+            <!-- Left Information Block (Headline, Subtitle, and Buttons moved DOWN) -->
             <div class="min-w-0 flex-1">
                 <!-- Tag / Category Pill -->
                 <div class="travel-banner-pill"
@@ -83,29 +88,36 @@
 
                 <!-- Balanced Subtitle -->
                 <p class="travel-banner-desc"
-                   style="font-size: 0.8125rem; color: #f1f5f9 !important; line-height: 1.5; margin: 0; max-width: 620px; font-weight: 400;">
+                   style="font-size: 0.8125rem; color: #f1f5f9 !important; line-height: 1.5; margin: 0 0 14px 0; max-width: 580px; font-weight: 400;">
                     Exclusive holy pilgrimages to Makkah &amp; Madinah and curated global vacation tours with visa processing, direct flights, and star hotel accommodation.
                 </p>
+
+                <!-- Action Buttons (Moved DOWN below subtitle) -->
+                <div class="travel-banner-actions flex flex-row items-center gap-2.5 pt-0.5">
+                    <a href="{{ route('travel.index') }}"
+                       class="travel-banner-btn"
+                       style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 12px; background-color: #f59e0b; color: #0f172a !important; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 2px 4px rgba(0,0,0,0.25); white-space: nowrap;"
+                       onmouseover="this.style.backgroundColor='#fbbf24'"
+                       onmouseout="this.style.backgroundColor='#f59e0b'">
+                        <i data-lucide="plane" style="width: 16px; height: 16px; stroke: #0f172a; stroke-width: 2.5;"></i>
+                        <span style="color: #0f172a !important;">Explore Packages &amp; Book</span>
+                    </a>
+                    <a href="{{ route('travel.tracking') }}"
+                       class="travel-banner-btn"
+                       style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 12px; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.35); font-size: 13px; font-weight: 600; text-decoration: none; backdrop-filter: blur(4px); white-space: nowrap;"
+                       onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'"
+                       onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
+                        <i data-lucide="search" style="width: 15px; height: 15px; stroke: #bae6fd; stroke-width: 2;"></i>
+                        <span style="color: #ffffff !important;">Track My Request</span>
+                    </a>
+                </div>
             </div>
 
-            <!-- Right Action Block (Balanced Buttons) -->
-            <div class="travel-banner-actions flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 pt-1 md:pt-0">
-                <a href="{{ route('travel.index') }}"
-                   class="travel-banner-btn"
-                   style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 12px; background-color: #f59e0b; color: #0f172a !important; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 2px 4px rgba(0,0,0,0.25); white-space: nowrap;"
-                   onmouseover="this.style.backgroundColor='#fbbf24'"
-                   onmouseout="this.style.backgroundColor='#f59e0b'">
-                    <i data-lucide="plane" style="width: 16px; height: 16px; stroke: #0f172a; stroke-width: 2.5;"></i>
-                    <span style="color: #0f172a !important;">Explore Packages &amp; Book</span>
-                </a>
-                <a href="{{ route('travel.tracking') }}"
-                   class="travel-banner-btn"
-                   style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 12px; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.35); font-size: 13px; font-weight: 600; text-decoration: none; backdrop-filter: blur(4px); white-space: nowrap;"
-                   onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'"
-                   onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
-                    <i data-lucide="search" style="width: 15px; height: 15px; stroke: #bae6fd; stroke-width: 2;"></i>
-                    <span style="color: #ffffff !important;">Track My Request</span>
-                </a>
+            <!-- Far Right Graphic: Flight Jet & Cloud Bank (Sky Removed) -->
+            <div class="travel-banner-plane shrink-0 hidden md:flex items-center justify-end -my-2 -mr-2">
+                <img src="{{ $planeCloudsImage }}"
+                     alt="Airplane Flights"
+                     class="h-32 lg:h-38 xl:h-40 w-auto object-contain object-right drop-shadow-2xl pointer-events-none transform hover:scale-105 transition-transform duration-300">
             </div>
 
         </div>
