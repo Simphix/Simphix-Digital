@@ -102,13 +102,15 @@ class CashOutController extends Controller
                     }
                 });
 
-                // Tax charge, if applicable — mirrors the original withdrawal
-                // flow's tax sub-block, only now runs on admin approval.
+                // Tax / threshold charge, if applicable — mirrors the withdrawal
+                // flow's threshold sub-block, only now runs on admin approval.
                 if ($cashOutRequest->tax > 0) {
                     try {
                         $service = Service::where('name', 'Withdrawal')->first();
+                        $cashoutSettings = \App\Models\CashoutSettings::current();
+                        $taxDescription = $cashoutSettings->cashout_threshold_description ?: 'Withdrawal Tax';
 
-                        DB::transaction(function () use ($cashOutRequest, $service, $user) {
+                        DB::transaction(function () use ($cashOutRequest, $service, $user, $taxDescription) {
                             $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first();
                             if ($wallet && $wallet->balance >= $cashOutRequest->tax) {
                                 $oldBal = $wallet->balance;
@@ -123,13 +125,14 @@ class CashOutController extends Controller
                                     'amount' => $cashOutRequest->tax,
                                     'fee' => 0,
                                     'net_amount' => $cashOutRequest->tax,
-                                    'description' => "Withdrawal Tax for Ref #{$cashOutRequest->transaction_ref}",
+                                    'description' => "{$taxDescription} for Ref #{$cashOutRequest->transaction_ref}",
                                     'type' => 'debit',
                                     'status' => 'completed',
                                     'performed_by' => 'System',
                                     'metadata' => [
                                         'service' => 'withdrawal_tax',
                                         'withdrawal_ref' => $cashOutRequest->transaction_ref,
+                                        'tax_description' => $taxDescription,
                                     ],
                                 ]);
 
@@ -138,12 +141,12 @@ class CashOutController extends Controller
                                     'phone_number' => $user->phone_number ?? 'N/A',
                                     'account_number' => $wallet->wallet_no ?? 'N/A',
                                     'account_name' => trim($user->first_name . ' ' . $user->last_name),
-                                    'network' => 'System Tax',
+                                    'network' => $taxDescription,
                                     'ref' => $taxRef,
                                     'amount' => $cashOutRequest->tax,
                                     'status' => 'completed',
                                     'type' => 'withdrawal_tax',
-                                    'description' => "Withdrawal Tax for Ref #{$cashOutRequest->transaction_ref}",
+                                    'description' => "{$taxDescription} for Ref #{$cashOutRequest->transaction_ref}",
                                     'old_balance' => $oldBal,
                                     'new_balance' => $newBal,
                                     'service_id' => $service?->id,

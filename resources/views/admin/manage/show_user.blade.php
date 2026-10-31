@@ -116,11 +116,13 @@
                                 Replace Manager
                             </a>
                         @endif
-                        <a href="{{ route('admin.manage.users.edit', $user) }}"
-                           class="px-4 py-2.5 bg-gradient-to-r from-[#0056D2] to-[#0049b8] hover:from-[#374368] hover:to-[#465785] text-white text-xs font-semibold rounded-xl shadow-md shadow-[#0056D2]/10 transition-all duration-200 flex items-center gap-2">
-                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                            Edit Account
-                        </a>
+                        @if (auth()->user()->role !== 'business_sales_manager' || ($user->role !== 'super_admin' && $user->role !== 'business_sales_manager'))
+                            <a href="{{ route('admin.manage.users.edit', $user) }}"
+                               class="px-4 py-2.5 bg-gradient-to-r from-[#0056D2] to-[#0049b8] hover:from-[#374368] hover:to-[#465785] text-white text-xs font-semibold rounded-xl shadow-md shadow-[#0056D2]/10 transition-all duration-200 flex items-center gap-2">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                Edit Account
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>

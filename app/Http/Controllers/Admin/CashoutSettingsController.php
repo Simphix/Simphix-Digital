@@ -55,6 +55,50 @@ class CashoutSettingsController extends Controller
             return back()->with('success', 'Role cash out limits updated successfully.');
         }
 
+        if ($request->has('cashout_charges_form')) {
+            $validated = $request->validate([
+                'cashout_fee' => ['nullable', 'numeric', 'min:0'],
+                'cashout_fee_type' => ['required', 'in:fixed,percent'],
+                'cashout_fee_description' => ['nullable', 'string', 'max:255'],
+                'cashout_threshold_amount' => ['nullable', 'numeric', 'min:0'],
+                'cashout_threshold_fee' => ['nullable', 'numeric', 'min:0'],
+                'cashout_threshold_description' => ['nullable', 'string', 'max:255'],
+            ]);
+
+            $settings->update([
+                'cashout_fee' => $validated['cashout_fee'] !== null && $validated['cashout_fee'] !== '' ? (float) $validated['cashout_fee'] : 0,
+                'cashout_fee_type' => $validated['cashout_fee_type'] ?? 'fixed',
+                'cashout_fee_description' => $validated['cashout_fee_description'] ?: 'Withdrawal Processing Fee',
+                'cashout_threshold_amount' => $validated['cashout_threshold_amount'] !== null && $validated['cashout_threshold_amount'] !== '' ? (float) $validated['cashout_threshold_amount'] : null,
+                'cashout_threshold_fee' => $validated['cashout_threshold_fee'] !== null && $validated['cashout_threshold_fee'] !== '' ? (float) $validated['cashout_threshold_fee'] : 0,
+                'cashout_threshold_description' => $validated['cashout_threshold_description'] ?: 'Transaction Levy / Stamp Duty',
+            ]);
+
+            return back()->with('success', 'Cash out charges and threshold settings updated successfully.');
+        }
+
+        if ($request->has('inflow_charges_form')) {
+            $validated = $request->validate([
+                'inflow_fee' => ['nullable', 'numeric', 'min:0'],
+                'inflow_fee_type' => ['required', 'in:fixed,percent'],
+                'inflow_fee_description' => ['nullable', 'string', 'max:255'],
+                'inflow_threshold_amount' => ['nullable', 'numeric', 'min:0'],
+                'inflow_threshold_fee' => ['nullable', 'numeric', 'min:0'],
+                'inflow_threshold_description' => ['nullable', 'string', 'max:255'],
+            ]);
+
+            $settings->update([
+                'inflow_fee' => $validated['inflow_fee'] !== null && $validated['inflow_fee'] !== '' ? (float) $validated['inflow_fee'] : 0,
+                'inflow_fee_type' => $validated['inflow_fee_type'] ?? 'fixed',
+                'inflow_fee_description' => $validated['inflow_fee_description'] ?: 'Wallet Funding Fee',
+                'inflow_threshold_amount' => $validated['inflow_threshold_amount'] !== null && $validated['inflow_threshold_amount'] !== '' ? (float) $validated['inflow_threshold_amount'] : null,
+                'inflow_threshold_fee' => $validated['inflow_threshold_fee'] !== null && $validated['inflow_threshold_fee'] !== '' ? (float) $validated['inflow_threshold_fee'] : 0,
+                'inflow_threshold_description' => $validated['inflow_threshold_description'] ?: 'Electronic Money Transfer Levy',
+            ]);
+
+            return back()->with('success', 'Money inflow charges and threshold settings updated successfully.');
+        }
+
         if ($request->has('is_enabled')) {
             $request->validate(['is_enabled' => ['required', 'boolean']]);
 

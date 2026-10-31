@@ -90,6 +90,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/network/downline/{user}', [\App\Http\Controllers\DownlineDetailController::class, 'show'])->name('network.downline.show');
     Route::post('/network/downline/{user}/complete-onboarding', [\App\Http\Controllers\DownlineDetailController::class, 'completeOnboarding'])->name('network.downline.complete-onboarding');
     Route::post('/network/downline/{user}/virtual-account', [\App\Http\Controllers\DownlineDetailController::class, 'generateVirtualAccount'])->name('network.downline.virtual-account');
+    Route::post('/network/downline/{user}/assign-district', [\App\Http\Controllers\DownlineDetailController::class, 'assignDistrict'])->name('network.downline.assign-district');
+    Route::post('/network/downline/{user}/unassign-district', [\App\Http\Controllers\DownlineDetailController::class, 'unassignDistrict'])->name('network.downline.unassign-district');
 
     // Leaderboard & Commission Dashboard Routes
     Route::get('/leaderboard', [\App\Http\Controllers\LeaderboardController::class, 'index'])->name('leaderboard');
@@ -157,6 +159,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/sims/activated/{sim}/update-customer', [\App\Http\Controllers\smartsim\SimsController::class, 'updateCustomerDetails'])->name('sims.activated.update-customer');
     Route::post('/sims/activated/{sim}/push-email', [\App\Http\Controllers\smartsim\SimsController::class, 'pushActivationDetailsEmail'])->name('sims.activated.push-email');
     Route::post('/partner/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('partner.sims.assign');
+    Route::post('/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('sims.assign');
     Route::post('/sims/bulk-assign', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignSim'])->name('sims.bulk-assign');
     Route::get('/sims/bulk-assign/new', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignPage'])->name('sims.bulk-assign.page');
     Route::post('/sims/bulk-assign/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveBulkAssignNumbers'])->name('sims.bulk-assign.resolve-numbers');
@@ -224,6 +227,8 @@ Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('bsm')
     Route::get('/customers', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'customers'])->name('customers');
     Route::get('/acceleration', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'acceleration'])->name('acceleration');
     Route::get('/reports/jurisdictions/export', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'exportJurisdictionReport'])->name('reports.jurisdictions.export');
+    Route::get('/reports/acceleration/export', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'exportAccelerationReport'])->name('reports.acceleration.export');
+    Route::get('/reports/acceleration/managers', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'searchManagers'])->name('reports.acceleration.managers');
     Route::post('/lifecycle/assign', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'assignSim'])->name('lifecycle.assign');
     Route::post('/lifecycle/reassign', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'reassignSim'])->name('lifecycle.reassign');
     Route::post('/lifecycle/revert', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'revertSim'])->name('lifecycle.revert');
@@ -282,7 +287,8 @@ Route::middleware(['auth', 'verified', 'support_staff'])->prefix('support-desk')
     Route::post('/failed-activations/{report}/retry', [\App\Http\Controllers\Support\FailedActivationController::class, 'retry'])->name('failed-activations.retry');
 });
 
-Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->name('admin.manage.')->group(function () {
+Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('admin/manage')->name('admin.manage.')->group(function () {
+    // Users Management & Role Control
     Route::get('/users', [\App\Http\Controllers\Admin\ManageController::class, 'users'])->name('users');
     Route::get('/users/{user}/edit', [\App\Http\Controllers\Admin\ManageController::class, 'editUser'])->name('users.edit');
     Route::put('/users/{user}', [\App\Http\Controllers\Admin\ManageController::class, 'updateUser'])->name('users.update');
@@ -290,11 +296,17 @@ Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->
     Route::get('/users/{user}/team', [\App\Http\Controllers\Admin\ManageController::class, 'userTeam'])->name('users.team');
     Route::delete('/users/{user}', [\App\Http\Controllers\Admin\ManageController::class, 'destroyUser'])->name('users.destroy');
 
-    // Manager replacement — hand an upline's entire seat (jurisdiction,
-    // downline, SIM holdings, pricing overrides) to a vacant same-role user.
+    // Manager replacement — hand an upline's seat to any platform user,
+    // automatically upgrading their role and batching downlines to Platform Master Manager.
     Route::get('/replace-manager', [\App\Http\Controllers\Admin\ManagerReplacementController::class, 'index'])->name('replace-manager.index');
     Route::get('/users/{user}/replace', [\App\Http\Controllers\Admin\ManagerReplacementController::class, 'show'])->name('users.replace');
+    Route::get('/users/{user}/replace/candidates', [\App\Http\Controllers\Admin\ManagerReplacementController::class, 'searchCandidates'])->name('users.replace.candidates');
     Route::post('/users/{user}/replace', [\App\Http\Controllers\Admin\ManagerReplacementController::class, 'store'])->name('users.replace.store');
+
+    // Downline Batches & Bulk Transfer
+    Route::get('/downline-batches', [\App\Http\Controllers\Admin\DownlineBatchController::class, 'index'])->name('downline-batches.index');
+    Route::get('/downline-batches/{batch}', [\App\Http\Controllers\Admin\DownlineBatchController::class, 'show'])->name('downline-batches.show');
+    Route::post('/downline-batches/{batch}/transfer', [\App\Http\Controllers\Admin\DownlineBatchController::class, 'transfer'])->name('downline-batches.transfer');
 
     Route::get('/upgrades', [\App\Http\Controllers\Admin\ManageController::class, 'upgrades'])->name('upgrades');
     Route::post('/upgrades/{user}/approve', [\App\Http\Controllers\Admin\ManageController::class, 'approveUpgrade'])->name('upgrades.approve');
@@ -302,7 +314,9 @@ Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->
 
     Route::get('/access', [\App\Http\Controllers\Admin\ManageController::class, 'access'])->name('access');
     Route::put('/access/{user}', [\App\Http\Controllers\Admin\ManageController::class, 'updateAccess'])->name('access.update');
+});
 
+Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->name('admin.manage.')->group(function () {
     // Admin Support Tickets Routes
     Route::get('/support', [\App\Http\Controllers\Admin\SupportController::class, 'index'])->name('support.index');
     Route::get('/support/{ticket}', [\App\Http\Controllers\Admin\SupportController::class, 'show'])->name('support.show');
@@ -446,8 +460,8 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
     });
 });
 
-// SIM Cards & Plans Management (accessible to Super Admin and Business Sales Manager)
-Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('admin/sim-plan')->name('admin.sim-plan.')->group(function () {
+// SIM Cards & Plans Management (strictly accessible to Super Admin only)
+Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/sim-plan')->name('admin.sim-plan.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\SimPlanController::class, 'index'])->name('index');
     Route::post('/store', [\App\Http\Controllers\Admin\SimPlanController::class, 'store'])->name('store');
     Route::post('/assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'assign'])->name('assign');

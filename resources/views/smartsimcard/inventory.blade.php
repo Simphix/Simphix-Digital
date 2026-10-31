@@ -563,6 +563,9 @@
                                 <th class="py-2.5">Category</th>
                                 <th class="py-2.5">Network</th>
                                 <th class="py-2.5">Status</th>
+                                @if ($downlineUsers->count() > 0)
+                                    <th class="py-2.5 text-right pr-2">Action</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
@@ -584,10 +587,19 @@
                                             {{ \App\Support\SimStatus::label($sim->status) }}
                                         </span>
                                     </td>
+                                    @if ($downlineUsers->count() > 0)
+                                        <td class="py-3 text-right pr-2">
+                                            <button type="button" @click="selectedSims = [{{ $sim->id }}]; $nextTick(() => { document.querySelector('[x-show=\'selectedSims.length > 0\'] button')?.click(); })"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold transition-colors">
+                                                <i data-lucide="user-plus" class="w-3 h-3"></i>
+                                                Assign
+                                            </button>
+                                        </td>
+                                    @endif
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ $downlineUsers->count() > 0 ? 5 : 4 }}" class="py-8 text-center text-slate-400 font-semibold">You don't have any SIMs assigned to you right now.</td>
+                                    <td colspan="{{ $downlineUsers->count() > 0 ? 6 : 4 }}" class="py-8 text-center text-slate-400 font-semibold">You don't have any SIMs assigned to you right now.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -927,7 +939,7 @@
             </div>
         </div>
 
-        @if (in_array(auth()->user()->role, ['regional_manager', 'coordinator'], true))
+        @if (in_array(auth()->user()->role, ['regional_manager', 'coordinator', 'business_sales_manager'], true))
             <!-- Floating bulk-actions button -->
             <div class="fixed bottom-6 right-6 z-40" x-data="{ open: false }">
                 <div x-show="open" @click.away="open = false"
