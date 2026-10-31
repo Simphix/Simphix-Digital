@@ -14,6 +14,50 @@
 <!-- Balanced Landscape Ad Banner for Travel & Tours -->
 <div class="mb-4 w-full">
     <style>
+        .travel-banner-plane-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-shrink: 0;
+            width: 220px;
+            height: 120px;
+            pointer-events: none;
+        }
+        .travel-banner-plane-img {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%) scale(1.4);
+            transform-origin: right center;
+            height: 135px;
+            width: auto;
+            max-width: none;
+            object-fit: contain;
+            filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.45));
+            pointer-events: none;
+            transition: transform 0.3s ease;
+        }
+        @media (min-width: 1024px) {
+            .travel-banner-plane-wrapper {
+                width: 260px;
+                height: 130px;
+            }
+            .travel-banner-plane-img {
+                height: 145px;
+                transform: translateY(-50%) scale(1.5);
+            }
+        }
+        @media (min-width: 1280px) {
+            .travel-banner-plane-wrapper {
+                width: 300px;
+                height: 140px;
+            }
+            .travel-banner-plane-img {
+                height: 150px;
+                transform: translateY(-50%) scale(1.6);
+            }
+        }
         @media (max-width: 767.98px) {
             .travel-banner-content {
                 padding: 10px 14px !important;
@@ -55,7 +99,8 @@
                 width: 14px !important;
                 height: 14px !important;
             }
-            .travel-banner-plane {
+            .travel-banner-plane,
+            .travel-banner-plane-wrapper {
                 display: none !important;
             }
         }
@@ -114,10 +159,10 @@
             </div>
 
             <!-- Far Right Graphic: Flight Jet & Cloud Bank (Sky Removed) -->
-            <div class="travel-banner-plane shrink-0 hidden md:flex items-center justify-end -my-2 -mr-2">
+            <div class="travel-banner-plane travel-banner-plane-wrapper hidden md:flex">
                 <img src="{{ $planeCloudsImage }}"
                      alt="Airplane Flights"
-                     class="h-32 lg:h-38 xl:h-40 w-auto object-contain object-right drop-shadow-2xl pointer-events-none transform hover:scale-105 transition-transform duration-300">
+                     class="travel-banner-plane-img">
             </div>
 
         </div>
