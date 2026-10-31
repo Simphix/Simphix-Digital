@@ -12,6 +12,7 @@ use App\Models\Sim;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Services\SimActivationWalletService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -84,6 +85,9 @@ class AwardCommissions
             $oldBalance = $wallet->bonus;
             $wallet->increment('bonus', $commission);
             $newBalance = $wallet->bonus;
+
+            // Deduct commission from the platform SIM Activation Wallet (retail lifecycle only)
+            app(SimActivationWalletService::class)->deductCommission($sim, $commission, $userModel);
 
             $ref = 'COMM-' . time() . '-' . rand(1000, 9999);
 

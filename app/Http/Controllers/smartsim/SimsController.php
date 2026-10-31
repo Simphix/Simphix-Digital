@@ -975,6 +975,8 @@ class SimsController extends Controller
         $wallet->decrement($balanceField, $payableAmount);
         $newBalance = (float) $wallet->{$balanceField};
 
+        app(\App\Services\SimActivationWalletService::class)->creditActivationFee($sim, $payableAmount, $partner);
+
         $ref = 'ACT-' . time() . '-' . rand(1000, 9999);
 
         $customerName = !empty($data['full_name']) ? $data['full_name'] : null;
@@ -1313,6 +1315,8 @@ class SimsController extends Controller
         $oldBalance = $wallet->balance;
         $wallet->decrement('balance', $payableAmount);
         $newBalance = $wallet->balance;
+
+        app(\App\Services\SimActivationWalletService::class)->creditActivationFee($sim, $payableAmount, $targetUser);
 
         $ref = 'ACT-' . time() . '-' . rand(1000, 9999);
 

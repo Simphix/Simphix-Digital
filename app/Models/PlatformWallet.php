@@ -9,6 +9,7 @@ class PlatformWallet extends Model
 {
     public const TYPE_WELFARE = 'welfare';
     public const TYPE_UTILITIES_REVENUE = 'utilities_revenue';
+    public const TYPE_SIM_ACTIVATION = 'sim_activation';
 
     protected $fillable = [
         'type',

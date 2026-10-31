@@ -292,6 +292,8 @@ class SimPlanController extends Controller
                     $wallet->decrement('balance', $payableAmount);
                     $newBalance = $wallet->balance;
 
+                    app(\App\Services\SimActivationWalletService::class)->creditActivationFee($sim, $payableAmount, $target);
+
                     $ref = 'ADMIN-ACT-' . time() . '-' . rand(1000, 9999);
 
                     Transaction::create([
