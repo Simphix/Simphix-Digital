@@ -21,6 +21,24 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Platform Administration
+
+### Super Admin Role Management
+
+The `super_admin` role cannot be assigned or granted via the web interface. All Super Admin role promotions and revocations are performed strictly via Artisan CLI commands:
+
+```bash
+# Promote a user to Super Admin
+php artisan make:admin user@example.com
+# or
+php artisan admin:make user@example.com
+
+# Revoke Super Admin and revert to personal user
+php artisan make:admin user@example.com --revoke
+```
+
+See [Super Admin Management Documentation](docs/super-admin-management.md) for full details, options, and security architecture.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
