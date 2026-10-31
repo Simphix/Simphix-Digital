@@ -14,9 +14,11 @@ use App\Models\SimRequest;
 use App\Models\State;
 use App\Models\User;
 use App\Services\ActivationBonusRetryService;
+use App\Services\BsmAccelerationReportService;
 use App\Services\SimAssignmentService;
 use App\Support\SimStatus;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -274,6 +276,7 @@ class BsmDashboardController extends Controller
         $regionalManagers = User::where('role', 'regional_manager')->where('status', 'active')->orderBy('first_name')->get();
         $coordinators = User::where('role', 'coordinator')->where('status', 'active')->orderBy('first_name')->get();
         $partners = User::where('role', 'partner')->where('status', 'active')->orderBy('first_name')->get();
+        $businesses = User::where('role', 'business')->where('status', 'active')->orderBy('first_name')->get();
 
         return view('bsm.acceleration', [
             'actor'              => $actor,
@@ -283,6 +286,7 @@ class BsmDashboardController extends Controller
             'regionalManagers'   => $regionalManagers,
             'coordinators'       => $coordinators,
             'partners'           => $partners,
+            'businesses'         => $businesses,
         ]);
     }
 
@@ -663,6 +667,52 @@ class BsmDashboardController extends Controller
             'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
+    }
+
+    /**
+     * Export battle-tested Sales Acceleration & Interventions Report in CSV or PDF.
+     */
+    public function exportAccelerationReport(Request $request, BsmAccelerationReportService $reportService): Response
+    {
+        $actor = $request->user();
+        $data = $reportService->buildData($request);
+        $format = strtolower($request->input('format', 'csv'));
+
+        $filenameSuffix = now()->format('Y-m-d');
+        if (!empty($data['targetManager'])) {
+            $filenameSuffix .= '-' . strtolower(str_replace('_', '-', $data['targetManager']->role));
+        }
+
+        if ($format === 'pdf') {
+            $pdfContent = $reportService->toPdf($data, $actor);
+            $filename = "bsm-sales-acceleration-report-{$filenameSuffix}.pdf";
+
+            return response($pdfContent, 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]);
+        }
+
+        $csvContent = $reportService->toCsv($data, $actor);
+        $filename = "bsm-sales-acceleration-report-{$filenameSuffix}.csv";
+
+        return response($csvContent, 200, [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    /**
+     * Search managers for live filter selector.
+     */
+    public function searchManagers(Request $request, BsmAccelerationReportService $reportService): JsonResponse
+    {
+        $term = $request->input('q') ?? $request->input('search');
+        $role = $request->input('role');
+
+        $managers = $reportService->searchManagers($term, $role, 40);
+
+        return response()->json($managers);
     }
 
     public function assignSim(Request $request, SimAssignmentService $assignmentService): RedirectResponse

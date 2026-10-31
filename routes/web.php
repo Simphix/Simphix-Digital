@@ -226,6 +226,8 @@ Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('bsm')
     Route::get('/customers', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'customers'])->name('customers');
     Route::get('/acceleration', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'acceleration'])->name('acceleration');
     Route::get('/reports/jurisdictions/export', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'exportJurisdictionReport'])->name('reports.jurisdictions.export');
+    Route::get('/reports/acceleration/export', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'exportAccelerationReport'])->name('reports.acceleration.export');
+    Route::get('/reports/acceleration/managers', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'searchManagers'])->name('reports.acceleration.managers');
     Route::post('/lifecycle/assign', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'assignSim'])->name('lifecycle.assign');
     Route::post('/lifecycle/reassign', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'reassignSim'])->name('lifecycle.reassign');
     Route::post('/lifecycle/revert', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'revertSim'])->name('lifecycle.revert');
