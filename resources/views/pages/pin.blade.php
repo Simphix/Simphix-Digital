@@ -59,8 +59,24 @@
                         <span class="text-xs font-semibold text-slate-800 text-right font-mono" id="confirmAccountNo">N/A</span>
                     </div>
                     <div class="flex justify-between items-center pt-1.5">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Amount</span>
-                        <span class="text-xl font-extrabold text-[#0056D2] font-display" id="confirmAmount">₦0.00</span>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider" id="confirmAmountLabel">Total Amount</span>
+                        <span class="text-xl font-extrabold text-[#0056D2] font-display font-mono" id="confirmAmount">₦0.00</span>
+                    </div>
+
+                    {{-- Dynamic Charges Breakdown (populated if charges apply) --}}
+                    <div id="confirmBreakdownContainer" class="hidden space-y-2 pt-2.5 border-t border-slate-100">
+                        <div id="confirmFeeRow" class="flex justify-between items-center text-xs text-slate-500 hidden">
+                            <span id="confirmFeeDesc">Withdrawal Fee</span>
+                            <span class="font-semibold text-rose-600 font-mono" id="confirmFeeVal">+₦0.00</span>
+                        </div>
+                        <div id="confirmThresholdRow" class="flex justify-between items-center text-xs text-slate-500 hidden">
+                            <span id="confirmThresholdDesc">Transaction Levy</span>
+                            <span class="font-semibold text-rose-600 font-mono" id="confirmThresholdVal">+₦0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs font-bold text-slate-800 pt-1 border-t border-slate-100">
+                            <span>Total Wallet Debit</span>
+                            <span class="font-mono text-slate-900 font-extrabold" id="confirmTotalDebit">₦0.00</span>
+                        </div>
                     </div>
                 </div>
 

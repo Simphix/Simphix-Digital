@@ -137,6 +137,47 @@
                             </div>
                         </div>
 
+                        {{-- Real-time Cash Out Charges Breakdown --}}
+                        <div id="charges_breakdown_card" class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3 hidden transition-all duration-200">
+                            <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                                    <i data-lucide="receipt" class="w-3.5 h-3.5 text-[#0056D2]"></i>
+                                    Cash Out Breakdown
+                                </span>
+                                <span id="charges_badge" class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                    No Extra Charges
+                                </span>
+                            </div>
+
+                            <div class="space-y-2 text-xs">
+                                <div class="flex justify-between items-center text-slate-600">
+                                    <span>Payout to Bank Account:</span>
+                                    <span class="font-bold text-slate-800 font-mono" id="breakdown_payout">₦0.00</span>
+                                </div>
+
+                                <div id="breakdown_fee_row" class="flex justify-between items-center text-slate-600 hidden">
+                                    <span class="flex items-center gap-1 text-slate-500">
+                                        <span id="breakdown_fee_desc">Withdrawal Fee</span>:
+                                    </span>
+                                    <span class="font-bold text-rose-600 font-mono" id="breakdown_fee">+₦0.00</span>
+                                </div>
+
+                                <div id="breakdown_threshold_row" class="flex justify-between items-center text-slate-600 hidden">
+                                    <span class="flex items-center gap-1 text-slate-500">
+                                        <span id="breakdown_threshold_desc">Transaction Levy</span>:
+                                    </span>
+                                    <span class="font-bold text-rose-600 font-mono" id="breakdown_threshold">+₦0.00</span>
+                                </div>
+
+                                <div id="breakdown_threshold_hint" class="text-[11px] text-slate-400 italic hidden pt-0.5"></div>
+
+                                <div class="flex justify-between items-center pt-2.5 border-t border-slate-200/80 font-bold text-slate-800">
+                                    <span>Total Wallet Deduction:</span>
+                                    <span class="text-[#0056D2] font-display font-extrabold text-sm sm:text-base font-mono" id="breakdown_total_debit">₦0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
                         {{-- Warning --}}
                         <div class="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-amber-800 flex gap-3 shadow-sm">
                             <i data-lucide="alert-circle" class="w-5 h-5 text-amber-500 shrink-0 mt-0.5"></i>
@@ -186,6 +227,112 @@
         const amountDisplay     = document.getElementById('amount_display');
         const amountInWordsDisp = document.getElementById('amount_in_words');
 
+        /* ── Cash Out Charges Configuration ─────────── */
+        const userWalletBalance = {{ (float) (auth()->user()->wallet->balance ?? 0) }};
+        const cashoutFee = {{ (float) ($cashoutSettings->cashout_fee ?? 0) }};
+        const cashoutFeeType = @json($cashoutSettings->cashout_fee_type ?? 'fixed');
+        const cashoutFeeDesc = @json($cashoutSettings->cashout_fee_description ?: 'Withdrawal Processing Fee');
+        const cashoutThresholdAmount = {{ $cashoutSettings->cashout_threshold_amount !== null ? (float) $cashoutSettings->cashout_threshold_amount : 'null' }};
+        const cashoutThresholdFee = {{ (float) ($cashoutSettings->cashout_threshold_fee ?? 0) }};
+        const cashoutThresholdDesc = @json($cashoutSettings->cashout_threshold_description ?: 'Transaction Levy / Stamp Duty');
+
+        const breakdownCard        = document.getElementById('charges_breakdown_card');
+        const breakdownPayout      = document.getElementById('breakdown_payout');
+        const breakdownFeeRow      = document.getElementById('breakdown_fee_row');
+        const breakdownFeeDesc     = document.getElementById('breakdown_fee_desc');
+        const breakdownFeeVal      = document.getElementById('breakdown_fee');
+        const breakdownThreshRow   = document.getElementById('breakdown_threshold_row');
+        const breakdownThreshDesc  = document.getElementById('breakdown_threshold_desc');
+        const breakdownThreshVal   = document.getElementById('breakdown_threshold');
+        const breakdownThreshHint  = document.getElementById('breakdown_threshold_hint');
+        const breakdownTotalDebit  = document.getElementById('breakdown_total_debit');
+        const chargesBadge         = document.getElementById('charges_badge');
+
+        function formatNaira(num) {
+            return '₦' + parseFloat(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function calculateCharges(amount) {
+            let baseFee = 0;
+            if (cashoutFee > 0) {
+                if (cashoutFeeType === 'percent') {
+                    baseFee = Math.round((amount * cashoutFee) / 100 * 100) / 100;
+                } else {
+                    baseFee = cashoutFee;
+                }
+            }
+            let thresholdFee = 0;
+            let thresholdMet = false;
+            if (cashoutThresholdAmount !== null && cashoutThresholdFee > 0) {
+                if (amount > cashoutThresholdAmount) {
+                    thresholdFee = cashoutThresholdFee;
+                    thresholdMet = true;
+                }
+            }
+            let totalCharges = baseFee + thresholdFee;
+            let totalDebit = amount + totalCharges;
+            return {
+                amount: amount,
+                baseFee: baseFee,
+                thresholdFee: thresholdFee,
+                thresholdMet: thresholdMet,
+                totalCharges: totalCharges,
+                totalDebit: totalDebit
+            };
+        }
+
+        function updateBreakdown(rawValue) {
+            if (!breakdownCard) return;
+
+            let val = parseFloat(rawValue);
+            if (isNaN(val) || val <= 0) {
+                breakdownCard.classList.add('hidden');
+                return;
+            }
+
+            let calc = calculateCharges(val);
+
+            breakdownPayout.textContent = formatNaira(calc.amount);
+
+            if (calc.baseFee > 0) {
+                breakdownFeeRow.classList.remove('hidden');
+                breakdownFeeDesc.textContent = cashoutFeeDesc + (cashoutFeeType === 'percent' ? ` (${cashoutFee}%)` : '');
+                breakdownFeeVal.textContent = '+' + formatNaira(calc.baseFee);
+            } else {
+                breakdownFeeRow.classList.add('hidden');
+            }
+
+            if (calc.thresholdFee > 0) {
+                breakdownThreshRow.classList.remove('hidden');
+                breakdownThreshDesc.textContent = cashoutThresholdDesc;
+                breakdownThreshVal.textContent = '+' + formatNaira(calc.thresholdFee);
+            } else {
+                breakdownThreshRow.classList.add('hidden');
+            }
+
+            if (cashoutThresholdAmount !== null && cashoutThresholdFee > 0 && !calc.thresholdMet) {
+                breakdownThreshHint.textContent = `Note: A ${formatNaira(cashoutThresholdFee)} ${cashoutThresholdDesc} applies to cash outs exceeding ${formatNaira(cashoutThresholdAmount)}.`;
+                breakdownThreshHint.classList.remove('hidden');
+            } else {
+                breakdownThreshHint.classList.add('hidden');
+            }
+
+            breakdownTotalDebit.textContent = formatNaira(calc.totalDebit);
+
+            if (calc.totalCharges > 0) {
+                chargesBadge.className = 'text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-700';
+                chargesBadge.textContent = 'Charges: +' + formatNaira(calc.totalCharges);
+            } else {
+                chargesBadge.className = 'text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700';
+                chargesBadge.textContent = 'No Extra Charges';
+            }
+
+            breakdownCard.classList.remove('hidden');
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
+
         /* ── Amount Input Styling Config ─────────────── */
         if (amountDisplay) {
             amountDisplay.addEventListener('input', function() {
@@ -195,6 +342,7 @@
 
                 if (rawValue === '') {
                     amountInput.value = '';
+                    updateBreakdown(0);
                     if (amountInWordsDisp) {
                         amountInWordsDisp.textContent = '';
                         amountInWordsDisp.classList.add('hidden');
@@ -208,6 +356,7 @@
                 }
 
                 amountInput.value = rawValue;
+                updateBreakdown(rawValue);
 
                 if (amountInWordsDisp) {
                     let w = numberToWords(rawValue);
@@ -367,17 +516,69 @@
                 return;
             }
 
+            const calc = calculateCharges(numAmount);
+            if (userWalletBalance < calc.totalDebit) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Insufficient Balance',
+                    text: 'Your wallet balance is ₦' + userWalletBalance.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ', but total required deduction (including charges) is ₦' + calc.totalDebit.toLocaleString(undefined, { minimumFractionDigits: 2 }) + '.',
+                    confirmButtonColor: '#0056D2',
+                });
+                return;
+            }
+
             document.getElementById('confirmAccountName').textContent = @json($withdrawalAccount->account_name);
             document.getElementById('confirmBankName').textContent    = @json($withdrawalAccount->bank_name);
             document.getElementById('confirmAccountNo').textContent   = @json($withdrawalAccount->account_no);
-            document.getElementById('confirmAmount').textContent      = '₦' + parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+            const confirmAmountEl     = document.getElementById('confirmAmount');
+            const confirmAmountLabel  = document.getElementById('confirmAmountLabel');
+            const confirmBreakdown    = document.getElementById('confirmBreakdownContainer');
+            const confirmFeeRow       = document.getElementById('confirmFeeRow');
+            const confirmFeeDesc      = document.getElementById('confirmFeeDesc');
+            const confirmFeeVal       = document.getElementById('confirmFeeVal');
+            const confirmThreshRow    = document.getElementById('confirmThresholdRow');
+            const confirmThreshDesc   = document.getElementById('confirmThresholdDesc');
+            const confirmThreshVal    = document.getElementById('confirmThresholdVal');
+            const confirmTotalDebit   = document.getElementById('confirmTotalDebit');
+
+            confirmAmountEl.textContent = formatNaira(numAmount);
+
+            if (confirmBreakdown) {
+                if (calc.totalCharges > 0) {
+                    if (confirmAmountLabel) confirmAmountLabel.textContent = 'Payout Amount';
+                    confirmBreakdown.classList.remove('hidden');
+
+                    if (calc.baseFee > 0 && confirmFeeRow) {
+                        confirmFeeRow.classList.remove('hidden');
+                        if (confirmFeeDesc) confirmFeeDesc.textContent = cashoutFeeDesc + (cashoutFeeType === 'percent' ? ` (${cashoutFee}%)` : '');
+                        if (confirmFeeVal) confirmFeeVal.textContent = '+' + formatNaira(calc.baseFee);
+                    } else if (confirmFeeRow) {
+                        confirmFeeRow.classList.add('hidden');
+                    }
+
+                    if (calc.thresholdFee > 0 && confirmThreshRow) {
+                        confirmThreshRow.classList.remove('hidden');
+                        if (confirmThreshDesc) confirmThreshDesc.textContent = cashoutThresholdDesc;
+                        if (confirmThreshVal) confirmThreshVal.textContent = '+' + formatNaira(calc.thresholdFee);
+                    } else if (confirmThreshRow) {
+                        confirmThreshRow.classList.add('hidden');
+                    }
+
+                    if (confirmTotalDebit) confirmTotalDebit.textContent = formatNaira(calc.totalDebit);
+                } else {
+                    if (confirmAmountLabel) confirmAmountLabel.textContent = 'Total Amount';
+                    confirmBreakdown.classList.add('hidden');
+                }
+            }
 
             confirmationStep.classList.remove('hidden');
             pinStep.classList.add('hidden');
             modalTitle.textContent    = 'Confirm Cash Out Request';
             modalSubtitle.textContent = 'Please review details carefully';
 
-            (pinModal || new bootstrap.Modal(document.getElementById('pinModal'))).show();
+            window.dispatchEvent(new CustomEvent('open-modal'));
+            try { (pinModal || new bootstrap.Modal(document.getElementById('pinModal'))).show(); } catch (e) {}
         });
 
         /* ── Modal Step Navigation ────────────────────── */

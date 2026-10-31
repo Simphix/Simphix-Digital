@@ -210,10 +210,13 @@ class PaymentWebhookController extends Controller
     {
         $this->updateWalletBalance($userId, $amountPaid);
 
-        // Check for 10,000 threshold logic
-        if ($amountPaid >= 10000) {
-            $chargeAmount = 50;
-            $chargeDesc = 'transaction lavy charge';
+        // Calculate dynamic Inflow Charges & Threshold Deductions
+        $inflowCharges = \App\Models\CashoutSettings::current()->calculateInflowCharges((float) $amountPaid);
+
+        // 1. Threshold Charge (e.g. if amount exceeds ₦9,999.99, deduct ₦50)
+        if ($inflowCharges['threshold_met'] && $inflowCharges['threshold_fee'] > 0) {
+            $chargeAmount = $inflowCharges['threshold_fee'];
+            $chargeDesc = $inflowCharges['threshold_description'];
             $chargeRef = 'CHG-' . strtoupper(Str::random(10));
             
             $this->debitWallet($userId, $chargeAmount, $chargeDesc, $chargeRef, $orderNo);
@@ -226,6 +229,12 @@ class PaymentWebhookController extends Controller
             } catch (\Throwable $e) {
                 Log::error('Non-blocking error dispatching ProcessVatCharge: '.$e->getMessage());
             }
+        }
+
+        // 2. Base Inflow Fee (if configured)
+        if ($inflowCharges['has_base_fee'] && $inflowCharges['base_fee'] > 0) {
+            $baseChargeRef = 'CHG-FEE-' . strtoupper(Str::random(8));
+            $this->debitWallet($userId, $inflowCharges['base_fee'], $inflowCharges['base_fee_description'], $baseChargeRef, $orderNo);
         }
 
         $this->sendNotificationAndEmail($userId, $amountPaid, $orderNo, $payerBankName, 'Topup');
