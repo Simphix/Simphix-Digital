@@ -22,12 +22,9 @@
                         <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" class="w-full h-auto object-contain brightness-0 invert">
                     </div>
                     <div>
-                        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
+                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 font-display tracking-tight">
                             Moniepoint POS Requests Desk
                         </h1>
-                        <p class="text-slate-500 text-xs sm:text-sm mt-0.5">
-                            Manage user terminal requests, serialize devices, assign dispatch couriers, and track merchant onboarding.
-                        </p>
                     </div>
                 </div>
 

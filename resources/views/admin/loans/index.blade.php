@@ -28,12 +28,9 @@
                         <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" class="w-full h-auto object-contain brightness-0 invert">
                     </div>
                     <div>
-                        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
+                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 font-display tracking-tight">
                             Moniepoint Business Loans Desk
                         </h1>
-                        <p class="text-slate-500 text-xs sm:text-sm mt-0.5">
-                            Credit underwriting, turnover verification, and loan disbursement management for registered Moniepoint merchants.
-                        </p>
                     </div>
                 </div>
 

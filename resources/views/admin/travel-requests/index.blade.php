@@ -22,12 +22,9 @@
                         <i data-lucide="plane" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
+                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 font-display tracking-tight">
                             Travel &amp; Tours Requests Desk
                         </h1>
-                        <p class="text-slate-500 text-xs sm:text-sm mt-0.5">
-                            Manage user applications for Umrah, Hajj, and International vacation packages. Review inquiries, assign officers, and update traveler progress.
-                        </p>
                     </div>
                 </div>
 

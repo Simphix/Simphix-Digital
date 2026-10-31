@@ -21,19 +21,16 @@
         </div>
 
         <!-- Header -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#00266B] text-xs font-bold mb-2">
                         <i data-lucide="banknote" class="w-3.5 h-3.5"></i>
                         <span>Business Loan Tracking Desk</span>
                     </div>
-                    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
+                    <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
                         Track Moniepoint Loan Application
                     </h1>
-                    <p class="text-slate-500 text-sm mt-1 max-w-2xl">
-                        Monitor your business loan request in real-time from submission and credit assessment to final approval and disbursement.
-                    </p>
                 </div>
 
                 <div class="shrink-0">

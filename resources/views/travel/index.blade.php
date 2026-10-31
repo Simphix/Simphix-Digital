@@ -40,22 +40,19 @@
         @endif
 
         <!-- Header Card -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-2.5">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-2">
                         <i data-lucide="compass" class="w-3.5 h-3.5"></i>
                         <span>SimPhix Travel &amp; Tours Desk</span>
                     </div>
-                    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
+                    <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
                         Umrah, Hajj &amp; International Travel Packages
                     </h1>
-                    <p class="text-slate-500 text-sm mt-1 max-w-2xl">
-                        Fulfill sacred pilgrimages or embark on international holidays. Select an existing package or request a tailored itinerary with verified flight and visa processing.
-                    </p>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-3 shrink-0">
+                <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
                     <a href="{{ route('travel.tracking') }}"
                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold shadow-sm transition">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>

@@ -36,26 +36,23 @@
         @endif
 
         <!-- Header Card -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="flex items-start gap-4">
-                    <div class="w-20 h-12 rounded-xl bg-[#001F5C] flex items-center justify-center p-2 shrink-0 shadow-sm border border-blue-900/40">
-                        <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" class="h-6 w-auto object-contain">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5 sm:gap-4">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#001F5C] flex items-center justify-center p-2.5 shrink-0 shadow-sm border border-blue-900/40">
+                        <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" class="h-5 sm:h-6 w-auto object-contain">
                     </div>
                     <div>
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#00266B] text-xs font-bold mb-2">
+                        <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#00266B] text-[11px] sm:text-xs font-bold mb-1.5">
                             <span>Official Moniepoint POS Hardware Partner</span>
                         </div>
-                        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
+                        <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
                             Moniepoint POS Terminals Request
                         </h1>
-                        <p class="text-slate-500 text-sm mt-1 max-w-2xl">
-                            Deploy verified, high-speed Moniepoint POS terminals to your business. Enjoy instant card and transfer settlements, durable hardware, dual-SIM connectivity, and nationwide delivery.
-                        </p>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-3 shrink-0">
+                <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
                     <a href="{{ route('moniepoint.pos.tracking') }}"
                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold shadow-sm transition">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
