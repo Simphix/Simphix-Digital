@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             SmeDataSeeder::class,
             AirtimeSeeder::class,
             VerificationSeeder::class,
+            TravelPackageSeeder::class,
         ]);
     }
 }
