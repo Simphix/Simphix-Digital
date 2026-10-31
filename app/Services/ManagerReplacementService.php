@@ -3,11 +3,14 @@
 namespace App\Services;
 
 use App\Models\BusinessCommissionRate;
+use App\Models\DownlineBatch;
+use App\Models\DownlineBatchUser;
 use App\Models\Region;
 use App\Models\SenatorialDistrict;
 use App\Models\Sim;
 use App\Models\SimHistory;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -60,47 +63,49 @@ class ManagerReplacementService
     }
 
     /**
-     * Users who could receive $outgoing's seat: same role, active, and
-     * holding nothing yet (no downline, no SIMs, no jurisdiction, no
-     * pricing overrides) — i.e. truly vacant.
+     * Query all platform users eligible to be selected as replacement (searchable by name, email, or phone).
+     * Excludes the outgoing manager and super administrators.
+     */
+    public function candidateQuery(User $outgoing, ?string $search = null): Builder
+    {
+        $query = User::query()
+            ->where('id', '!=', $outgoing->id)
+            ->where('role', '!=', 'super_admin')
+            ->where('status', 'active');
+
+        if ($search !== null && trim($search) !== '') {
+            $term = trim($search);
+            $query->where(function ($q) use ($term) {
+                $q->where('first_name', 'like', "%{$term}%")
+                    ->orWhere('middle_name', 'like', "%{$term}%")
+                    ->orWhere('last_name', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%")
+                    ->orWhere('phone', 'like', "%{$term}%");
+            });
+        }
+
+        return $query->orderBy('first_name')->orderBy('last_name');
+    }
+
+    /**
+     * Fetch candidates list with optional search term.
+     */
+    public function candidates(User $outgoing, ?string $search = null, int $limit = 50): Collection
+    {
+        return $this->candidateQuery($outgoing, $search)->limit($limit)->get();
+    }
+
+    /**
+     * Legacy helper: Users who hold the same role and are vacant.
      */
     public function vacantCandidates(User $outgoing): Collection
     {
-        $column = self::roleColumn($outgoing->role);
-        if (!$column) {
-            return collect();
-        }
-
-        $query = User::query()
-            ->where('role', $outgoing->role)
-            ->where('id', '!=', $outgoing->id)
-            ->where('status', 'active')
-            ->whereDoesntHave('referrals')
-            ->whereNotExists(function ($q) use ($column) {
-                $q->select(DB::raw(1))
-                    ->from('sims')
-                    ->whereColumn("sims.$column", 'users.id');
-            });
-
-        if ($outgoing->role === 'regional_manager') {
-            $query->whereDoesntHave('regionAsManager');
-        } elseif ($outgoing->role === 'coordinator') {
-            $query->whereDoesntHave('districtAsCoordinator');
-        } elseif ($outgoing->role === 'business') {
-            $query->whereNotExists(function ($q) {
-                $q->select(DB::raw(1))
-                    ->from('business_commission_rates')
-                    ->whereColumn('business_commission_rates.business_id', 'users.id');
-            });
-        }
-
-        return $query->orderBy('first_name')->orderBy('last_name')->get();
+        return $this->candidates($outgoing);
     }
 
     /**
      * Reasons $incoming is not eligible to receive $outgoing's seat, empty
-     * when eligible. Re-checked at execution time (not just when the
-     * candidate list was rendered) in case anything changed in between.
+     * when eligible. Re-checked at execution time.
      */
     public function vacancyErrors(User $outgoing, User $incoming): array
     {
@@ -110,38 +115,12 @@ class ManagerReplacementService
             $errors[] = 'The replacement must be a different account than the outgoing manager.';
         }
 
-        if ($incoming->role !== $outgoing->role) {
-            $errors[] = 'The replacement must hold the same role as the outgoing manager.';
-        }
-
         if ($incoming->status !== 'active') {
             $errors[] = 'The replacement account is not active.';
         }
 
-        $column = self::roleColumn($incoming->role);
-        if (!$column) {
-            $errors[] = 'This role does not hold a downline/jurisdiction position that can be replaced.';
-            return $errors;
-        }
-
-        if ($incoming->referrals()->exists()) {
-            $errors[] = 'The replacement already has downline users reporting to them.';
-        }
-
-        if (Sim::where($column, $incoming->id)->exists()) {
-            $errors[] = 'The replacement already holds SIMs.';
-        }
-
-        if ($incoming->role === 'regional_manager' && $incoming->regionAsManager()->exists()) {
-            $errors[] = 'The replacement already manages a region.';
-        }
-
-        if ($incoming->role === 'coordinator' && $incoming->districtAsCoordinator()->exists()) {
-            $errors[] = 'The replacement already coordinates a senatorial district.';
-        }
-
-        if ($incoming->role === 'business' && BusinessCommissionRate::where('business_id', $incoming->id)->exists()) {
-            $errors[] = 'The replacement already has custom pricing configured.';
+        if ($incoming->role === 'super_admin') {
+            $errors[] = 'A super administrator cannot be placed into a regional manager/coordinator seat.';
         }
 
         return $errors;
@@ -166,11 +145,12 @@ class ManagerReplacementService
     }
 
     /**
-     * Move $outgoing's entire seat (jurisdiction + downline + SIM holdings
-     * + pricing overrides) onto $incoming. Throws RuntimeException with a
-     * human-readable reason if $incoming isn't actually vacant.
+     * Move $outgoing's seat (jurisdiction + SIM holdings + pricing overrides) onto $incoming.
+     * Automatically upgrades $incoming to the exact role of $outgoing if not already matching.
+     * Places downlines of both $outgoing and $incoming under the Platform Level Master Manager in batches
+     * so they can be monitored and transferred to other managers in bulk operations.
      */
-    public function replace(User $outgoing, User $incoming, User $actor): void
+    public function replace(User $outgoing, User $incoming, User $actor): array
     {
         $errors = $this->vacancyErrors($outgoing, $incoming);
         if (!empty($errors)) {
@@ -178,29 +158,131 @@ class ManagerReplacementService
         }
 
         $column = self::roleColumn($outgoing->role);
+        if (!$column) {
+            throw new \RuntimeException('This role does not hold a downline/jurisdiction position that can be replaced.');
+        }
 
-        DB::transaction(function () use ($outgoing, $incoming, $actor, $column) {
+        return DB::transaction(function () use ($outgoing, $incoming, $actor, $column) {
+            $masterManager = User::platformMasterManager();
+
+            // 1. Place Outgoing Manager's downline under Platform Master Manager in a batch
+            $outgoingDownlines = User::where('referred_by', $outgoing->id)->get();
+            $outgoingBatch = null;
+
+            if ($outgoingDownlines->isNotEmpty()) {
+                $outgoingBatch = DownlineBatch::create([
+                    'batch_reference'   => DownlineBatch::generateReference('OUT', $outgoing),
+                    'source_user_id'    => $outgoing->id,
+                    'source_role'       => $outgoing->role,
+                    'source_type'       => 'outgoing_manager',
+                    'master_manager_id' => $masterManager->id,
+                    'title'             => "Downline from Outgoing {$outgoing->name} (" . str_replace('_', ' ', $outgoing->role) . ")",
+                    'notes'             => "Detached upon manager replacement by {$incoming->name} (executed by {$actor->name})",
+                    'initial_count'     => $outgoingDownlines->count(),
+                    'current_count'     => $outgoingDownlines->count(),
+                    'transferred_count' => 0,
+                    'status'            => DownlineBatch::STATUS_HELD,
+                    'created_by'        => $actor->id,
+                ]);
+
+                $now = now();
+                $batchUsers = $outgoingDownlines->map(fn (User $u) => [
+                    'batch_id'             => $outgoingBatch->id,
+                    'user_id'              => $u->id,
+                    'original_referred_by' => $outgoing->id,
+                    'current_referred_by'  => $masterManager->id,
+                    'status'               => DownlineBatchUser::STATUS_HELD,
+                    'created_at'           => $now,
+                    'updated_at'           => $now,
+                ])->all();
+
+                DownlineBatchUser::insert($batchUsers);
+
+                User::where('referred_by', $outgoing->id)->update(['referred_by' => $masterManager->id]);
+            }
+
+            // 2. Place Incoming Manager's existing downlines under Platform Master Manager in a batch
+            $incomingDownlines = User::where('referred_by', $incoming->id)->get();
+            $incomingBatch = null;
+
+            if ($incomingDownlines->isNotEmpty()) {
+                $incomingBatch = DownlineBatch::create([
+                    'batch_reference'   => DownlineBatch::generateReference('INC', $incoming),
+                    'source_user_id'    => $incoming->id,
+                    'source_role'       => $incoming->role,
+                    'source_type'       => 'incoming_manager',
+                    'master_manager_id' => $masterManager->id,
+                    'title'             => "Downline from Replacement {$incoming->name} (" . str_replace('_', ' ', $incoming->role) . ")",
+                    'notes'             => "Detached upon taking over {$outgoing->name}'s seat (executed by {$actor->name})",
+                    'initial_count'     => $incomingDownlines->count(),
+                    'current_count'     => $incomingDownlines->count(),
+                    'transferred_count' => 0,
+                    'status'            => DownlineBatch::STATUS_HELD,
+                    'created_by'        => $actor->id,
+                ]);
+
+                $now = now();
+                $batchUsers = $incomingDownlines->map(fn (User $u) => [
+                    'batch_id'             => $incomingBatch->id,
+                    'user_id'              => $u->id,
+                    'original_referred_by' => $incoming->id,
+                    'current_referred_by'  => $masterManager->id,
+                    'status'               => DownlineBatchUser::STATUS_HELD,
+                    'created_at'           => $now,
+                    'updated_at'           => $now,
+                ])->all();
+
+                DownlineBatchUser::insert($batchUsers);
+
+                User::where('referred_by', $incoming->id)->update(['referred_by' => $masterManager->id]);
+            }
+
+            // 3. Upgrade Incoming User to the exact role of the outgoing manager
+            $roleUpgraded = false;
+            $oldRole = $incoming->role;
+            if ($incoming->role !== $outgoing->role) {
+                $incoming->role = $outgoing->role;
+                $incoming->save();
+                $roleUpgraded = true;
+            }
+
+            // 4. Transfer Jurisdiction
             if ($outgoing->role === 'regional_manager') {
                 Region::where('regional_manager_id', $outgoing->id)->update(['regional_manager_id' => $incoming->id]);
             } elseif ($outgoing->role === 'coordinator') {
                 SenatorialDistrict::where('coordinator_id', $outgoing->id)->update(['coordinator_id' => $incoming->id]);
             }
 
-            User::where('referred_by', $outgoing->id)->update(['referred_by' => $incoming->id]);
-
+            // 5. Transfer SIM holdings
             $simsMoved = $this->reassignSims($outgoing, $incoming, $actor, $column);
 
+            // 6. Transfer Pricing overrides if business
             if ($outgoing->role === 'business') {
                 BusinessCommissionRate::where('business_id', $outgoing->id)->update(['business_id' => $incoming->id]);
             }
 
-            Log::info('Manager replacement executed', [
-                'role' => $outgoing->role,
-                'outgoing_user_id' => $outgoing->id,
-                'incoming_user_id' => $incoming->id,
-                'sims_moved' => $simsMoved,
-                'actor_id' => $actor->id,
+            Log::info('Manager replacement executed with downline batching', [
+                'role'                     => $outgoing->role,
+                'outgoing_user_id'         => $outgoing->id,
+                'incoming_user_id'         => $incoming->id,
+                'outgoing_downlines_count' => $outgoingDownlines->count(),
+                'incoming_downlines_count' => $incomingDownlines->count(),
+                'outgoing_batch_ref'       => $outgoingBatch?->batch_reference,
+                'incoming_batch_ref'       => $incomingBatch?->batch_reference,
+                'sims_moved'               => $simsMoved,
+                'role_upgraded'            => $roleUpgraded,
+                'actor_id'                 => $actor->id,
             ]);
+
+            return [
+                'outgoing_batch'           => $outgoingBatch,
+                'incoming_batch'           => $incomingBatch,
+                'outgoing_downlines_count' => $outgoingDownlines->count(),
+                'incoming_downlines_count' => $incomingDownlines->count(),
+                'sims_moved'               => $simsMoved,
+                'role_upgraded'            => $roleUpgraded,
+                'old_role'                 => $oldRole,
+            ];
         });
     }
 

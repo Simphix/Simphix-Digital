@@ -230,9 +230,10 @@
                 <span :class="sidebarCollapsed ? 'lg:hidden' : 'block'" class="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Administration</span>
 
                 @php
+                    $downlineBatchesActive = request()->routeIs('admin.manage.downline-batches*');
                     $replaceManagerActive = request()->routeIs('admin.manage.replace-manager*', 'admin.manage.users.replace*');
                     $manageUsersActive = request()->routeIs('admin.manage.users*') && !$replaceManagerActive;
-                    $adminUsersActive = $manageUsersActive || $replaceManagerActive || request()->routeIs('admin.manage.upgrades*', 'admin.manage.access*');
+                    $adminUsersActive = $manageUsersActive || $replaceManagerActive || $downlineBatchesActive || request()->routeIs('admin.manage.upgrades*', 'admin.manage.access*');
                 @endphp
                 <div x-data="{ open: {{ $adminUsersActive ? 'true' : 'false' }} }">
                     <button type="button"
@@ -262,6 +263,7 @@
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.upgrades'), 'icon' => 'arrow-up-circle', 'label' => 'Manage Upgrades', 'active' => request()->routeIs('admin.manage.upgrades*')])
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.access'), 'icon' => 'shield-check', 'label' => 'Manage Access', 'active' => request()->routeIs('admin.manage.access*')])
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.replace-manager.index'), 'icon' => 'repeat', 'label' => 'Replace Manager', 'active' => $replaceManagerActive])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.downline-batches.index'), 'icon' => 'layers', 'label' => 'Downline Batches', 'active' => $downlineBatchesActive])
                     </div>
                 </div>
 

@@ -292,11 +292,17 @@ Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->
     Route::get('/users/{user}/team', [\App\Http\Controllers\Admin\ManageController::class, 'userTeam'])->name('users.team');
     Route::delete('/users/{user}', [\App\Http\Controllers\Admin\ManageController::class, 'destroyUser'])->name('users.destroy');
 
-    // Manager replacement — hand an upline's entire seat (jurisdiction,
-    // downline, SIM holdings, pricing overrides) to a vacant same-role user.
+    // Manager replacement — hand an upline's seat to any platform user,
+    // automatically upgrading their role and batching downlines to Platform Master Manager.
     Route::get('/replace-manager', [\App\Http\Controllers\Admin\ManagerReplacementController::class, 'index'])->name('replace-manager.index');
     Route::get('/users/{user}/replace', [\App\Http\Controllers\Admin\ManagerReplacementController::class, 'show'])->name('users.replace');
+    Route::get('/users/{user}/replace/candidates', [\App\Http\Controllers\Admin\ManagerReplacementController::class, 'searchCandidates'])->name('users.replace.candidates');
     Route::post('/users/{user}/replace', [\App\Http\Controllers\Admin\ManagerReplacementController::class, 'store'])->name('users.replace.store');
+
+    // Downline Batches & Bulk Transfer
+    Route::get('/downline-batches', [\App\Http\Controllers\Admin\DownlineBatchController::class, 'index'])->name('downline-batches.index');
+    Route::get('/downline-batches/{batch}', [\App\Http\Controllers\Admin\DownlineBatchController::class, 'show'])->name('downline-batches.show');
+    Route::post('/downline-batches/{batch}/transfer', [\App\Http\Controllers\Admin\DownlineBatchController::class, 'transfer'])->name('downline-batches.transfer');
 
     Route::get('/upgrades', [\App\Http\Controllers\Admin\ManageController::class, 'upgrades'])->name('upgrades');
     Route::post('/upgrades/{user}/approve', [\App\Http\Controllers\Admin\ManageController::class, 'approveUpgrade'])->name('upgrades.approve');

@@ -48,23 +48,48 @@ class ManagerReplacementController extends Controller
     }
 
     /**
-     * Confirmation screen: pick the vacant account that will take over
-     * $outgoing's seat, after seeing exactly what that involves.
+     * Confirmation screen: pick any account on the platform that will take over
+     * $outgoing's seat. Automatically upgrades the selected user to the exact role
+     * and batches downlines of both managers to the Platform Level Master Manager.
      */
-    public function show(User $user): View
+    public function show(Request $request, User $user): View
     {
         if (!ManagerReplacementService::roleColumn($user->role)) {
             abort(404, 'This role does not hold a downline/jurisdiction position that can be replaced.');
         }
 
-        $candidates = $this->service->vacantCandidates($user);
+        $search = $request->query('search');
+        $candidates = $this->service->candidateQuery($user, $search)->paginate(20)->withQueryString();
         $impact = $this->service->impactSummary($user);
+        $masterManager = User::platformMasterManager();
 
         return view('admin.manage.replace_manager', [
-            'outgoing' => $user,
-            'candidates' => $candidates,
-            'impact' => $impact,
+            'outgoing'      => $user,
+            'candidates'    => $candidates,
+            'impact'        => $impact,
+            'masterManager' => $masterManager,
+            'search'        => $search,
         ]);
+    }
+
+    /**
+     * Live search endpoint returning candidates matching a phone, email, or name query.
+     */
+    public function searchCandidates(Request $request, User $user)
+    {
+        $search = $request->query('search') ?? $request->query('q');
+        $candidates = $this->service->candidates($user, $search, 30);
+
+        return response()->json($candidates->map(fn (User $u) => [
+            'id'             => $u->id,
+            'name'           => $u->name,
+            'email'          => $u->email,
+            'phone'          => $u->phone,
+            'role'           => $u->role,
+            'role_label'     => ucfirst(str_replace('_', ' ', $u->role)),
+            'needs_upgrade'  => $u->role !== $user->role,
+            'downline_count' => $u->referrals()->count(),
+        ]));
     }
 
     public function store(Request $request, User $user): RedirectResponse
@@ -72,20 +97,31 @@ class ManagerReplacementController extends Controller
         $validated = $request->validate([
             'incoming_user_id' => [
                 'required',
-                Rule::exists('users', 'id')->where('role', $user->role),
+                Rule::exists('users', 'id')->whereNot('id', $user->id),
             ],
         ]);
 
         $incoming = User::findOrFail($validated['incoming_user_id']);
 
         try {
-            $this->service->replace($user, $incoming, $request->user());
+            $result = $this->service->replace($user, $incoming, $request->user());
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
+        $msg = "{$incoming->name} has taken over {$user->name}'s seat.";
+        if (!empty($result['role_upgraded'])) {
+            $msg .= " Upgraded from " . ucfirst(str_replace('_', ' ', $result['old_role'])) . " to " . ucfirst(str_replace('_', ' ', $user->role)) . ".";
+        }
+        if (!empty($result['outgoing_downlines_count'])) {
+            $msg .= " Outgoing downline ({$result['outgoing_downlines_count']} users) moved to Platform Master Manager in Batch #{$result['outgoing_batch']->batch_reference}.";
+        }
+        if (!empty($result['incoming_downlines_count'])) {
+            $msg .= " Replacement downline ({$result['incoming_downlines_count']} users) moved to Platform Master Manager in Batch #{$result['incoming_batch']->batch_reference}.";
+        }
+
         return redirect()
             ->route('admin.manage.users.show', $incoming)
-            ->with('success', "{$incoming->name} has taken over {$user->name}'s seat: downline, jurisdiction, and SIM holdings have all moved over.");
+            ->with('success', $msg);
     }
 }
