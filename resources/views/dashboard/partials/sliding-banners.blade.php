@@ -1,4 +1,4 @@
-<!-- Sliding Banners: 1. Moniepoint POS | 2. Business Loans (Balanced Landscape Size matching Travel & Tours Banner) -->
+<!-- Sliding Banners: 1. Moniepoint POS | 2. Business Loans (Balanced Landscape Billboard matching Travel & Tours Banner) -->
 <div class="mb-4 w-full"
      x-data="{
         currentSlide: 0,
@@ -30,6 +30,60 @@
      @mouseenter="stopTimer()"
      @mouseleave="startTimer()">
 
+    <style>
+        @media (max-width: 767.98px) {
+            .slide-banner-card {
+                padding: 10px 14px !important;
+                min-height: auto !important;
+            }
+            .slide-banner-row {
+                gap: 8px !important;
+            }
+            .slide-banner-pill {
+                padding: 2px 8px !important;
+                margin-bottom: 4px !important;
+                font-size: 10px !important;
+            }
+            .slide-banner-pill span {
+                font-size: 10px !important;
+            }
+            .slide-banner-title {
+                font-size: 0.875rem !important;
+                line-height: 1.25 !important;
+                margin-bottom: 4px !important;
+            }
+            .slide-banner-desc {
+                font-size: 0.6875rem !important;
+                line-height: 1.35 !important;
+                display: -webkit-box !important;
+                -webkit-line-clamp: 1 !important;
+                -webkit-box-orient: vertical !important;
+                overflow: hidden !important;
+                margin-bottom: 6px !important;
+            }
+            .slide-banner-actions {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 8px !important;
+                padding-top: 2px !important;
+            }
+            .slide-banner-btn {
+                padding: 6px 12px !important;
+                font-size: 11px !important;
+            }
+            .slide-banner-btn i {
+                width: 14px !important;
+                height: 14px !important;
+            }
+            .slide-banner-graphic {
+                display: none !important;
+            }
+            .slide-feature-tags {
+                display: none !important;
+            }
+        }
+    </style>
+
     <div class="relative overflow-hidden rounded-2xl shadow-md border border-slate-200">
 
         <!-- ========================================== -->
@@ -43,78 +97,75 @@
              x-transition:leave-start="opacity-100 translate-x-0"
              x-transition:leave-end="opacity-0 -translate-x-4"
              style="background: linear-gradient(135deg, #001F5C 0%, #002D80 50%, #0056D2 100%); color: #ffffff;"
-             class="relative py-2.5 px-3 md:p-5 lg:p-6 min-h-[115px] md:min-h-[160px] flex items-center">
+             class="slide-banner-card relative p-4 sm:p-5 lg:p-6 min-h-[160px] flex items-center">
 
             <!-- Decorative Ambient Accents -->
             <div class="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full"
                  style="background: radial-gradient(circle, rgba(251, 191, 36, 0.25) 0%, rgba(251, 191, 36, 0) 70%); filter: blur(20px);" aria-hidden="true"></div>
 
-            <div class="relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-6">
+            <div class="slide-banner-row relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-4 lg:gap-6">
                 
                 <!-- Left Content Block -->
                 <div class="min-w-0 flex-1 text-left">
                     <!-- Partner Badge with Logo -->
-                    <div class="inline-flex items-center gap-1.5 md:gap-2 py-0.5 px-2 md:py-1 md:px-3 rounded-full mb-1 md:mb-2"
-                         style="background: rgba(255, 204, 0, 0.15); border: 1px solid rgba(255, 204, 0, 0.4);">
-                        <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" class="h-3 md:h-3.5 w-auto object-contain">
-                        <span class="text-[10px] md:text-[11px] font-bold text-amber-200 tracking-wide uppercase">Official Moniepoint POS Partner</span>
+                    <div class="slide-banner-pill"
+                         style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; background: rgba(255, 204, 0, 0.15); border: 1px solid rgba(255, 204, 0, 0.4); margin-bottom: 8px;">
+                        <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" style="height: 14px; width: auto; object-fit: contain;">
+                        <span style="font-size: 11px; font-weight: 700; color: #fef08a; letter-spacing: 0.3px; text-transform: uppercase;">Official Moniepoint POS Partner</span>
                     </div>
 
                     <!-- Title -->
-                    <h2 class="text-sm md:text-xl lg:text-[1.25rem] font-bold md:font-extrabold text-white leading-tight md:leading-snug mb-1 md:mb-1.5 tracking-tight"
-                        style="color: #ffffff !important;">
+                    <h2 class="slide-banner-title"
+                        style="font-size: 1.25rem; font-weight: 800; color: #ffffff !important; line-height: 1.3; margin: 0 0 6px 0; letter-spacing: -0.02em;">
                         Request Your Moniepoint POS Terminal Today
                     </h2>
 
-                    <!-- Subtitle (1 line on mobile screen, full text on large screens) -->
-                    <p class="text-[11px] md:text-[0.8125rem] text-slate-100 line-clamp-1 md:line-clamp-none font-normal max-w-2xl leading-normal md:leading-relaxed"
-                       style="color: #e0e7ff !important; margin: 0;">
-                        Get high-speed Moniepoint Smart (Android) or Traditional POS terminals with instant settlement, dual SIM, and nationwide delivery.
+                    <!-- Subtitle -->
+                    <p class="slide-banner-desc"
+                       style="font-size: 0.8125rem; color: #e0e7ff !important; line-height: 1.5; margin: 0 0 10px 0; max-width: 580px; font-weight: 400;">
+                        Get high-speed Moniepoint Smart (Android) or Traditional POS terminals for your business. Enjoy instant card settlement, 99.9% uptime, dual SIM, and long battery life.
                     </p>
 
-                    <!-- Feature Tags (Desktop/Tablet Only) -->
-                    <div class="hidden lg:flex items-center gap-2 mt-2">
-                        <span style="font-size: 10px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #bae6fd; font-weight: 600;">
+                    <!-- Feature Tags (Desktop/Tablet) -->
+                    <div class="slide-feature-tags hidden sm:flex items-center gap-2 mb-3">
+                        <span style="font-size: 11px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #bae6fd; font-weight: 600;">
                             ✓ Instant Wallet Settlement
                         </span>
-                        <span style="font-size: 10px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #bae6fd; font-weight: 600;">
-                            ✓ Smart Android &amp; Traditional
+                        <span style="font-size: 11px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #bae6fd; font-weight: 600;">
+                            ✓ Android &amp; Traditional
                         </span>
-                        <span style="font-size: 10px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #bae6fd; font-weight: 600;">
-                            ✓ Fast Dispatch
+                        <span style="font-size: 11px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #bae6fd; font-weight: 600;">
+                            ✓ Nationwide Delivery
                         </span>
                     </div>
-                </div>
 
-                <!-- Right Action Block + Hardware Image -->
-                <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-0.5 md:pt-0">
                     <!-- Action Buttons -->
-                    <div class="flex flex-row items-center gap-2 md:gap-2.5">
+                    <div class="slide-banner-actions flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
                         <a href="{{ route('moniepoint.pos.index') }}"
-                           class="inline-flex items-center justify-center gap-1.5 md:gap-2 py-1.5 px-3 md:py-2.5 md:px-4.5 rounded-xl font-bold text-xs md:text-[13px] whitespace-nowrap shadow-sm transition"
-                           style="background-color: #ffcc00; color: #001F5C !important; text-decoration: none;"
+                           class="slide-banner-btn"
+                           style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 12px; background-color: #ffcc00; color: #001F5C !important; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: nowrap;"
                            onmouseover="this.style.backgroundColor='#ffe066'"
                            onmouseout="this.style.backgroundColor='#ffcc00'">
-                            <i data-lucide="smartphone" class="w-3.5 h-3.5 md:w-4 md:h-4 stroke-[2.5]" style="stroke: #001F5C;"></i>
+                            <i data-lucide="smartphone" style="width: 16px; height: 16px; stroke: #001F5C; stroke-width: 2.5;"></i>
                             <span style="color: #001F5C !important;">Request Moniepoint POS</span>
                         </a>
                         <a href="{{ route('moniepoint.pos.tracking') }}"
-                           class="inline-flex items-center justify-center gap-1.5 md:gap-2 py-1.5 px-2.5 md:py-2.5 md:px-4 rounded-xl font-semibold text-xs md:text-[13px] whitespace-nowrap transition"
-                           style="background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.35); text-decoration: none; backdrop-filter: blur(4px);"
+                           class="slide-banner-btn"
+                           style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 15px; border-radius: 12px; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.35); font-size: 13px; font-weight: 600; text-decoration: none; backdrop-filter: blur(4px); white-space: nowrap;"
                            onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'"
                            onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
-                            <i data-lucide="search" class="w-3.5 h-3.5 md:w-4 md:h-4" style="stroke: #bae6fd;"></i>
+                            <i data-lucide="search" style="width: 15px; height: 15px; stroke: #bae6fd; stroke-width: 2;"></i>
                             <span style="color: #ffffff !important;">Track POS Request</span>
                         </a>
                     </div>
+                </div>
 
-                    <!-- POS Terminal Graphic (Tablet/Desktop) -->
-                    <div class="hidden md:flex shrink-0 items-center justify-center">
-                        <div class="relative flex items-center justify-center p-1.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-sm">
-                            <img src="{{ asset('assets/images/moniepoint-pos.png') }}"
-                                 alt="Moniepoint POS"
-                                 class="h-16 lg:h-20 w-auto object-contain filter drop-shadow-md">
-                        </div>
+                <!-- Right Side: Official POS Hardware Image (Desktop/Tablet) -->
+                <div class="slide-banner-graphic shrink-0 hidden md:flex items-center justify-center pt-2 md:pt-0">
+                    <div class="relative flex items-center justify-center p-2 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg">
+                        <img src="{{ asset('assets/images/moniepoint-pos.png') }}"
+                             alt="Moniepoint POS Terminal"
+                             class="h-28 lg:h-32 w-auto object-contain filter drop-shadow-md">
                     </div>
                 </div>
 
@@ -132,82 +183,80 @@
              x-transition:leave-start="opacity-100 translate-x-0"
              x-transition:leave-end="opacity-0 -translate-x-4"
              style="background: linear-gradient(135deg, #063d2e 0%, #0b4a3a 50%, #0d2f5a 100%); color: #ffffff;"
-             class="relative py-2.5 px-3 md:p-5 lg:p-6 min-h-[115px] md:min-h-[160px] flex items-center"
+             class="slide-banner-card relative p-4 sm:p-5 lg:p-6 min-h-[160px] flex items-center"
              style="display: none;">
 
             <!-- Decorative Ambient Accents -->
             <div class="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full"
                  style="background: radial-gradient(circle, rgba(52, 211, 153, 0.25) 0%, rgba(52, 211, 153, 0) 70%); filter: blur(20px);" aria-hidden="true"></div>
 
-            <div class="relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-6">
+            <div class="slide-banner-row relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-4 lg:gap-6">
                 
                 <!-- Left Content Block -->
                 <div class="min-w-0 flex-1 text-left">
                     <!-- Prominent Disclaimer Badge -->
-                    <div class="inline-flex items-center gap-1.5 md:gap-2 py-0.5 px-2 md:py-1 md:px-3 rounded-full mb-1 md:mb-2"
-                         style="background: rgba(245, 158, 11, 0.22); border: 1px solid rgba(245, 158, 11, 0.55);">
-                        <i data-lucide="alert-triangle" class="w-3 md:w-3.5 h-3 md:h-3.5 stroke-[2.5]" style="stroke: #fbbf24;"></i>
-                        <span class="text-[10px] md:text-[11px] font-bold text-amber-200 tracking-wide uppercase">
+                    <div class="slide-banner-pill"
+                         style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; background: rgba(245, 158, 11, 0.22); border: 1px solid rgba(245, 158, 11, 0.55); margin-bottom: 8px;">
+                        <i data-lucide="alert-triangle" style="width: 14px; height: 14px; stroke: #fbbf24; stroke-width: 2.5;"></i>
+                        <span style="font-size: 11px; font-weight: 700; color: #fef08a; letter-spacing: 0.3px; text-transform: uppercase;">
                             Disclaimer: Moniepoint Business Owners Only
                         </span>
                     </div>
 
                     <!-- Title -->
-                    <h2 class="text-sm md:text-xl lg:text-[1.25rem] font-bold md:font-extrabold text-white leading-tight md:leading-snug mb-1 md:mb-1.5 tracking-tight"
-                        style="color: #ffffff !important;">
+                    <h2 class="slide-banner-title"
+                        style="font-size: 1.25rem; font-weight: 800; color: #ffffff !important; line-height: 1.3; margin: 0 0 6px 0; letter-spacing: -0.02em;">
                         Instant Working Capital &amp; Business Loans
                     </h2>
 
-                    <!-- Subtitle (1 line on mobile screen, full text on large screens) -->
-                    <p class="text-[11px] md:text-[0.8125rem] text-slate-100 line-clamp-1 md:line-clamp-none font-normal max-w-2xl leading-normal md:leading-relaxed"
-                       style="color: #d1fae5 !important; margin: 0;">
-                        Expand your retail operations or agent liquidity with fast working capital disbursed directly into your active Moniepoint business wallet.
+                    <!-- Subtitle -->
+                    <p class="slide-banner-desc"
+                       style="font-size: 0.8125rem; color: #d1fae5 !important; line-height: 1.5; margin: 0 0 10px 0; max-width: 580px; font-weight: 400;">
+                        Expand your retail operations or agent liquidity. Fast, low-interest working capital loans disbursed directly into your active Moniepoint business wallet.
                     </p>
 
-                    <!-- Feature Tags (Desktop/Tablet Only) -->
-                    <div class="hidden lg:flex items-center gap-2 mt-2">
-                        <span style="font-size: 10px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #a7f3d0; font-weight: 600;">
+                    <!-- Feature Tags -->
+                    <div class="slide-feature-tags hidden sm:flex items-center gap-2 mb-3">
+                        <span style="font-size: 11px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #a7f3d0; font-weight: 600;">
                             ✓ 24-48h Quick Disbursement
                         </span>
-                        <span style="font-size: 10px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #a7f3d0; font-weight: 600;">
+                        <span style="font-size: 11px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #a7f3d0; font-weight: 600;">
                             ✓ Up to &#8358;50,000,000
                         </span>
-                        <span style="font-size: 10px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #a7f3d0; font-weight: 600;">
+                        <span style="font-size: 11px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: #a7f3d0; font-weight: 600;">
                             ✓ Flexible Repayment
                         </span>
                     </div>
-                </div>
 
-                <!-- Right Action Block + Badge Graphic -->
-                <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-0.5 md:pt-0">
                     <!-- Action Buttons -->
-                    <div class="flex flex-row items-center gap-2 md:gap-2.5">
+                    <div class="slide-banner-actions flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
                         <a href="{{ route('loans.index') }}"
-                           class="inline-flex items-center justify-center gap-1.5 md:gap-2 py-1.5 px-3 md:py-2.5 md:px-4.5 rounded-xl font-bold text-xs md:text-[13px] whitespace-nowrap shadow-sm transition"
-                           style="background-color: #10b981; color: #022c22 !important; text-decoration: none;"
+                           class="slide-banner-btn"
+                           style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 12px; background-color: #10b981; color: #022c22 !important; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: nowrap;"
                            onmouseover="this.style.backgroundColor='#34d399'"
                            onmouseout="this.style.backgroundColor='#10b981'">
-                            <i data-lucide="banknote" class="w-3.5 h-3.5 md:w-4 md:h-4 stroke-[2.5]" style="stroke: #022c22;"></i>
-                            <span style="color: #022c22 !important;">Apply for Loan</span>
+                            <i data-lucide="banknote" style="width: 16px; height: 16px; stroke: #022c22; stroke-width: 2.5;"></i>
+                            <span style="color: #022c22 !important;">Apply for Business Loan</span>
                         </a>
                         <a href="{{ route('loans.tracking') }}"
-                           class="inline-flex items-center justify-center gap-1.5 md:gap-2 py-1.5 px-2.5 md:py-2.5 md:px-4 rounded-xl font-semibold text-xs md:text-[13px] whitespace-nowrap transition"
-                           style="background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.35); text-decoration: none; backdrop-filter: blur(4px);"
+                           class="slide-banner-btn"
+                           style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 15px; border-radius: 12px; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.35); font-size: 13px; font-weight: 600; text-decoration: none; backdrop-filter: blur(4px); white-space: nowrap;"
                            onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'"
                            onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
-                            <i data-lucide="search" class="w-3.5 h-3.5 md:w-4 md:h-4" style="stroke: #a7f3d0;"></i>
-                            <span style="color: #ffffff !important;">Track Loan</span>
+                            <i data-lucide="search" style="width: 15px; height: 15px; stroke: #a7f3d0; stroke-width: 2;"></i>
+                            <span style="color: #ffffff !important;">Track Loan Status</span>
                         </a>
                     </div>
+                </div>
 
-                    <!-- Business Credit Graphic (Tablet/Desktop) -->
-                    <div class="hidden md:flex shrink-0 items-center justify-center">
-                        <div class="p-2 rounded-xl bg-white/10 backdrop-blur-sm border border-emerald-400/30 text-center shadow-sm">
-                            <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center mx-auto mb-1 border border-emerald-400/40">
-                                <i data-lucide="trending-up" class="w-4 h-4"></i>
-                            </div>
-                            <span class="block text-[9px] font-bold text-white uppercase tracking-wider">Moniepoint Credit</span>
+                <!-- Right Side: Business Credit Graphic (Desktop/Tablet) -->
+                <div class="slide-banner-graphic shrink-0 hidden md:flex items-center justify-center pt-2 md:pt-0">
+                    <div class="p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-emerald-400/30 text-center shadow-lg">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center mx-auto mb-2 border border-emerald-400/40">
+                            <i data-lucide="trending-up" class="w-6 h-6"></i>
                         </div>
+                        <span class="block text-xs font-bold text-white uppercase tracking-wider">Business Credit</span>
+                        <span class="block text-[10px] text-emerald-300 font-medium">Moniepoint Verified</span>
                     </div>
                 </div>
 
