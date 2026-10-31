@@ -12,38 +12,31 @@
 
 <!-- Balanced Landscape Ad Banner for Travel & Tours -->
 <div class="mb-4 w-full">
-    <div class="relative overflow-hidden rounded-2xl border border-sky-800/40 shadow-md bg-slate-950 text-white"
-         @if($hasLocalImage) style="background-image: url('{{ $customBannerImage }}'); background-size: cover; background-position: center;" @endif>
+    <div class="relative overflow-hidden rounded-2xl shadow-md"
+         style="background-color: #07152f; background-image: linear-gradient(90deg, rgba(7, 21, 47, 0.94) 0%, rgba(12, 35, 75, 0.88) 55%, rgba(0, 86, 210, 0.78) 100%), url('{{ $customBannerImage }}'); background-size: cover; background-position: center; border: 1px solid rgba(30, 58, 138, 0.6);">
         
-        <!-- Background Image layer (falls back to rich gradient when image is not yet uploaded) -->
-        <div class="absolute inset-0 bg-cover bg-center pointer-events-none"
-             style="background-image: url('{{ $customBannerImage }}');"></div>
+        <!-- Subtle Glow Element -->
+        <div class="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full"
+             style="background: radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0) 70%); filter: blur(20px);" aria-hidden="true"></div>
 
-        <!-- Dark Gradient Scrim: Ensures text & buttons are 100% visible, sharp & high-contrast over any photo -->
-        <div class="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/85 to-[#0056D2]/75 pointer-events-none" aria-hidden="true"></div>
-
-        <!-- Subtle Light Ambient Accent -->
-        <div class="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-amber-400/15 blur-3xl" aria-hidden="true"></div>
-        <div class="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-sky-400/15 blur-3xl" aria-hidden="true"></div>
-
-        <!-- Banner Content Container (Balanced padding and vertical rhythm) -->
+        <!-- Banner Content Container -->
         <div class="relative z-10 w-full p-4 sm:p-5 lg:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 lg:gap-6">
             
             <!-- Left Information Block -->
             <div class="min-w-0 flex-1">
                 <!-- Tag / Category Pill -->
-                <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-semibold backdrop-blur-sm mb-2">
-                    <span class="flex h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-                    <span>Holy Pilgrimages &amp; Global Travels</span>
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; background: rgba(245, 158, 11, 0.18); border: 1px solid rgba(245, 158, 11, 0.45); margin-bottom: 8px;">
+                    <span style="width: 7px; height: 7px; border-radius: 9999px; background-color: #fbbf24; display: inline-block;"></span>
+                    <span style="font-size: 11px; font-weight: 700; color: #fef08a; letter-spacing: 0.3px;">Holy Pilgrimages &amp; Global Travels</span>
                 </div>
 
                 <!-- Main Headline -->
-                <h2 class="text-lg sm:text-xl lg:text-2xl font-extrabold text-white font-display tracking-tight leading-snug">
+                <h2 style="font-size: 1.25rem; font-weight: 800; color: #ffffff !important; line-height: 1.3; margin: 0 0 6px 0; letter-spacing: -0.02em;">
                     Umrah, Hajj &amp; International Travel Packages
                 </h2>
 
                 <!-- Balanced Subtitle -->
-                <p class="mt-1 text-xs sm:text-sm text-sky-100/90 leading-relaxed max-w-xl">
+                <p style="font-size: 0.8125rem; color: #f1f5f9 !important; line-height: 1.5; margin: 0; max-width: 620px; font-weight: 400;">
                     Exclusive holy pilgrimages to Makkah &amp; Madinah and curated global vacation tours with visa processing, direct flights, and star hotel accommodation.
                 </p>
             </div>
@@ -51,14 +44,18 @@
             <!-- Right Action Block (Balanced Buttons) -->
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 pt-1 md:pt-0">
                 <a href="{{ route('travel.index') }}"
-                   class="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-slate-950 font-bold text-xs sm:text-sm shadow-sm transition-all transform active:scale-95 no-underline text-center">
-                    <i data-lucide="plane" class="w-4 h-4 text-slate-950"></i>
-                    <span>Explore Packages &amp; Book</span>
+                   style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 12px; background-color: #f59e0b; color: #0f172a !important; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 2px 4px rgba(0,0,0,0.25); white-space: nowrap;"
+                   onmouseover="this.style.backgroundColor='#fbbf24'"
+                   onmouseout="this.style.backgroundColor='#f59e0b'">
+                    <i data-lucide="plane" style="width: 16px; height: 16px; stroke: #0f172a; stroke-width: 2.5;"></i>
+                    <span style="color: #0f172a !important;">Explore Packages &amp; Book</span>
                 </a>
                 <a href="{{ route('travel.tracking') }}"
-                   class="inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold text-xs sm:text-sm backdrop-blur-sm transition-all no-underline text-center">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-sky-200"></i>
-                    <span>Track My Request</span>
+                   style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 12px; background: rgba(255, 255, 255, 0.15); color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.35); font-size: 13px; font-weight: 600; text-decoration: none; backdrop-filter: blur(4px); white-space: nowrap;"
+                   onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'"
+                   onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
+                    <i data-lucide="search" style="width: 15px; height: 15px; stroke: #bae6fd; stroke-width: 2;"></i>
+                    <span style="color: #ffffff !important;">Track My Request</span>
                 </a>
             </div>
 
