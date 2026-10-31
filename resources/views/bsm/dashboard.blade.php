@@ -452,34 +452,34 @@
             </a>
         </div>
 
-        <!-- 5. SIM Cards & Plans Management Desk -->
+        <!-- 5. All SIMs Inventory Desk -->
         <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between hover:border-primary/40 transition">
             <div>
                 <div class="flex items-center gap-3 mb-3">
                     <span class="p-2.5 rounded-xl bg-indigo-50 text-indigo-600">
-                        <i data-lucide="settings" class="w-5 h-5"></i>
+                        <i data-lucide="database" class="w-5 h-5"></i>
                     </span>
                     <div>
-                        <h3 class="text-base font-bold text-slate-900 font-display">SIM Cards &amp; Plans</h3>
-                        <p class="text-xs text-slate-500">Platform inventory &amp; operations</p>
+                        <h3 class="text-base font-bold text-slate-900 font-display">All SIMs Inventory</h3>
+                        <p class="text-xs text-slate-500">Your assigned inventory &amp; field delegation</p>
                     </div>
                 </div>
                 <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                    Full administrative control over direct assignments, bulk collect, bulk assign, requests, swap requests, and category activation switches.
+                    Manage your assigned SIM inventory. Delegate stock down to any user or manager on the platform, and track turnover across the entire field.
                 </p>
                 <div class="p-3 bg-slate-50 rounded-xl space-y-2 mb-4 text-xs">
                     <div class="flex justify-between text-slate-600">
-                        <span>New SIM Uploads</span>
-                        <span class="font-bold text-slate-400">Admin Only</span>
+                        <span>Assigned Stock</span>
+                        <span class="font-bold text-indigo-600">Personal Portfolio</span>
                     </div>
                     <div class="flex justify-between text-slate-600">
-                        <span>Management Access</span>
-                        <span class="font-bold text-emerald-600">Enabled</span>
+                        <span>Delegation Scope</span>
+                        <span class="font-bold text-emerald-600">All Platform Users</span>
                     </div>
                 </div>
             </div>
-            <a href="{{ route('admin.sim-plan.index') }}" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition">
-                <span>Manage SIMs &amp; Plans</span>
+            <a href="{{ route('sims.inventory') }}" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition">
+                <span>View All SIMs Inventory</span>
                 <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
         </div>

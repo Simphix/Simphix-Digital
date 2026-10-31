@@ -159,6 +159,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/sims/activated/{sim}/update-customer', [\App\Http\Controllers\smartsim\SimsController::class, 'updateCustomerDetails'])->name('sims.activated.update-customer');
     Route::post('/sims/activated/{sim}/push-email', [\App\Http\Controllers\smartsim\SimsController::class, 'pushActivationDetailsEmail'])->name('sims.activated.push-email');
     Route::post('/partner/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('partner.sims.assign');
+    Route::post('/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('sims.assign');
     Route::post('/sims/bulk-assign', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignSim'])->name('sims.bulk-assign');
     Route::get('/sims/bulk-assign/new', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignPage'])->name('sims.bulk-assign.page');
     Route::post('/sims/bulk-assign/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveBulkAssignNumbers'])->name('sims.bulk-assign.resolve-numbers');
@@ -459,8 +460,8 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
     });
 });
 
-// SIM Cards & Plans Management (accessible to Super Admin and Business Sales Manager)
-Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('admin/sim-plan')->name('admin.sim-plan.')->group(function () {
+// SIM Cards & Plans Management (strictly accessible to Super Admin only)
+Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/sim-plan')->name('admin.sim-plan.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\SimPlanController::class, 'index'])->name('index');
     Route::post('/store', [\App\Http\Controllers\Admin\SimPlanController::class, 'store'])->name('store');
     Route::post('/assign', [\App\Http\Controllers\Admin\SimPlanController::class, 'assign'])->name('assign');

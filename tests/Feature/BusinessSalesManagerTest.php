@@ -381,16 +381,11 @@ test('BSM desks render days held and idle days as rounded whole numbers without 
         ->assertSee('10 days');
 });
 
-test('BSM can access SIM Cards & Plans Management but uploading SIMs is disabled', function () {
-    // 1. BSM can view the SIM Cards & Plans management index
-    $response = $this->actingAs($this->bsm)
-        ->get(route('admin.sim-plan.index'));
-
-    $response->assertOk();
-    $response->assertSee('SIM Cards & Plans Management', false);
-    $response->assertSee('SIM Uploading Disabled');
-    $response->assertSee('Uploading new inventory batches is restricted to Super Admins');
-    $response->assertDontSee('Upload Numbers');
+test('BSM cannot access admin SIM Cards & Plans Management (strictly restricted to Super Admin)', function () {
+    // 1. BSM is forbidden from viewing the SIM Cards & Plans management index
+    $this->actingAs($this->bsm)
+        ->get(route('admin.sim-plan.index'))
+        ->assertForbidden();
 
     // 2. Direct single SIM store endpoint is forbidden for BSM
     $this->actingAs($this->bsm)

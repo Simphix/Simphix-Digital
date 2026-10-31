@@ -20,10 +20,19 @@ class Sim extends Model
         'partner_id',
         'coordinator_id',
         'regional_manager_id',
+        'business_sales_manager_id',
         'business_id',
         'business_agent_id',
         'status',
     ];
+
+    /**
+     * Get the Business Sales Manager who holds or dispatched this SIM.
+     */
+    public function businessSalesManager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'business_sales_manager_id');
+    }
 
     /**
      * Get the user that is assigned to the SIM.

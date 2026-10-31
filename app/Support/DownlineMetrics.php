@@ -16,19 +16,21 @@ use App\Models\User;
 class DownlineMetrics
 {
     private const HOLDER_FK = [
-        'regional_manager' => 'regional_manager_id',
-        'coordinator'      => 'coordinator_id',
-        'partner'          => 'partner_id',
-        'business'         => 'business_id',
-        'business_agent'   => 'business_agent_id',
+        'business_sales_manager' => 'business_sales_manager_id',
+        'regional_manager'       => 'regional_manager_id',
+        'coordinator'            => 'coordinator_id',
+        'partner'                => 'partner_id',
+        'business'               => 'business_id',
+        'business_agent'         => 'business_agent_id',
     ];
 
     private const ASSIGNED_STATUS = [
-        'regional_manager' => SimStatus::ASSIGNED_TO_RM,
-        'coordinator'      => SimStatus::ASSIGNED_TO_COORDINATOR,
-        'partner'          => SimStatus::ASSIGNED_TO_PARTNER,
-        'business'         => SimStatus::ASSIGNED_TO_BUSINESS,
-        'business_agent'   => SimStatus::ASSIGNED_TO_BUSINESS_AGENT,
+        'business_sales_manager' => SimStatus::ASSIGNED_TO_BSM,
+        'regional_manager'       => SimStatus::ASSIGNED_TO_RM,
+        'coordinator'            => SimStatus::ASSIGNED_TO_COORDINATOR,
+        'partner'                => SimStatus::ASSIGNED_TO_PARTNER,
+        'business'               => SimStatus::ASSIGNED_TO_BUSINESS,
+        'business_agent'         => SimStatus::ASSIGNED_TO_BUSINESS_AGENT,
     ];
 
     public static function forUser(User $user): array

@@ -726,7 +726,11 @@ class BsmDashboardController extends Controller
         $target = User::findOrFail($request->target_id);
 
         try {
-            $assignmentService->adminAssign($sim, $target, $request->user());
+            if ($sim->status === SimStatus::ASSIGNED_TO_BSM && $sim->business_sales_manager_id === $request->user()->id) {
+                $assignmentService->assignDown($sim, $request->user(), $target);
+            } else {
+                $assignmentService->adminAssign($sim, $target, $request->user());
+            }
             return back()->with('success', "SIM {$sim->number} successfully assigned to {$target->name} ({$target->role}).");
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());

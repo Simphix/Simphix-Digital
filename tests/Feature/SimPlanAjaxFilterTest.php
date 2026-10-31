@@ -110,7 +110,7 @@ test('sim plan page filters inventory via AJAX by search, category, provider, an
     expect($statusHtml)->not->toContain('08031112222');
 });
 
-test('bsm user can also filter sim inventory via AJAX', function () {
+test('bsm user is forbidden from admin sim inventory via AJAX', function () {
     Sim::create([
         'number'   => '08055556666',
         'category' => 'POS SIM',
@@ -122,7 +122,5 @@ test('bsm user can also filter sim inventory via AJAX', function () {
         'search' => '08055556666',
     ]));
 
-    $response->assertOk();
-    expect($response->json('status'))->toBe('success');
-    expect($response->json('html'))->toContain('08055556666');
+    $response->assertForbidden();
 });
