@@ -135,6 +135,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{slug}/register', [\App\Http\Controllers\CacRegistrationController::class, 'store'])->name('store');
     });
 
+    // Travel & Tours (Umrah, Hajj, & International Travels)
+    Route::prefix('travel')->name('travel.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\TravelTourController::class, 'index'])->name('index');
+        Route::post('/request', [\App\Http\Controllers\TravelTourController::class, 'store'])->name('store');
+        Route::get('/tracking', [\App\Http\Controllers\TravelTourController::class, 'tracking'])->name('tracking');
+        Route::get('/tracking/{reference}', [\App\Http\Controllers\TravelTourController::class, 'showTracking'])->name('track-reference');
+    });
+
     // Support Tickets Routes
     Route::get('/support', [\App\Http\Controllers\SupportController::class, 'index'])->name('support');
     Route::post('/support', [\App\Http\Controllers\SupportController::class, 'store'])->name('support.store');
@@ -414,6 +422,13 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::post('/{registration}/upload', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'upload'])->name('upload');
         Route::get('/{registration}/documents/{document}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'download'])->name('download');
         Route::delete('/{registration}/documents/{document}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'destroyDocument'])->name('documents.destroy');
+    });
+
+    // Travel & Tours Requests (Super Admin)
+    Route::prefix('admin/travel-requests')->name('admin.travel-requests.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'index'])->name('index');
+        Route::get('/{travelRequest}', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'show'])->name('show');
+        Route::patch('/{travelRequest}/status', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'updateStatus'])->name('update-status');
     });
 
     // Advanced SIM Operations dashboard

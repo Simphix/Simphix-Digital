@@ -187,6 +187,7 @@
         @endif
         @if (auth()->user() && !\App\Support\StaffAccess::isInternal(auth()->user()))
             @include('layouts.partials.sidebar-link', ['href' => route('cac.overview'), 'icon' => 'file-badge', 'label' => __('CAC Registration'), 'active' => request()->routeIs('cac.*')])
+            @include('layouts.partials.sidebar-link', ['href' => route('travel.index'), 'icon' => 'plane', 'label' => __('Travel & Tours'), 'active' => request()->routeIs('travel.*')])
         @endif
         @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('support'), 'icon' => 'help-circle', 'label' => __('Support'), 'active' => request()->routeIs('support')])
@@ -323,6 +324,7 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.notifications.index'), 'icon' => 'send', 'label' => 'Push Notifications', 'active' => request()->routeIs('admin.notifications*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.manage.support.index'), 'icon' => 'message-square', 'label' => 'Admin Support', 'active' => request()->routeIs('admin.manage.support*'), 'badge' => $openTicketsBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.cac.index'), 'icon' => 'file-badge', 'label' => 'CAC Registrations', 'active' => request()->routeIs('admin.cac*'), 'badge' => $newCacBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.travel-requests.index'), 'icon' => 'plane', 'label' => 'Travel Requests', 'active' => request()->routeIs('admin.travel-requests*'), 'badge' => $pendingTravelBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.webhooks.index'), 'icon' => 'webhook', 'label' => 'Webhook Logs', 'active' => request()->routeIs('admin.webhooks*'), 'badge' => $failedWebhooksBadge ?? 0])
             </div>
 

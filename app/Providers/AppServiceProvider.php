@@ -114,6 +114,7 @@ class AppServiceProvider extends ServiceProvider
             $failedWebhooksBadge = 0;
             $failedActivationsBadge = 0;
             $newCacBadge = 0;
+            $pendingTravelBadge = 0;
             $sidebarUpline = null;
 
             if (auth()->check()) {
@@ -123,6 +124,7 @@ class AppServiceProvider extends ServiceProvider
                     $openTicketsBadge = \App\Models\Ticket::where('status', 'open')->count();
                     $failedWebhooksBadge = \App\Models\WebhookLog::where('status', 'failed')->count();
                     $newCacBadge = \App\Models\CacRegistration::where('status', 'submitted')->count();
+                    $pendingTravelBadge = \App\Models\TravelRequest::where('status', 'pending')->count();
                 } elseif ($user->role === 'support') {
                     $openTicketsBadge = \App\Models\Ticket::where('status', 'open')->count();
                     $failedWebhooksBadge = \App\Models\WebhookLog::where('status', 'failed')->count();
@@ -141,6 +143,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('failedWebhooksBadge', $failedWebhooksBadge);
             $view->with('failedActivationsBadge', $failedActivationsBadge);
             $view->with('newCacBadge', $newCacBadge);
+            $view->with('pendingTravelBadge', $pendingTravelBadge);
             $view->with('sidebarUpline', $sidebarUpline);
         });
     }
