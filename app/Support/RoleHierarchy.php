@@ -37,6 +37,10 @@ class RoleHierarchy
     /** Can $onboarder create/onboard an account with role $targetRole? */
     public static function canOnboard(User $onboarder, string $targetRole): bool
     {
+        if ($targetRole === 'super_admin' || ($onboarder->role === 'business_sales_manager' && $targetRole === 'business_sales_manager')) {
+            return false;
+        }
+
         if (in_array($onboarder->role, self::BYPASS_ROLES, true)) {
             return true;
         }

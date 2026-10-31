@@ -136,7 +136,9 @@ class BsmDashboardController extends Controller
             'totalFailedActivationsCount' => $totalFailedActivationsCount,
             'failedActivations'           => $failedActivations,
             'topRegions'                  => $topRegions,
-            'jurisdictionTotals'      => $jurisdictionData['totals'],
+            'jurisdictionTotals'          => $jurisdictionData['totals'],
+            'totalUsersCount'             => User::count(),
+            'pendingUpgradesCount'        => User::where('upgrade_status', 'pending')->count(),
         ]);
     }
 

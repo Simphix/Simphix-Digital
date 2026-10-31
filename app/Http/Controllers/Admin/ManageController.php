@@ -56,8 +56,19 @@ class ManageController extends Controller
     /**
      * Show the form for editing a user.
      */
-    public function editUser(User $user): View
+    public function editUser(Request $request, User $user): View
     {
+        $actor = $request->user();
+
+        if ($actor && $actor->role === 'business_sales_manager') {
+            if ($user->role === 'super_admin') {
+                abort(403, 'You do not have permission to modify a Super Admin account.');
+            }
+            if ($user->role === 'business_sales_manager') {
+                abort(403, 'Business Sales Managers cannot modify another Business Sales Manager account.');
+            }
+        }
+
         return view('admin.manage.edit_user', compact('user'));
     }
 
@@ -68,11 +79,30 @@ class ManageController extends Controller
     {
         \App\Support\PhoneNumber::normalizeRequestInput($request);
 
+        $actor = $request->user();
+
+        if ($actor && $actor->role === 'business_sales_manager') {
+            if ($user->role === 'super_admin') {
+                abort(403, 'You do not have permission to modify a Super Admin account.');
+            }
+            if ($user->role === 'business_sales_manager') {
+                abort(403, 'Business Sales Managers cannot modify another Business Sales Manager account.');
+            }
+        }
+
         $assignableRoles = ['personal', 'agent', 'partner', 'business', 'business_agent', 'regional_manager', 'coordinator', 'business_sales_manager', 'support'];
         
+        if ($actor && $actor->role === 'business_sales_manager') {
+            $assignableRoles = array_values(array_diff($assignableRoles, ['business_sales_manager']));
+        }
+
         $roleRules = $user->role === 'super_admin'
             ? ['required', 'string', 'in:super_admin']
             : ['required', 'string', Rule::in($assignableRoles)];
+
+        $roleErrorMsg = ($actor && $actor->role === 'business_sales_manager' && $request->role === 'business_sales_manager')
+            ? 'Business Sales Managers cannot assign or upgrade users to the Business Sales Manager role.'
+            : 'Super Admin role cannot be assigned through the interface.';
 
         $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
@@ -83,7 +113,7 @@ class ManageController extends Controller
             'status' => ['required', 'string', 'in:active,suspended,inactive,banned'],
             'role' => $roleRules,
         ], [
-            'role.in' => 'Super Admin role cannot be assigned through the interface.',
+            'role.in' => $roleErrorMsg,
         ]);
 
         $previousRole = $user->role;
@@ -136,11 +166,21 @@ class ManageController extends Controller
     /**
      * Delete the user and all associated wallet and virtual account records.
      */
-    public function destroyUser(User $user): RedirectResponse
+    public function destroyUser(Request $request, User $user): RedirectResponse
     {
+        $actor = $request->user();
+
         // Don't allow an admin to delete themselves
-        if (auth()->id() === $user->id) {
+        if ($actor && $actor->id === $user->id) {
             return redirect()->back()->with('error', 'You cannot delete your own account.');
+        }
+
+        if ($user->role === 'super_admin') {
+            return redirect()->back()->with('error', 'Super Admin accounts cannot be deleted.');
+        }
+
+        if ($actor && $actor->role === 'business_sales_manager' && $user->role === 'business_sales_manager') {
+            return redirect()->back()->with('error', 'Business Sales Managers cannot delete Business Sales Manager accounts.');
         }
 
         \Illuminate\Support\Facades\DB::beginTransaction();
@@ -185,14 +225,20 @@ class ManageController extends Controller
     /**
      * Approve upgrade request.
      */
-    public function approveUpgrade(User $user): RedirectResponse
+    public function approveUpgrade(Request $request, User $user): RedirectResponse
     {
+        $actor = $request->user();
+
         if ($user->upgrade_status !== 'pending') {
             return redirect()->back()->with('error', 'This user does not have a pending upgrade request.');
         }
 
         if ($user->pending_role === 'super_admin') {
             return redirect()->back()->with('error', 'Super Admin role cannot be granted via upgrade requests.');
+        }
+
+        if ($actor && $actor->role === 'business_sales_manager' && $user->pending_role === 'business_sales_manager') {
+            return redirect()->back()->with('error', 'Business Sales Managers cannot approve upgrade requests to the Business Sales Manager role.');
         }
 
         $user->forceFill([
@@ -246,16 +292,30 @@ class ManageController extends Controller
      */
     public function updateAccess(Request $request, User $user): RedirectResponse
     {
+        $actor = $request->user();
+
         if ($user->role === 'super_admin') {
             return redirect()->back()->with('error', 'Super Admin roles cannot be modified from the interface.');
         }
 
+        if ($actor && $actor->role === 'business_sales_manager' && $user->role === 'business_sales_manager') {
+            return redirect()->back()->with('error', 'Business Sales Managers cannot modify Business Sales Manager accounts.');
+        }
+
         $assignableRoles = ['personal', 'agent', 'partner', 'business', 'business_agent', 'regional_manager', 'coordinator', 'business_sales_manager', 'support'];
+
+        if ($actor && $actor->role === 'business_sales_manager') {
+            $assignableRoles = array_values(array_diff($assignableRoles, ['business_sales_manager']));
+        }
+
+        $roleErrorMsg = ($actor && $actor->role === 'business_sales_manager' && $request->role === 'business_sales_manager')
+            ? 'Business Sales Managers cannot assign or upgrade users to the Business Sales Manager role.'
+            : 'Super Admin role cannot be assigned through the interface.';
 
         $request->validate([
             'role' => ['required', 'string', Rule::in($assignableRoles)],
         ], [
-            'role.in' => 'Super Admin role cannot be assigned through the interface.',
+            'role.in' => $roleErrorMsg,
         ]);
 
         $previousRole = $user->role;

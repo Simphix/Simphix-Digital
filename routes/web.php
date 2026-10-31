@@ -284,7 +284,8 @@ Route::middleware(['auth', 'verified', 'support_staff'])->prefix('support-desk')
     Route::post('/failed-activations/{report}/retry', [\App\Http\Controllers\Support\FailedActivationController::class, 'retry'])->name('failed-activations.retry');
 });
 
-Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->name('admin.manage.')->group(function () {
+Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('admin/manage')->name('admin.manage.')->group(function () {
+    // Users Management & Role Control
     Route::get('/users', [\App\Http\Controllers\Admin\ManageController::class, 'users'])->name('users');
     Route::get('/users/{user}/edit', [\App\Http\Controllers\Admin\ManageController::class, 'editUser'])->name('users.edit');
     Route::put('/users/{user}', [\App\Http\Controllers\Admin\ManageController::class, 'updateUser'])->name('users.update');
@@ -310,7 +311,9 @@ Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->
 
     Route::get('/access', [\App\Http\Controllers\Admin\ManageController::class, 'access'])->name('access');
     Route::put('/access/{user}', [\App\Http\Controllers\Admin\ManageController::class, 'updateAccess'])->name('access.update');
+});
 
+Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->name('admin.manage.')->group(function () {
     // Admin Support Tickets Routes
     Route::get('/support', [\App\Http\Controllers\Admin\SupportController::class, 'index'])->name('support.index');
     Route::get('/support/{ticket}', [\App\Http\Controllers\Admin\SupportController::class, 'show'])->name('support.show');

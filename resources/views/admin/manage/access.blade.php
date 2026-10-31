@@ -74,6 +74,13 @@
                                             </span>
                                             <span class="text-[11px] text-slate-400 italic font-medium">(CLI only)</span>
                                         </div>
+                                    @elseif (auth()->user()->role === 'business_sales_manager' && $u->role === 'business_sales_manager')
+                                        <div class="inline-flex items-center gap-2">
+                                            <span class="inline-flex items-center px-2.5 py-1 text-xs font-extrabold rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider">
+                                                BSM
+                                            </span>
+                                            <span class="text-[11px] text-slate-400 italic font-medium">(Protected)</span>
+                                        </div>
                                     @else
                                         <form method="POST" action="{{ route('admin.manage.access.update', $u) }}" class="inline-flex items-center gap-3">
                                             @csrf
@@ -88,7 +95,9 @@
                                                 <option value="regional_manager" {{ $u->role === 'regional_manager' ? 'selected' : '' }}>Regional Manager</option>
                                                 <option value="business" {{ $u->role === 'business' ? 'selected' : '' }}>Enterprise Business</option>
                                                 <option value="business_agent" {{ $u->role === 'business_agent' ? 'selected' : '' }}>Business Agent</option>
-                                                <option value="business_sales_manager" {{ $u->role === 'business_sales_manager' ? 'selected' : '' }}>Business Sales Manager</option>
+                                                @if (auth()->user()->role !== 'business_sales_manager')
+                                                    <option value="business_sales_manager" {{ $u->role === 'business_sales_manager' ? 'selected' : '' }}>Business Sales Manager</option>
+                                                @endif
                                                 <option value="support" {{ $u->role === 'support' ? 'selected' : '' }}>Support</option>
                                             </x-select-input>
 

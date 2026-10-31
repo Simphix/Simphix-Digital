@@ -204,6 +204,44 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.customers'), 'icon' => 'user-check', 'label' => 'Customer Desk', 'active' => request()->routeIs('bsm.customers')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.acceleration'), 'icon' => 'zap', 'label' => 'Sales Acceleration', 'active' => request()->routeIs('bsm.acceleration')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-plan.index'), 'icon' => 'settings', 'label' => 'SIMs & Plans Mgmt', 'active' => request()->routeIs('admin.sim-plan.*')])
+
+                @php
+                    $bsmDownlineBatchesActive = request()->routeIs('admin.manage.downline-batches*');
+                    $bsmReplaceManagerActive = request()->routeIs('admin.manage.replace-manager*', 'admin.manage.users.replace*');
+                    $bsmManageUsersActive = request()->routeIs('admin.manage.users*') && !$bsmReplaceManagerActive;
+                    $bsmUsersActive = $bsmManageUsersActive || $bsmReplaceManagerActive || $bsmDownlineBatchesActive || request()->routeIs('admin.manage.upgrades*', 'admin.manage.access*');
+                @endphp
+                <div x-data="{ open: {{ $bsmUsersActive ? 'true' : 'false' }} }">
+                    <button type="button"
+                            @click="if (sidebarCollapsed && window.innerWidth >= 1024) { sidebarCollapsed = false; open = true } else { open = !open }"
+                            :aria-expanded="open" aria-controls="sidebar-bsm-users-menu"
+                            :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : 'justify-between'"
+                            class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-semibold font-display transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {{ $bsmUsersActive ? 'text-slate-900 font-bold bg-slate-100/70' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                        <span class="flex items-center gap-3 min-w-0">
+                            <span class="w-5 h-5 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-users text-base {{ $bsmUsersActive ? 'text-slate-900' : 'text-slate-500' }}"></i>
+                            </span>
+                            <span :class="sidebarCollapsed ? 'lg:hidden' : ''" class="truncate font-medium">Users Management</span>
+                        </span>
+                        <i :class="[sidebarCollapsed ? 'lg:hidden' : '', open ? 'rotate-180' : '']" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" aria-hidden="true"></i>
+                    </button>
+
+                    <div id="sidebar-bsm-users-menu" x-show="open" :class="sidebarCollapsed ? 'lg:hidden' : ''"
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-100"
+                         x-transition:leave-start="opacity-100 translate-y-0"
+                         x-transition:leave-end="opacity-0 -translate-y-1"
+                         class="mt-1 ml-[22px] space-y-0.5 border-l border-slate-200 pl-2.5" style="display: none;">
+
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.users'), 'icon' => 'users', 'label' => 'Manage Users', 'active' => $bsmManageUsersActive])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.upgrades'), 'icon' => 'arrow-up-circle', 'label' => 'Manage Upgrades', 'active' => request()->routeIs('admin.manage.upgrades*')])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.access'), 'icon' => 'shield-check', 'label' => 'Manage Access', 'active' => request()->routeIs('admin.manage.access*')])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.replace-manager.index'), 'icon' => 'repeat', 'label' => 'Replace Manager', 'active' => $bsmReplaceManagerActive])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.downline-batches.index'), 'icon' => 'layers', 'label' => 'Downline Batches', 'active' => $bsmDownlineBatchesActive])
+                    </div>
+                </div>
             </div>
         @endif
 

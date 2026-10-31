@@ -43,6 +43,15 @@
 
             <!-- Global Actions -->
             <div class="flex flex-wrap items-center gap-2.5">
+                <a href="{{ route('admin.manage.users') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold shadow-sm hover:bg-slate-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                    <i data-lucide="users" class="w-4 h-4 text-slate-500"></i>
+                    <span>Users Management</span>
+                    @if (($pendingUpgradesCount ?? 0) > 0)
+                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white">
+                            {{ $pendingUpgradesCount }}
+                        </span>
+                    @endif
+                </a>
                 <a href="{{ route('bsm.customers') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold shadow-sm hover:bg-primary-dark transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                     <i data-lucide="user-plus" class="w-4 h-4"></i>
                     <span>Customer Desk</span>
@@ -471,6 +480,40 @@
             </div>
             <a href="{{ route('admin.sim-plan.index') }}" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition">
                 <span>Manage SIMs &amp; Plans</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+
+        <!-- 6. Users Management Desk -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between hover:border-primary/40 transition">
+            <div>
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="p-2.5 rounded-xl bg-teal-50 text-teal-600">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 font-display">Users Management</h3>
+                        <p class="text-xs text-slate-500">Accounts, roles &amp; upgrades</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                    Full user directory governance. View profiles, manage role access, review pending role upgrade requests, and monitor field hierarchy.
+                </p>
+                <div class="p-3 bg-slate-50 rounded-xl space-y-2 mb-4 text-xs">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Total Registered Users</span>
+                        <span class="font-bold text-slate-900">{{ number_format($totalUsersCount ?? \App\Models\User::count()) }}</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Pending Upgrades</span>
+                        <span class="font-bold {{ ($pendingUpgradesCount ?? 0) > 0 ? 'text-amber-600' : 'text-slate-900' }}">
+                            {{ number_format($pendingUpgradesCount ?? \App\Models\User::where('upgrade_status', 'pending')->count()) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <a href="{{ route('admin.manage.users') }}" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition">
+                <span>Manage Users &amp; Upgrades</span>
                 <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
         </div>
