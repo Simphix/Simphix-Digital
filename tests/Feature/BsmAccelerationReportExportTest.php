@@ -214,7 +214,9 @@ class BsmAccelerationReportExportTest extends TestCase
         $this->assertStringContainsString('MANAGER ACCELERATION & FIELD VELOCITY SUMMARY', $content);
         $this->assertStringContainsString('STALLED FIELD STOCK LINE ITEMS', $content);
         $this->assertStringContainsString('PENDING INVENTORY DISPATCH REQUESTS', $content);
-        $this->assertStringContainsString('STALLED ACTIVATION BONUS RETRIES', $content);
+        $this->assertStringNotContainsString('STALLED ACTIVATION BONUS RETRIES', $content);
+        $this->assertStringNotContainsString('FAILED BONUS RETRIES', $content);
+        $this->assertStringNotContainsString('Failed / Stalled Activation Bonuses', $content);
         $this->assertStringContainsString($this->rm->first_name, $content);
     }
 

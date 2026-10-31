@@ -7,39 +7,39 @@
         body {
             font-family: dejavusans, sans-serif;
             color: #1e293b;
-            font-size: 7.5pt;
-            line-height: 1.45;
+            font-size: 7.8pt;
+            line-height: 1.5;
         }
 
-        /* Executive Header Banner */
+        /* Executive Header Banner Card */
         .banner-card {
             width: 100%;
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 10px 14px;
-            margin-bottom: 12px;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
         }
         .header-title {
-            font-size: 13pt;
+            font-size: 13.5pt;
             font-weight: bold;
             color: #0056D2;
-            letter-spacing: 0.2px;
-            margin-bottom: 2px;
+            letter-spacing: 0.3px;
+            margin-bottom: 3px;
         }
         .header-meta {
-            font-size: 7pt;
+            font-size: 7.3pt;
             color: #475569;
-            line-height: 1.45;
+            line-height: 1.5;
         }
 
-        /* Clean Section Headings */
+        /* Clean Section Headings (No heavy colored lines) */
         .section-wrap {
-            margin-top: 14px;
-            margin-bottom: 6px;
+            margin-top: 15px;
+            margin-bottom: 7px;
         }
         .section-title {
-            font-size: 9pt;
+            font-size: 9.5pt;
             font-weight: bold;
             color: #0f172a;
             letter-spacing: 0.2px;
@@ -50,101 +50,84 @@
             margin-top: 1px;
         }
 
-        /* KPI Cards Grid Table */
+        /* Executive KPI Cards Grid */
         .kpi-table {
             width: 100%;
             border-collapse: separate;
             margin-bottom: 10px;
         }
         .kpi-card {
-            border: 1px solid #e2e8f0;
             border-radius: 6px;
-            padding: 6px 8px;
+            padding: 8px 10px;
             text-align: center;
         }
         .kpi-label {
-            font-size: 6.2pt;
+            font-size: 6.6pt;
             font-weight: bold;
-            color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
         }
         .kpi-number {
-            font-size: 11pt;
+            font-size: 11.5pt;
             font-weight: bold;
-            line-height: 1.2;
+            line-height: 1.25;
         }
         .kpi-sub {
-            font-size: 6.2pt;
-            color: #64748b;
-            margin-top: 1px;
+            font-size: 6.7pt;
+            margin-top: 2px;
         }
 
-        /* Airy Tables with Light Colors and Good Edges */
+        /* Airy Tables with Light Colors and Balanced Edges */
         .styled-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 4px;
-            margin-bottom: 12px;
+            margin-top: 5px;
+            margin-bottom: 14px;
             border: 1px solid #e2e8f0;
         }
         .styled-table th {
             background-color: #f8fafc;
             color: #475569;
             font-weight: bold;
-            font-size: 6.8pt;
+            font-size: 7.2pt;
             text-transform: uppercase;
-            letter-spacing: 0.2px;
+            letter-spacing: 0.3px;
             border-top: 1px solid #e2e8f0;
-            border-bottom: 1px solid #cbd5e1;
-            padding: 5px 6px;
+            border-bottom: 1.5px solid #cbd5e1;
+            padding: 7px 8px;
         }
         .styled-table td {
-            padding: 4.5px 6px;
-            border-bottom: 0.5px solid #f1f5f9;
-            font-size: 7pt;
+            font-size: 7.4pt;
+            padding: 6.5px 8px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
             vertical-align: middle;
         }
-        .row-alt {
+        .styled-table tr.even td {
             background-color: #fafbfc;
         }
-
-        /* Status Pills */
-        .pill-critical {
-            background-color: #fef2f2;
-            color: #991b1b;
+        .styled-table tr.totals-row td {
+            background-color: #f1f5f9;
             font-weight: bold;
-            font-size: 6pt;
-            padding: 1.5px 4px;
-            border-radius: 4px;
-        }
-        .pill-attention {
-            background-color: #fffbeb;
-            color: #92400e;
-            font-weight: bold;
-            font-size: 6pt;
-            padding: 1.5px 4px;
-            border-radius: 4px;
-        }
-        .pill-healthy {
-            background-color: #f0fdf4;
-            color: #166534;
-            font-weight: bold;
-            font-size: 6pt;
-            padding: 1.5px 4px;
-            border-radius: 4px;
+            color: #0f172a;
+            border-top: 1.5px solid #cbd5e1;
+            border-bottom: 1.5px solid #cbd5e1;
+            padding: 7.5px 8px;
         }
 
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .font-mono { font-family: dejavusans, monospace; }
-        .font-bold { font-weight: bold; }
-        .text-slate-500 { color: #64748b; }
-        .text-slate-400 { color: #94a3b8; }
-        .text-rose { color: #e11d48; font-weight: bold; }
-        .text-amber { color: #d97706; font-weight: bold; }
-        .text-emerald { color: #059669; font-weight: bold; }
+        /* Clean Soft Badges */
+        .badge {
+            font-size: 6.6pt;
+            font-weight: bold;
+            padding: 2.5px 6px;
+            border-radius: 4px;
+        }
+        .badge-success { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-info    { background-color: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .badge-warning { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+        .badge-danger  { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .badge-slate   { background-color: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
@@ -152,154 +135,183 @@
     <!-- Executive Header Banner -->
     <table class="banner-card" cellpadding="0" cellspacing="0">
         <tr>
-            <td style="width: 65%;">
-                <div class="header-title">SimPhix Sales Acceleration and Interventions Report</div>
-                <div class="header-meta">
-                    <strong>Generated By:</strong> {{ $actor->name }} (Business Sales Manager &bull; {{ $actor->email }})<br>
-                    <strong>Reporting Period:</strong> {{ $rangeLabel }}<br>
-                    <strong>Manager Scope:</strong> {{ $managerLabel }}
-                </div>
+            <td width="30%" valign="middle">
+                @if (file_exists(public_path('assets/images/logo/logo1.png')))
+                    <img src="{{ public_path('assets/images/logo/logo1.png') }}" height="32" /><br/>
+                @else
+                    <span style="font-size:16pt; font-weight:bold; color:#0056D2;">SimPhix</span><br/>
+                @endif
+                <span style="font-size:6.8pt; color:#64748b; font-weight:500;">Empowering Businesses Through Smart Connectivity</span>
             </td>
-            <td style="width: 35%; text-align: right; vertical-align: middle;">
+            <td width="70%" align="right" valign="middle">
+                <div class="header-title">Sales Acceleration and Interventions Report</div>
                 <div class="header-meta">
-                    <strong>Generated At:</strong> {{ $reportDate }}<br>
-                    <strong>Classification:</strong> Internal Executive Report
+                    <b>Generated By:</b> {{ $actor->name }} &nbsp;·&nbsp;
+                    <span style="color:#0056D2; font-weight:bold;">Business Sales Manager</span><br/>
+                    <b>Reporting Window:</b> <span style="color:#0f172a; font-weight:bold;">{{ $rangeLabel }}</span> &nbsp;|&nbsp;
+                    <b>Manager Scope:</b> <span style="color:#0f172a; font-weight:bold;">{{ $managerLabel }}</span> &nbsp;|&nbsp;
+                    <b>Generated:</b> {{ $reportDate }}
                 </div>
             </td>
         </tr>
     </table>
 
-    <!-- Executive KPI Grid Table -->
-    <table class="kpi-table" cellpadding="0" cellspacing="4">
-        <tr>
-            <!-- Stalled Stock -->
-            <td style="width: 25%;">
-                <div class="kpi-card" style="background-color: #fff5f5; border-color: #fecdd3;">
-                    <div class="kpi-label" style="color: #e11d48;">Stalled Stock (≥ 7 Days)</div>
-                    <div class="kpi-number" style="color: #be123c;">{{ number_format($kpis['stalled_count']) }}</div>
-                    <div class="kpi-sub">Est. Value: ₦{{ number_format($kpis['stalled_value'], 0) }}</div>
-                </div>
-            </td>
-            <!-- Pending Requests -->
-            <td style="width: 25%;">
-                <div class="kpi-card" style="background-color: #fffbeb; border-color: #fde68a;">
-                    <div class="kpi-label" style="color: #d97706;">Pending Inventory Requests</div>
-                    <div class="kpi-number" style="color: #b45309;">{{ number_format($kpis['pending_requests_count']) }}</div>
-                    <div class="kpi-sub">{{ number_format($kpis['pending_units_count']) }} Units Awaiting Dispatch</div>
-                </div>
-            </td>
-            <!-- Failed Bonus Retries -->
-            <td style="width: 25%;">
-                <div class="kpi-card" style="background-color: #eff6ff; border-color: #bfdbfe;">
-                    <div class="kpi-label" style="color: #2563eb;">Failed Bonus Retries</div>
-                    <div class="kpi-number" style="color: #1d4ed8;">{{ number_format($kpis['failed_bonuses_count']) }}</div>
-                    <div class="kpi-sub">Stalled Activation Grants</div>
-                </div>
-            </td>
-            <!-- Managers in Scope -->
-            <td style="width: 25%;">
-                <div class="kpi-card" style="background-color: #f0fdf4; border-color: #bbf7d0;">
-                    <div class="kpi-label" style="color: #16a34a;">Field Managers Monitored</div>
-                    <div class="kpi-number" style="color: #15803d;">{{ number_format($kpis['managers_count']) }}</div>
-                    <div class="kpi-sub">{{ number_format($kpis['total_allocated']) }} Total Allocated Stock</div>
-                </div>
-            </td>
-        </tr>
-    </table>
-
-    <!-- 1. Manager Acceleration and Field Velocity Summary -->
+    <!-- Section 1: Executive KPI Summary -->
     <div class="section-wrap">
-        <div class="section-title">Manager Acceleration and Field Velocity Summary</div>
-        <div class="section-desc">Turnover velocity, bottleneck detection, and stock utilization per field manager</div>
+        <div class="section-title">Executive Acceleration Overview</div>
+        <div class="section-desc">Key performance indicators, inventory bottlenecks, and field velocity status for the reporting window.</div>
     </div>
 
-    <table class="styled-table" cellpadding="0" cellspacing="0">
+    <!-- KPI Grid (4 Balanced Cards in 1 Row with Light Pastel Backgrounds) -->
+    <table class="kpi-table" cellpadding="3" cellspacing="5">
+        <tr>
+            <!-- Card 1: Stalled Stock -->
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #fff5f5; border: 1px solid #fecdd3;">
+                    <div class="kpi-label" style="color: #e11d48;">Stalled Stock (≥ 7 Days)</div>
+                    <div class="kpi-number" style="color: #be123c;">{{ number_format($kpis['stalled_count']) }}</div>
+                    <div class="kpi-sub" style="color: #be123c;">Est. Value: NGN {{ number_format($kpis['stalled_value'], 2) }}</div>
+                </div>
+            </td>
+            <!-- Card 2: Pending Requests -->
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #fffbeb; border: 1px solid #fde68a;">
+                    <div class="kpi-label" style="color: #92400e;">Pending Inventory Requests</div>
+                    <div class="kpi-number" style="color: #b45309;">{{ number_format($kpis['pending_requests_count']) }}</div>
+                    <div class="kpi-sub" style="color: #b45309;">{{ number_format($kpis['pending_units_count']) }} units awaiting dispatch</div>
+                </div>
+            </td>
+            <!-- Card 3: Activated in Period -->
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #eff6ff; border: 1px solid #bfdbfe;">
+                    <div class="kpi-label" style="color: #1e40af;">Activated in Period</div>
+                    <div class="kpi-number" style="color: #0056D2;">{{ number_format($kpis['total_activated']) }}</div>
+                    <div class="kpi-sub" style="color: #2563eb;">Gross: NGN {{ number_format($kpis['total_sales_volume'], 2) }}</div>
+                </div>
+            </td>
+            <!-- Card 4: Field Managers Monitored -->
+            <td width="25%">
+                <div class="kpi-card" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
+                    <div class="kpi-label" style="color: #166534;">Field Managers Monitored</div>
+                    <div class="kpi-number" style="color: #15803d;">{{ number_format($kpis['managers_count']) }}</div>
+                    <div class="kpi-sub" style="color: #16a34a;">{{ number_format($kpis['total_allocated']) }} total allocated stock</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div style="height: 10px;"></div>
+
+    <!-- Section 2: Manager Acceleration and Field Velocity Summary -->
+    <div class="section-wrap">
+        <div class="section-title">Manager Acceleration and Field Velocity Summary</div>
+        <div class="section-desc">Turnover velocity, bottleneck detection, and stock utilization per field manager.</div>
+    </div>
+    <table class="styled-table" cellpadding="6">
         <thead>
             <tr>
-                <th style="width: 20%;">Manager Name</th>
-                <th style="width: 14%;">Role</th>
-                <th style="width: 14%;">Phone</th>
-                <th style="width: 18%;">Territory</th>
-                <th style="width: 8%;" class="text-right">Allocated</th>
-                <th style="width: 8%;" class="text-right">Activated</th>
-                <th style="width: 8%;" class="text-right">Stalled</th>
-                <th style="width: 10%;" class="text-center">Status</th>
+                <th width="22%"><b>Manager Name</b></th>
+                <th width="13%"><b>Role</b></th>
+                <th width="13%"><b>Contact Phone</b></th>
+                <th width="18%"><b>Territory / Jurisdiction</b></th>
+                <th width="8%" align="center"><b>Allocated</b></th>
+                <th width="8%" align="center"><b>Activated</b></th>
+                <th width="9%" align="center"><b>Stalled (≥ 7d)</b></th>
+                <th width="9%" align="center"><b>Status</b></th>
             </tr>
         </thead>
         <tbody>
-            @forelse ($managerSummaries as $idx => $mgr)
-                <tr class="{{ $idx % 2 === 1 ? 'row-alt' : '' }}">
-                    <td class="font-bold">{{ $mgr['name'] }}</td>
-                    <td>{{ $mgr['role_label'] }}</td>
-                    <td class="font-mono text-slate-500">{{ $mgr['phone'] }}</td>
+            @forelse ($managerSummaries as $mgr)
+                <tr class="{{ $loop->even ? 'even' : '' }}">
+                    <td><b>{{ $mgr['name'] }}</b></td>
+                    <td style="color: #64748b;">{{ $mgr['role_label'] }}</td>
+                    <td style="color: #64748b;">{{ $mgr['phone'] }}</td>
                     <td>{{ $mgr['territory'] }}</td>
-                    <td class="text-right">{{ number_format($mgr['allocated']) }}</td>
-                    <td class="text-right font-bold text-emerald">{{ number_format($mgr['activated']) }}</td>
-                    <td class="text-right {{ $mgr['stalled'] > 0 ? 'text-rose' : 'text-slate-400' }} font-bold">
+                    <td align="center" style="color: #64748b;">{{ number_format($mgr['allocated']) }}</td>
+                    <td align="center" style="color: #0056D2; font-weight: bold;">{{ number_format($mgr['activated']) }}</td>
+                    <td align="center" style="color: {{ $mgr['stalled'] > 0 ? '#dc2626' : '#64748b' }}; font-weight: bold;">
                         {{ number_format($mgr['stalled']) }}
                     </td>
-                    <td class="text-center">
+                    <td align="center">
                         @if ($mgr['stalled'] > 15)
-                            <span class="pill-critical">Critical</span>
+                            <span class="badge badge-danger">Critical</span>
                         @elseif ($mgr['stalled'] > 0 || $mgr['pending_requests'] > 0)
-                            <span class="pill-attention">Attention</span>
+                            <span class="badge badge-warning">Attention</span>
                         @else
-                            <span class="pill-healthy">Healthy</span>
+                            <span class="badge badge-success">Healthy</span>
                         @endif
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="text-center text-slate-400" style="padding: 10px;">
-                        No managers found matching the selected filter criteria.
-                    </td>
+                    <td colspan="8" align="center" style="color: #64748b; padding: 14px;">No managers found matching the selected filter criteria.</td>
                 </tr>
             @endforelse
+
+            @if (!empty($managerSummaries))
+                @php
+                    $totAlloc = collect($managerSummaries)->sum('allocated');
+                    $totActiv = collect($managerSummaries)->sum('activated');
+                    $totStall = collect($managerSummaries)->sum('stalled');
+                @endphp
+                <tr class="totals-row">
+                    <td colspan="4"><b>TOTAL MANAGED PORTFOLIO SUMMARY</b></td>
+                    <td align="center"><b>{{ number_format($totAlloc) }}</b></td>
+                    <td align="center" style="color: #0056D2;"><b>{{ number_format($totActiv) }}</b></td>
+                    <td align="center" style="color: {{ $totStall > 0 ? '#dc2626' : '#64748b' }};"><b>{{ number_format($totStall) }}</b></td>
+                    <td align="center">
+                        <span class="badge {{ $totStall > 15 ? 'badge-danger' : ($totStall > 0 ? 'badge-warning' : 'badge-success') }}">
+                            {{ $totStall > 15 ? 'Critical' : ($totStall > 0 ? 'Attention' : 'Healthy') }}
+                        </span>
+                    </td>
+                </tr>
+            @endif
         </tbody>
     </table>
 
-    <!-- 2. Stalled Field Stock Line Items (>= 7 Days) -->
-    <div class="section-wrap">
-        <div class="section-title">Stalled Field Stock Line Items (Unactivated ≥ 7 Days)</div>
-        <div class="section-desc">Unactivated SIM stock currently sitting dormant with field holders requiring reassignment or recall</div>
-    </div>
+    <div style="height: 10px;"></div>
 
-    <table class="styled-table" cellpadding="0" cellspacing="0">
+    <!-- Section 3: Critical Stalled Field Inventory (>= 7 Days) -->
+    <div class="section-wrap">
+        <div class="section-title">Critical Stalled Field Inventory (Unactivated ≥ 7 Days)</div>
+        <div class="section-desc">Unactivated SIM stock currently sitting dormant with field holders requiring reassignment or recall.</div>
+    </div>
+    <table class="styled-table" cellpadding="6">
         <thead>
             <tr>
-                <th style="width: 16%;">SIM Number</th>
-                <th style="width: 10%;">Network</th>
-                <th style="width: 14%;">Category</th>
-                <th style="width: 22%;">Current Holder</th>
-                <th style="width: 14%;">Holder Role</th>
-                <th style="width: 12%;" class="text-center">Days In Field</th>
-                <th style="width: 12%;" class="text-right">Allocated Date</th>
+                <th width="16%"><b>SIM Number</b></th>
+                <th width="9%" align="center"><b>Network</b></th>
+                <th width="15%"><b>Category</b></th>
+                <th width="21%"><b>Current Holder</b></th>
+                <th width="14%"><b>Holder Role</b></th>
+                <th width="12%" align="center"><b>Days In Field</b></th>
+                <th width="13%" align="right"><b>Allocated Date</b></th>
             </tr>
         </thead>
         <tbody>
-            @forelse ($stalledSims->take(60) as $idx => $s)
+            @forelse ($stalledSims->take(60) as $s)
                 @php
                     $holder = $s->user ?? $s->partner ?? $s->coordinator ?? $s->regionalManager;
                 @endphp
-                <tr class="{{ $idx % 2 === 1 ? 'row-alt' : '' }}">
-                    <td class="font-mono font-bold">{{ $s->number }}</td>
-                    <td>{{ strtoupper($s->provider ?? '—') }}</td>
+                <tr class="{{ $loop->even ? 'even' : '' }}">
+                    <td><b>{{ $s->number }}</b></td>
+                    <td align="center"><span class="badge badge-slate">{{ strtoupper($s->provider ?? '—') }}</span></td>
                     <td>{{ $s->category ?? 'POS SIM' }}</td>
                     <td>{{ $holder?->name ?? 'Unassigned' }}</td>
-                    <td>{{ ucfirst(str_replace('_', ' ', $holder?->role ?? '—')) }}</td>
-                    <td class="text-center text-rose font-bold">{{ $s->daysHeld() }} days</td>
-                    <td class="text-right text-slate-500 font-mono">{{ $s->created_at ? $s->created_at->format('M d, Y') : '—' }}</td>
+                    <td style="color: #64748b;">{{ ucfirst(str_replace('_', ' ', $holder?->role ?? '—')) }}</td>
+                    <td align="center">
+                        <span class="badge badge-danger">{{ $s->daysHeld() }} days</span>
+                    </td>
+                    <td align="right" style="color: #64748b;">{{ $s->created_at ? $s->created_at->format('M d, Y') : '—' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="text-center text-slate-400" style="padding: 10px;">
-                        No stalled inventory detected in field. Velocity is healthy!
-                    </td>
+                    <td colspan="7" align="center" style="color: #64748b; padding: 14px;">No stalled inventory detected in field. Velocity is healthy!</td>
                 </tr>
             @endforelse
             @if ($stalledSims->count() > 60)
                 <tr>
-                    <td colspan="7" class="text-center text-slate-400" style="padding: 6px; font-style: italic;">
+                    <td colspan="7" align="center" style="color: #64748b; padding: 8px; font-style: italic;">
                         Showing top 60 of {{ $stalledSims->count() }} total stalled SIMs. For complete line item ledger, export as CSV.
                     </td>
                 </tr>
@@ -307,75 +319,39 @@
         </tbody>
     </table>
 
-    <!-- 3. Pending Inventory Dispatch Requests -->
+    <div style="height: 10px;"></div>
+
+    <!-- Section 4: Pending Inventory Dispatch Requests -->
     <div class="section-wrap">
         <div class="section-title">Pending Inventory Dispatch Requests</div>
-        <div class="section-desc">Inventory requests awaiting approval or dispatch from uplines to unblock partner distribution</div>
+        <div class="section-desc">Inventory requests awaiting approval or dispatch from uplines to unblock partner distribution.</div>
     </div>
-
-    <table class="styled-table" cellpadding="0" cellspacing="0">
+    <table class="styled-table" cellpadding="6">
         <thead>
             <tr>
-                <th style="width: 22%;">Requester</th>
-                <th style="width: 14%;">Role</th>
-                <th style="width: 16%;">Contact Phone</th>
-                <th style="width: 18%;">Category / Provider</th>
-                <th style="width: 10%;" class="text-right">Quantity</th>
-                <th style="width: 12%;" class="text-center">Requested Date</th>
-                <th style="width: 8%;" class="text-center">Status</th>
+                <th width="22%"><b>Requester Name</b></th>
+                <th width="14%"><b>Requester Role</b></th>
+                <th width="15%"><b>Contact Phone</b></th>
+                <th width="20%"><b>Category &amp; Network</b></th>
+                <th width="10%" align="right"><b>Quantity</b></th>
+                <th width="11%" align="center"><b>Requested Date</b></th>
+                <th width="8%" align="center"><b>Status</b></th>
             </tr>
         </thead>
         <tbody>
-            @forelse ($pendingRequests->take(40) as $idx => $req)
-                <tr class="{{ $idx % 2 === 1 ? 'row-alt' : '' }}">
-                    <td class="font-bold">{{ $req->user?->name ?? 'User #' . $req->user_id }}</td>
-                    <td>{{ ucfirst(str_replace('_', ' ', $req->user?->role ?? '')) }}</td>
-                    <td class="font-mono text-slate-500">{{ $req->user?->phone ?? '—' }}</td>
-                    <td>{{ $req->category }} ({{ strtoupper($req->provider) }})</td>
-                    <td class="text-right font-bold">{{ $req->quantity }}</td>
-                    <td class="text-center font-mono text-slate-500">{{ $req->created_at ? $req->created_at->format('M d, H:i') : '—' }}</td>
-                    <td class="text-center"><span class="pill-attention">Pending</span></td>
+            @forelse ($pendingRequests->take(40) as $req)
+                <tr class="{{ $loop->even ? 'even' : '' }}">
+                    <td><b>{{ $req->user?->name ?? 'User #' . $req->user_id }}</b></td>
+                    <td style="color: #64748b;">{{ ucfirst(str_replace('_', ' ', $req->user?->role ?? '—')) }}</td>
+                    <td style="color: #64748b;">{{ $req->user?->phone ?? '—' }}</td>
+                    <td>{{ $req->category }} <span style="color: #64748b;">({{ strtoupper($req->provider) }})</span></td>
+                    <td align="right" style="font-weight: bold; color: #0f172a;">{{ number_format($req->quantity) }}</td>
+                    <td align="center" style="color: #64748b;">{{ $req->created_at ? $req->created_at->format('M d, H:i') : '—' }}</td>
+                    <td align="center"><span class="badge badge-warning">Pending</span></td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="text-center text-slate-400" style="padding: 10px;">
-                        All partner stock requests are fulfilled and up to date.
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
-
-    <!-- 4. Stalled Activation Bonus Retries -->
-    <div class="section-wrap">
-        <div class="section-title">Stalled Activation Bonus Retries</div>
-        <div class="section-desc">Failed SIM activation data bonus grants requiring vendor intervention or retry</div>
-    </div>
-
-    <table class="styled-table" cellpadding="0" cellspacing="0">
-        <thead>
-            <tr>
-                <th style="width: 18%;">Target Phone</th>
-                <th style="width: 12%;">Network</th>
-                <th style="width: 12%;" class="text-center">Status</th>
-                <th style="width: 16%;" class="text-center">Attempt Date</th>
-                <th style="width: 42%;">Vendor Response / Error Payload</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($failedBonusReports->take(30) as $idx => $bon)
-                <tr class="{{ $idx % 2 === 1 ? 'row-alt' : '' }}">
-                    <td class="font-mono font-bold">{{ $bon->phone ?? $bon->account_number ?? '—' }}</td>
-                    <td>{{ strtoupper($bon->network ?? '—') }}</td>
-                    <td class="text-center"><span class="pill-critical">{{ strtoupper($bon->status) }}</span></td>
-                    <td class="text-center font-mono text-slate-500">{{ $bon->created_at ? $bon->created_at->format('M d, H:i') : '—' }}</td>
-                    <td class="text-slate-500" style="font-size: 6.5pt;">{{ $bon->description ?? $bon->api_response ?? 'No error payload recorded' }}</td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="5" class="text-center text-slate-400" style="padding: 10px;">
-                        No failed activation bonus attempts found.
-                    </td>
+                    <td colspan="7" align="center" style="color: #64748b; padding: 14px;">All partner stock requests are fulfilled and up to date.</td>
                 </tr>
             @endforelse
         </tbody>

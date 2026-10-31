@@ -294,23 +294,7 @@ class BsmAccelerationReportService
 
         $pendingRequests = $requestsQuery->latest()->get();
 
-        // 3. Query Failed Activation Bonuses
-        $bonusesQuery = Report::where('type', 'activation_bonus_data')
-            ->whereIn('status', ['failed', 'retrying']);
-
-        if ($rangeStart && $rangeEnd) {
-            $bonusesQuery->whereBetween('created_at', [$rangeStart, $rangeEnd]);
-        }
-
-        if ($targetManager) {
-            $bonusesQuery->where('user_id', $targetManager->id);
-        } elseif (!empty($matchedManagerIds)) {
-            $bonusesQuery->whereIn('user_id', $matchedManagerIds);
-        }
-
-        $failedBonusReports = $bonusesQuery->latest()->get();
-
-        // 4. Build Manager Velocity & Acceleration Summary Table
+        // 3. Build Manager Velocity & Acceleration Summary Table
         $managersQuery = User::whereIn('role', self::MANAGER_ROLES)->where('status', 'active');
 
         if ($targetManager) {
@@ -400,7 +384,6 @@ class BsmAccelerationReportService
         $totalStalledCount = $stalledSims->count();
         $totalPendingRequestsCount = $pendingRequests->count();
         $totalPendingQuantity = $pendingRequests->sum('quantity');
-        $totalFailedBonusesCount = $failedBonusReports->count();
         $totalManagersCount = count($managerSummaries);
 
         $stalledEstimatedValue = 0.00;
@@ -419,14 +402,12 @@ class BsmAccelerationReportService
             'managerRole'           => $managerRole,
             'stalledSims'           => $stalledSims,
             'pendingRequests'       => $pendingRequests,
-            'failedBonusReports'    => $failedBonusReports,
             'managerSummaries'      => $managerSummaries,
             'kpis'                  => [
                 'stalled_count'           => $totalStalledCount,
                 'stalled_value'           => $stalledEstimatedValue,
                 'pending_requests_count'  => $totalPendingRequestsCount,
                 'pending_units_count'     => $totalPendingQuantity,
-                'failed_bonuses_count'    => $totalFailedBonusesCount,
                 'managers_count'          => $totalManagersCount,
                 'total_allocated'         => $totalAllocatedAcross,
                 'total_activated'         => $totalActivatedAcross,
@@ -455,7 +436,6 @@ class BsmAccelerationReportService
         $csv .= "\"EXECUTIVE ACCELERATION & INTERVENTIONS OVERVIEW\"\n";
         $csv .= "\"Stalled Field Stock (>= 7 Days)\",\"" . $kpis['stalled_count'] . " SIMs (Est. Value: NGN " . number_format($kpis['stalled_value'], 2) . ")\"\n";
         $csv .= "\"Pending Inventory Requests\",\"" . $kpis['pending_requests_count'] . " requests (" . $kpis['pending_units_count'] . " units)\"\n";
-        $csv .= "\"Failed / Stalled Activation Bonuses\",\"" . $kpis['failed_bonuses_count'] . " bonus retries required\"\n";
         $csv .= "\"Active Managers In Scope\",\"" . $kpis['managers_count'] . "\"\n";
         $csv .= "\"Total Field Stock Allocated\",\"" . $kpis['total_allocated'] . " SIMs\"\n";
         $csv .= "\"Total Activated in Period\",\"" . $kpis['total_activated'] . " SIMs (NGN " . number_format($kpis['total_sales_volume'], 2) . ")\"\n";
@@ -516,21 +496,6 @@ class BsmAccelerationReportService
                 $req->quantity,
                 $req->created_at ? $req->created_at->format('Y-m-d H:i') : '—',
                 ucfirst($req->status),
-            ])) . "\n";
-        }
-        $csv .= "\n";
-
-        // 6. Failed Activation Bonuses
-        $csv .= "\"STALLED ACTIVATION BONUS RETRIES\"\n";
-        $csv .= "\"Target Number\",\"Network\",\"Status\",\"Attempt Date\",\"Error / Vendor Payload\"\n";
-
-        foreach ($data['failedBonusReports'] as $bon) {
-            $csv .= implode(',', array_map(fn ($v) => '"' . str_replace('"', '""', (string) $v) . '"', [
-                $bon->phone ?? $bon->account_number ?? '—',
-                strtoupper((string) ($bon->network ?? '—')),
-                strtoupper((string) $bon->status),
-                $bon->created_at ? $bon->created_at->format('Y-m-d H:i') : '—',
-                $bon->description ?? $bon->api_response ?? 'No payload',
             ])) . "\n";
         }
 
