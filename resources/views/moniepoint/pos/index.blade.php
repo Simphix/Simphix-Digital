@@ -39,8 +39,8 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-start gap-4">
-                    <div class="w-14 h-14 rounded-2xl bg-[#00266B] flex items-center justify-center p-2.5 shrink-0 shadow-sm">
-                        <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" class="w-full h-auto object-contain brightness-0 invert">
+                    <div class="w-20 h-12 rounded-xl bg-[#001F5C] flex items-center justify-center p-2 shrink-0 shadow-sm border border-blue-900/40">
+                        <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" class="h-6 w-auto object-contain">
                     </div>
                     <div>
                         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#00266B] text-xs font-bold mb-2">
@@ -114,8 +114,8 @@
                         Most Popular &bull; High Volume
                     </span>
 
-                    <div class="h-40 flex items-center justify-center p-2 mb-4 bg-slate-50 rounded-xl">
-                        <img src="{{ asset('assets/images/moniepoint-pos.png') }}" alt="Moniepoint Smart POS" class="h-full w-auto object-contain">
+                    <div class="h-44 flex items-center justify-center p-2 mb-4 bg-slate-50 rounded-xl">
+                        <img src="{{ asset('assets/images/moniepoint-pos.png') }}" alt="Moniepoint Smart POS" class="h-full w-auto object-contain drop-shadow-sm">
                     </div>
 
                     <h3 class="text-lg font-bold text-slate-900 font-display">Moniepoint Smart POS (Android)</h3>
@@ -159,8 +159,8 @@
                         Rugged Keypad &bull; Field Favorite
                     </span>
 
-                    <div class="h-40 flex items-center justify-center p-2 mb-4 bg-slate-50 rounded-xl">
-                        <img src="{{ asset('assets/images/moniepoint-pos.png') }}" alt="Traditional POS" class="h-full w-auto object-contain filter grayscale-[30%]">
+                    <div class="h-44 flex items-center justify-center p-2 mb-4 bg-slate-50 rounded-xl">
+                        <img src="{{ asset('assets/images/moniepoint-traditional-pos.png') }}" alt="Moniepoint Traditional POS" class="h-full w-auto object-contain drop-shadow-sm">
                     </div>
 
                     <h3 class="text-lg font-bold text-slate-900 font-display">Moniepoint Traditional POS</h3>
@@ -204,10 +204,8 @@
                         Pocket Size &bull; Mobile Sellers
                     </span>
 
-                    <div class="h-40 flex items-center justify-center p-2 mb-4 bg-slate-50 rounded-xl">
-                        <div class="w-24 h-32 rounded-xl bg-slate-800 flex items-center justify-center text-white border-2 border-slate-700 shadow-sm p-3 text-center">
-                            <i data-lucide="credit-card" class="w-8 h-8 text-[#ffcc00]"></i>
-                        </div>
+                    <div class="h-44 flex items-center justify-center p-2 mb-4 bg-slate-50 rounded-xl">
+                        <img src="{{ asset('assets/images/moniepoint-mini-pos.png') }}" alt="Moniepoint Mini POS" class="h-full w-auto object-contain drop-shadow-sm">
                     </div>
 
                     <h3 class="text-lg font-bold text-slate-900 font-display">Moniepoint Mini POS (MPOS)</h3>

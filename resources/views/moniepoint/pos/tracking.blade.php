@@ -59,13 +59,25 @@
             <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
                 <!-- Status Header Banner -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-                    <div>
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-xs text-slate-400 font-mono">Reference</span>
-                            <span class="text-lg font-bold font-mono text-slate-900">{{ $matchedRequest->reference }}</span>
+                    <div class="flex items-center gap-3">
+                        @php
+                            $matchedPosImg = match($matchedRequest->pos_type) {
+                                'mini_pos' => asset('assets/images/moniepoint-mini-pos.png'),
+                                'traditional_pos' => asset('assets/images/moniepoint-traditional-pos.png'),
+                                default => asset('assets/images/moniepoint-pos.png'),
+                            };
+                        @endphp
+                        <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center p-1.5 shrink-0">
+                            <img src="{{ $matchedPosImg }}" alt="{{ $matchedRequest->pos_type_label }}" class="max-h-full max-w-full object-contain">
                         </div>
-                        <h2 class="text-xl font-bold text-slate-900 font-display mt-1">{{ $matchedRequest->pos_type_label }}</h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Requested on {{ $matchedRequest->created_at->format('M d, Y \a\t h:i A') }}</p>
+                        <div>
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-xs text-slate-400 font-mono">Reference</span>
+                                <span class="text-lg font-bold font-mono text-slate-900">{{ $matchedRequest->reference }}</span>
+                            </div>
+                            <h2 class="text-xl font-bold text-slate-900 font-display mt-0.5">{{ $matchedRequest->pos_type_label }}</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Requested on {{ $matchedRequest->created_at->format('M d, Y \a\t h:i A') }}</p>
+                        </div>
                     </div>
 
                     <div>

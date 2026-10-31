@@ -96,12 +96,12 @@
              x-transition:leave="transition ease-in duration-200"
              x-transition:leave-start="opacity-100 translate-x-0"
              x-transition:leave-end="opacity-0 -translate-x-4"
-             style="background: linear-gradient(135deg, #001F5C 0%, #002D80 50%, #0056D2 100%); color: #ffffff;"
+             style="background: linear-gradient(135deg, #001233 0%, #002875 50%, #0056D2 100%); color: #ffffff;"
              class="slide-banner-card relative p-4 sm:p-5 lg:p-6 min-h-[160px] flex items-center">
 
             <!-- Decorative Ambient Accents -->
             <div class="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full"
-                 style="background: radial-gradient(circle, rgba(251, 191, 36, 0.25) 0%, rgba(251, 191, 36, 0) 70%); filter: blur(20px);" aria-hidden="true"></div>
+                 style="background: radial-gradient(circle, rgba(0, 163, 255, 0.28) 0%, rgba(0, 86, 210, 0) 70%); filter: blur(20px);" aria-hidden="true"></div>
 
             <div class="slide-banner-row relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-4 lg:gap-6">
                 
@@ -109,9 +109,9 @@
                 <div class="min-w-0 flex-1 text-left">
                     <!-- Partner Badge with Logo -->
                     <div class="slide-banner-pill"
-                         style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; background: rgba(255, 204, 0, 0.15); border: 1px solid rgba(255, 204, 0, 0.4); margin-bottom: 8px;">
+                         style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; background: rgba(0, 102, 246, 0.25); border: 1px solid rgba(0, 163, 255, 0.45); margin-bottom: 8px;">
                         <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" style="height: 14px; width: auto; object-fit: contain;">
-                        <span style="font-size: 11px; font-weight: 700; color: #fef08a; letter-spacing: 0.3px; text-transform: uppercase;">Official Moniepoint POS Partner</span>
+                        <span style="font-size: 11px; font-weight: 700; color: #bae6fd; letter-spacing: 0.3px; text-transform: uppercase;">Official Moniepoint POS Partner</span>
                     </div>
 
                     <!-- Title -->
@@ -162,10 +162,10 @@
 
                 <!-- Right Side: Official POS Hardware Image (Desktop/Tablet) -->
                 <div class="slide-banner-graphic shrink-0 hidden md:flex items-center justify-center pt-2 md:pt-0">
-                    <div class="relative flex items-center justify-center p-2 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg">
+                    <div class="relative flex items-center justify-center p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-sky-400/30 shadow-xl">
                         <img src="{{ asset('assets/images/moniepoint-pos.png') }}"
                              alt="Moniepoint POS Terminal"
-                             class="h-28 lg:h-32 w-auto object-contain filter drop-shadow-md">
+                             class="h-28 lg:h-36 w-auto object-contain filter drop-shadow-lg transform hover:scale-105 transition-transform duration-300">
                     </div>
                 </div>
 

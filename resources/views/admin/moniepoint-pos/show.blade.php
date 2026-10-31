@@ -117,8 +117,15 @@
 
                     <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-2 shrink-0">
-                                <img src="{{ asset('assets/images/moniepoint-pos.png') }}" alt="POS Terminal" class="max-h-full max-w-full object-contain">
+                            <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center p-1.5 shrink-0">
+                                @php
+                                    $posHardwareImg = match($posRequest->pos_type) {
+                                        'mini_pos' => asset('assets/images/moniepoint-mini-pos.png'),
+                                        'traditional_pos' => asset('assets/images/moniepoint-traditional-pos.png'),
+                                        default => asset('assets/images/moniepoint-pos.png'),
+                                    };
+                                @endphp
+                                <img src="{{ $posHardwareImg }}" alt="{{ $posRequest->pos_type_label }}" class="max-h-full max-w-full object-contain">
                             </div>
                             <div>
                                 <h3 class="text-sm font-bold text-slate-900">{{ $posRequest->pos_type_label }}</h3>
