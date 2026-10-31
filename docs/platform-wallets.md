@@ -20,9 +20,10 @@ just a new type slug and a call into the ledger below.
 
 ## The three wallets today
 
-- **`welfare`** (`PlatformWallet::TYPE_WELFARE`) — credited a fixed,
-  admin-configurable amount (`/admin/platform-wallets/welfare-settings`,
-  backed by `PlatformWelfareSettings`) every time a SIM activates. See
+- **`welfare`** (`PlatformWallet::TYPE_WELFARE`) — credited a configurable
+  amount (`/admin/platform-wallets/welfare-settings`, backed by `PlatformWelfareSettings`)
+  every time a retail SIM activates, and automatically deducted from the Platform SIM
+  Operations Wallet (`PlatformWallet::TYPE_SIM_ACTIVATION`). See
   `App\Listeners\CreditPlatformWelfareWallet`, which listens on the same
   `App\Events\SimActivated` event `App\Listeners\AwardCommissions` does.
 - **`utilities_revenue`** (`PlatformWallet::TYPE_UTILITIES_REVENUE`) —
@@ -33,9 +34,10 @@ just a new type slug and a call into the ledger below.
   the platform nothing until an admin explicitly sets a margin on it.
 - **`sim_activation`** (`PlatformWallet::TYPE_SIM_ACTIVATION`) —
   the central ledger on top of which the retail SIM activation lifecycle
-  runs. Credited with the full activation fee whenever a SIM is activated
-  (fees deducted from personal user or partner wallet), and debited for
-  each commission paid out across the upline chain (`AwardCommissions`).
+  runs (Platform SIM Operations Wallet). Credited with the full activation fee whenever
+  a SIM is activated (fees deducted from personal user or partner wallet), and debited for
+  each commission paid out across the upline chain (`AwardCommissions`) as well as the
+  platform welfare contribution (`CreditPlatformWelfareWallet`).
   **Note:** This does not apply to Enterprise Partners (`business`) and
   their `business_agent` downlines, whose splits are governed by
   `BusinessCommissionRate`.

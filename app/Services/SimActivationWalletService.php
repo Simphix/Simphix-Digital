@@ -84,6 +84,42 @@ class SimActivationWalletService
     }
 
     /**
+     * Deduct platform welfare contribution from the SIM Activation / Operations Wallet.
+     * Does NOT apply to business and business agents.
+     */
+    public function deductWelfare(Sim $sim, float $amount, ?string $description = null): ?PlatformWalletTransaction
+    {
+        if ($this->isExcludedBusinessFlow($sim)) {
+            return null;
+        }
+
+        if ($amount <= 0.00) {
+            return null;
+        }
+
+        $desc = $description
+            ? "{$description} deducted for SIM {$sim->number}"
+            : "Platform welfare contribution deducted for SIM {$sim->number}";
+
+        return $this->ledger->debit(
+            PlatformWallet::TYPE_SIM_ACTIVATION,
+            $amount,
+            'debit',
+            'sim_activation_welfare',
+            $desc,
+            $sim,
+            [
+                'sim_id'        => $sim->id,
+                'sim_number'    => $sim->number,
+                'category'      => $sim->category,
+                'amount'        => $amount,
+                'target_wallet' => PlatformWallet::TYPE_WELFARE,
+            ],
+            allowOverdraft: true
+        );
+    }
+
+    /**
      * Check whether this SIM or user is part of the Enterprise Partner (business / business_agent) flow.
      */
     public function isExcludedBusinessFlow(Sim $sim, ?User $user = null): bool
