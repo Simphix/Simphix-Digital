@@ -277,7 +277,7 @@
             </div>
         </div>
 
-        <!-- Sliding Banners (Moniepoint POS & Business Loans) -->
+        <!-- Moniepoint POS & Business Loans Banners -->
         @include('dashboard.partials.sliding-banners')
 
         @if ($epSims)

@@ -230,7 +230,7 @@ class SimsController extends Controller
         $providers = ['mtn', 'airtel', 'glo', '9mobile'];
 
         $mode = match ($user->role) {
-            'regional_manager', 'coordinator', 'business' => 'distribute',
+            'regional_manager', 'coordinator', 'business', 'business_sales_manager' => 'distribute',
             'partner', 'business_agent' => 'activate_for_user',
             default => 'self_activate',
         };
@@ -239,6 +239,7 @@ class SimsController extends Controller
 
         $heldSims = match ($mode) {
             'distribute' => (match ($user->role) {
+                'business_sales_manager' => Sim::where('business_sales_manager_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_BSM),
                 'regional_manager' => Sim::where('regional_manager_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_RM),
                 'coordinator' => Sim::where('coordinator_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_COORDINATOR),
                 'business' => Sim::where('business_id', $user->id)->where('status', SimStatus::ASSIGNED_TO_BUSINESS),
@@ -257,8 +258,15 @@ class SimsController extends Controller
         $activationDisabled = false;
 
         if ($mode === 'distribute') {
-            $nextRole = \App\Support\RoleHierarchy::nextRole($user->role);
-            $downlineUsers = $user->referrals()->where('role', $nextRole)->where('status', 'active')->orderBy('first_name')->get();
+            if ($user->role === 'business_sales_manager') {
+                $downlineUsers = User::where('status', 'active')
+                    ->where('id', '!=', $user->id)
+                    ->orderBy('first_name')
+                    ->get();
+            } else {
+                $nextRole = \App\Support\RoleHierarchy::nextRole($user->role);
+                $downlineUsers = $user->referrals()->where('role', $nextRole)->where('status', 'active')->orderBy('first_name')->get();
+            }
         } elseif ($mode === 'activate_for_user') {
             $downlineUsers = $user->referrals()->where('role', 'personal')->where('status', 'active')->orderBy('first_name')->get();
 
@@ -425,26 +433,25 @@ class SimsController extends Controller
         $assignedToOthersQuery = $baseQuery();
         $this->applyOthersScope($assignedToOthersQuery, $user);
         $assignedToOthersSims = $assignedToOthersQuery
-            ->with(['user', 'partner', 'coordinator'])
+            ->with(['user', 'partner', 'coordinator', 'regionalManager', 'business', 'businessAgent'])
             ->orderBy('category')->orderBy('provider')
             ->paginate(15, ['*'], 'others_page')->withQueryString();
 
         // Flag which "Assigned to Others" rows the user can swap, and resolve
         // who currently holds each one for the "Held By" column — derived
         // purely from the SIM's own state, so it's correct regardless of
-        // which tier is viewing (a Coordinator's "Others" tab can show rows
-        // still held by a Partner *and* rows that Partner has already
-        // handed to their own downline user).
+        // which tier is viewing.
         $assignedToOthersSims->getCollection()->transform(function (Sim $sim) use ($user) {
             $sim->swap_eligible = (bool) $this->resolveSwapHolder($sim, $user);
             $sim->current_holder = match (true) {
+                $sim->status === SimStatus::ASSIGNED_TO_RM => $sim->regionalManager,
                 $sim->status === SimStatus::ASSIGNED_TO_COORDINATOR => $sim->coordinator,
-                // At ASSIGNED_TO_PARTNER, user_id === partner_id means it's
-                // still self-held by the partner; anything else means it's
-                // been handed to that downline personal user.
+                $sim->status === SimStatus::ASSIGNED_TO_BUSINESS => $sim->business,
+                $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT && $sim->user_id !== $sim->business_agent_id => $sim->user,
+                $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT => $sim->businessAgent,
                 $sim->status === SimStatus::ASSIGNED_TO_PARTNER && $sim->user_id !== $sim->partner_id => $sim->user,
                 $sim->status === SimStatus::ASSIGNED_TO_PARTNER => $sim->partner,
-                default => null,
+                default => $sim->user,
             };
 
             return $sim;
@@ -1547,8 +1554,22 @@ class SimsController extends Controller
                 continue;
             }
 
+            if ($user->role === 'business_sales_manager') {
+                if ($sim->status === SimStatus::ASSIGNED_TO_BSM && $sim->user_id === $user->id) {
+                    $errors[] = "{$number} — Already in your held stock";
+                    continue;
+                }
+
+                if ($sim->status === SimStatus::UNASSIGNED) {
+                    $errors[] = "{$number} — Already unassigned, nothing to collect";
+                    continue;
+                }
+
+                $resolved[] = ['id' => $sim->id, 'number' => $sim->number];
+                continue;
+            }
+
             $tracesBackToActor = match (true) {
-                $user->role === 'business_sales_manager' => $sim->business_sales_manager_id === $user->id && $sim->status !== SimStatus::ASSIGNED_TO_BSM,
                 $expectedHolderRole === 'coordinator'    => $sim->coordinator_id !== null && $sim->status === SimStatus::ASSIGNED_TO_COORDINATOR && $sim->regional_manager_id === $user->id,
                 $expectedHolderRole === 'partner'        => $sim->partner_id !== null && $sim->user_id === $sim->partner_id && $sim->status === SimStatus::ASSIGNED_TO_PARTNER && $sim->coordinator_id === $user->id,
                 $expectedHolderRole === 'business_agent' => $sim->business_agent_id !== null && $sim->user_id === $sim->business_agent_id && $sim->status === SimStatus::ASSIGNED_TO_BUSINESS_AGENT && $sim->business_id === $user->id,
@@ -1640,20 +1661,21 @@ class SimsController extends Controller
     public function bulkCollect(Request $request)
     {
         $user = $this->authorizeBulkDelegator();
+        $isBsm = $user->role === 'business_sales_manager';
         $nextRole = RoleHierarchy::nextRole($user->role);
 
         $request->validate([
             'sim_ids'   => 'required|array|max:1000',
             'sim_ids.*' => 'exists:sims,id',
-            'user_id'   => 'required|exists:users,id',
+            'user_id'   => $isBsm ? 'nullable|exists:users,id' : 'required|exists:users,id',
         ]);
 
-        $currentHolder = User::find($request->user_id);
-        if (!$currentHolder) {
+        $currentHolder = $request->filled('user_id') ? User::find($request->user_id) : null;
+        if (!$isBsm && !$currentHolder) {
             return back()->with('error', 'Target user not found.');
         }
 
-        if ($user->role !== 'business_sales_manager' && $currentHolder->role !== $nextRole) {
+        if (!$isBsm && $currentHolder->role !== $nextRole) {
             return back()->with('error', 'You can only collect from a ' . str_replace('_', ' ', (string) $nextRole) . '.');
         }
 
@@ -1674,7 +1696,8 @@ class SimsController extends Controller
             }
         });
 
-        $message = "Successfully collected {$collectedCount} SIM number(s) from {$currentHolder->first_name} {$currentHolder->last_name}.";
+        $fromText = $currentHolder ? " from {$currentHolder->first_name} {$currentHolder->last_name}" : '';
+        $message = "Successfully collected {$collectedCount} SIM number(s){$fromText}.";
         if ($skipped > 0) {
             $message .= " {$skipped} SIM(s) were skipped (no longer eligible).";
 

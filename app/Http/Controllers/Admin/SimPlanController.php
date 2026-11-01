@@ -710,10 +710,10 @@ class SimPlanController extends Controller
         $request->validate([
             'sim_ids'   => 'required|array',
             'sim_ids.*' => 'exists:sims,id',
-            'user_id'   => 'required|exists:users,id',
+            'user_id'   => 'nullable|exists:users,id',
         ]);
 
-        $targetUser = User::find($request->user_id);
+        $targetUser = $request->filled('user_id') ? User::find($request->user_id) : null;
         $actor = $request->user();
         $service = app(SimAssignmentService::class);
 
@@ -723,19 +723,29 @@ class SimPlanController extends Controller
 
         DB::transaction(function () use ($sims, $targetUser, $actor, $service, &$collectedCount, &$skipped) {
             foreach ($sims as $sim) {
-                $belongsToUser = $sim->user_id === $targetUser->id
-                    || $sim->partner_id === $targetUser->id
-                    || $sim->coordinator_id === $targetUser->id
-                    || $sim->regional_manager_id === $targetUser->id;
-
                 if ($sim->status === SimStatus::ACTIVATED) {
                     $skipped[] = "{$sim->number} (activated)";
                     continue;
                 }
 
-                if (!$belongsToUser) {
-                    $skipped[] = "{$sim->number} (not held by this user)";
+                if ($sim->status === SimStatus::UNASSIGNED) {
+                    $skipped[] = "{$sim->number} (already unassigned)";
                     continue;
+                }
+
+                if ($targetUser) {
+                    $belongsToUser = $sim->user_id === $targetUser->id
+                        || $sim->partner_id === $targetUser->id
+                        || $sim->coordinator_id === $targetUser->id
+                        || $sim->regional_manager_id === $targetUser->id
+                        || $sim->business_id === $targetUser->id
+                        || $sim->business_agent_id === $targetUser->id
+                        || $sim->business_sales_manager_id === $targetUser->id;
+
+                    if (!$belongsToUser) {
+                        $skipped[] = "{$sim->number} (not held by this user)";
+                        continue;
+                    }
                 }
 
                 $service->unassign($sim, $actor);
@@ -743,7 +753,10 @@ class SimPlanController extends Controller
             }
         });
 
-        $message = "Collected {$collectedCount} SIM number(s) from {$targetUser->first_name} {$targetUser->last_name} ({$targetUser->role}).";
+        $message = $targetUser
+            ? "Collected {$collectedCount} SIM number(s) from {$targetUser->first_name} {$targetUser->last_name} ({$targetUser->role})."
+            : "Collected {$collectedCount} SIM number(s) back to available pool.";
+
         if (count($skipped) > 0) {
             $message .= ' Skipped: ' . implode(', ', $skipped) . '.';
             return back()->with('warning', $message);

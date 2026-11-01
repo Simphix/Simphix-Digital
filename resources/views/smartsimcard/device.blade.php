@@ -110,7 +110,7 @@
                     <div class="lg:col-span-6">
                         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                             @if ($mode === 'distribute')
-                                @php $nextRoleLabel = str_replace('_', ' ', \App\Support\RoleHierarchy::nextRole($user->role)); @endphp
+                                @php $nextRoleLabel = $user->role === 'business_sales_manager' ? 'user' : str_replace('_', ' ', (string) \App\Support\RoleHierarchy::nextRole($user->role)); @endphp
                                 <div class="flex items-center gap-3 pb-4 border-b border-slate-100 mb-4">
                                     <div class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                                         <i data-lucide="send" class="w-4 h-4"></i>
