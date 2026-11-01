@@ -140,30 +140,48 @@ class SimAssignmentService
      * lineage), so a regional_manager can't collect a coordinator's SIM that
      * actually came from a different regional_manager.
      */
-    public function collectUp(Sim $sim, User $collector, User $currentHolder): void
+    public function collectUp(Sim $sim, User $collector, ?User $currentHolder = null): void
     {
         if ($collector->role === 'business_sales_manager') {
-            if ($sim->business_sales_manager_id !== $collector->id || $sim->status === SimStatus::ACTIVATED) {
+            if ($sim->status === SimStatus::ACTIVATED || ($sim->status === SimStatus::ASSIGNED_TO_BSM && $sim->user_id === $collector->id) || $sim->status === SimStatus::UNASSIGNED) {
                 throw new \RuntimeException('This SIM is not currently eligible to be collected back.');
             }
 
             DB::transaction(function () use ($sim, $collector, $currentHolder) {
+                $holderName = 'current holder';
+                if ($currentHolder) {
+                    $holderName = "{$currentHolder->name} ({$currentHolder->role})";
+                } elseif ($sim->user) {
+                    $holderName = "{$sim->user->name} ({$sim->user->role})";
+                } elseif ($sim->partner) {
+                    $holderName = "{$sim->partner->name} (partner)";
+                } elseif ($sim->coordinator) {
+                    $holderName = "{$sim->coordinator->name} (coordinator)";
+                } elseif ($sim->regionalManager) {
+                    $holderName = "{$sim->regionalManager->name} (regional manager)";
+                }
+
                 $fields = [
-                    'regional_manager_id' => null,
-                    'coordinator_id'      => null,
-                    'partner_id'          => null,
-                    'business_id'         => null,
-                    'business_agent_id'   => null,
-                    'user_id'             => $collector->id,
-                    'status'              => SimStatus::ASSIGNED_TO_BSM,
+                    'regional_manager_id'       => null,
+                    'coordinator_id'            => null,
+                    'partner_id'                => null,
+                    'business_id'               => null,
+                    'business_agent_id'         => null,
+                    'business_sales_manager_id' => $collector->id,
+                    'user_id'                   => $collector->id,
+                    'status'                    => SimStatus::ASSIGNED_TO_BSM,
                 ];
 
                 $fromStatus = $sim->status;
                 $sim->update($fields);
-                $this->logHistory($sim, $fromStatus, $sim->status, $collector, "Collected back from {$currentHolder->name} ({$currentHolder->role}) to BSM stock");
+                $this->logHistory($sim, $fromStatus, $sim->status, $collector, "Collected back from {$holderName} to BSM stock");
             });
 
             return;
+        }
+
+        if (!$currentHolder) {
+            throw new \RuntimeException('Target user is required.');
         }
 
         $expectedHolderRole = RoleHierarchy::nextRole($collector->role);

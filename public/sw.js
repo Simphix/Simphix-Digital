@@ -1,4 +1,4 @@
-const CACHE = 'simphix-static-v1';
+const CACHE = 'simphix-static-v2';
 const STATIC_ASSETS = ['/manifest.json'];
 
 self.addEventListener('install', (e) => {

@@ -266,6 +266,81 @@ class BusinessSalesManagerSimInventoryTest extends TestCase
         $this->assertEquals($this->bsm->id, $sim->business_sales_manager_id);
     }
 
+    public function test_bsm_can_assign_and_collect_with_every_catalog_and_personal_role(): void
+    {
+        $roles = [
+            'regional_manager',
+            'coordinator',
+            'partner',
+            'business',
+            'business_agent',
+            'personal',
+            'agent',
+        ];
+
+        foreach ($roles as $role) {
+            $user = User::factory()->create([
+                'role'   => $role,
+                'status' => 'active',
+            ]);
+
+            $sim = Sim::create([
+                'number'                    => '080' . random_int(10000000, 99999999),
+                'category'                  => 'POS SIM TEST BSM',
+                'provider'                  => 'mtn',
+                'business_sales_manager_id' => $this->bsm->id,
+                'user_id'                   => $this->bsm->id,
+                'status'                    => SimStatus::ASSIGNED_TO_BSM,
+            ]);
+
+            // Test Single Assign
+            $responseAssign = $this->actingAs($this->bsm)->post(route('sims.assign'), [
+                'sim_id'  => $sim->id,
+                'user_id' => $user->id,
+            ]);
+            $responseAssign->assertSessionHas('success');
+
+            $sim->refresh();
+            $this->assertEquals($this->bsm->id, $sim->business_sales_manager_id);
+            $this->assertNotEquals(SimStatus::ASSIGNED_TO_BSM, $sim->status);
+
+            // Test Collect Back
+            $responseCollect = $this->actingAs($this->bsm)->post(route('sims.bulk-collect'), [
+                'sim_ids' => [$sim->id],
+                'user_id' => $user->id,
+            ]);
+            $responseCollect->assertSessionHas('success');
+
+            $sim->refresh();
+            $this->assertEquals(SimStatus::ASSIGNED_TO_BSM, $sim->status);
+            $this->assertEquals($this->bsm->id, $sim->user_id);
+            $this->assertEquals($this->bsm->id, $sim->business_sales_manager_id);
+
+            // Test Bulk Assign
+            $responseBulkAssign = $this->actingAs($this->bsm)->post(route('sims.bulk-assign'), [
+                'sim_ids' => [$sim->id],
+                'user_id' => $user->id,
+            ]);
+            $responseBulkAssign->assertSessionHas('success');
+
+            $sim->refresh();
+            $this->assertEquals($this->bsm->id, $sim->business_sales_manager_id);
+            $this->assertNotEquals(SimStatus::ASSIGNED_TO_BSM, $sim->status);
+
+            // Test Collect Back Again
+            $responseCollect2 = $this->actingAs($this->bsm)->post(route('sims.bulk-collect'), [
+                'sim_ids' => [$sim->id],
+                'user_id' => $user->id,
+            ]);
+            $responseCollect2->assertSessionHas('success');
+
+            $sim->refresh();
+            $this->assertEquals(SimStatus::ASSIGNED_TO_BSM, $sim->status);
+            $this->assertEquals($this->bsm->id, $sim->user_id);
+            $this->assertEquals($this->bsm->id, $sim->business_sales_manager_id);
+        }
+    }
+
     public function test_bsm_dashboard_and_sidebar_links_to_all_sims_inventory_and_not_admin_sim_plan(): void
     {
         $response = $this->actingAs($this->bsm)->get(route('bsm.dashboard'));
@@ -274,5 +349,139 @@ class BusinessSalesManagerSimInventoryTest extends TestCase
         $response->assertSee(route('sims.inventory'));
         $response->assertSee('All SIMs Inventory');
         $response->assertDontSee(route('admin.sim-plan.index'));
+    }
+
+    public function test_bsm_bulk_collect_page_does_not_contain_collect_from_user_picker(): void
+    {
+        $response = $this->actingAs($this->bsm)->get(route('sims.bulk-collect'));
+
+        $response->assertOk();
+        $response->assertDontSee('2. Collect From');
+        $response->assertDontSee('Search Your Downline by Name, Email, or Phone');
+        $response->assertSee('ready to collect back to your stock');
+    }
+
+    public function test_non_bsm_manager_bulk_collect_page_still_contains_collect_from_user_picker(): void
+    {
+        $response = $this->actingAs($this->rm)->get(route('sims.bulk-collect'));
+
+        $response->assertOk();
+        $response->assertSee('2. Collect From');
+        $response->assertSee('Search Your Downline by Name, Email, or Phone');
+    }
+
+    public function test_bsm_can_bulk_collect_sims_from_anyone_on_platform_without_user_id(): void
+    {
+        $user1 = User::factory()->create(['role' => 'vendor', 'status' => 'active']);
+        $user2 = User::factory()->create(['role' => 'coordinator', 'status' => 'active']);
+        $user3 = User::factory()->create(['role' => 'personal', 'status' => 'active']);
+
+        $num1 = '080' . random_int(10000000, 99999999);
+        $num2 = '080' . random_int(10000000, 99999999);
+        $num3 = '080' . random_int(10000000, 99999999);
+
+        $sim1 = Sim::create([
+            'number'                    => $num1,
+            'category'                  => 'POS SIM TEST BSM',
+            'provider'                  => 'mtn',
+            'business_sales_manager_id' => null,
+            'user_id'                   => $user1->id,
+            'status'                    => SimStatus::ASSIGNED_TO_PARTNER,
+        ]);
+
+        $sim2 = Sim::create([
+            'number'                    => $num2,
+            'category'                  => 'POS SIM TEST BSM',
+            'provider'                  => 'mtn',
+            'business_sales_manager_id' => null,
+            'coordinator_id'            => $user2->id,
+            'status'                    => SimStatus::ASSIGNED_TO_COORDINATOR,
+        ]);
+
+        $sim3 = Sim::create([
+            'number'                    => $num3,
+            'category'                  => 'POS SIM TEST BSM',
+            'provider'                  => 'mtn',
+            'business_sales_manager_id' => null,
+            'user_id'                   => $user3->id,
+            'status'                    => SimStatus::ASSIGNED_TO_BUSINESS,
+        ]);
+
+        // 1. Resolve numbers without error
+        $resolveResponse = $this->actingAs($this->bsm)->postJson(route('sims.bulk-collect.resolve-numbers'), [
+            'numbers' => "{$num1}\n{$num2}\n{$num3}",
+        ]);
+
+        $resolveResponse->assertOk();
+        $this->assertCount(3, $resolveResponse->json('resolved'));
+        $this->assertEmpty($resolveResponse->json('errors'));
+
+        // 2. Collect back without passing user_id
+        $collectResponse = $this->actingAs($this->bsm)->post(route('sims.bulk-collect'), [
+            'sim_ids' => [$sim1->id, $sim2->id, $sim3->id],
+        ]);
+
+        $collectResponse->assertSessionHas('success');
+
+        $sim1->refresh();
+        $sim2->refresh();
+        $sim3->refresh();
+
+        $this->assertEquals(SimStatus::ASSIGNED_TO_BSM, $sim1->status);
+        $this->assertEquals($this->bsm->id, $sim1->user_id);
+        $this->assertEquals($this->bsm->id, $sim1->business_sales_manager_id);
+
+        $this->assertEquals(SimStatus::ASSIGNED_TO_BSM, $sim2->status);
+        $this->assertEquals($this->bsm->id, $sim2->user_id);
+        $this->assertEquals($this->bsm->id, $sim2->business_sales_manager_id);
+        $this->assertNull($sim2->coordinator_id);
+
+        $this->assertEquals(SimStatus::ASSIGNED_TO_BSM, $sim3->status);
+        $this->assertEquals($this->bsm->id, $sim3->user_id);
+        $this->assertEquals($this->bsm->id, $sim3->business_sales_manager_id);
+    }
+
+    public function test_admin_bulk_collect_page_does_not_contain_collect_from_user_picker(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.sim-plan.bulk-collect'));
+
+        $response->assertOk();
+        $response->assertDontSee('2. Collect From');
+        $response->assertDontSee('Search by Name, Email, or Phone');
+        $response->assertSee('ready to collect back to available pool');
+    }
+
+    public function test_admin_can_bulk_collect_sims_from_anyone_without_user_id(): void
+    {
+        $holder = User::factory()->create(['role' => 'partner', 'status' => 'active']);
+        $num = '080' . random_int(10000000, 99999999);
+
+        $sim = Sim::create([
+            'number'      => $num,
+            'category'    => 'POS SIM TEST BSM',
+            'provider'    => 'mtn',
+            'partner_id'  => $holder->id,
+            'user_id'     => $holder->id,
+            'status'      => SimStatus::ASSIGNED_TO_PARTNER,
+        ]);
+
+        $resolveResponse = $this->actingAs($this->admin)->postJson(route('admin.sim-plan.bulk-collect.resolve-numbers'), [
+            'numbers' => $num,
+        ]);
+
+        $resolveResponse->assertOk();
+        $this->assertCount(1, $resolveResponse->json('resolved'));
+        $this->assertEmpty($resolveResponse->json('errors'));
+
+        $collectResponse = $this->actingAs($this->admin)->post(route('admin.sim-plan.bulk-collect.execute'), [
+            'sim_ids' => [$sim->id],
+        ]);
+
+        $collectResponse->assertSessionHas('success');
+
+        $sim->refresh();
+        $this->assertEquals(SimStatus::UNASSIGNED, $sim->status);
+        $this->assertNull($sim->user_id);
+        $this->assertNull($sim->partner_id);
     }
 }
