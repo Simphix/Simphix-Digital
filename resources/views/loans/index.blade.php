@@ -218,7 +218,7 @@
                     </p>
                 </div>
 
-                <form method="POST" action="{{ route('loans.store') }}" class="space-y-6">
+                <form method="POST" action="{{ route('loans.store') }}" autocomplete="off" class="space-y-6">
                     @csrf
 
                     <!-- Disclaimer Notice inside Form -->
@@ -233,8 +233,8 @@
                             <label class="block text-xs font-bold text-slate-700 mb-1">
                                 Full Name (as on Moniepoint Account) <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" name="name" required
-                                   value="{{ old('name', $user->name ?? '') }}"
+                            <input type="text" name="name" required autocomplete="off"
+                                   value="{{ old('name') }}"
                                    placeholder="e.g. Adebayo Ibrahim"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                         </div>
@@ -244,8 +244,8 @@
                             <label class="block text-xs font-bold text-slate-700 mb-1">
                                 Phone Number <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" name="phone" required
-                                   value="{{ old('phone', $user->phone ?? '') }}"
+                            <input type="text" name="phone" required autocomplete="off"
+                                   value="{{ old('phone') }}"
                                    placeholder="e.g. 08012345678"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                         </div>
@@ -255,8 +255,8 @@
                             <label class="block text-xs font-bold text-slate-700 mb-1">
                                 Email Address <span class="text-slate-400 font-normal">(Optional)</span>
                             </label>
-                            <input type="email" name="email"
-                                   value="{{ old('email', $user->email ?? '') }}"
+                            <input type="email" name="email" autocomplete="off"
+                                   value="{{ old('email') }}"
                                    placeholder="e.g. adebayo@example.com"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                         </div>
@@ -266,7 +266,7 @@
                             <label class="block text-xs font-bold text-slate-700 mb-1">
                                 Moniepoint Wallet / Account Number <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" name="moniepoint_account_number" required
+                            <input type="text" name="moniepoint_account_number" required autocomplete="off"
                                    value="{{ old('moniepoint_account_number') }}"
                                    placeholder="e.g. 8123456789 (Moniepoint MFB)"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
@@ -278,8 +278,8 @@
                             <label class="block text-xs font-bold text-slate-700 mb-1">
                                 Loan Amount Requesting (&#8358;) <span class="text-rose-500">*</span>
                             </label>
-                            <input type="number" name="amount_requested" min="1000" max="50000000" step="1000" required
-                                   value="{{ old('amount_requested', '500000') }}"
+                            <input type="number" name="amount_requested" min="1000" max="50000000" step="1000" required autocomplete="off"
+                                   value="{{ old('amount_requested') }}"
                                    placeholder="e.g. 500000"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                             <p class="text-[11px] text-slate-400 mt-1">Range: &#8358;1,000 to &#8358;50,000,000</p>
@@ -304,7 +304,7 @@
                         <label class="block text-xs font-bold text-slate-700 mb-1">
                             Registered Business / Store Name <span class="text-slate-400 font-normal">(Optional)</span>
                         </label>
-                        <input type="text" name="business_name"
+                        <input type="text" name="business_name" autocomplete="off"
                                value="{{ old('business_name') }}"
                                placeholder="e.g. Adebayo Supermarket & POS Venture"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
@@ -315,7 +315,7 @@
                         <label class="block text-xs font-bold text-slate-700 mb-1">
                             Purpose of Loan / Notes <span class="text-slate-400 font-normal">(Optional)</span>
                         </label>
-                        <textarea name="purpose" rows="3"
+                        <textarea name="purpose" rows="3" autocomplete="off"
                                   placeholder="e.g. Inventory restocking for festive season and purchasing additional shop stock..."
                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">{{ old('purpose') }}</textarea>
                     </div>

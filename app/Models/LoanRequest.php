@@ -19,9 +19,9 @@ class LoanRequest extends Model
     public const STATUS_DECLINED     = 'declined';
 
     public const STATUSES = [
-        self::STATUS_PENDING      => 'Pending Assessment',
+        self::STATUS_PENDING      => 'Processing',
         self::STATUS_UNDER_REVIEW => 'Under Review',
-        self::STATUS_CONTACTED    => 'Customer Contacted',
+        self::STATUS_CONTACTED    => 'Customer Will Be Contacted',
         self::STATUS_APPROVED     => 'Approved',
         self::STATUS_DISBURSED    => 'Disbursed',
         self::STATUS_DECLINED     => 'Declined',

@@ -123,6 +123,7 @@ class MoniepointPosAndLoanRequestTest extends TestCase
         $response->assertSee($posRequest->reference);
         $response->assertSee('Dispatched via Courier #TRK12345');
         $response->assertSee('Moniepoint Smart POS (Android)');
+        $response->assertSee('Customer Will Be Contacted');
     }
 
     public function test_user_can_view_loan_index_and_tracking_pages(): void
@@ -217,6 +218,8 @@ class MoniepointPosAndLoanRequestTest extends TestCase
         $response->assertSee('8123456789');
         $response->assertSee('2,000,000.00');
         $response->assertSee('Loan approved! Moniepoint account funded.');
+        $response->assertSee('Processing');
+        $response->assertSee('Customer Will Be Contacted');
     }
 
     public function test_admin_can_view_pos_and_loan_admin_desks(): void

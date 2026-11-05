@@ -77,8 +77,7 @@
                 @php
                     $steps = [
                         'pending'   => ['label' => 'Submitted', 'desc' => 'Request received by desk'],
-                        'reviewing' => ['label' => 'Under Review', 'desc' => 'Officer reviewing requirements'],
-                        'contacted' => ['label' => 'Contacted', 'desc' => 'Travel specialist in touch'],
+                        'contacted' => ['label' => 'Customer Will Be Contacted', 'desc' => 'Travel specialist will reach out'],
                         'approved'  => ['label' => 'Approved / Processing', 'desc' => 'Visa & flights processing'],
                         'completed' => ['label' => 'Completed', 'desc' => 'Travel confirmed & ready'],
                     ];
@@ -86,9 +85,9 @@
                     $statusRank = [
                         'pending'   => 1,
                         'reviewing' => 2,
-                        'contacted' => 3,
-                        'approved'  => 4,
-                        'completed' => 5,
+                        'contacted' => 2,
+                        'approved'  => 3,
+                        'completed' => 4,
                         'cancelled' => 0,
                     ];
 
@@ -109,7 +108,7 @@
                 @else
                     <div>
                         <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Application Progress</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
                             @foreach ($steps as $key => $stepInfo)
                                 @php
                                     $stepRank = $statusRank[$key];

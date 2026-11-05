@@ -82,10 +82,13 @@ class NIN_PDF_Repository
             $filename =  'Regular NIN Slip - ' . $nin_no . '.pdf';
             $pdfContent = $pdf->Output($filename, 'S');
 
-            return response($pdfContent)
+            return response($pdfContent, 200)
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename=' . $filename)
-                ->header('Content-Length', strlen($pdfContent));
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename))
+                ->header('Content-Length', strlen($pdfContent))
+                ->header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
+                ->header('Pragma', 'public')
+                ->header('Expires', '0');
         } else {
             return response()->json([
                 "message" => "Error",
@@ -193,7 +196,11 @@ class NIN_PDF_Repository
 
             return response($pdfContent, 200)
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename=' . $filename);
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename))
+                ->header('Content-Length', strlen($pdfContent))
+                ->header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
+                ->header('Pragma', 'public')
+                ->header('Expires', '0');
         } else {
             return response()->json([
                 "message" => "Error",
@@ -326,8 +333,11 @@ class NIN_PDF_Repository
 
             return response($pdfContent, 200)
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
-                ->header('Content-Length', strlen($pdfContent));
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename))
+                ->header('Content-Length', strlen($pdfContent))
+                ->header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
+                ->header('Pragma', 'public')
+                ->header('Expires', '0');
         } else {
             return response()->json([
                 "message" => "Error",
@@ -411,8 +421,11 @@ class NIN_PDF_Repository
 
         return response($pdfContent, 200)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
-            ->header('Content-Length', strlen($pdfContent));
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename))
+            ->header('Content-Length', strlen($pdfContent))
+            ->header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
+            ->header('Pragma', 'public')
+            ->header('Expires', '0');
     }
 
     public function vninPDF($nin_no)
@@ -607,9 +620,11 @@ class NIN_PDF_Repository
 
             return response($pdfContent, 200)
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename))
                 ->header('Content-Length', strlen($pdfContent))
-                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
+                ->header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
+                ->header('Pragma', 'public')
+                ->header('Expires', '0');
 
         } else {
             return response()->json([

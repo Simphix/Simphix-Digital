@@ -484,4 +484,61 @@ class BusinessSalesManagerSimInventoryTest extends TestCase
         $this->assertNull($sim->user_id);
         $this->assertNull($sim->partner_id);
     }
+
+    public function test_all_roles_inventory_displays_only_assigned_to_me_sims_with_downline_breakdown(): void
+    {
+        // 1. Coordinator has 2 SIMs assigned directly to them (ASSIGNED_TO_COORDINATOR)
+        Sim::create([
+            'number'         => '08091111111',
+            'category'       => $this->field->field_name,
+            'provider'       => 'mtn',
+            'coordinator_id' => $this->coordinator->id,
+            'status'         => SimStatus::ASSIGNED_TO_COORDINATOR,
+        ]);
+        Sim::create([
+            'number'         => '08092222222',
+            'category'       => $this->field->field_name,
+            'provider'       => 'mtn',
+            'coordinator_id' => $this->coordinator->id,
+            'status'         => SimStatus::ASSIGNED_TO_COORDINATOR,
+        ]);
+
+        // 2. Coordinator has 1 SIM in downline with Partner
+        Sim::create([
+            'number'         => '08093333333',
+            'category'       => $this->field->field_name,
+            'provider'       => 'mtn',
+            'coordinator_id' => $this->coordinator->id,
+            'partner_id'     => $this->partner->id,
+            'user_id'        => $this->partner->id,
+            'status'         => SimStatus::ASSIGNED_TO_PARTNER,
+        ]);
+
+        // 3. Coordinator has 1 SIM activated in their line
+        Sim::create([
+            'number'         => '08094444444',
+            'category'       => $this->field->field_name,
+            'provider'       => 'mtn',
+            'coordinator_id' => $this->coordinator->id,
+            'status'         => SimStatus::ACTIVATED,
+        ]);
+
+        $response = $this->actingAs($this->coordinator)->get(route('sims.inventory'));
+
+        $response->assertOk();
+        $response->assertViewHas('totalAssignedToMe', 2);
+        $response->assertViewHas('totalInDownline', 1);
+        $response->assertViewHas('totalActivated', 1);
+        $response->assertViewHas('totalPortfolio', 4);
+        $response->assertViewHas('downlineRoleBreakdown', ['Partners' => 1]);
+
+        $stockCounts = $response->viewData('stockCounts');
+        $this->assertEquals(2, $stockCounts[$this->field->field_name] ?? 0);
+
+        $response->assertSee('Assigned to You');
+        $response->assertSee('With Downline');
+        $response->assertSee('1 Partners');
+        $response->assertSee('1 on downline');
+        $response->assertSee('1 activated');
+    }
 }

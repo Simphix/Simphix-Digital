@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="container-fluid py-4 px-0 max-w-5xl mx-auto space-y-6">
+    <div class="container-fluid py-4 px-0 max-w-5xl mx-auto space-y-6" x-data="{ showEditPackageModal: false }">
 
         <!-- Flash Messages -->
         @if (session('success'))
@@ -124,14 +124,32 @@
                 <!-- Package Specifications -->
                 @if ($travelRequest->travelPackage)
                     <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-                        <div class="border-b border-slate-100 pb-3">
-                            <h2 class="text-sm font-bold text-slate-900 font-display flex items-center gap-2">
-                                <i data-lucide="package" class="w-4 h-4 text-primary"></i>
-                                <span>Selected Package Inclusions</span>
-                            </h2>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h2 class="text-sm font-bold text-slate-900 font-display flex items-center gap-2">
+                                    <i data-lucide="package" class="w-4 h-4 text-primary"></i>
+                                    <span>Selected Package Configuration</span>
+                                </h2>
+                                <p class="text-[11px] text-slate-400 mt-0.5">{{ $travelRequest->travelPackage->name }}</p>
+                            </div>
+                            <button type="button" @click="showEditPackageModal = true"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-[#0056D2] text-white text-xs font-bold transition shadow-xs">
+                                <i data-lucide="edit" class="w-3.5 h-3.5"></i>
+                                <span>Edit This Package</span>
+                            </button>
                         </div>
 
                         <div class="space-y-3 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500">Package Title</span>
+                                <span class="font-bold text-slate-800">{{ $travelRequest->travelPackage->name }}</span>
+                            </div>
+                            @if ($travelRequest->travelPackage->tagline)
+                                <div class="flex items-start justify-between gap-4">
+                                    <span class="text-slate-500 shrink-0">Subtitle / Tagline</span>
+                                    <span class="text-slate-700 text-right font-medium">{{ $travelRequest->travelPackage->tagline }}</span>
+                                </div>
+                            @endif
                             <div class="flex items-center justify-between">
                                 <span class="text-slate-500">Category</span>
                                 <span class="font-bold text-slate-800">{{ $travelRequest->package_type_label }}</span>
@@ -144,14 +162,18 @@
                             @endif
                             @if ($travelRequest->travelPackage->price_range)
                                 <div class="flex items-center justify-between">
-                                    <span class="text-slate-500">Estimated Price Range</span>
+                                    <span class="text-slate-500">Estimated Package Value</span>
                                     <span class="font-bold text-[#0056D2]">{{ $travelRequest->travelPackage->price_range }}</span>
                                 </div>
                             @endif
 
                             @if (!empty($travelRequest->travelPackage->highlights))
                                 <div class="pt-2 border-t border-slate-100">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Package Inclusions</p>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                            Package Inclusions ({{ count($travelRequest->travelPackage->highlights) }})
+                                        </p>
+                                    </div>
                                     <ul class="space-y-1 text-slate-600">
                                         @foreach ($travelRequest->travelPackage->highlights as $hl)
                                             <li class="flex items-start gap-1.5">
@@ -163,6 +185,23 @@
                                 </div>
                             @endif
                         </div>
+                    </div>
+                @else
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h2 class="text-sm font-bold text-slate-900 font-display flex items-center gap-2">
+                                <i data-lucide="compass" class="w-4 h-4 text-primary"></i>
+                                <span>Custom Request Itinerary</span>
+                            </h2>
+                            <a href="{{ route('admin.travel-requests.packages.index') }}"
+                               class="text-xs font-bold text-[#0056D2] hover:underline flex items-center gap-1">
+                                <span>Browse Catalog Packages</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                            </a>
+                        </div>
+                        <p class="text-xs text-slate-600">
+                            The traveler requested a tailored itinerary: <strong class="text-slate-900">{{ $travelRequest->package_name }}</strong>.
+                        </p>
                     </div>
                 @endif
 
@@ -248,7 +287,7 @@
                             <span class="text-slate-800 font-medium">{{ $travelRequest->created_at->format('M d, Y \a\t H:i') }}</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Customer Contacted</span>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Customer Will Be Contacted</span>
                             <span class="text-slate-800 font-medium">
                                 {{ $travelRequest->contacted_at ? $travelRequest->contacted_at->format('M d, Y \a\t H:i') : 'Not yet recorded' }}
                             </span>
@@ -289,6 +328,133 @@
             </div>
 
         </div>
+
+        @if ($travelRequest->travelPackage)
+            <!-- Edit Package Configuration Modal -->
+            <div x-show="showEditPackageModal" x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                 @click.self="showEditPackageModal = false">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-[#0056D2] flex items-center justify-center shrink-0">
+                                <i data-lucide="package" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-900 font-display">Modify Package Configuration</h3>
+                                <p class="text-xs text-slate-400">Updates title, subtitle, estimated value, and inclusions across the platform.</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="showEditPackageModal = false" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <form method="POST" action="{{ route('admin.travel-requests.packages.update', $travelRequest->travelPackage) }}" class="space-y-4">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="redirect_to" value="{{ url()->current() }}">
+
+                        <!-- Title & Category -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                    Package Title <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="text" name="name" required value="{{ $travelRequest->travelPackage->name }}"
+                                       class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                    Category <span class="text-rose-500">*</span>
+                                </label>
+                                <select name="category" required
+                                        class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white">
+                                    @foreach (\App\Models\TravelPackage::CATEGORIES as $ck => $cl)
+                                        <option value="{{ $ck }}" {{ $travelRequest->travelPackage->category === $ck ? 'selected' : '' }}>
+                                            {{ $cl }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Subtitle / Tagline -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                Subtitle / Tagline
+                            </label>
+                            <input type="text" name="tagline" value="{{ $travelRequest->travelPackage->tagline }}"
+                                   placeholder="Short subtitle summary"
+                                   class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                        </div>
+
+                        <!-- Estimated Package Value & Duration -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                    Estimated Package Value
+                                </label>
+                                <input type="text" name="price_range" value="{{ $travelRequest->travelPackage->price_range }}"
+                                       placeholder="e.g. From ₦2,650,000 / person"
+                                       class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-bold text-[#0056D2]">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                    Duration
+                                </label>
+                                <input type="text" name="duration" value="{{ $travelRequest->travelPackage->duration }}"
+                                       placeholder="e.g. 14 Days / 13 Nights"
+                                       class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                            </div>
+                        </div>
+
+                        <!-- Package Inclusions -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                    Package Inclusions
+                                </label>
+                                <span class="text-[10px] text-slate-400">One bullet point per line</span>
+                            </div>
+                            <textarea name="highlights" rows="5"
+                                      class="w-full font-mono text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary leading-relaxed">{{ $travelRequest->travelPackage->highlights_text }}</textarea>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                Full Description &amp; Itinerary
+                            </label>
+                            <textarea name="description" rows="3"
+                                      class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">{{ $travelRequest->travelPackage->description }}</textarea>
+                        </div>
+
+                        <!-- Active Toggle -->
+                        <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50">
+                            <input type="checkbox" id="modal_is_active" name="is_active" value="1"
+                                   {{ $travelRequest->travelPackage->is_active ? 'checked' : '' }}
+                                   class="w-4 h-4 rounded text-[#0056D2] focus:ring-primary/20 border-slate-300">
+                            <label for="modal_is_active" class="text-xs font-bold text-slate-800 cursor-pointer">
+                                Active &amp; Visible in Customer Catalog
+                            </label>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <button type="button" @click="showEditPackageModal = false"
+                                    class="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                    class="px-5 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
+                                Save Package Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endif
 
     </div>
 </x-app-layout>

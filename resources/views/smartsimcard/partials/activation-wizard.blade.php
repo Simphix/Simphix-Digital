@@ -197,7 +197,7 @@
 
     <!-- Main Wizard Card -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-7">
-        <form action="{{ route('sims.activate') }}" method="POST" @submit="handleSubmit($event)">
+        <form action="{{ route('sims.activate') }}" method="POST" autocomplete="off" @submit="handleSubmit($event)">
             @csrf
 
             <!-- Hidden Inputs for Submission -->
@@ -454,6 +454,7 @@
                         <input type="text"
                                id="cust_full_name"
                                x-model="customerName"
+                               autocomplete="off"
                                placeholder="e.g. Adebayo Ogunlesi (optional)"
                                class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                                :class="nameError ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' : ''">
@@ -468,6 +469,7 @@
                         <textarea id="cust_address"
                                   rows="2"
                                   x-model="customerAddress"
+                                  autocomplete="off"
                                   placeholder="e.g. 15 Marina Boulevard, Victoria Island, Lagos (optional)"
                                   class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                                   :class="addressError ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' : ''"></textarea>
@@ -482,6 +484,7 @@
                         <input type="tel"
                                id="cust_phone_number"
                                x-model="customerPhone"
+                               autocomplete="off"
                                placeholder="e.g. 08012345678 or +234..."
                                class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                                :class="phoneError ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' : ''">
@@ -497,6 +500,7 @@
                         <input type="email"
                                id="cust_email"
                                x-model="customerEmail"
+                               autocomplete="off"
                                placeholder="e.g. adebayo@example.com"
                                class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
                         <p class="text-[11px] text-slate-400">Optional: Used to email customer activation details.</p>

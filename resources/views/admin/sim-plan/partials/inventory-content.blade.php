@@ -55,16 +55,33 @@
                         </span>
                     </td>
                     <td class="py-3">
-                        @if ($sim->regionalManager || $sim->coordinator || $sim->user)
-                            @php $holder = $sim->regionalManager ?? $sim->coordinator ?? $sim->user; @endphp
-                            <span class="font-semibold text-slate-700">{{ $holder->first_name }} {{ $holder->last_name }}</span>
-                            <span class="block text-xs text-slate-400 capitalize">{{ str_replace('_', ' ', $holder->role) }}</span>
+                        @php
+                            $holder = match ($sim->status) {
+                                \App\Support\SimStatus::ASSIGNED_TO_BSM => $sim->businessSalesManager ?? $sim->user,
+                                \App\Support\SimStatus::ASSIGNED_TO_RM => $sim->regionalManager ?? $sim->user,
+                                \App\Support\SimStatus::ASSIGNED_TO_COORDINATOR => $sim->coordinator ?? $sim->user,
+                                \App\Support\SimStatus::ASSIGNED_TO_PARTNER => $sim->partner ?? $sim->user,
+                                \App\Support\SimStatus::ASSIGNED_TO_BUSINESS => $sim->business ?? $sim->user,
+                                \App\Support\SimStatus::ASSIGNED_TO_BUSINESS_AGENT => $sim->businessAgent ?? $sim->user,
+                                default => $sim->user ?? $sim->businessSalesManager ?? $sim->regionalManager ?? $sim->coordinator ?? $sim->partner ?? $sim->business ?? $sim->businessAgent,
+                            };
+                        @endphp
+                        @if ($holder)
+                            <span class="font-semibold text-slate-800 block">{{ $holder->first_name }} {{ $holder->last_name }}</span>
+                            <span class="block text-[11px] text-slate-500 capitalize">{{ str_replace('_', ' ', $holder->role) }}</span>
+                            @if ($holder->phone || $holder->email)
+                                <span class="block text-[11px] text-slate-400">{{ $holder->phone ?? $holder->email }}</span>
+                            @endif
+                        @elseif ($sim->customer)
+                            <span class="font-semibold text-slate-800 block">{{ $sim->customer->full_name }}</span>
+                            <span class="block text-[11px] text-emerald-600 font-medium">Customer</span>
+                            <span class="block text-[11px] text-slate-400">{{ $sim->customer->phone_number ?? $sim->customer->email }}</span>
                         @else
                             <span class="text-slate-400 font-semibold italic">None</span>
                         @endif
                     </td>
                     <td class="py-3 text-right space-x-1 whitespace-nowrap">
-                        @if (in_array($sim->status, ['ASSIGNED_TO_RM', 'ASSIGNED_TO_COORDINATOR', 'ASSIGNED_TO_PARTNER']))
+                        @if (str_starts_with($sim->status, 'ASSIGNED_TO_'))
                             <form action="{{ route('admin.sim-plan.activate', $sim->id) }}" method="POST" class="inline-block" @submit="loading = true">
                                 @csrf
                                 <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all duration-150">

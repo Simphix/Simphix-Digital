@@ -90,7 +90,7 @@
                     $steps = [
                         'pending'      => ['label' => 'Order Received', 'desc' => 'Request logged in dispatch queue'],
                         'under_review' => ['label' => 'Processing', 'desc' => 'Hardware configured & serialized'],
-                        'contacted'    => ['label' => 'Officer Contacted', 'desc' => 'Merchant officer verified location'],
+                        'contacted'    => ['label' => 'Customer Will Be Contacted', 'desc' => 'Merchant officer will reach out'],
                         'dispatched'   => ['label' => 'Dispatched', 'desc' => 'In courier transit to address'],
                         'delivered'    => ['label' => 'Delivered & Active', 'desc' => 'Activated and ready for transactions'],
                     ];

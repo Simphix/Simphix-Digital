@@ -48,7 +48,7 @@
                     <div class="relative flex-grow">
                         <x-text-input type="text" name="search" :value="request('search')"
                                class="pl-11 pr-4 rounded-xl font-semibold shadow-sm"
-                               placeholder="Search by SIM number..." />
+                               placeholder="Search by SIM number, holder, or customer..." />
                         <div class="absolute left-4 top-3.5 text-slate-400">
                             <i data-lucide="search" class="w-4 h-4"></i>
                         </div>

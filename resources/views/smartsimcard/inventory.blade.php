@@ -35,18 +35,95 @@
             </div>
         @endif
 
-        <!-- Stock Summary Metrics Cells (Single Line) -->
+        <!-- Overall Inventory Metrics -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Assigned to You</span>
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-[#0056D2] flex items-center justify-center">
+                        <i data-lucide="inbox" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <p class="text-2xl font-extrabold text-[#0056D2] font-display mt-2">{{ number_format($totalAssignedToMe ?? 0) }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">Currently held with you</p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">With Downline</span>
+                    <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                        <i data-lucide="git-branch" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <p class="text-2xl font-extrabold text-amber-600 font-display mt-2">{{ number_format($totalInDownline ?? 0) }}</p>
+                @if (!empty($downlineRoleBreakdown))
+                    <div class="text-[11px] text-slate-500 mt-1 flex flex-wrap gap-1">
+                        @foreach ($downlineRoleBreakdown as $roleLabel => $rCount)
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium text-[10px]">
+                                {{ $rCount }} {{ $roleLabel }}
+                            </span>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-xs text-slate-400 mt-0.5">No SIMs in downline</p>
+                @endif
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Activated Lines</span>
+                    <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <p class="text-2xl font-extrabold text-emerald-600 font-display mt-2">{{ number_format($totalActivated ?? 0) }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">Live customer lines</p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Total Portfolio</span>
+                    <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        <i data-lucide="layers" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <p class="text-2xl font-extrabold text-slate-800 font-display mt-2">{{ number_format($totalPortfolio ?? 0) }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">Across your hierarchy</p>
+            </div>
+        </div>
+
+        <!-- Stock Summary Metrics Cells (Single Line per Category) -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Your Held Stock by Category</span>
+                <span class="text-[11px] text-slate-400 font-medium">Shows SIMs currently in your hands, with downline breakdown</span>
+            </div>
             <div class="flex flex-row divide-x divide-slate-100 overflow-x-auto">
                 @forelse ($categories as $cat)
-                    <div class="flex-1 min-w-[130px] p-4 sm:p-5 transition-colors hover:bg-slate-50/50">
+                    @php
+                        $myCount = $assignedToMeCounts[$cat['name']] ?? 0;
+                        $downlineCount = $downlineCounts[$cat['name']] ?? 0;
+                        $activeCount = $activatedCounts[$cat['name']] ?? 0;
+                    @endphp
+                    <div class="flex-1 min-w-[140px] p-4 sm:p-5 transition-colors hover:bg-slate-50/50">
                         <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate" title="{{ $cat['name'] }}">
                             {{ $cat['name'] }}
                         </span>
-                        <span class="text-xl sm:text-2xl font-extrabold text-slate-800 font-display mt-1 block">
-                            {{ $stockCounts[$cat['name']] ?? 0 }}
+                        <span class="text-xl sm:text-2xl font-extrabold text-[#0056D2] font-display mt-1 block">
+                            {{ $myCount }}
                         </span>
-                        <span class="text-[11px] text-slate-400 font-medium">SIMs with you</span>
+                        <span class="text-[11px] text-slate-500 font-semibold block">SIMs with you</span>
+                        <div class="mt-2 pt-2 border-t border-slate-100 text-[10px] space-y-0.5">
+                            @if ($downlineCount > 0)
+                                <span class="block text-amber-600 font-medium">{{ $downlineCount }} on downline</span>
+                            @endif
+                            @if ($activeCount > 0)
+                                <span class="block text-emerald-600 font-medium">{{ $activeCount }} activated</span>
+                            @endif
+                            @if ($downlineCount === 0 && $activeCount === 0)
+                                <span class="block text-slate-400">0 in downline / active</span>
+                            @endif
+                        </div>
                     </div>
                 @empty
                     <div class="w-full text-center text-slate-400 text-sm py-5">No SIM categories configured yet.</div>
@@ -80,7 +157,7 @@
 
         <!-- Your SIMs -->
         <div x-data="{
-            currentTab: 'activated',
+            currentTab: '{{ $assignedToMeSims->total() > 0 ? 'mine' : 'activated' }}',
             detailsModalOpen: false,
             selectedSim: null,
             copiedKey: null,
@@ -359,15 +436,15 @@
         }" class="space-y-4">
             <!-- Navigation Tabs -->
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-2 flex gap-1">
-                <button type="button" @click="currentTab = 'activated'" :class="currentTab === 'activated' ? 'bg-[#0056D2] text-white' : 'text-slate-500 hover:bg-slate-50'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5">
-                    <i data-lucide="zap" class="w-4 h-4"></i> Activated
-                </button>
                 <button type="button" @click="currentTab = 'mine'" :class="currentTab === 'mine' ? 'bg-[#0056D2] text-white' : 'text-slate-500 hover:bg-slate-50'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5">
-                    <i data-lucide="inbox" class="w-4 h-4"></i> Assigned to Me
+                    <i data-lucide="inbox" class="w-4 h-4"></i> Assigned to Me ({{ $assignedToMeSims->total() }})
+                </button>
+                <button type="button" @click="currentTab = 'activated'" :class="currentTab === 'activated' ? 'bg-[#0056D2] text-white' : 'text-slate-500 hover:bg-slate-50'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5">
+                    <i data-lucide="zap" class="w-4 h-4"></i> Activated ({{ $activatedSims->total() }})
                 </button>
                 @if ($downlineUsers->count() > 0)
                     <button type="button" @click="currentTab = 'others'" :class="currentTab === 'others' ? 'bg-[#0056D2] text-white' : 'text-slate-500 hover:bg-slate-50'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5">
-                        <i data-lucide="git-branch" class="w-4 h-4"></i> Assigned to Others
+                        <i data-lucide="git-branch" class="w-4 h-4"></i> Assigned to Others ({{ $assignedToOthersSims->total() }})
                     </button>
                 @endif
             </div>
@@ -875,22 +952,22 @@
 
                                             <div class="space-y-1">
                                                 <label class="block text-[11px] font-bold text-slate-600 uppercase">Customer Full Name <span class="text-rose-500">*</span></label>
-                                                <input type="text" x-model="editForm.full_name" placeholder="e.g. Adebayo Ogunlesi" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
+                                                <input type="text" x-model="editForm.full_name" placeholder="e.g. Adebayo Ogunlesi" autocomplete="off" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
                                             </div>
 
                                             <div class="space-y-1">
                                                 <label class="block text-[11px] font-bold text-slate-600 uppercase">Full Address <span class="text-rose-500">*</span></label>
-                                                <textarea rows="2" x-model="editForm.address" placeholder="Physical Address" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary"></textarea>
+                                                <textarea rows="2" x-model="editForm.address" placeholder="Physical Address" autocomplete="off" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary"></textarea>
                                             </div>
 
                                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 <div class="space-y-1">
                                                     <label class="block text-[11px] font-bold text-slate-600 uppercase">Phone Number <span class="text-slate-400 font-normal lowercase">(optional)</span></label>
-                                                    <input type="tel" x-model="editForm.phone_number" placeholder="e.g. 08012345678" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
+                                                    <input type="tel" x-model="editForm.phone_number" placeholder="e.g. 08012345678" autocomplete="off" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
                                                 </div>
                                                 <div class="space-y-1">
                                                     <label class="block text-[11px] font-bold text-slate-600 uppercase">Email Address <span class="text-slate-400 font-normal lowercase">(optional)</span></label>
-                                                    <input type="email" x-model="editForm.email" placeholder="customer@example.com" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
+                                                    <input type="email" x-model="editForm.email" placeholder="customer@example.com" autocomplete="off" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
                                                 </div>
                                             </div>
 

@@ -457,11 +457,59 @@ class SimsController extends Controller
             return $sim;
         });
 
-        // Quick counts per category, for the summary cards — scoped to this user's own SIMs.
-        $stockCounts = $this->scopeToUserPortfolio(Sim::query(), $user)
+        // Counts of SIMs held directly AT this user's own tier (in their hands)
+        $ownTierQuery = Sim::query();
+        $this->applyOwnTierScope($ownTierQuery, $user);
+        $totalAssignedToMe = (clone $ownTierQuery)->count();
+        $assignedToMeCounts = (clone $ownTierQuery)
             ->select('category', DB::raw('count(*) as total'))
             ->groupBy('category')
             ->pluck('total', 'category');
+
+        // Counts of SIMs currently cascaded down the user's downline (not yet activated)
+        $downlineScopeQuery = Sim::query();
+        $this->applyOthersScope($downlineScopeQuery, $user);
+        $totalInDownline = (clone $downlineScopeQuery)->count();
+        $downlineCounts = (clone $downlineScopeQuery)
+            ->select('category', DB::raw('count(*) as total'))
+            ->groupBy('category')
+            ->pluck('total', 'category');
+
+        // Counts of activated SIMs in this user's line
+        $activatedScopeQuery = $this->scopeToUserPortfolio(Sim::query(), $user)
+            ->whereIn('status', [SimStatus::ACTIVATED, SimStatus::DEACTIVATED, SimStatus::SUSPENDED]);
+        $totalActivated = (clone $activatedScopeQuery)->count();
+        $activatedCounts = (clone $activatedScopeQuery)
+            ->select('category', DB::raw('count(*) as total'))
+            ->groupBy('category')
+            ->pluck('total', 'category');
+
+        $totalPortfolio = $totalAssignedToMe + $totalInDownline + $totalActivated;
+
+        // Breakdown of where the downline SIMs are distributed
+        $downlineRoleBreakdown = [];
+        if ($totalInDownline > 0) {
+            $statusCounts = (clone $downlineScopeQuery)
+                ->select('status', DB::raw('count(*) as total'))
+                ->groupBy('status')
+                ->pluck('total', 'status');
+
+            foreach ($statusCounts as $status => $cnt) {
+                $label = match ($status) {
+                    SimStatus::ASSIGNED_TO_BSM => 'Business Sales Managers',
+                    SimStatus::ASSIGNED_TO_RM => 'Regional Managers',
+                    SimStatus::ASSIGNED_TO_COORDINATOR => 'Coordinators',
+                    SimStatus::ASSIGNED_TO_PARTNER => ($user->role === 'partner' ? 'Downline Agents' : 'Partners'),
+                    SimStatus::ASSIGNED_TO_BUSINESS => 'Businesses',
+                    SimStatus::ASSIGNED_TO_BUSINESS_AGENT => ($user->role === 'business_agent' ? 'Downline Agents' : 'Business Agents'),
+                    default => str_replace('_', ' ', str_replace('ASSIGNED_TO_', '', $status)),
+                };
+                $downlineRoleBreakdown[$label] = ($downlineRoleBreakdown[$label] ?? 0) + $cnt;
+            }
+        }
+
+        // Backward compatibility: stockCounts reflects only SIMs assigned to them
+        $stockCounts = $assignedToMeCounts;
 
         // Who this user can bulk-assign/swap held SIMs down to — empty for
         // agents, who sit at the bottom of the chain and only self-activate.
@@ -479,7 +527,10 @@ class SimsController extends Controller
 
         return view('smartsimcard.inventory', compact(
             'user', 'categories', 'providers', 'stockCounts', 'downlineUsers',
-            'activatedSims', 'assignedToMeSims', 'assignedToOthersSims'
+            'activatedSims', 'assignedToMeSims', 'assignedToOthersSims',
+            'assignedToMeCounts', 'downlineCounts', 'activatedCounts',
+            'totalAssignedToMe', 'totalInDownline', 'totalActivated', 'totalPortfolio',
+            'downlineRoleBreakdown'
         ));
     }
 

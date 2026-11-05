@@ -217,7 +217,7 @@
                 </div>
 
                 <!-- Form -->
-                <form method="POST" action="{{ route('travel.store') }}" class="space-y-4">
+                <form method="POST" action="{{ route('travel.store') }}" autocomplete="off" class="space-y-4">
                     @csrf
 
                     <!-- Full Name (Required) -->
@@ -225,8 +225,8 @@
                         <label for="req_name" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                             Full Name <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" id="req_name" name="name" required
-                               value="{{ old('name', Auth::user()?->name ?? '') }}"
+                        <input type="text" id="req_name" name="name" required autocomplete="off"
+                               value="{{ old('name') }}"
                                placeholder="e.g. Ibrahim Abubakar"
                                class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                     </div>
@@ -238,8 +238,8 @@
                             <label for="req_phone" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                 Phone Number <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" id="req_phone" name="phone" required
-                                   value="{{ old('phone', Auth::user()?->phone ?? '') }}"
+                            <input type="text" id="req_phone" name="phone" required autocomplete="off"
+                                   value="{{ old('phone') }}"
                                    placeholder="e.g. 08012345678"
                                    class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                         </div>
@@ -252,8 +252,8 @@
                                 </label>
                                 <span class="text-[10px] text-slate-400 font-medium">Optional</span>
                             </div>
-                            <input type="email" id="req_email" name="email"
-                                   value="{{ old('email', Auth::user()?->email ?? '') }}"
+                            <input type="email" id="req_email" name="email" autocomplete="off"
+                                   value="{{ old('email') }}"
                                    placeholder="e.g. ibrahim@example.com"
                                    class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                         </div>
@@ -300,7 +300,7 @@
                             <label for="req_travelers" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                 Number of Travelers
                             </label>
-                            <input type="number" id="req_travelers" name="number_of_travelers" min="1" max="50"
+                            <input type="number" id="req_travelers" name="number_of_travelers" min="1" max="50" autocomplete="off"
                                    value="{{ old('number_of_travelers', 1) }}"
                                    class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                         </div>
@@ -308,7 +308,7 @@
                             <label for="req_departure" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                 Preferred Month / Date
                             </label>
-                            <input type="text" id="req_departure" name="departure_date"
+                            <input type="text" id="req_departure" name="departure_date" autocomplete="off"
                                    value="{{ old('departure_date') }}"
                                    placeholder="e.g. Ramadan 2027 or Nov 15"
                                    class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
@@ -320,7 +320,7 @@
                         <label for="req_notes" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                             Special Inquiries or Preferences
                         </label>
-                        <textarea id="req_notes" name="notes" rows="3"
+                        <textarea id="req_notes" name="notes" rows="3" autocomplete="off"
                                   placeholder="Mention specific hotel preferences, visa history, companion details, or custom requests..."
                                   class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">{{ old('notes') }}</textarea>
                     </div>

@@ -20,8 +20,7 @@ class TravelRequest extends Model
 
     public const STATUSES = [
         self::STATUS_PENDING   => 'Pending Triage',
-        self::STATUS_REVIEWING => 'Under Review',
-        self::STATUS_CONTACTED => 'Customer Contacted',
+        self::STATUS_CONTACTED => 'Customer Will Be Contacted',
         self::STATUS_APPROVED  => 'Approved / Processing',
         self::STATUS_COMPLETED => 'Completed',
         self::STATUS_CANCELLED => 'Cancelled / Declined',
@@ -83,19 +82,18 @@ class TravelRequest extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return self::STATUSES[$this->status] ?? ucfirst(str_replace('_', ' ', $this->status));
+        return self::STATUSES[$this->status] ?? ($this->status === 'reviewing' ? 'Customer Will Be Contacted' : ucfirst(str_replace('_', ' ', $this->status)));
     }
 
     public function getStatusBadgeClassAttribute(): string
     {
         return match ($this->status) {
-            self::STATUS_PENDING   => 'bg-amber-100 text-amber-800 border-amber-200',
-            self::STATUS_REVIEWING => 'bg-blue-100 text-blue-800 border-blue-200',
-            self::STATUS_CONTACTED => 'bg-indigo-100 text-indigo-800 border-indigo-200',
-            self::STATUS_APPROVED  => 'bg-emerald-100 text-emerald-800 border-emerald-200',
-            self::STATUS_COMPLETED => 'bg-teal-100 text-teal-800 border-teal-200',
-            self::STATUS_CANCELLED => 'bg-rose-100 text-rose-800 border-rose-200',
-            default                => 'bg-slate-100 text-slate-800 border-slate-200',
+            self::STATUS_PENDING                          => 'bg-amber-100 text-amber-800 border-amber-200',
+            self::STATUS_CONTACTED, self::STATUS_REVIEWING => 'bg-indigo-100 text-indigo-800 border-indigo-200',
+            self::STATUS_APPROVED                         => 'bg-emerald-100 text-emerald-800 border-emerald-200',
+            self::STATUS_COMPLETED                        => 'bg-teal-100 text-teal-800 border-teal-200',
+            self::STATUS_CANCELLED                        => 'bg-rose-100 text-rose-800 border-rose-200',
+            default                                       => 'bg-slate-100 text-slate-800 border-slate-200',
         };
     }
 

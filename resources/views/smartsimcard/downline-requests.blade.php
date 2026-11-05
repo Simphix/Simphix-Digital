@@ -247,7 +247,7 @@
                      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                      class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-200">
 
-                    <form action="{{ route('sims.request') }}" method="POST" class="p-6 space-y-5">
+                    <form action="{{ route('sims.request') }}" method="POST" autocomplete="off" class="p-6 space-y-5">
                         @csrf
                         <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                             <div class="flex items-center gap-3">

@@ -171,7 +171,7 @@ class TravelAndToursTest extends TestCase
             'package_name'        => 'VIP & Ramadan Premium Umrah',
             'package_type'        => 'umrah',
             'number_of_travelers' => 1,
-            'status'              => TravelRequest::STATUS_REVIEWING,
+            'status'              => TravelRequest::STATUS_CONTACTED,
             'customer_notes'      => 'Your visa submission is currently under embassy vetting.',
         ]);
 
@@ -180,7 +180,8 @@ class TravelAndToursTest extends TestCase
         $response->assertOk();
         $response->assertSee($req->reference);
         $response->assertSee('VIP &amp; Ramadan Premium Umrah', false);
-        $response->assertSee('Under Review');
+        $response->assertSee('Customer Will Be Contacted');
+        $response->assertDontSee('Under Review');
         $response->assertSee('Your visa submission is currently under embassy vetting.');
     }
 
@@ -305,5 +306,217 @@ class TravelAndToursTest extends TestCase
         $trackResponse = $this->actingAs($this->user)->get(route('travel.tracking', ['ref' => $req->reference]));
         $trackResponse->assertOk();
         $trackResponse->assertSee('Our travel desk has contacted you via WhatsApp to verify your passport biodata.');
+    }
+
+    public function test_super_admin_can_view_packages_configuration_index(): void
+    {
+        $response = $this->actingAs($this->superAdmin)->get(route('admin.travel-requests.packages.index'));
+
+        $response->assertOk();
+        $response->assertSee('Travel &amp; Tours Packages Configuration', false);
+        $response->assertSee('Add New Package');
+        $response->assertSee('Economy Umrah Package');
+        $response->assertSee('Configurable Packages');
+    }
+
+    public function test_travel_requests_desk_displays_link_to_configure_packages(): void
+    {
+        $response = $this->actingAs($this->superAdmin)->get(route('admin.travel-requests.index'));
+
+        $response->assertOk();
+        $response->assertSee('Configure Packages');
+        $response->assertSee(route('admin.travel-requests.packages.index'));
+    }
+
+    public function test_super_admin_can_view_packages_create_form(): void
+    {
+        $response = $this->actingAs($this->superAdmin)->get(route('admin.travel-requests.packages.create'));
+
+        $response->assertOk();
+        $response->assertSee('Create New Travel Package');
+        $response->assertSee('Package Title');
+        $response->assertSee('Subtitle / Tagline');
+        $response->assertSee('Estimated Package Value');
+        $response->assertSee('Package Inclusions');
+    }
+
+    public function test_super_admin_can_create_new_travel_package(): void
+    {
+        $payload = [
+            'name'        => 'Luxury Maldives Honeymoon & Retreat',
+            'category'    => 'international',
+            'tagline'     => 'All-inclusive overwater villa stay with scenic seaplane transfers.',
+            'price_range' => 'From ₦5,200,000 / couple',
+            'duration'    => '6 Days / 5 Nights',
+            'highlights'  => "Overwater luxury villa accommodation\nRound-trip seaplane scenic transfers\nAll-inclusive gourmet dining & drinks\nComplimentary sunset dolphin cruise\nDedicated island host & butler",
+            'description' => 'Unmatched luxury experience in the Maldives Indian Ocean paradise.',
+            'is_active'   => '1',
+            'is_featured' => '1',
+            'sort_order'  => 10,
+        ];
+
+        $response = $this->actingAs($this->superAdmin)->post(route('admin.travel-requests.packages.store'), $payload);
+
+        $response->assertRedirect(route('admin.travel-requests.packages.index'));
+        $response->assertSessionHas('success');
+
+        $created = TravelPackage::where('name', 'Luxury Maldives Honeymoon & Retreat')->first();
+        $this->assertNotNull($created);
+        $this->assertEquals('international', $created->category);
+        $this->assertEquals('luxury-maldives-honeymoon-retreat', $created->slug);
+        $this->assertEquals('All-inclusive overwater villa stay with scenic seaplane transfers.', $created->tagline);
+        $this->assertEquals('From ₦5,200,000 / couple', $created->price_range);
+        $this->assertEquals('6 Days / 5 Nights', $created->duration);
+        $this->assertCount(5, $created->highlights);
+        $this->assertEquals('Overwater luxury villa accommodation', $created->highlights[0]);
+        $this->assertTrue($created->is_active);
+        $this->assertTrue($created->is_featured);
+
+        // Verify the customer catalog now renders the new package!
+        $catalogResponse = $this->actingAs($this->user)->get(route('travel.index', ['category' => 'international']));
+        $catalogResponse->assertOk();
+        $catalogResponse->assertSee('Luxury Maldives Honeymoon &amp; Retreat', false);
+        $catalogResponse->assertSee('From ₦5,200,000 / couple');
+    }
+
+    public function test_super_admin_can_update_travel_package_title_subtitle_price_and_inclusions(): void
+    {
+        $package = TravelPackage::where('category', 'umrah')->first();
+
+        $payload = [
+            'name'        => 'Updated VIP Executive Umrah Experience',
+            'category'    => 'umrah',
+            'tagline'     => 'Now featuring front-row Haram 5-star clock tower suites with VIP transport.',
+            'price_range' => 'From ₦3,950,000 / person',
+            'duration'    => '12 Days / 11 Nights',
+            'highlights'  => "Express VIP e-Visa & private insurance\nSwissotel Makkah clock tower direct Haram view\nPrivate GMC luxury transfer vehicle\nFull board VIP gourmet buffet",
+            'description' => 'Completely updated luxury Umrah experience.',
+            'is_active'   => '1',
+            'is_featured' => '1',
+            'sort_order'  => 1,
+        ];
+
+        $response = $this->actingAs($this->superAdmin)->put(route('admin.travel-requests.packages.update', $package), $payload);
+
+        $response->assertRedirect(route('admin.travel-requests.packages.index'));
+        $response->assertSessionHas('success');
+
+        $package->refresh();
+        $this->assertEquals('Updated VIP Executive Umrah Experience', $package->name);
+        $this->assertEquals('Now featuring front-row Haram 5-star clock tower suites with VIP transport.', $package->tagline);
+        $this->assertEquals('From ₦3,950,000 / person', $package->price_range);
+        $this->assertEquals('12 Days / 11 Nights', $package->duration);
+        $this->assertCount(4, $package->highlights);
+        $this->assertEquals('Express VIP e-Visa & private insurance', $package->highlights[0]);
+
+        // Verify customer catalog reflects the update
+        $catalogResponse = $this->actingAs($this->user)->get(route('travel.index', ['category' => 'umrah']));
+        $catalogResponse->assertOk();
+        $catalogResponse->assertSee('Updated VIP Executive Umrah Experience');
+        $catalogResponse->assertSee('From ₦3,950,000 / person');
+    }
+
+    public function test_super_admin_can_toggle_package_active_status(): void
+    {
+        $package = TravelPackage::first();
+        $initialStatus = $package->is_active;
+
+        $response = $this->actingAs($this->superAdmin)->patch(route('admin.travel-requests.packages.toggle-status', $package));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $package->refresh();
+        $this->assertEquals(!$initialStatus, $package->is_active);
+    }
+
+    public function test_travel_request_show_page_displays_edit_package_button_and_modal(): void
+    {
+        $package = TravelPackage::first();
+
+        $req = TravelRequest::create([
+            'reference'           => TravelRequest::generateReference(),
+            'user_id'             => $this->user->id,
+            'travel_package_id'   => $package->id,
+            'name'                => 'Ibrahim Sani',
+            'phone'               => '08022334455',
+            'package_name'        => $package->name,
+            'package_type'        => $package->category,
+            'number_of_travelers' => 2,
+            'status'              => 'pending',
+        ]);
+
+        $response = $this->actingAs($this->superAdmin)->get(route('admin.travel-requests.show', $req));
+
+        $response->assertOk();
+        $response->assertSee('Selected Package Configuration');
+        $response->assertSee('Edit This Package');
+        $response->assertSee('Modify Package Configuration');
+    }
+
+    public function test_super_admin_can_update_package_directly_from_travel_request_and_redirect_back(): void
+    {
+        $package = TravelPackage::first();
+
+        $req = TravelRequest::create([
+            'reference'           => TravelRequest::generateReference(),
+            'user_id'             => $this->user->id,
+            'travel_package_id'   => $package->id,
+            'name'                => 'Ibrahim Sani',
+            'phone'               => '08022334455',
+            'package_name'        => $package->name,
+            'package_type'        => $package->category,
+            'number_of_travelers' => 2,
+            'status'              => 'pending',
+        ]);
+
+        $redirectUrl = route('admin.travel-requests.show', $req);
+
+        $payload = [
+            'name'        => $package->name,
+            'category'    => $package->category,
+            'tagline'     => 'Customized subtitle saved directly from travel request desk.',
+            'price_range' => 'From ₦2,999,999 / person',
+            'duration'    => '15 Days / 14 Nights',
+            'highlights'  => "Direct VIP Fast Track Entry\nExclusive Hotel Suite",
+            'redirect_to' => $redirectUrl,
+            'is_active'   => '1',
+        ];
+
+        $response = $this->actingAs($this->superAdmin)->put(route('admin.travel-requests.packages.update', $package), $payload);
+
+        $response->assertRedirect($redirectUrl);
+        $response->assertSessionHas('success');
+
+        $package->refresh();
+        $this->assertEquals('Customized subtitle saved directly from travel request desk.', $package->tagline);
+        $this->assertEquals('From ₦2,999,999 / person', $package->price_range);
+        $this->assertEquals('15 Days / 14 Nights', $package->duration);
+        $this->assertCount(2, $package->highlights);
+    }
+
+    public function test_regular_user_cannot_access_package_configuration(): void
+    {
+        $package = TravelPackage::first();
+
+        // Index
+        $this->actingAs($this->user)->get(route('admin.travel-requests.packages.index'))
+            ->assertForbidden();
+
+        // Create
+        $this->actingAs($this->user)->get(route('admin.travel-requests.packages.create'))
+            ->assertForbidden();
+
+        // Store
+        $this->actingAs($this->user)->post(route('admin.travel-requests.packages.store'), ['name' => 'Hack'])
+            ->assertForbidden();
+
+        // Edit
+        $this->actingAs($this->user)->get(route('admin.travel-requests.packages.edit', $package))
+            ->assertForbidden();
+
+        // Update
+        $this->actingAs($this->user)->put(route('admin.travel-requests.packages.update', $package), ['name' => 'Hack'])
+            ->assertForbidden();
     }
 }

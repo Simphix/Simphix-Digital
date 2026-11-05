@@ -49,6 +49,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             <form method="POST" action="{{ route('cac.store', $def['slug']) }}" enctype="multipart/form-data"
+                  autocomplete="off"
                   class="lg:col-span-2 space-y-6"
                   x-data="{
                       people: @js($initialPeople),

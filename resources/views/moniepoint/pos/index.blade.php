@@ -261,7 +261,7 @@
                     </button>
                 </div>
 
-                <form method="POST" action="{{ route('moniepoint.pos.store') }}" class="space-y-4">
+                <form method="POST" action="{{ route('moniepoint.pos.store') }}" autocomplete="off" class="space-y-4">
                     @csrf
 
                     <!-- Full Name (Required) -->
@@ -269,8 +269,8 @@
                         <label for="pos_name" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                             Full Name <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" id="pos_name" name="name" required
-                               value="{{ old('name', Auth::user()?->name ?? '') }}"
+                        <input type="text" id="pos_name" name="name" required autocomplete="off"
+                               value="{{ old('name') }}"
                                placeholder="e.g. Chukwuemeka Eze"
                                class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                     </div>
@@ -281,8 +281,8 @@
                             <label for="pos_phone" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                 Phone Number <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" id="pos_phone" name="phone" required
-                                   value="{{ old('phone', Auth::user()?->phone ?? '') }}"
+                            <input type="text" id="pos_phone" name="phone" required autocomplete="off"
+                                   value="{{ old('phone') }}"
                                    placeholder="e.g. 08012345678"
                                    class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                         </div>
@@ -290,8 +290,8 @@
                             <label for="pos_email" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                 Email Address <span class="text-rose-500">*</span>
                             </label>
-                            <input type="email" id="pos_email" name="email" required
-                                   value="{{ old('email', Auth::user()?->email ?? '') }}"
+                            <input type="email" id="pos_email" name="email" required autocomplete="off"
+                                   value="{{ old('email') }}"
                                    placeholder="e.g. agent@example.com"
                                    class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                         </div>
@@ -318,7 +318,7 @@
                             <label for="pos_biz" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                 Business / Store Name
                             </label>
-                            <input type="text" id="pos_biz" name="business_name"
+                            <input type="text" id="pos_biz" name="business_name" autocomplete="off"
                                    value="{{ old('business_name') }}"
                                    placeholder="e.g. Eze Supermarket &amp; POS Services"
                                    class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
@@ -327,7 +327,7 @@
                             <label for="pos_qty" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                 Quantity
                             </label>
-                            <input type="number" id="pos_qty" name="quantity" min="1" max="50"
+                            <input type="number" id="pos_qty" name="quantity" min="1" max="50" autocomplete="off"
                                    value="{{ old('quantity', 1) }}"
                                    class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                         </div>
@@ -338,7 +338,7 @@
                         <label for="pos_address" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                             Delivery Address (City / State / Landmark)
                         </label>
-                        <textarea id="pos_address" name="delivery_address" rows="2"
+                        <textarea id="pos_address" name="delivery_address" rows="2" autocomplete="off"
                                   placeholder="Enter complete store or home address for hardware delivery..."
                                   class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">{{ old('delivery_address') }}</textarea>
                     </div>
