@@ -168,6 +168,78 @@ test('enterprise-partners:purge removes enterprise partners and their activated 
         ->and(Sim::where('id', $regularSim->id)->exists())->toBeTrue();
 });
 
+test('enterprise-partners:purge allows selecting a specific enterprise business to clear while keeping others intact', function () {
+    // Enterprise Business 1
+    $ep1 = User::factory()->create([
+        'role' => 'business',
+        'business_name' => 'Acme EP LTD',
+        'email' => 'acme@example.com',
+    ]);
+    $agent1 = User::factory()->create([
+        'role' => 'business_agent',
+        'referred_by' => $ep1->id,
+    ]);
+    $sim1 = Sim::create([
+        'number' => '08011110001',
+        'category' => 'business',
+        'provider' => 'glo',
+        'status' => SimStatus::ASSIGNED_TO_BUSINESS,
+        'business_id' => $ep1->id,
+    ]);
+
+    // Enterprise Business 2
+    $ep2 = User::factory()->create([
+        'role' => 'business',
+        'business_name' => 'Beta Ventures',
+        'email' => 'beta@example.com',
+    ]);
+    $agent2 = User::factory()->create([
+        'role' => 'business_agent',
+        'referred_by' => $ep2->id,
+    ]);
+    $sim2 = Sim::create([
+        'number' => '08022220002',
+        'category' => 'business',
+        'provider' => 'mtn',
+        'status' => SimStatus::ASSIGNED_TO_BUSINESS,
+        'business_id' => $ep2->id,
+    ]);
+
+    // 1. Purge specifically EP1 by ID using argument/option
+    $this->artisan('enterprise-partners:purge', ['business' => (string) $ep1->id, '--force' => true])
+        ->expectsOutputToContain('Acme EP LTD')
+        ->expectsOutputToContain('Successfully removed 1 Enterprise Partner(s), 1 Business Agent(s), and 1 associated SIM(s)')
+        ->assertSuccessful();
+
+    // Verify EP1 is deleted
+    expect(User::where('id', $ep1->id)->exists())->toBeFalse()
+        ->and(User::where('id', $agent1->id)->exists())->toBeFalse()
+        ->and(Sim::where('id', $sim1->id)->exists())->toBeFalse();
+
+    // Verify EP2 and its assets are completely untouched
+    expect(User::where('id', $ep2->id)->exists())->toBeTrue()
+        ->and(User::where('id', $agent2->id)->exists())->toBeTrue()
+        ->and(Sim::where('id', $sim2->id)->exists())->toBeTrue();
+
+    // 2. Clear EP2 using interactive choice with --select
+    $this->artisan('enterprise-partners:purge --select')
+        ->expectsChoice(
+            'Select the Enterprise Business to clear (or select "all"):',
+            "[#{$ep2->id}] Beta Ventures (beta@example.com)",
+            [
+                'all' => 'ALL Enterprise Businesses (1 total)',
+                (string) $ep2->id => "[#{$ep2->id}] Beta Ventures (beta@example.com)",
+            ]
+        )
+        ->expectsConfirmation("Are you sure you want to permanently delete Enterprise Business 'Beta Ventures' (ID #{$ep2->id}), 1 Business Agent(s), and 1 associated SIM(s)?", 'yes')
+        ->expectsOutputToContain('Successfully removed 1 Enterprise Partner(s), 1 Business Agent(s), and 1 associated SIM(s)')
+        ->assertSuccessful();
+
+    expect(User::where('id', $ep2->id)->exists())->toBeFalse()
+        ->and(User::where('id', $agent2->id)->exists())->toBeFalse()
+        ->and(Sim::where('id', $sim2->id)->exists())->toBeFalse();
+});
+
 test('transactions:clear-history clears transaction history and handles foreign key constraints like verifications', function () {
     $user = User::factory()->create();
 
@@ -544,4 +616,136 @@ test('balances:clear respects cancellation and clears user balances with options
 
     // Verify transactions recorded for debits
     expect(Transaction::where('type', 'debit')->where('description', 'like', '%System balance clearance%')->count())->toBeGreaterThan(0);
+});
+
+test('enterprise:export-breakdown exports enterprise balances, downline activations, and sim inventory to CSV', function () {
+    // 1. Create Enterprise Business User
+    $epUser = User::factory()->create([
+        'first_name' => 'Mega',
+        'last_name' => 'Telecom',
+        'business_name' => 'Mega Enterprise LTD',
+        'email' => 'mega@enterprise.com',
+        'phone' => '08099887766',
+        'role' => 'business',
+    ]);
+
+    Wallet::create([
+        'user_id' => $epUser->id,
+        'wallet_number' => 'WLT0000EP1',
+        'balance' => 50000.00,
+        'bonus' => 12500.00,
+        'hold_amount' => 1000.00,
+        'status' => 'active',
+    ]);
+
+    // 2. Create Downline Business Agent
+    $agentUser = User::factory()->create([
+        'first_name' => 'Sam',
+        'last_name' => 'Agent',
+        'email' => 'sam@agent.com',
+        'phone' => '08011223344',
+        'role' => 'business_agent',
+        'referred_by' => $epUser->id,
+    ]);
+
+    Wallet::create([
+        'user_id' => $agentUser->id,
+        'wallet_number' => 'WLT0000AG1',
+        'balance' => 8000.00,
+        'bonus' => 2000.00,
+        'status' => 'active',
+    ]);
+
+    // 3. Create Enterprise Own Direct SIMs (business_agent_id is null)
+    // - 1 Activated MTN SIM
+    Sim::create([
+        'number' => '08030000001',
+        'category' => 'business',
+        'provider' => 'mtn',
+        'status' => SimStatus::ACTIVATED,
+        'business_id' => $epUser->id,
+        'business_agent_id' => null,
+    ]);
+    // - 1 Unactivated Glo Stock SIM
+    Sim::create([
+        'number' => '08050000002',
+        'category' => 'business',
+        'provider' => 'glo',
+        'status' => SimStatus::ASSIGNED_TO_BUSINESS,
+        'business_id' => $epUser->id,
+        'business_agent_id' => null,
+    ]);
+
+    // 4. Create Downline Agent SIMs (business_agent_id set)
+    // - 2 Activated MTN SIMs
+    Sim::create([
+        'number' => '08030000003',
+        'category' => 'business',
+        'provider' => 'mtn',
+        'status' => SimStatus::ACTIVATED,
+        'business_id' => $epUser->id,
+        'business_agent_id' => $agentUser->id,
+    ]);
+    Sim::create([
+        'number' => '08030000004',
+        'category' => 'business',
+        'provider' => 'mtn',
+        'status' => SimStatus::ACTIVATED,
+        'business_id' => $epUser->id,
+        'business_agent_id' => $agentUser->id,
+    ]);
+    // - 1 Unactivated Airtel SIM
+    Sim::create([
+        'number' => '08080000005',
+        'category' => 'business',
+        'provider' => 'airtel',
+        'status' => SimStatus::ASSIGNED_TO_BUSINESS_AGENT,
+        'business_id' => $epUser->id,
+        'business_agent_id' => $agentUser->id,
+    ]);
+
+    $tempSummaryCsv = storage_path('app/exports/test_ep_breakdown_' . uniqid() . '.csv');
+    $tempAgentsCsv = storage_path('app/exports/test_ep_agents_' . uniqid() . '.csv');
+
+    // Run export command with detailed flag
+    $this->artisan('enterprise:export-breakdown', [
+        '--output' => $tempSummaryCsv,
+        '--agents-output' => $tempAgentsCsv,
+        '--detailed' => true,
+    ])
+        ->expectsOutputToContain('Gathering Enterprise Business metrics')
+        ->expectsOutputToContain('SimPhix Enterprise Business Ecosystem Summary:')
+        ->expectsOutputToContain('Enterprise breakdown export generated successfully!')
+        ->assertSuccessful();
+
+    // Verify Main CSV exists and content is accurate
+    expect(File::exists($tempSummaryCsv))->toBeTrue();
+    $summaryContent = File::get($tempSummaryCsv);
+
+    expect($summaryContent)->toContain('Mega Enterprise LTD')
+        ->and($summaryContent)->toContain('mega@enterprise.com')
+        // EP balances (50000 + 12500 = 62500)
+        ->and($summaryContent)->toContain('50000.00')
+        ->and($summaryContent)->toContain('12500.00')
+        ->and($summaryContent)->toContain('62500.00')
+        // Agent balances (8000 + 2000 = 10000)
+        ->and($summaryContent)->toContain('8000.00')
+        ->and($summaryContent)->toContain('2000.00')
+        ->and($summaryContent)->toContain('10000.00')
+        // Combined ecosystem balance (62500 + 10000 = 72500)
+        ->and($summaryContent)->toContain('72500.00');
+
+    // Verify Detailed Agents CSV exists and content is accurate
+    expect(File::exists($tempAgentsCsv))->toBeTrue();
+    $agentsContent = File::get($tempAgentsCsv);
+
+    expect($agentsContent)->toContain('Sam Agent')
+        ->and($agentsContent)->toContain('sam@agent.com')
+        ->and($agentsContent)->toContain('Mega Enterprise LTD')
+        ->and($agentsContent)->toContain('8000.00')
+        ->and($agentsContent)->toContain('2000.00');
+
+    // Clean up temporary files
+    File::delete($tempSummaryCsv);
+    File::delete($tempAgentsCsv);
 });

@@ -39,6 +39,22 @@ php artisan make:admin user@example.com --revoke
 
 See [Super Admin Management Documentation](docs/super-admin-management.md) for full details, options, and security architecture.
 
+### Administrative Maintenance, Export & Reset Commands
+
+SimPhix provides a suite of administrative Artisan CLI commands for auditing balances, exporting downlines and SIM inventories, clearing test transactions, and managing platform records:
+
+- `php artisan enterprise:export-breakdown`: Export Enterprise Business metrics, downline activations, balances, and SIM stock.
+- `php artisan users:export-balances`: Export all user balances (Main, Commission, Hold, Lien) to an Excel-friendly CSV.
+- `php artisan balances:clear`: Clear/debit user wallet balances across the platform (supports `--main-only`, `--commission-only`, `--role=`, and Platform Wallets).
+- `php artisan enterprise-partners:purge`: Purge Enterprise Businesses and their associated SIMs and agents (supports interactive menu selection or targeting a single business).
+- `php artisan sims:remove-activated`: Remove all activated SIMs and their history/customer records.
+- `php artisan transactions:clear-history`: Clear transaction history while cascading verification records without foreign key locks.
+- `php artisan sims:clear-activation-events`: Clear activation bonus grants and activation events.
+- `php artisan requests:clear-pending`: Clear unfulfilled pending SIM, Loan, POS, or Travel requests.
+- `php artisan webhooks:clear-logs`: Purge webhook logs with provider/status filters.
+
+See [Admin Maintenance Commands Documentation](docs/admin-maintenance-commands.md) for full parameters, safety flags, and examples.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
