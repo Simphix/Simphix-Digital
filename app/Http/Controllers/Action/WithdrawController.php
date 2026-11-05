@@ -71,13 +71,11 @@ class WithdrawController extends Controller
         $eligibilityField = ServiceField::where('field_name', 'withdrawal eligibility')->first();
         $eligibilityAmount = $eligibilityField ? $eligibilityField->priceForUser($user) : 2000000;
 
-        $feeField = ServiceField::where('field_name', 'withdrawal fee')->first();
-        $withdrawalFee = $feeField ? $feeField->priceForUser($user) : 0;
-
+        $cashoutSettings = CashoutSettings::current();
         $withdrawalAccount = $user->withdrawalAccount;
-        $roleLimits = CashoutSettings::limitsForRole($user->role);
+        $roleLimits = $cashoutSettings->getLimitsForRole($user->role);
 
-        return view('wallet.withdraw', compact('user', 'totalVolume', 'eligibilityAmount', 'withdrawalFee', 'withdrawalAccount', 'roleLimits'));
+        return view('wallet.withdraw', compact('user', 'totalVolume', 'eligibilityAmount', 'withdrawalAccount', 'roleLimits', 'cashoutSettings'));
     }
 
     /**
@@ -169,22 +167,12 @@ class WithdrawController extends Controller
             return back()->with('error', 'Withdrawal service is currently inactive.');
         }
 
-        $feeField = ServiceField::firstOrCreate(
-            ['service_id' => $service->id, 'field_name' => 'withdrawal fee'],
-            ['field_code' => 'WDL_001', 'description' => 'Fee charged for withdrawals', 'base_price' => 0, 'is_active' => true]
-        );
-        $fee = $feeField->priceForUser($user);
-        $totalCharge = $request->amount + $fee;
-
-        // Calculate Withdrawal Tax for transactions >= 10,000 NGN
-        $tax = 0;
-        if ($request->amount >= 10000) {
-            $taxField = ServiceField::firstOrCreate(
-                ['service_id' => $service->id, 'field_name' => 'withdrawal tax'],
-                ['field_code' => 'WDL_003', 'description' => 'Tax charged for withdrawals ₦10,000 and above', 'base_price' => 50, 'is_active' => true]
-            );
-            $tax = $taxField->priceForUser($user);
-        }
+        $cashoutSettings = CashoutSettings::current();
+        $charges = $cashoutSettings->calculateCashoutCharges((float) $request->amount, $user);
+        $fee = (float) $charges['base_fee'];
+        $tax = (float) $charges['threshold_fee'];
+        $totalCharge = (float) $request->amount + $fee;
+        $totalRequired = (float) $charges['total_debit']; // amount + fee + threshold_fee
 
         // Fail fast on insufficient balance, before the PIN check burns a
         // rate-limited attempt or the eligibility check does real work on a
@@ -195,8 +183,9 @@ class WithdrawController extends Controller
         if ($wallet && $wallet->is_locked) {
             return back()->with('error', 'Your account is under a Post No Debit (PND) restriction. Contact support or your upline.');
         }
-        if (!$wallet || $wallet->balance < ($totalCharge + $tax)) {
-            return back()->with('error', 'Insufficient wallet balance. Total required (including tax): ' . number_format($totalCharge + $tax, 2));
+        if (!$wallet || $wallet->balance < $totalRequired) {
+            $taxNotice = $tax > 0 ? " (including {$charges['threshold_description']}: ₦" . number_format($tax, 2) . ")" : '';
+            return back()->with('error', 'Insufficient wallet balance. Total required: ₦' . number_format($totalRequired, 2) . $taxNotice);
         }
 
         // 1. One Active Withdrawal at a Time (Check for Processing/Pending)
@@ -295,8 +284,9 @@ class WithdrawController extends Controller
                     throw new \Exception('Your wallet is not active.');
                 }
 
-                if ($wallet->balance < ($totalCharge + $tax)) {
-                    throw new \Exception('Insufficient wallet balance. Total required (including tax): ' . number_format($totalCharge + $tax, 2));
+                if ($wallet->balance < $totalRequired) {
+                    $taxNotice = $tax > 0 ? " (including {$charges['threshold_description']}: ₦" . number_format($tax, 2) . ")" : '';
+                    throw new \Exception('Insufficient wallet balance. Total required: ₦' . number_format($totalRequired, 2) . $taxNotice);
                 }
 
                 $oldBalance = $wallet->balance;
@@ -326,10 +316,15 @@ class WithdrawController extends Controller
                         'account_name' => $account->account_name,
                         'user_role' => $user->role,
                         'price_details' => [
-                            'amount' => $request->amount,
+                            'amount' => (float) $request->amount,
                             'fee' => $fee,
+                            'fee_description' => $charges['base_fee_description'],
+                            'tax' => $tax,
+                            'threshold_description' => $charges['threshold_description'],
+                            'total_debit' => $totalRequired,
                             'total' => $totalCharge,
                         ],
+                        'charges' => $charges,
                     ],
                 ]);
 

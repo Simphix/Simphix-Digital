@@ -78,6 +78,308 @@
             </div>
         </div>
 
+        <!-- Cash Out Charges & Amount Threshold -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-[#0056D2] flex items-center justify-center shrink-0">
+                        <i data-lucide="receipt" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800">Cash Out Charges & Amount Threshold</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Configure base withdrawal processing fees and threshold charges (e.g. stamp duty / levy) displayed to users on cashout.</p>
+                    </div>
+                </div>
+                <div class="text-[11px] text-slate-400 font-medium bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl">
+                    Cash Out Fees
+                </div>
+            </div>
+
+            <form method="POST" action="{{ route('admin.cash-out.settings.update') }}">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="cashout_charges_form" value="1">
+
+                <div class="p-6 space-y-6">
+                    <!-- Base Fee Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#0056D2]"></span>
+                            Base Cash Out Fee
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="cashout_fee" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Fee Amount / Rate
+                                </label>
+                                <div class="relative">
+                                    <input type="number"
+                                           name="cashout_fee"
+                                           id="cashout_fee"
+                                           value="{{ old('cashout_fee', $settings->cashout_fee ?? 0) }}"
+                                           step="0.01"
+                                           min="0"
+                                           class="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
+                                           placeholder="0.00" />
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">Set 0 for free withdrawals.</p>
+                            </div>
+
+                            <div>
+                                <label for="cashout_fee_type" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Fee Type
+                                </label>
+                                <select name="cashout_fee_type" id="cashout_fee_type"
+                                        class="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs">
+                                    <option value="fixed" {{ old('cashout_fee_type', $settings->cashout_fee_type) === 'fixed' ? 'selected' : '' }}>Fixed Amount (₦)</option>
+                                    <option value="percent" {{ old('cashout_fee_type', $settings->cashout_fee_type) === 'percent' ? 'selected' : '' }}>Percentage (%)</option>
+                                </select>
+                                <p class="text-[10px] text-slate-400 mt-1">Fixed currency fee or percent of payout.</p>
+                            </div>
+
+                            <div>
+                                <label for="cashout_fee_description" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Fee Description
+                                </label>
+                                <input type="text"
+                                       name="cashout_fee_description"
+                                       id="cashout_fee_description"
+                                       value="{{ old('cashout_fee_description', $settings->cashout_fee_description ?? 'Withdrawal Processing Fee') }}"
+                                       maxlength="255"
+                                       class="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
+                                       placeholder="e.g. Withdrawal Processing Fee" />
+                                <p class="text-[10px] text-slate-400 mt-1">Shown in the user cash out breakdown.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-100"></div>
+
+                    <!-- Threshold Fee Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            Amount Threshold Charge (e.g. Levy / Stamp Duty)
+                        </h3>
+                        <p class="text-xs text-slate-400">If a user's cash out amount exceeds this threshold, the threshold charge is automatically applied and displayed in the breakdown.</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="cashout_threshold_amount" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Threshold Amount (₦)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">₦</span>
+                                    <input type="number"
+                                           name="cashout_threshold_amount"
+                                           id="cashout_threshold_amount"
+                                           value="{{ old('cashout_threshold_amount', $settings->cashout_threshold_amount ?? 9999.99) }}"
+                                           step="0.01"
+                                           min="0"
+                                           class="w-full pl-7 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
+                                           placeholder="9999.99" />
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">e.g. 9,999.99 (applies when amount > threshold).</p>
+                            </div>
+
+                            <div>
+                                <label for="cashout_threshold_fee" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Threshold Charge (₦)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">₦</span>
+                                    <input type="number"
+                                           name="cashout_threshold_fee"
+                                           id="cashout_threshold_fee"
+                                           value="{{ old('cashout_threshold_fee', $settings->cashout_threshold_fee ?? 50.00) }}"
+                                           step="0.01"
+                                           min="0"
+                                           class="w-full pl-7 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
+                                           placeholder="50.00" />
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">e.g. 50.00 fixed deduction.</p>
+                            </div>
+
+                            <div>
+                                <label for="cashout_threshold_description" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Threshold Description
+                                </label>
+                                <input type="text"
+                                       name="cashout_threshold_description"
+                                       id="cashout_threshold_description"
+                                       value="{{ old('cashout_threshold_description', $settings->cashout_threshold_description ?? 'Transaction Levy / Stamp Duty') }}"
+                                       maxlength="255"
+                                       class="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
+                                       placeholder="e.g. Transaction Levy / Stamp Duty" />
+                                <p class="text-[10px] text-slate-400 mt-1">Shown in the breakdown and transaction statement.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <p class="text-xs text-slate-400">
+                        Configured charges and descriptions update the live cash out breakdown immediately.
+                    </p>
+                    <x-primary-button type="submit" class="px-6 py-2.5">
+                        <i data-lucide="save" class="w-4 h-4 mr-1.5"></i>
+                        Save Cash Out Charges
+                    </x-primary-button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Money Inflow Charges & Amount Threshold -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="arrow-down-circle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800">Money Inflow Charges & Amount Threshold</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Configure transaction fees and threshold deductions applied when funds are deposited into user wallets.</p>
+                    </div>
+                </div>
+                <div class="text-[11px] text-slate-400 font-medium bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl">
+                    Inflow / Funding Fees
+                </div>
+            </div>
+
+            <form method="POST" action="{{ route('admin.cash-out.settings.update') }}">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="inflow_charges_form" value="1">
+
+                <div class="p-6 space-y-6">
+                    <!-- Base Fee Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Base Money Inflow Fee
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="inflow_fee" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Fee Amount / Rate
+                                </label>
+                                <div class="relative">
+                                    <input type="number"
+                                           name="inflow_fee"
+                                           id="inflow_fee"
+                                           value="{{ old('inflow_fee', $settings->inflow_fee ?? 0) }}"
+                                           step="0.01"
+                                           min="0"
+                                           class="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
+                                           placeholder="0.00" />
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">Set 0 for free wallet funding.</p>
+                            </div>
+
+                            <div>
+                                <label for="inflow_fee_type" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Fee Type
+                                </label>
+                                <select name="inflow_fee_type" id="inflow_fee_type"
+                                        class="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs">
+                                    <option value="fixed" {{ old('inflow_fee_type', $settings->inflow_fee_type) === 'fixed' ? 'selected' : '' }}>Fixed Amount (₦)</option>
+                                    <option value="percent" {{ old('inflow_fee_type', $settings->inflow_fee_type) === 'percent' ? 'selected' : '' }}>Percentage (%)</option>
+                                </select>
+                                <p class="text-[10px] text-slate-400 mt-1">Fixed currency fee or percent of deposit.</p>
+                            </div>
+
+                            <div>
+                                <label for="inflow_fee_description" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Fee Description
+                                </label>
+                                <input type="text"
+                                       name="inflow_fee_description"
+                                       id="inflow_fee_description"
+                                       value="{{ old('inflow_fee_description', $settings->inflow_fee_description ?? 'Wallet Funding Fee') }}"
+                                       maxlength="255"
+                                       class="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
+                                       placeholder="e.g. Wallet Funding Fee" />
+                                <p class="text-[10px] text-slate-400 mt-1">Description on user transaction statement.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-100"></div>
+
+                    <!-- Threshold Fee Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            Inflow Amount Threshold (e.g. EMTL / Stamp Duty Deduction)
+                        </h3>
+                        <p class="text-xs text-slate-400">If the credited deposit amount exceeds this threshold, the specified deduction is applied automatically to the credited wallet funds.</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="inflow_threshold_amount" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Threshold Amount (₦)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">₦</span>
+                                    <input type="number"
+                                           name="inflow_threshold_amount"
+                                           id="inflow_threshold_amount"
+                                           value="{{ old('inflow_threshold_amount', $settings->inflow_threshold_amount ?? 9999.99) }}"
+                                           step="0.01"
+                                           min="0"
+                                           class="w-full pl-7 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
+                                           placeholder="9999.99" />
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">e.g. 9,999.99 (deducts when deposit > threshold).</p>
+                            </div>
+
+                            <div>
+                                <label for="inflow_threshold_fee" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Threshold Deduction (₦)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">₦</span>
+                                    <input type="number"
+                                           name="inflow_threshold_fee"
+                                           id="inflow_threshold_fee"
+                                           value="{{ old('inflow_threshold_fee', $settings->inflow_threshold_fee ?? 50.00) }}"
+                                           step="0.01"
+                                           min="0"
+                                           class="w-full pl-7 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
+                                           placeholder="50.00" />
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">e.g. 50.00 deducted from credited funds.</p>
+                            </div>
+
+                            <div>
+                                <label for="inflow_threshold_description" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Threshold Description
+                                </label>
+                                <input type="text"
+                                       name="inflow_threshold_description"
+                                       id="inflow_threshold_description"
+                                       value="{{ old('inflow_threshold_description', $settings->inflow_threshold_description ?? 'Electronic Money Transfer Levy') }}"
+                                       maxlength="255"
+                                       class="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
+                                       placeholder="e.g. Electronic Money Transfer Levy" />
+                                <p class="text-[10px] text-slate-400 mt-1">Deduction narrative on user account statement.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <p class="text-xs text-slate-400">
+                        Inflow threshold charges take effect immediately on all incoming webhook deposits.
+                    </p>
+                    <x-primary-button type="submit" class="px-6 py-2.5">
+                        <i data-lucide="save" class="w-4 h-4 mr-1.5"></i>
+                        Save Inflow Charges
+                    </x-primary-button>
+                </div>
+            </form>
+        </div>
+
         <!-- Role Cashout Limits Configuration -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

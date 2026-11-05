@@ -61,11 +61,26 @@
                         <span>Account ID: #{{ $user->id }}</span>
                         <span>•</span>
                         <span>Member since {{ $user->created_at->format('M d, Y') }}</span>
+                        @if ($user->role === 'coordinator')
+                            <span>•</span>
+                            <span class="inline-flex items-center gap-1 font-semibold {{ $coordinatorDistrict ? 'text-[#0056D2]' : 'text-amber-600' }}">
+                                <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                                {{ $coordinatorDistrict ? $coordinatorDistrict->name . ' (' . ($coordinatorDistrict->state?->name ?? 'N/A') . ')' : 'No territory assigned' }}
+                            </span>
+                        @endif
                     </p>
                 </div>
             </div>
 
             <div class="hidden sm:flex items-center gap-4 bg-slate-50 border border-slate-100 p-3 rounded-2xl">
+                @if ($user->role === 'coordinator')
+                    <div class="border-r border-slate-200 pr-4">
+                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Territory</span>
+                        <span class="text-xs font-bold {{ $coordinatorDistrict ? 'text-slate-700' : 'text-amber-600' }} truncate max-w-[130px] block" title="{{ $coordinatorDistrict ? $coordinatorDistrict->name : 'Unassigned' }}">
+                            {{ $coordinatorDistrict ? $coordinatorDistrict->name : 'Unassigned' }}
+                        </span>
+                    </div>
+                @endif
                 <div class="border-r border-slate-200 pr-4">
                     <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Wallet Balance</span>
                     <span class="text-xs font-bold text-slate-700">₦{{ number_format($wallet->spendable(), 2) }}</span>
@@ -161,6 +176,173 @@
                     </div>
                 </x-card>
             </div>
+
+            @if ($user->role === 'coordinator')
+                <x-card padding="p-6 sm:p-8" class="space-y-5" x-data="{ 
+                    showAssignForm: {{ ($errors->has('district_id') || $errors->has('new_district_name') || $errors->has('new_district_state_id')) ? 'true' : ($coordinatorDistrict ? 'false' : 'true') }},
+                    territoryMode: '{{ old('territory_mode', 'existing') }}'
+                }">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0056D2]">
+                                    <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                </div>
+                                <h2 class="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Territory (Senatorial District)</h2>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">Geographic jurisdiction assigned to this coordinator within their regional boundary.</p>
+                        </div>
+                        
+                        @if ($canManageTerritory && $coordinatorDistrict)
+                            <div class="flex items-center gap-2">
+                                <button type="button" 
+                                        @click="showAssignForm = !showAssignForm" 
+                                        class="px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-1.5">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                    <span x-text="showAssignForm ? 'Close Form' : 'Reassign District'">Reassign District</span>
+                                </button>
+                                
+                                <form method="POST" action="{{ route('network.downline.unassign-district', $user) }}" onsubmit="return confirm('Are you sure you want to unassign this territory from {{ $user->first_name }} {{ $user->last_name }}?');">
+                                    @csrf
+                                    <button type="submit" class="px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors flex items-center gap-1.5">
+                                        <i data-lucide="unlink" class="w-3.5 h-3.5"></i>
+                                        <span>Unassign</span>
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Current Territory Display --}}
+                    @if ($coordinatorDistrict)
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Senatorial District</span>
+                                <span class="text-sm font-bold text-slate-800 font-display mt-0.5 block">{{ $coordinatorDistrict->name }}</span>
+                            </div>
+                            <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">State</span>
+                                <span class="text-sm font-bold text-slate-800 font-display mt-0.5 block">{{ $coordinatorDistrict->state?->name ?? 'N/A' }}</span>
+                            </div>
+                            <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Region</span>
+                                <span class="text-sm font-bold text-slate-800 font-display mt-0.5 block">{{ $coordinatorDistrict->state?->region?->name ?? 'N/A' }}</span>
+                            </div>
+                        </div>
+                    @else
+                        <div class="p-4 bg-amber-50/70 border border-amber-200/70 rounded-2xl flex items-start gap-3">
+                            <i data-lucide="alert-circle" class="w-5 h-5 text-amber-500 shrink-0 mt-0.5"></i>
+                            <div>
+                                <h3 class="text-xs font-bold text-amber-900">No Territory Assigned</h3>
+                                <p class="text-xs text-amber-700 mt-0.5">This coordinator does not have an active senatorial district territory assigned. SIMs registered in a territory rely on coordinator mapping.</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Territory Assignment Form (for RM or Super Admin) --}}
+                    @if ($canManageTerritory)
+                        <div x-show="showAssignForm" x-cloak class="mt-4 pt-4 border-t border-slate-100">
+                            @if ($actorRegion || auth()->user()->hasRole('super_admin'))
+                                <form method="POST" action="{{ route('network.downline.assign-district', $user) }}" class="space-y-4">
+                                    @csrf
+
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                                            {{ $coordinatorDistrict ? 'Reassign Territory' : 'Assign Senatorial District' }}
+                                        </h3>
+
+                                        <div class="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs">
+                                            <button type="button"
+                                                    @click="territoryMode = 'existing'"
+                                                    :class="territoryMode === 'existing' ? 'bg-white font-bold text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                                                    class="rounded-md px-2.5 py-1 transition">
+                                                Available Districts
+                                            </button>
+                                            <button type="button"
+                                                    @click="territoryMode = 'new'"
+                                                    :class="territoryMode === 'new' ? 'bg-white font-bold text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                                                    class="rounded-md px-2.5 py-1 transition">
+                                                + Create New
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" name="territory_mode" :value="territoryMode">
+
+                                    {{-- Mode: Existing District --}}
+                                    <div x-show="territoryMode === 'existing'" class="space-y-2">
+                                        <x-input-label for="district_id" value="Select Senatorial District" />
+                                        @if ($availableDistricts->isEmpty())
+                                            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center justify-between">
+                                                <span>No unassigned senatorial districts available in {{ $actorRegion ? $actorRegion->name : 'your region' }}.</span>
+                                                <button type="button" @click="territoryMode = 'new'" class="text-[#0056D2] font-bold hover:underline">
+                                                    + Create a new district
+                                                </button>
+                                            </div>
+                                        @else
+                                            <select id="district_id" name="district_id" class="w-full rounded-xl border-slate-200 text-xs font-medium text-slate-800 focus:border-[#0056D2] focus:ring-[#0056D2]">
+                                                <option value="">-- Choose an available district --</option>
+                                                @foreach ($availableDistricts as $dist)
+                                                    <option value="{{ $dist->id }}" {{ (old('district_id', $coordinatorDistrict?->id) == $dist->id) ? 'selected' : '' }}>
+                                                        {{ $dist->name }} ({{ $dist->state?->name ?? 'Unknown State' }})
+                                                        {{ $coordinatorDistrict?->id === $dist->id ? '— Currently Assigned' : '' }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <x-input-error :messages="$errors->get('district_id')" class="mt-1" />
+                                            <p class="text-[11px] text-slate-400">Districts without an assigned coordinator in {{ $actorRegion ? $actorRegion->name : 'the region' }}.</p>
+                                        @endif
+                                    </div>
+
+                                    {{-- Mode: Create New District --}}
+                                    <div x-show="territoryMode === 'new'" class="space-y-4 bg-slate-50/70 p-4 rounded-2xl border border-slate-200/70" x-cloak>
+                                        <div class="flex items-center gap-2 text-xs font-bold text-[#0056D2]">
+                                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                            <span>Create &amp; Assign New Senatorial District</span>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <x-input-label for="new_district_name" value="District Name" />
+                                                <x-text-input id="new_district_name" type="text" name="new_district_name" :value="old('new_district_name')" placeholder="e.g. Lagos West, Imo East" class="mt-1 text-xs" />
+                                                <x-input-error :messages="$errors->get('new_district_name')" class="mt-1" />
+                                            </div>
+
+                                            <div>
+                                                <x-input-label for="new_district_state_id" value="State" />
+                                                <select id="new_district_state_id" name="new_district_state_id" class="mt-1 w-full rounded-xl border-slate-200 text-xs font-medium text-slate-800 focus:border-[#0056D2] focus:ring-[#0056D2]">
+                                                    <option value="">-- Select a state --</option>
+                                                    @foreach ($regionStates as $st)
+                                                        <option value="{{ $st->id }}" {{ old('new_district_state_id') == $st->id ? 'selected' : '' }}>
+                                                            {{ $st->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <x-input-error :messages="$errors->get('new_district_state_id')" class="mt-1" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-3 pt-2">
+                                        <x-primary-button type="submit" class="text-xs">
+                                            {{ $coordinatorDistrict ? 'Save Territory' : 'Assign Territory' }}
+                                        </x-primary-button>
+                                        @if ($coordinatorDistrict)
+                                            <button type="button" @click="showAssignForm = false" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 transition-colors">
+                                                Cancel
+                                            </button>
+                                        @endif
+                                    </div>
+                                </form>
+                            @else
+                                <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                                    No managed region is associated with your account. A regional manager must be assigned to a region before assigning coordinator territories.
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+                </x-card>
+            @endif
         </div>
 
         <!-- Tab: Metrics -->

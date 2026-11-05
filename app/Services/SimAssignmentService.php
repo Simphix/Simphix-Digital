@@ -30,6 +30,11 @@ class SimAssignmentService
 
         DB::transaction(function () use ($sim, $target, $actor) {
             $fields = match ($target->role) {
+                'business_sales_manager' => [
+                    'business_sales_manager_id' => $target->id,
+                    'user_id'                   => $target->id,
+                    'status'                    => SimStatus::ASSIGNED_TO_BSM,
+                ],
                 'regional_manager' => ['regional_manager_id' => $target->id, 'status' => SimStatus::ASSIGNED_TO_RM],
                 'coordinator' => ['coordinator_id' => $target->id, 'status' => SimStatus::ASSIGNED_TO_COORDINATOR],
                 // Business (Enterprise Partner) is structurally the
@@ -55,6 +60,29 @@ class SimAssignmentService
      */
     public function assignDown(Sim $sim, User $from, User $to): void
     {
+        if ($from->role === 'business_sales_manager') {
+            if ($sim->business_sales_manager_id !== $from->id || $sim->status !== SimStatus::ASSIGNED_TO_BSM) {
+                throw new \RuntimeException('You do not currently hold this SIM in your assigned stock.');
+            }
+
+            DB::transaction(function () use ($sim, $from, $to) {
+                $fields = match ($to->role) {
+                    'regional_manager' => ['regional_manager_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_RM],
+                    'coordinator'      => ['coordinator_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_COORDINATOR],
+                    'partner'          => ['partner_id' => $to->id, 'user_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_PARTNER],
+                    'business'         => ['business_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_BUSINESS],
+                    'business_agent'   => ['business_agent_id' => $to->id, 'user_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_BUSINESS_AGENT],
+                    default            => ['user_id' => $to->id, 'status' => SimStatus::ASSIGNED_TO_PARTNER],
+                };
+
+                $fromStatus = $sim->status;
+                $sim->update($fields);
+                $this->logHistory($sim, $fromStatus, $sim->status, $from, "BSM assigned to {$to->name} ({$to->role})");
+            });
+
+            return;
+        }
+
         $expectedNextRole = RoleHierarchy::nextRole($from->role);
         if (!$expectedNextRole || $expectedNextRole !== $to->role) {
             throw new \RuntimeException("You can only assign to a " . str_replace('_', ' ', (string) $expectedNextRole) . '.');
@@ -112,8 +140,50 @@ class SimAssignmentService
      * lineage), so a regional_manager can't collect a coordinator's SIM that
      * actually came from a different regional_manager.
      */
-    public function collectUp(Sim $sim, User $collector, User $currentHolder): void
+    public function collectUp(Sim $sim, User $collector, ?User $currentHolder = null): void
     {
+        if ($collector->role === 'business_sales_manager') {
+            if ($sim->status === SimStatus::ACTIVATED || ($sim->status === SimStatus::ASSIGNED_TO_BSM && $sim->user_id === $collector->id) || $sim->status === SimStatus::UNASSIGNED) {
+                throw new \RuntimeException('This SIM is not currently eligible to be collected back.');
+            }
+
+            DB::transaction(function () use ($sim, $collector, $currentHolder) {
+                $holderName = 'current holder';
+                if ($currentHolder) {
+                    $holderName = "{$currentHolder->name} ({$currentHolder->role})";
+                } elseif ($sim->user) {
+                    $holderName = "{$sim->user->name} ({$sim->user->role})";
+                } elseif ($sim->partner) {
+                    $holderName = "{$sim->partner->name} (partner)";
+                } elseif ($sim->coordinator) {
+                    $holderName = "{$sim->coordinator->name} (coordinator)";
+                } elseif ($sim->regionalManager) {
+                    $holderName = "{$sim->regionalManager->name} (regional manager)";
+                }
+
+                $fields = [
+                    'regional_manager_id'       => null,
+                    'coordinator_id'            => null,
+                    'partner_id'                => null,
+                    'business_id'               => null,
+                    'business_agent_id'         => null,
+                    'business_sales_manager_id' => $collector->id,
+                    'user_id'                   => $collector->id,
+                    'status'                    => SimStatus::ASSIGNED_TO_BSM,
+                ];
+
+                $fromStatus = $sim->status;
+                $sim->update($fields);
+                $this->logHistory($sim, $fromStatus, $sim->status, $collector, "Collected back from {$holderName} to BSM stock");
+            });
+
+            return;
+        }
+
+        if (!$currentHolder) {
+            throw new \RuntimeException('Target user is required.');
+        }
+
         $expectedHolderRole = RoleHierarchy::nextRole($collector->role);
         if (!$expectedHolderRole || $expectedHolderRole !== $currentHolder->role) {
             throw new \RuntimeException("You can only collect from a " . str_replace('_', ' ', (string) $expectedHolderRole) . '.');
@@ -279,13 +349,14 @@ class SimAssignmentService
     {
         $from = $sim->status;
         $sim->update([
-            'user_id' => null,
-            'partner_id' => null,
-            'coordinator_id' => null,
-            'regional_manager_id' => null,
-            'business_id' => null,
-            'business_agent_id' => null,
-            'status' => SimStatus::UNASSIGNED,
+            'user_id'                   => null,
+            'partner_id'                => null,
+            'coordinator_id'            => null,
+            'regional_manager_id'       => null,
+            'business_sales_manager_id' => null,
+            'business_id'               => null,
+            'business_agent_id'         => null,
+            'status'                    => SimStatus::UNASSIGNED,
         ]);
         $this->logHistory($sim, $from, SimStatus::UNASSIGNED, $actor, 'SIM unassigned.');
     }

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Mail\KycWelcomeMail;
 use App\Models\LeaderboardTier;
+use App\Models\SenatorialDistrict;
+use App\Models\State;
 use App\Models\User;
 use App\Models\VirtualAccount;
 use App\Models\Wallet;
@@ -11,8 +13,10 @@ use App\Repositories\VirtualAccountRepository;
 use App\Support\DownlineAuthorization;
 use App\Support\DownlineMetrics;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 
 /**
  * The team-member detail page reached from Network > Team — Info, Metrics,
@@ -43,13 +47,59 @@ class DownlineDetailController extends Controller
                 : ($currentTier ? 100 : 0);
         }
 
+        $coordinatorDistrict = null;
+        $availableDistricts = collect();
+        $regionStates = collect();
+        $actorRegion = null;
+        $canManageTerritory = false;
+
+        $actor = auth()->user();
+        if ($user->role === 'coordinator') {
+            $coordinatorDistrict = $user->districtAsCoordinator()->with(['state.region'])->first();
+            $canManageTerritory = ($actor && ($actor->role === 'regional_manager' || $actor->hasRole('super_admin')));
+
+            if ($canManageTerritory) {
+                if ($actor->role === 'regional_manager') {
+                    $actorRegion = $actor->regionAsManager;
+                } elseif ($actor->hasRole('super_admin')) {
+                    $actorRegion = $user->referrer?->regionAsManager ?? $coordinatorDistrict?->state?->region;
+                }
+
+                if ($actorRegion) {
+                    $regionStates = $actorRegion->states()->orderBy('name')->get();
+                    $availableDistricts = SenatorialDistrict::whereIn('state_id', $regionStates->pluck('id'))
+                        ->where(function ($q) use ($user) {
+                            $q->whereNull('coordinator_id')
+                              ->orWhere('coordinator_id', $user->id);
+                        })
+                        ->with('state')
+                        ->orderBy('name')
+                        ->get();
+                } else {
+                    $regionStates = State::orderBy('name')->get();
+                    $availableDistricts = SenatorialDistrict::where(function ($q) use ($user) {
+                            $q->whereNull('coordinator_id')
+                              ->orWhere('coordinator_id', $user->id);
+                        })
+                        ->with('state')
+                        ->orderBy('name')
+                        ->get();
+                }
+            }
+        }
+
         return view('network.downline-show', array_merge($metrics, compact(
             'user',
             'wallet',
             'virtualAccount',
             'currentTier',
             'nextTier',
-            'progressPercent'
+            'progressPercent',
+            'coordinatorDistrict',
+            'availableDistricts',
+            'regionStates',
+            'actorRegion',
+            'canManageTerritory'
         )));
     }
 
@@ -134,5 +184,122 @@ class DownlineDetailController extends Controller
         }
 
         return back()->with('success', "Virtual account generated for {$user->first_name} {$user->last_name}.");
+    }
+
+    /**
+     * Assign or reassign a senatorial district territory to a coordinator.
+     */
+    public function assignDistrict(Request $request, User $user)
+    {
+        $actor = DownlineAuthorization::authorize($user);
+
+        if (!$actor->hasRole('regional_manager') && !$actor->hasRole('super_admin')) {
+            abort(403, 'Only regional managers and administrators can assign territories.');
+        }
+
+        if ($user->role !== 'coordinator') {
+            return back()->with('error', 'Territory can only be assigned to a coordinator.');
+        }
+
+        $actorRegion = null;
+        if ($actor->role === 'regional_manager') {
+            $actorRegion = $actor->regionAsManager;
+            if (!$actorRegion) {
+                return back()->with('error', 'You do not have a managed region assigned to your account.');
+            }
+        } elseif ($actor->hasRole('super_admin')) {
+            $actorRegion = $user->referrer?->regionAsManager ?? $user->districtAsCoordinator?->state?->region;
+        }
+
+        $regionStateIds = $actorRegion ? $actorRegion->states()->pluck('id')->all() : [];
+
+        $territoryMode = $request->input('territory_mode', 'existing');
+
+        if ($territoryMode === 'new') {
+            $rules = [
+                'new_district_name' => ['required', 'string', 'max:255', 'unique:senatorial_districts,name'],
+                'new_district_state_id' => ['required', 'exists:states,id'],
+            ];
+
+            if (!empty($regionStateIds)) {
+                $rules['new_district_state_id'][] = Rule::in($regionStateIds);
+            }
+
+            $validated = $request->validate($rules, [
+                'new_district_name.unique' => 'A senatorial district with this name already exists.',
+                'new_district_state_id.in' => 'The selected state must belong to your region.',
+            ]);
+
+            DB::transaction(function () use ($user, $validated) {
+                SenatorialDistrict::where('coordinator_id', $user->id)->update(['coordinator_id' => null]);
+
+                SenatorialDistrict::create([
+                    'name' => trim($validated['new_district_name']),
+                    'state_id' => $validated['new_district_state_id'],
+                    'coordinator_id' => $user->id,
+                ]);
+            });
+
+            return back()->with('success', "Senatorial district '{$validated['new_district_name']}' created and assigned to {$user->first_name} {$user->last_name}.");
+        }
+
+        // Existing district mode
+        $validated = $request->validate([
+            'district_id' => ['required', 'exists:senatorial_districts,id'],
+        ], [
+            'district_id.required' => 'Please select a senatorial district to assign.',
+        ]);
+
+        $district = SenatorialDistrict::with('state')->findOrFail($validated['district_id']);
+
+        if (!empty($regionStateIds) && !in_array($district->state_id, $regionStateIds, true)) {
+            return back()->with('error', 'The selected district does not belong to your managed region.');
+        }
+
+        if ($district->coordinator_id && $district->coordinator_id !== $user->id) {
+            return back()->with('error', 'This senatorial district is already assigned to another coordinator.');
+        }
+
+        DB::transaction(function () use ($user, $district) {
+            SenatorialDistrict::where('coordinator_id', $user->id)
+                ->where('id', '!=', $district->id)
+                ->update(['coordinator_id' => null]);
+
+            $district->update(['coordinator_id' => $user->id]);
+        });
+
+        return back()->with('success', "Senatorial district '{$district->name}' assigned to {$user->first_name} {$user->last_name}.");
+    }
+
+    /**
+     * Unassign a senatorial district territory from a coordinator.
+     */
+    public function unassignDistrict(Request $request, User $user)
+    {
+        $actor = DownlineAuthorization::authorize($user);
+
+        if (!$actor->hasRole('regional_manager') && !$actor->hasRole('super_admin')) {
+            abort(403, 'Only regional managers and administrators can unassign territories.');
+        }
+
+        if ($user->role !== 'coordinator') {
+            return back()->with('error', 'Territory can only be unassigned from a coordinator.');
+        }
+
+        $district = $user->districtAsCoordinator()->with('state')->first();
+        if (!$district) {
+            return back()->with('error', "{$user->first_name} {$user->last_name} does not have an assigned senatorial district.");
+        }
+
+        if ($actor->role === 'regional_manager') {
+            $actorRegion = $actor->regionAsManager;
+            if ($actorRegion && $district->state?->region_id !== $actorRegion->id) {
+                return back()->with('error', 'This district does not belong to your managed region.');
+            }
+        }
+
+        $district->update(['coordinator_id' => null]);
+
+        return back()->with('success', "Senatorial district '{$district->name}' unassigned from {$user->first_name} {$user->last_name}.");
     }
 }

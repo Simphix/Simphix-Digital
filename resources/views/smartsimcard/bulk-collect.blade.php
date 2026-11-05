@@ -1,6 +1,10 @@
 <x-app-layout>
     <title>SimPhix - Bulk Collect SIM</title>
 
+    @php
+        $isBsm = auth()->user()->role === 'business_sales_manager';
+    @endphp
+
     <div class="max-w-3xl mx-auto space-y-6"
          x-data="{
             numbers: '',
@@ -12,6 +16,7 @@
             userResults: [],
             searching: false,
             selectedUser: null,
+            submitting: false,
 
             async validateNumbers() {
                 if (!this.numbers.trim()) return;
@@ -47,7 +52,22 @@
                 this.userQuery = u.name + ' · ' + (u.phone || u.email);
             },
 
+            submitDirect() {
+                if (this.submitting || this.resolved.length === 0) return;
+                this.submitting = true;
+                const f = document.createElement('form');
+                f.method = 'POST';
+                f.action = '{{ route('sims.bulk-collect.execute') }}';
+                let inputs = '<input type=\'hidden\' name=\'_token\' value=\'{{ csrf_token() }}\'>';
+                this.resolved.forEach(s => { inputs += '<input type=\'hidden\' name=\'sim_ids[]\' value=\'' + s.id + '\'>'; });
+                f.innerHTML = inputs;
+                document.body.appendChild(f);
+                f.submit();
+            },
+
             submit() {
+                if (this.submitting || !this.selectedUser) return;
+                this.submitting = true;
                 const f = document.createElement('form');
                 f.method = 'POST';
                 f.action = '{{ route('sims.bulk-collect.execute') }}';
@@ -72,7 +92,13 @@
             </div>
             <div>
                 <h1 class="text-xl font-extrabold font-display text-slate-900">Bulk Collect SIM</h1>
-                <p class="text-sm text-slate-500 mt-0.5">Paste a batch of SIM numbers currently down your line, review what's valid, then pick which downline user to reclaim them from.</p>
+                <p class="text-sm text-slate-500 mt-0.5">
+                    @if ($isBsm)
+                        Paste a batch of SIM numbers, review what's valid, and collect them directly to your stock.
+                    @else
+                        Paste a batch of SIM numbers currently down your line, review what's valid, then pick which downline user to reclaim them from.
+                    @endif
+                </p>
             </div>
         </div>
 
@@ -116,61 +142,78 @@
 
             <button type="button" @click="validateNumbers()" :disabled="validating || !numbers.trim()"
                     class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors">
-                <i data-lucide="loader-2" class="w-3.5 h-3.5" x-show="validating" x-cloak></i>
+                <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin" x-show="validating" x-cloak></i>
                 <span x-text="validating ? 'Validating…' : 'Validate Numbers'"></span>
             </button>
 
             <template x-if="validated">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    <div>
-                        <p class="text-xs font-bold text-emerald-600 uppercase mb-2">Valid (<span x-text="resolved.length"></span>)</p>
-                        <div class="max-h-48 overflow-y-auto space-y-1">
-                            <template x-for="s in resolved" :key="s.id">
-                                <div class="text-xs font-medium text-slate-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5" x-text="s.number"></div>
-                            </template>
-                            <p x-show="resolved.length === 0" class="text-xs text-slate-400 italic">None</p>
+                <div class="space-y-4 pt-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-xs font-bold text-emerald-600 uppercase mb-2">Valid (<span x-text="resolved.length"></span>)</p>
+                            <div class="max-h-48 overflow-y-auto space-y-1">
+                                <template x-for="s in resolved" :key="s.id">
+                                    <div class="text-xs font-medium text-slate-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5" x-text="s.number"></div>
+                                </template>
+                                <p x-show="resolved.length === 0" class="text-xs text-slate-400 italic">None</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-rose-600 uppercase mb-2">Rejected (<span x-text="errors.length"></span>)</p>
+                            <div class="max-h-48 overflow-y-auto space-y-1">
+                                <template x-for="(e, i) in errors" :key="i">
+                                    <div class="text-xs font-medium text-slate-700 bg-rose-50 border border-rose-100 rounded-lg px-2.5 py-1.5" x-text="e"></div>
+                                </template>
+                                <p x-show="errors.length === 0" class="text-xs text-slate-400 italic">None</p>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <p class="text-xs font-bold text-rose-600 uppercase mb-2">Rejected (<span x-text="errors.length"></span>)</p>
-                        <div class="max-h-48 overflow-y-auto space-y-1">
-                            <template x-for="(e, i) in errors" :key="i">
-                                <div class="text-xs font-medium text-slate-700 bg-rose-50 border border-rose-100 rounded-lg px-2.5 py-1.5" x-text="e"></div>
-                            </template>
-                            <p x-show="errors.length === 0" class="text-xs text-slate-400 italic">None</p>
+
+                    @if ($isBsm)
+                        <div x-show="resolved.length > 0" class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-xs text-slate-500"><strong x-text="resolved.length"></strong> SIM(s) ready to collect back to your stock</span>
+                            <button type="button" @click="submitDirect()" :disabled="submitting"
+                                    class="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-colors shadow-sm">
+                                <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin" x-show="submitting" x-cloak></i>
+                                <i data-lucide="user-minus" class="w-3.5 h-3.5" x-show="!submitting"></i>
+                                Collect <span x-text="resolved.length"></span> SIM(s) to Stock
+                            </button>
                         </div>
-                    </div>
+                    @endif
                 </div>
             </template>
         </div>
 
-        <!-- Step 2: Pick user & complete -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4" x-show="validated && resolved.length > 0" x-cloak>
-            <h3 class="text-sm font-semibold text-slate-800 font-display pb-3 border-b border-slate-100">2. Collect From</h3>
-            <p class="text-xs text-slate-400 -mt-2">Numbers not actually held by the downline user you pick below will be skipped and reported, not collected from the wrong holder.</p>
+        @if (!$isBsm)
+            <!-- Step 2: Pick user & complete -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4" x-show="validated && resolved.length > 0" x-cloak>
+                <h3 class="text-sm font-semibold text-slate-800 font-display pb-3 border-b border-slate-100">2. Collect From</h3>
+                <p class="text-xs text-slate-400 -mt-2">Numbers not actually held by the downline user you pick below will be skipped and reported, not collected from the wrong holder.</p>
 
-            <div class="relative space-y-1.5">
-                <x-input-label value="Search Your Downline by Name, Email, or Phone" />
-                <x-text-input type="text" x-model="userQuery" @input.debounce.400ms="searchUsers()"
-                              placeholder="Start typing…" autocomplete="off" class="rounded-xl font-medium" />
+                <div class="relative space-y-1.5">
+                    <x-input-label value="Search Your Downline by Name, Email, or Phone" />
+                    <x-text-input type="text" x-model="userQuery" @input.debounce.400ms="searchUsers()"
+                                  placeholder="Start typing…" autocomplete="off" class="rounded-xl font-medium" />
 
-                <div x-show="userResults.length > 0" x-cloak
-                     class="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto">
-                    <template x-for="u in userResults" :key="u.id">
-                        <button type="button" @click="selectUser(u)"
-                                class="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-0">
-                            <span class="block text-xs font-bold text-slate-700" x-text="u.name"></span>
-                            <span class="block text-[11px] text-slate-400" x-text="(u.phone || '') + ' · ' + u.email + ' (' + u.role + ')'"></span>
-                        </button>
-                    </template>
+                    <div x-show="userResults.length > 0" x-cloak
+                         class="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+                        <template x-for="u in userResults" :key="u.id">
+                            <button type="button" @click="selectUser(u)"
+                                    class="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-0">
+                                <span class="block text-xs font-bold text-slate-700" x-text="u.name"></span>
+                                <span class="block text-[11px] text-slate-400" x-text="(u.phone || '') + ' · ' + u.email + ' (' + u.role + ')'"></span>
+                            </button>
+                        </template>
+                    </div>
                 </div>
-            </div>
 
-            <button type="button" @click="submit()" :disabled="!selectedUser"
-                    class="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors">
-                <i data-lucide="user-minus" class="w-3.5 h-3.5"></i>
-                Collect <span x-text="resolved.length"></span> SIM(s) from Selected User
-            </button>
-        </div>
+                <button type="button" @click="submit()" :disabled="!selectedUser || submitting"
+                        class="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors">
+                    <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin" x-show="submitting" x-cloak></i>
+                    <i data-lucide="user-minus" class="w-3.5 h-3.5" x-show="!submitting"></i>
+                    Collect <span x-text="resolved.length"></span> SIM(s) from Selected User
+                </button>
+            </div>
+        @endif
     </div>
 </x-app-layout>

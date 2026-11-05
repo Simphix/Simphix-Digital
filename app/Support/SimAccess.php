@@ -18,7 +18,7 @@ use App\Models\User;
  */
 class SimAccess
 {
-    public const CATALOG_ROLES = ['regional_manager', 'coordinator', 'partner', 'business', 'business_agent'];
+    public const CATALOG_ROLES = ['regional_manager', 'coordinator', 'partner', 'business', 'business_agent', 'business_sales_manager'];
 
     public const MINE_ROLES = ['personal'];
 

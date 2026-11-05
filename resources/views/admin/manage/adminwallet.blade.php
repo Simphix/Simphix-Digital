@@ -38,7 +38,22 @@
         @endif
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            <!-- SIM Activation Lifecycle Wallet Card -->
+            <a href="{{ route('admin.platform-wallets.cashout.show', \App\Models\PlatformWallet::TYPE_SIM_ACTIVATION) }}"
+               class="block p-6 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">SIM Activation Wallet</p>
+                        <h3 class="text-2xl font-extrabold text-slate-900 mt-2 tracking-tight">₦{{ number_format($simActivationWallet->balance, 2) }}</h3>
+                        <p class="text-[11px] text-slate-400 mt-1.5 font-medium">₦{{ number_format($simActivationWallet->total_credited, 2) }} in &middot; ₦{{ number_format($simActivationWallet->total_debited, 2) }} comm. &middot; Cash out</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100/50 flex items-center justify-center text-emerald-600">
+                        <i data-lucide="smartphone" class="w-5 h-5"></i>
+                    </div>
+                </div>
+            </a>
+
             <!-- Platform Welfare Wallet Card -->
             <div class="relative group p-6 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <a href="{{ route('admin.platform-wallets.cashout.show', \App\Models\PlatformWallet::TYPE_WELFARE) }}" class="absolute inset-0" aria-label="Cash out Platform Welfare Wallet"></a>

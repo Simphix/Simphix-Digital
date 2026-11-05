@@ -52,7 +52,7 @@ class PlatformWalletLedger
     }
 
     /**
-     * Throws \RuntimeException if the wallet doesn't exist or has insufficient balance.
+     * Debit a platform wallet. Throws \RuntimeException if the wallet has insufficient balance (unless allowOverdraft is true).
      */
     public function debit(
         string $walletType,
@@ -61,14 +61,16 @@ class PlatformWalletLedger
         string $source,
         string $description,
         ?Model $related = null,
-        array $metadata = []
+        array $metadata = [],
+        bool $allowOverdraft = false
     ): PlatformWalletTransaction {
-        return DB::transaction(function () use ($walletType, $amount, $type, $source, $description, $related, $metadata) {
+        return DB::transaction(function () use ($walletType, $amount, $type, $source, $description, $related, $metadata, $allowOverdraft) {
             $wallet = PlatformWallet::where('type', $walletType)->lockForUpdate()->first();
             if (!$wallet) {
-                throw new \RuntimeException("Platform wallet [{$walletType}] does not exist.");
+                PlatformWallet::forType($walletType, ucwords(str_replace('_', ' ', $walletType)) . ' Wallet');
+                $wallet = PlatformWallet::where('type', $walletType)->lockForUpdate()->first();
             }
-            if ($wallet->balance < $amount) {
+            if (!$allowOverdraft && $wallet->balance < $amount) {
                 throw new \RuntimeException('Insufficient platform wallet balance.');
             }
 

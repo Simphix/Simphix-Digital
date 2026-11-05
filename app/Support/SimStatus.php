@@ -12,6 +12,7 @@ namespace App\Support;
  */
 class SimStatus
 {
+    public const ASSIGNED_TO_BSM = 'ASSIGNED_TO_BSM';
     public const ASSIGNED_TO_RM = 'ASSIGNED_TO_RM';
     public const ASSIGNED_TO_COORDINATOR = 'ASSIGNED_TO_COORDINATOR';
     public const ASSIGNED_TO_PARTNER = 'ASSIGNED_TO_PARTNER';
@@ -25,6 +26,7 @@ class SimStatus
     public static function all(): array
     {
         return [
+            self::ASSIGNED_TO_BSM,
             self::ASSIGNED_TO_RM,
             self::ASSIGNED_TO_COORDINATOR,
             self::ASSIGNED_TO_PARTNER,
@@ -41,6 +43,7 @@ class SimStatus
     {
         return match ($status) {
             self::UNASSIGNED => 'Unassigned',
+            self::ASSIGNED_TO_BSM => 'With Business Sales Manager',
             self::ASSIGNED_TO_RM => 'With Regional Manager',
             self::ASSIGNED_TO_COORDINATOR => 'With Coordinator',
             self::ASSIGNED_TO_PARTNER => 'With Partner',

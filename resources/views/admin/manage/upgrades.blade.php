@@ -75,20 +75,34 @@
 
                     <!-- Actions Form -->
                     <div class="flex justify-end gap-3 pt-2">
-                        <form method="POST" action="{{ route('admin.manage.upgrades.reject', $req) }}">
-                            @csrf
-                            <button type="submit" 
-                                    class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-xs rounded-xl border border-rose-100 transition-all duration-200">
-                                Decline Upgrade
-                            </button>
-                        </form>
-                        <form method="POST" action="{{ route('admin.manage.upgrades.approve', $req) }}">
-                            @csrf
-                            <button type="submit" 
-                                    class="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-emerald-600/10 transition-all duration-200">
-                                Approve Upgrade
-                            </button>
-                        </form>
+                        @if (auth()->user()->role === 'business_sales_manager' && $req->pending_role === 'business_sales_manager')
+                            <div class="inline-flex items-center gap-2 px-3.5 py-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs font-bold">
+                                <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600"></i>
+                                <span>BSM upgrade requires Super Admin approval</span>
+                            </div>
+                            <form method="POST" action="{{ route('admin.manage.upgrades.reject', $req) }}">
+                                @csrf
+                                <button type="submit" 
+                                        class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-xs rounded-xl border border-rose-100 transition-all duration-200">
+                                    Decline Upgrade
+                                </button>
+                            </form>
+                        @else
+                            <form method="POST" action="{{ route('admin.manage.upgrades.reject', $req) }}">
+                                @csrf
+                                <button type="submit" 
+                                        class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-xs rounded-xl border border-rose-100 transition-all duration-200">
+                                    Decline Upgrade
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ route('admin.manage.upgrades.approve', $req) }}">
+                                @csrf
+                                <button type="submit" 
+                                        class="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-emerald-600/10 transition-all duration-200">
+                                    Approve Upgrade
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             @empty

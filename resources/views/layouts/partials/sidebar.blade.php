@@ -187,6 +187,9 @@
         @endif
         @if (auth()->user() && !\App\Support\StaffAccess::isInternal(auth()->user()))
             @include('layouts.partials.sidebar-link', ['href' => route('cac.overview'), 'icon' => 'file-badge', 'label' => __('CAC Registration'), 'active' => request()->routeIs('cac.*')])
+            @include('layouts.partials.sidebar-link', ['href' => route('travel.index'), 'icon' => 'plane', 'label' => __('Travel & Tours'), 'active' => request()->routeIs('travel.*')])
+            @include('layouts.partials.sidebar-link', ['href' => route('moniepoint.pos.index'), 'icon' => 'smartphone', 'label' => __('Moniepoint POS'), 'active' => request()->routeIs('moniepoint.pos.*')])
+            @include('layouts.partials.sidebar-link', ['href' => route('loans.index'), 'icon' => 'banknote', 'label' => __('Business Loans'), 'active' => request()->routeIs('loans.*')])
         @endif
         @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('support'), 'icon' => 'help-circle', 'label' => __('Support'), 'active' => request()->routeIs('support')])
@@ -203,7 +206,45 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.lifecycle'), 'icon' => 'cpu', 'label' => 'SIM Lifecycle', 'active' => request()->routeIs('bsm.lifecycle')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.customers'), 'icon' => 'user-check', 'label' => 'Customer Desk', 'active' => request()->routeIs('bsm.customers')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.acceleration'), 'icon' => 'zap', 'label' => 'Sales Acceleration', 'active' => request()->routeIs('bsm.acceleration')])
-                @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-plan.index'), 'icon' => 'settings', 'label' => 'SIMs & Plans Mgmt', 'active' => request()->routeIs('admin.sim-plan.*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('sims.inventory'), 'icon' => 'database', 'label' => 'All SIMs Inventory', 'active' => request()->routeIs('sims.inventory*')])
+
+                @php
+                    $bsmDownlineBatchesActive = request()->routeIs('admin.manage.downline-batches*');
+                    $bsmReplaceManagerActive = request()->routeIs('admin.manage.replace-manager*', 'admin.manage.users.replace*');
+                    $bsmManageUsersActive = request()->routeIs('admin.manage.users*') && !$bsmReplaceManagerActive;
+                    $bsmUsersActive = $bsmManageUsersActive || $bsmReplaceManagerActive || $bsmDownlineBatchesActive || request()->routeIs('admin.manage.upgrades*', 'admin.manage.access*');
+                @endphp
+                <div x-data="{ open: {{ $bsmUsersActive ? 'true' : 'false' }} }">
+                    <button type="button"
+                            @click="if (sidebarCollapsed && window.innerWidth >= 1024) { sidebarCollapsed = false; open = true } else { open = !open }"
+                            :aria-expanded="open" aria-controls="sidebar-bsm-users-menu"
+                            :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : 'justify-between'"
+                            class="w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm font-semibold font-display transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {{ $bsmUsersActive ? 'text-slate-900 font-bold bg-slate-100/70' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                        <span class="flex items-center gap-3 min-w-0">
+                            <span class="w-5 h-5 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-users text-base {{ $bsmUsersActive ? 'text-slate-900' : 'text-slate-500' }}"></i>
+                            </span>
+                            <span :class="sidebarCollapsed ? 'lg:hidden' : ''" class="truncate font-medium">Users Management</span>
+                        </span>
+                        <i :class="[sidebarCollapsed ? 'lg:hidden' : '', open ? 'rotate-180' : '']" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200" aria-hidden="true"></i>
+                    </button>
+
+                    <div id="sidebar-bsm-users-menu" x-show="open" :class="sidebarCollapsed ? 'lg:hidden' : ''"
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-100"
+                         x-transition:leave-start="opacity-100 translate-y-0"
+                         x-transition:leave-end="opacity-0 -translate-y-1"
+                         class="mt-1 ml-[22px] space-y-0.5 border-l border-slate-200 pl-2.5" style="display: none;">
+
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.users'), 'icon' => 'users', 'label' => 'Manage Users', 'active' => $bsmManageUsersActive])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.upgrades'), 'icon' => 'arrow-up-circle', 'label' => 'Manage Upgrades', 'active' => request()->routeIs('admin.manage.upgrades*')])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.access'), 'icon' => 'shield-check', 'label' => 'Manage Access', 'active' => request()->routeIs('admin.manage.access*')])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.replace-manager.index'), 'icon' => 'repeat', 'label' => 'Replace Manager', 'active' => $bsmReplaceManagerActive])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.downline-batches.index'), 'icon' => 'layers', 'label' => 'Downline Batches', 'active' => $bsmDownlineBatchesActive])
+                    </div>
+                </div>
             </div>
         @endif
 
@@ -230,9 +271,10 @@
                 <span :class="sidebarCollapsed ? 'lg:hidden' : 'block'" class="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Administration</span>
 
                 @php
+                    $downlineBatchesActive = request()->routeIs('admin.manage.downline-batches*');
                     $replaceManagerActive = request()->routeIs('admin.manage.replace-manager*', 'admin.manage.users.replace*');
                     $manageUsersActive = request()->routeIs('admin.manage.users*') && !$replaceManagerActive;
-                    $adminUsersActive = $manageUsersActive || $replaceManagerActive || request()->routeIs('admin.manage.upgrades*', 'admin.manage.access*');
+                    $adminUsersActive = $manageUsersActive || $replaceManagerActive || $downlineBatchesActive || request()->routeIs('admin.manage.upgrades*', 'admin.manage.access*');
                 @endphp
                 <div x-data="{ open: {{ $adminUsersActive ? 'true' : 'false' }} }">
                     <button type="button"
@@ -262,6 +304,7 @@
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.upgrades'), 'icon' => 'arrow-up-circle', 'label' => 'Manage Upgrades', 'active' => request()->routeIs('admin.manage.upgrades*')])
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.access'), 'icon' => 'shield-check', 'label' => 'Manage Access', 'active' => request()->routeIs('admin.manage.access*')])
                         @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.replace-manager.index'), 'icon' => 'repeat', 'label' => 'Replace Manager', 'active' => $replaceManagerActive])
+                        @include('layouts.partials.sidebar-link', ['sub' => true, 'href' => route('admin.manage.downline-batches.index'), 'icon' => 'layers', 'label' => 'Downline Batches', 'active' => $downlineBatchesActive])
                     </div>
                 </div>
 
@@ -279,9 +322,13 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.leaderboard.index'), 'icon' => 'trophy', 'label' => 'Leaderboard Settings', 'active' => request()->routeIs('admin.leaderboard*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.transactions'), 'icon' => 'receipt', 'label' => 'All Transactions', 'active' => request()->routeIs('admin.transactions*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.manage.adminwallet'), 'icon' => 'wallet', 'label' => 'Admin Wallet', 'active' => request()->routeIs('admin.manage.adminwallet')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.platform-wallets.welfare-settings.edit'), 'icon' => 'shield-plus', 'label' => 'Welfare Settings', 'active' => request()->routeIs('admin.platform-wallets.welfare-settings*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.notifications.index'), 'icon' => 'send', 'label' => 'Push Notifications', 'active' => request()->routeIs('admin.notifications*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.manage.support.index'), 'icon' => 'message-square', 'label' => 'Admin Support', 'active' => request()->routeIs('admin.manage.support*'), 'badge' => $openTicketsBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.cac.index'), 'icon' => 'file-badge', 'label' => 'CAC Registrations', 'active' => request()->routeIs('admin.cac*'), 'badge' => $newCacBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.travel-requests.index'), 'icon' => 'plane', 'label' => 'Travel Requests', 'active' => request()->routeIs('admin.travel-requests*'), 'badge' => $pendingTravelBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.moniepoint-pos.index'), 'icon' => 'smartphone', 'label' => 'Moniepoint POS', 'active' => request()->routeIs('admin.moniepoint-pos*'), 'badge' => $pendingPosBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.loan-requests.index'), 'icon' => 'banknote', 'label' => 'Business Loans', 'active' => request()->routeIs('admin.loan-requests*'), 'badge' => $pendingLoansBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.webhooks.index'), 'icon' => 'webhook', 'label' => 'Webhook Logs', 'active' => request()->routeIs('admin.webhooks*'), 'badge' => $failedWebhooksBadge ?? 0])
             </div>
 

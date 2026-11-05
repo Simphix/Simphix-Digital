@@ -18,11 +18,12 @@ platform itself earns, not any individual account.
 `welfare`, `utilities_revenue`) — a new wallet kind needs no migration,
 just a new type slug and a call into the ledger below.
 
-## The two wallets today
+## The three wallets today
 
-- **`welfare`** (`PlatformWallet::TYPE_WELFARE`) — credited a fixed,
-  admin-configurable amount (`/admin/platform-wallets/welfare-settings`,
-  backed by `PlatformWelfareSettings`) every time a SIM activates. See
+- **`welfare`** (`PlatformWallet::TYPE_WELFARE`) — credited a configurable
+  amount (`/admin/platform-wallets/welfare-settings`, backed by `PlatformWelfareSettings`)
+  every time a retail SIM activates, and automatically deducted from the Platform SIM
+  Operations Wallet (`PlatformWallet::TYPE_SIM_ACTIVATION`). See
   `App\Listeners\CreditPlatformWelfareWallet`, which listens on the same
   `App\Events\SimActivated` event `App\Listeners\AwardCommissions` does.
 - **`utilities_revenue`** (`PlatformWallet::TYPE_UTILITIES_REVENUE`) —
@@ -31,6 +32,15 @@ just a new type slug and a call into the ledger below.
   `/admin/services` screen (`ServicePrice.margin_percent`, right next to
   the existing `commission` field) — it defaults to `0`, so a service earns
   the platform nothing until an admin explicitly sets a margin on it.
+- **`sim_activation`** (`PlatformWallet::TYPE_SIM_ACTIVATION`) —
+  the central ledger on top of which the retail SIM activation lifecycle
+  runs (Platform SIM Operations Wallet). Credited with the full activation fee whenever
+  a SIM is activated (fees deducted from personal user or partner wallet), and debited for
+  each commission paid out across the upline chain (`AwardCommissions`) as well as the
+  platform welfare contribution (`CreditPlatformWelfareWallet`).
+  **Note:** This does not apply to Enterprise Partners (`business`) and
+  their `business_agent` downlines, whose splits are governed by
+  `BusinessCommissionRate`.
 
 ## Adding a new revenue-generating service — the whole checklist
 
@@ -75,6 +85,8 @@ readable without parsing `metadata`. Current values:
 | Source                    | Wallet              | Where                                                    |
 |----------------------------|----------------------|-----------------------------------------------------------|
 | `sim_activation`           | `welfare`            | `App\Listeners\CreditPlatformWelfareWallet`               |
+| `sim_activation_fee`       | `sim_activation`     | `App\Services\SimActivationWalletService` (activation fee credit) |
+| `sim_activation_commission`| `sim_activation`     | `App\Services\SimActivationWalletService` (commission payout debit) |
 | `airtime_topup`             | `utilities_revenue`  | `App\Http\Controllers\Action\AirtimeController`            |
 | `data_topup`                 | `utilities_revenue`  | `App\Http\Controllers\Action\SmeDataController`             |
 | `verification_bvn`         | `utilities_revenue`  | `App\Http\Controllers\Verification\BvnverificationController` |

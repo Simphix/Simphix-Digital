@@ -205,14 +205,16 @@
                                         </a>
 
                                         <!-- Edit -->
-                                        <a href="{{ route('admin.manage.users.edit', $u) }}" 
-                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all duration-150">
-                                            <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
-                                            Edit
-                                        </a>
+                                        @if (auth()->user()->role !== 'business_sales_manager' || ($u->role !== 'super_admin' && $u->role !== 'business_sales_manager'))
+                                            <a href="{{ route('admin.manage.users.edit', $u) }}" 
+                                               class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all duration-150">
+                                                <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                                                Edit
+                                            </a>
+                                        @endif
 
                                         <!-- Delete -->
-                                        @if (auth()->id() !== $u->id)
+                                        @if (auth()->id() !== $u->id && (auth()->user()->role !== 'business_sales_manager' || ($u->role !== 'super_admin' && $u->role !== 'business_sales_manager')))
                                             <form method="POST" action="{{ route('admin.manage.users.destroy', $u) }}" 
                                                   onsubmit="return confirm('Are you sure you want to permanently delete user {{ $u->first_name }} {{ $u->last_name }} and all their wallet and virtual account records?');" 
                                                   class="inline-block">

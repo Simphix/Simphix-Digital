@@ -74,6 +74,9 @@
             </div>
         </div>
 
+        <!-- Landscape Travel & Tours Banner (Mobile Responsive) -->
+        @include('travel.partials.landscape-banner')
+
         {{-- Flash Messages --}}
         @if (session('success'))
             <div class="p-4 mb-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3" role="alert">
@@ -273,6 +276,9 @@
 
             </div>
         </div>
+
+        <!-- Moniepoint POS & Business Loans Banners -->
+        @include('dashboard.partials.sliding-banners')
 
         @if ($epSims)
             @include('enterprise-partner.partials.sims-panel', ['epSims' => $epSims])

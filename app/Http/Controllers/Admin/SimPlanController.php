@@ -28,11 +28,114 @@ class SimPlanController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Sim::with(['user', 'partner', 'regionalManager', 'coordinator']);
+        $query = Sim::with(['user', 'partner', 'regionalManager', 'coordinator', 'businessSalesManager', 'business', 'businessAgent', 'customer']);
 
-        // Search by SIM Number
+        // Search by SIM Number, Holder Name, Email, or Phone, or Customer Name/Email/Phone
         if ($request->filled('search')) {
-            $query->where('number', 'like', "%{$request->search}%");
+            $term = trim($request->search);
+            $query->where(function ($q) use ($term) {
+                $q->where('number', 'like', "%{$term}%")
+                  ->orWhereHas('user', function ($uq) use ($term) {
+                      $uq->where('first_name', 'like', "%{$term}%")
+                         ->orWhere('last_name', 'like', "%{$term}%")
+                         ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$term}%")
+                         ->orWhere('email', 'like', "%{$term}%")
+                         ->orWhere('phone', 'like', "%{$term}%");
+                  })
+                  ->orWhereHas('businessSalesManager', function ($uq) use ($term) {
+                      $uq->where('first_name', 'like', "%{$term}%")
+                         ->orWhere('last_name', 'like', "%{$term}%")
+                         ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$term}%")
+                         ->orWhere('email', 'like', "%{$term}%")
+                         ->orWhere('phone', 'like', "%{$term}%");
+                  })
+                  ->orWhereHas('regionalManager', function ($uq) use ($term) {
+                      $uq->where('first_name', 'like', "%{$term}%")
+                         ->orWhere('last_name', 'like', "%{$term}%")
+                         ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$term}%")
+                         ->orWhere('email', 'like', "%{$term}%")
+                         ->orWhere('phone', 'like', "%{$term}%");
+                  })
+                  ->orWhereHas('coordinator', function ($uq) use ($term) {
+                      $uq->where('first_name', 'like', "%{$term}%")
+                         ->orWhere('last_name', 'like', "%{$term}%")
+                         ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$term}%")
+                         ->orWhere('email', 'like', "%{$term}%")
+                         ->orWhere('phone', 'like', "%{$term}%");
+                  })
+                  ->orWhereHas('partner', function ($uq) use ($term) {
+                      $uq->where('first_name', 'like', "%{$term}%")
+                         ->orWhere('last_name', 'like', "%{$term}%")
+                         ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$term}%")
+                         ->orWhere('email', 'like', "%{$term}%")
+                         ->orWhere('phone', 'like', "%{$term}%");
+                  })
+                  ->orWhereHas('business', function ($uq) use ($term) {
+                      $uq->where('first_name', 'like', "%{$term}%")
+                         ->orWhere('last_name', 'like', "%{$term}%")
+                         ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$term}%")
+                         ->orWhere('business_name', 'like', "%{$term}%")
+                         ->orWhere('email', 'like', "%{$term}%")
+                         ->orWhere('phone', 'like', "%{$term}%");
+                  })
+                  ->orWhereHas('businessAgent', function ($uq) use ($term) {
+                      $uq->where('first_name', 'like', "%{$term}%")
+                         ->orWhere('last_name', 'like', "%{$term}%")
+                         ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$term}%")
+                         ->orWhere('email', 'like', "%{$term}%")
+                         ->orWhere('phone', 'like', "%{$term}%");
+                  })
+                  ->orWhereHas('customer', function ($cq) use ($term) {
+                      $cq->where('full_name', 'like', "%{$term}%")
+                         ->orWhere('phone_number', 'like', "%{$term}%")
+                         ->orWhere('email', 'like', "%{$term}%");
+                  });
+            });
+        }
+
+        // Specific filter by Name
+        if ($request->filled('name')) {
+            $name = trim($request->name);
+            $query->where(function ($q) use ($name) {
+                $q->whereHas('user', fn ($uq) => $uq->where('first_name', 'like', "%{$name}%")->orWhere('last_name', 'like', "%{$name}%")->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$name}%"))
+                  ->orWhereHas('businessSalesManager', fn ($uq) => $uq->where('first_name', 'like', "%{$name}%")->orWhere('last_name', 'like', "%{$name}%")->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$name}%"))
+                  ->orWhereHas('regionalManager', fn ($uq) => $uq->where('first_name', 'like', "%{$name}%")->orWhere('last_name', 'like', "%{$name}%")->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$name}%"))
+                  ->orWhereHas('coordinator', fn ($uq) => $uq->where('first_name', 'like', "%{$name}%")->orWhere('last_name', 'like', "%{$name}%")->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$name}%"))
+                  ->orWhereHas('partner', fn ($uq) => $uq->where('first_name', 'like', "%{$name}%")->orWhere('last_name', 'like', "%{$name}%")->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$name}%"))
+                  ->orWhereHas('business', fn ($uq) => $uq->where('first_name', 'like', "%{$name}%")->orWhere('last_name', 'like', "%{$name}%")->orWhere('business_name', 'like', "%{$name}%")->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$name}%"))
+                  ->orWhereHas('businessAgent', fn ($uq) => $uq->where('first_name', 'like', "%{$name}%")->orWhere('last_name', 'like', "%{$name}%")->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$name}%"))
+                  ->orWhereHas('customer', fn ($cq) => $cq->where('full_name', 'like', "%{$name}%"));
+            });
+        }
+
+        // Specific filter by Email
+        if ($request->filled('email')) {
+            $email = trim($request->email);
+            $query->where(function ($q) use ($email) {
+                $q->whereHas('user', fn ($uq) => $uq->where('email', 'like', "%{$email}%"))
+                  ->orWhereHas('businessSalesManager', fn ($uq) => $uq->where('email', 'like', "%{$email}%"))
+                  ->orWhereHas('regionalManager', fn ($uq) => $uq->where('email', 'like', "%{$email}%"))
+                  ->orWhereHas('coordinator', fn ($uq) => $uq->where('email', 'like', "%{$email}%"))
+                  ->orWhereHas('partner', fn ($uq) => $uq->where('email', 'like', "%{$email}%"))
+                  ->orWhereHas('business', fn ($uq) => $uq->where('email', 'like', "%{$email}%"))
+                  ->orWhereHas('businessAgent', fn ($uq) => $uq->where('email', 'like', "%{$email}%"))
+                  ->orWhereHas('customer', fn ($cq) => $cq->where('email', 'like', "%{$email}%"));
+            });
+        }
+
+        // Specific filter by Phone
+        if ($request->filled('phone')) {
+            $phone = trim($request->phone);
+            $query->where(function ($q) use ($phone) {
+                $q->whereHas('user', fn ($uq) => $uq->where('phone', 'like', "%{$phone}%"))
+                  ->orWhereHas('businessSalesManager', fn ($uq) => $uq->where('phone', 'like', "%{$phone}%"))
+                  ->orWhereHas('regionalManager', fn ($uq) => $uq->where('phone', 'like', "%{$phone}%"))
+                  ->orWhereHas('coordinator', fn ($uq) => $uq->where('phone', 'like', "%{$phone}%"))
+                  ->orWhereHas('partner', fn ($uq) => $uq->where('phone', 'like', "%{$phone}%"))
+                  ->orWhereHas('business', fn ($uq) => $uq->where('phone', 'like', "%{$phone}%"))
+                  ->orWhereHas('businessAgent', fn ($uq) => $uq->where('phone', 'like', "%{$phone}%"))
+                  ->orWhereHas('customer', fn ($cq) => $cq->where('phone_number', 'like', "%{$phone}%"));
+            });
         }
 
         // Filter by Category
@@ -45,7 +148,7 @@ class SimPlanController extends Controller
             $query->where('provider', $request->provider);
         }
 
-        // Filter by Status
+        // Filter by Status / Role
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -55,9 +158,12 @@ class SimPlanController extends Controller
         // Header statistics
         $totalUploaded = Sim::count();
         $totalAssigned = Sim::whereIn('status', [
+            SimStatus::ASSIGNED_TO_BSM,
             SimStatus::ASSIGNED_TO_RM,
             SimStatus::ASSIGNED_TO_COORDINATOR,
             SimStatus::ASSIGNED_TO_PARTNER,
+            SimStatus::ASSIGNED_TO_BUSINESS,
+            SimStatus::ASSIGNED_TO_BUSINESS_AGENT,
         ])->count();
         $totalAvailable = Sim::where('status', SimStatus::UNASSIGNED)->count();
         $totalActivated = Sim::where('status', SimStatus::ACTIVATED)->count();
@@ -291,6 +397,8 @@ class SimPlanController extends Controller
                     $oldBalance = $wallet->balance;
                     $wallet->decrement('balance', $payableAmount);
                     $newBalance = $wallet->balance;
+
+                    app(\App\Services\SimActivationWalletService::class)->creditActivationFee($sim, $payableAmount, $target);
 
                     $ref = 'ADMIN-ACT-' . time() . '-' . rand(1000, 9999);
 
@@ -708,10 +816,10 @@ class SimPlanController extends Controller
         $request->validate([
             'sim_ids'   => 'required|array',
             'sim_ids.*' => 'exists:sims,id',
-            'user_id'   => 'required|exists:users,id',
+            'user_id'   => 'nullable|exists:users,id',
         ]);
 
-        $targetUser = User::find($request->user_id);
+        $targetUser = $request->filled('user_id') ? User::find($request->user_id) : null;
         $actor = $request->user();
         $service = app(SimAssignmentService::class);
 
@@ -721,19 +829,29 @@ class SimPlanController extends Controller
 
         DB::transaction(function () use ($sims, $targetUser, $actor, $service, &$collectedCount, &$skipped) {
             foreach ($sims as $sim) {
-                $belongsToUser = $sim->user_id === $targetUser->id
-                    || $sim->partner_id === $targetUser->id
-                    || $sim->coordinator_id === $targetUser->id
-                    || $sim->regional_manager_id === $targetUser->id;
-
                 if ($sim->status === SimStatus::ACTIVATED) {
                     $skipped[] = "{$sim->number} (activated)";
                     continue;
                 }
 
-                if (!$belongsToUser) {
-                    $skipped[] = "{$sim->number} (not held by this user)";
+                if ($sim->status === SimStatus::UNASSIGNED) {
+                    $skipped[] = "{$sim->number} (already unassigned)";
                     continue;
+                }
+
+                if ($targetUser) {
+                    $belongsToUser = $sim->user_id === $targetUser->id
+                        || $sim->partner_id === $targetUser->id
+                        || $sim->coordinator_id === $targetUser->id
+                        || $sim->regional_manager_id === $targetUser->id
+                        || $sim->business_id === $targetUser->id
+                        || $sim->business_agent_id === $targetUser->id
+                        || $sim->business_sales_manager_id === $targetUser->id;
+
+                    if (!$belongsToUser) {
+                        $skipped[] = "{$sim->number} (not held by this user)";
+                        continue;
+                    }
                 }
 
                 $service->unassign($sim, $actor);
@@ -741,7 +859,10 @@ class SimPlanController extends Controller
             }
         });
 
-        $message = "Collected {$collectedCount} SIM number(s) from {$targetUser->first_name} {$targetUser->last_name} ({$targetUser->role}).";
+        $message = $targetUser
+            ? "Collected {$collectedCount} SIM number(s) from {$targetUser->first_name} {$targetUser->last_name} ({$targetUser->role})."
+            : "Collected {$collectedCount} SIM number(s) back to available pool.";
+
         if (count($skipped) > 0) {
             $message .= ' Skipped: ' . implode(', ', $skipped) . '.';
             return back()->with('warning', $message);
@@ -859,15 +980,19 @@ class SimPlanController extends Controller
         
         $writer = new Xlsx($spreadsheet);
         
-        return response()->stream(
+        return response()->streamDownload(
             function () use ($writer) {
+                if (!app()->environment('testing') && ob_get_level() > 0) {
+                    ob_end_clean();
+                }
                 $writer->save('php://output');
             },
-            200,
+            'sim_bulk_upload_sample.xlsx',
             [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'Content-Disposition' => 'attachment; filename="sim_bulk_upload_sample.xlsx"',
-                'Cache-Control' => 'max-age=0',
+                'Content-Type'  => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Pragma'        => 'public',
+                'Expires'       => '0',
             ]
         );
     }

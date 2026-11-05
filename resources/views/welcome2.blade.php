@@ -31,7 +31,7 @@
 
     <!-- PWA -->
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <link rel="apple-touch-icon" href="{{ asset('assets/images/icons/icon-192.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/images/icons/apple-touch-icon.png') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

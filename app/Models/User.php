@@ -238,6 +238,45 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(User::class, 'referred_by');
     }
 
+    /** Downline batch memberships where this user is or was placed in a batch. */
+    public function downlineBatchMemberships(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DownlineBatchUser::class, 'user_id');
+    }
+
+    /** Batches sourced from this user's downline during manager replacement. */
+    public function sourcedDownlineBatches(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DownlineBatch::class, 'source_user_id');
+    }
+
+    /**
+     * Resolve or create the platform-level master manager account.
+     * Serves as the central holding upline for detached downlines during manager replacement.
+     */
+    public static function platformMasterManager(): self
+    {
+        $master = static::where('email', 'master.manager@platform.internal')
+            ->orWhere('email', 'master.manager@smartsim.test')
+            ->first();
+
+        if ($master) {
+            return $master;
+        }
+
+        return static::create([
+            'first_name' => 'Platform',
+            'middle_name' => 'Level',
+            'last_name' => 'Master Manager',
+            'email' => 'master.manager@platform.internal',
+            'phone' => '08000000001',
+            'role' => 'regional_manager',
+            'status' => 'active',
+            'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
+            'email_verified_at' => now(),
+        ]);
+    }
+
     // -------------------------------------------------------------------------
     // Jurisdiction Relationships (independent of the referral hierarchy above)
     // -------------------------------------------------------------------------
