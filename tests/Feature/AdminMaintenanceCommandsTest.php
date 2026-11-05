@@ -18,6 +18,8 @@ use App\Models\SimCustomer;
 use App\Models\SimHistory;
 use App\Models\SimRequest;
 use App\Models\SimSwapRequest;
+use App\Models\Ticket;
+use App\Models\TicketMessage;
 use App\Models\Transaction;
 use App\Models\TravelPackage;
 use App\Models\TravelRequest;
@@ -748,4 +750,63 @@ test('enterprise:export-breakdown exports enterprise balances, downline activati
     // Clean up temporary files
     File::delete($tempSummaryCsv);
     File::delete($tempAgentsCsv);
+});
+
+test('tickets:clear respects cancellation, filters, and clears support tickets', function () {
+    $user = User::factory()->create();
+
+    $openTicket = Ticket::create([
+        'user_id' => $user->id,
+        'subject' => 'Cannot activate SIM',
+        'category' => 'technical',
+        'priority' => 'high',
+        'status' => 'open',
+    ]);
+    TicketMessage::create([
+        'ticket_id' => $openTicket->id,
+        'user_id' => $user->id,
+        'message' => 'Please help with activation error.',
+        'is_admin' => false,
+    ]);
+
+    $closedTicket = Ticket::create([
+        'user_id' => $user->id,
+        'subject' => 'Billing inquiry',
+        'category' => 'billing',
+        'priority' => 'low',
+        'status' => 'closed',
+    ]);
+    TicketMessage::create([
+        'ticket_id' => $closedTicket->id,
+        'user_id' => $user->id,
+        'message' => 'Resolved already.',
+        'is_admin' => false,
+    ]);
+
+    // 1. Cancellation test
+    $this->artisan('tickets:clear')
+        ->expectsConfirmation('Are you sure you want to permanently clear 2 support ticket(s) and 2 message(s)? This action cannot be undone.', 'no')
+        ->expectsOutputToContain('Operation cancelled by user')
+        ->assertSuccessful();
+
+    expect(Ticket::count())->toBe(2)
+        ->and(TicketMessage::count())->toBe(2);
+
+    // 2. Status filter test
+    $this->artisan('tickets:clear --status=closed --force')
+        ->expectsOutputToContain('Successfully cleared 1 support ticket(s) and 1 message(s)')
+        ->assertSuccessful();
+
+    expect(Ticket::count())->toBe(1)
+        ->and(TicketMessage::count())->toBe(1)
+        ->and(Ticket::where('id', $openTicket->id)->exists())->toBeTrue()
+        ->and(Ticket::where('id', $closedTicket->id)->exists())->toBeFalse();
+
+    // 3. Clear remaining with force
+    $this->artisan('tickets:clear --force')
+        ->expectsOutputToContain('Successfully cleared 1 support ticket(s) and 1 message(s)')
+        ->assertSuccessful();
+
+    expect(Ticket::count())->toBe(0)
+        ->and(TicketMessage::count())->toBe(0);
 });

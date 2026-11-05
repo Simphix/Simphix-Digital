@@ -18,6 +18,7 @@ This document provides a comprehensive reference for the administrative Artisan 
    - [`sims:clear-activation-events`](#7-simsclear-activation-events)
    - [`requests:clear-pending`](#8-requestsclear-pending)
    - [`webhooks:clear-logs`](#9-webhooksclear-logs)
+   - [`tickets:clear`](#10-ticketsclear)
 
 ---
 
@@ -378,4 +379,39 @@ php artisan webhooks:clear-logs
 
 # Clear only failed PalmPay webhooks
 php artisan webhooks:clear-logs --provider=palmpay --status=failed --force
+```
+
+---
+
+### 10. `tickets:clear`
+
+Permanently clears support tickets (`tickets`) and their associated conversation messages (`ticket_messages`) from the database. Supports status and category filtering.
+
+- **Signature**:
+  ```bash
+  php artisan tickets:clear {--status=} {--category=} {--force} {--dry-run}
+  ```
+- **Aliases**:
+  - `support:clear-tickets`
+  - `tickets:clear-all`
+  - `simphix:clear-tickets`
+
+#### Options
+| Option | Description |
+|---|---|
+| `--status=` | Filter by ticket status: `open`, `responded`, or `closed` |
+| `--category=` | Filter by ticket category: `technical`, `billing`, `general`, or `upgrade` |
+| `--force` | Clear without confirmation prompt |
+| `--dry-run` | Preview count of matching tickets and messages without deleting |
+
+#### Usage Examples
+```bash
+# Preview all support tickets and messages, then prompt confirmation
+php artisan tickets:clear
+
+# Clear only closed support tickets
+php artisan tickets:clear --status=closed --force
+
+# Clear all technical tickets without prompt
+php artisan tickets:clear --category=technical --force
 ```
