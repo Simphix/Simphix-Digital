@@ -168,6 +168,78 @@ test('enterprise-partners:purge removes enterprise partners and their activated 
         ->and(Sim::where('id', $regularSim->id)->exists())->toBeTrue();
 });
 
+test('enterprise-partners:purge allows selecting a specific enterprise business to clear while keeping others intact', function () {
+    // Enterprise Business 1
+    $ep1 = User::factory()->create([
+        'role' => 'business',
+        'business_name' => 'Acme EP LTD',
+        'email' => 'acme@example.com',
+    ]);
+    $agent1 = User::factory()->create([
+        'role' => 'business_agent',
+        'referred_by' => $ep1->id,
+    ]);
+    $sim1 = Sim::create([
+        'number' => '08011110001',
+        'category' => 'business',
+        'provider' => 'glo',
+        'status' => SimStatus::ASSIGNED_TO_BUSINESS,
+        'business_id' => $ep1->id,
+    ]);
+
+    // Enterprise Business 2
+    $ep2 = User::factory()->create([
+        'role' => 'business',
+        'business_name' => 'Beta Ventures',
+        'email' => 'beta@example.com',
+    ]);
+    $agent2 = User::factory()->create([
+        'role' => 'business_agent',
+        'referred_by' => $ep2->id,
+    ]);
+    $sim2 = Sim::create([
+        'number' => '08022220002',
+        'category' => 'business',
+        'provider' => 'mtn',
+        'status' => SimStatus::ASSIGNED_TO_BUSINESS,
+        'business_id' => $ep2->id,
+    ]);
+
+    // 1. Purge specifically EP1 by ID using argument/option
+    $this->artisan('enterprise-partners:purge', ['business' => (string) $ep1->id, '--force' => true])
+        ->expectsOutputToContain('Acme EP LTD')
+        ->expectsOutputToContain('Successfully removed 1 Enterprise Partner(s), 1 Business Agent(s), and 1 associated SIM(s)')
+        ->assertSuccessful();
+
+    // Verify EP1 is deleted
+    expect(User::where('id', $ep1->id)->exists())->toBeFalse()
+        ->and(User::where('id', $agent1->id)->exists())->toBeFalse()
+        ->and(Sim::where('id', $sim1->id)->exists())->toBeFalse();
+
+    // Verify EP2 and its assets are completely untouched
+    expect(User::where('id', $ep2->id)->exists())->toBeTrue()
+        ->and(User::where('id', $agent2->id)->exists())->toBeTrue()
+        ->and(Sim::where('id', $sim2->id)->exists())->toBeTrue();
+
+    // 2. Clear EP2 using interactive choice with --select
+    $this->artisan('enterprise-partners:purge --select')
+        ->expectsChoice(
+            'Select the Enterprise Business to clear (or select "all"):',
+            "[#{$ep2->id}] Beta Ventures (beta@example.com)",
+            [
+                'all' => 'ALL Enterprise Businesses (1 total)',
+                (string) $ep2->id => "[#{$ep2->id}] Beta Ventures (beta@example.com)",
+            ]
+        )
+        ->expectsConfirmation("Are you sure you want to permanently delete Enterprise Business 'Beta Ventures' (ID #{$ep2->id}), 1 Business Agent(s), and 1 associated SIM(s)?", 'yes')
+        ->expectsOutputToContain('Successfully removed 1 Enterprise Partner(s), 1 Business Agent(s), and 1 associated SIM(s)')
+        ->assertSuccessful();
+
+    expect(User::where('id', $ep2->id)->exists())->toBeFalse()
+        ->and(User::where('id', $agent2->id)->exists())->toBeFalse()
+        ->and(Sim::where('id', $sim2->id)->exists())->toBeFalse();
+});
+
 test('transactions:clear-history clears transaction history and handles foreign key constraints like verifications', function () {
     $user = User::factory()->create();
 
