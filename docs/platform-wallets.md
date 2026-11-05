@@ -18,7 +18,7 @@ platform itself earns, not any individual account.
 `welfare`, `utilities_revenue`) — a new wallet kind needs no migration,
 just a new type slug and a call into the ledger below.
 
-## The three wallets today
+## The platform wallets today
 
 - **`welfare`** (`PlatformWallet::TYPE_WELFARE`) — credited a configurable
   amount (`/admin/platform-wallets/welfare-settings`, backed by `PlatformWelfareSettings`)
@@ -41,6 +41,12 @@ just a new type slug and a call into the ledger below.
   **Note:** This does not apply to Enterprise Partners (`business`) and
   their `business_agent` downlines, whose splits are governed by
   `BusinessCommissionRate`.
+- **`cashout_charges`** (`PlatformWallet::TYPE_CASHOUT_CHARGES`) —
+  collects the admin-level cashout withdrawal fees configured in
+  Admin > Cash-Out Settings (`/admin/cash-out/settings`). When an admin approves
+  a user's withdrawal request, the flat withdrawal fee deducted from the user is
+  automatically credited to this pool (`CashOutController::approve`). Displayed in
+  the Admin Platform Wallets dashboard (`/admin/platform-wallets`).
 
 ## Adding a new revenue-generating service — the whole checklist
 
