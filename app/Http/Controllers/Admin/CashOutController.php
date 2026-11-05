@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CashOutRequest;
+use App\Models\PlatformWallet;
 use App\Models\Report;
 use App\Models\Service;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Services\PalmPayService;
+use App\Services\PlatformWalletLedger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -81,7 +83,7 @@ class CashOutController extends Controller
 
             if (isset($payoutResponse['respCode']) && $payoutResponse['respCode'] === '00000000') {
                 // Success — finalize
-                DB::transaction(function () use ($cashOutRequest, $transaction, $report, $payoutResponse) {
+                DB::transaction(function () use ($cashOutRequest, $transaction, $report, $payoutResponse, $user) {
                     $cashOutRequest->update([
                         'status' => 'approved',
                         'approved_by' => Auth::id(),
@@ -99,6 +101,24 @@ class CashOutController extends Controller
                     if ($report) {
                         $report->status = 'completed';
                         $report->save();
+                    }
+
+                    // Credit configured cashout base fee to the Admin Cashout Charges Wallet
+                    if ((float) $cashOutRequest->fee > 0) {
+                        app(PlatformWalletLedger::class)->credit(
+                            PlatformWallet::TYPE_CASHOUT_CHARGES,
+                            'Cashout Charges Wallet',
+                            (float) $cashOutRequest->fee,
+                            'cashout_fee',
+                            "Cashout fee from {$user->first_name} {$user->last_name} for Ref #{$cashOutRequest->transaction_ref}",
+                            $cashOutRequest,
+                            [
+                                'cashout_request_id' => $cashOutRequest->id,
+                                'transaction_ref' => $cashOutRequest->transaction_ref,
+                                'user_id' => $user->id,
+                                'charge_type' => 'base_fee',
+                            ]
+                        );
                     }
                 });
 
@@ -151,6 +171,23 @@ class CashOutController extends Controller
                                     'new_balance' => $newBal,
                                     'service_id' => $service?->id,
                                 ]);
+
+                                // Credit configured cashout threshold levy/tax to the Admin Cashout Charges Wallet
+                                app(PlatformWalletLedger::class)->credit(
+                                    PlatformWallet::TYPE_CASHOUT_CHARGES,
+                                    'Cashout Charges Wallet',
+                                    (float) $cashOutRequest->tax,
+                                    'cashout_tax',
+                                    "{$taxDescription} from {$user->first_name} {$user->last_name} for Ref #{$cashOutRequest->transaction_ref}",
+                                    $cashOutRequest,
+                                    [
+                                        'cashout_request_id' => $cashOutRequest->id,
+                                        'transaction_ref' => $cashOutRequest->transaction_ref,
+                                        'tax_ref' => $taxRef,
+                                        'user_id' => $user->id,
+                                        'charge_type' => 'threshold_tax',
+                                    ]
+                                );
                             }
                         });
                     } catch (\Exception $taxEx) {

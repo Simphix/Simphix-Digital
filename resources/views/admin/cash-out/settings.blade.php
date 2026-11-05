@@ -95,6 +95,27 @@
                 </div>
             </div>
 
+            @if(isset($cashoutChargesWallet))
+                <div class="px-6 pt-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-50/80 border border-amber-200/70 rounded-xl p-3.5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-700 flex items-center justify-center shrink-0">
+                                <i data-lucide="receipt" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Cashout Charges Wallet Balance</p>
+                                <p class="text-base font-extrabold text-slate-900">₦{{ number_format($cashoutChargesWallet->balance, 2) }} <span class="text-xs font-normal text-slate-400 font-medium">(₦{{ number_format($cashoutChargesWallet->total_credited, 2) }} total credited)</span></p>
+                            </div>
+                        </div>
+                        <a href="{{ route('admin.platform-wallets.cashout.show', \App\Models\PlatformWallet::TYPE_CASHOUT_CHARGES) }}"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-xs self-start sm:self-auto">
+                            Cash Out Wallet
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        </a>
+                    </div>
+                </div>
+            @endif
+
             <form method="POST" action="{{ route('admin.cash-out.settings.update') }}">
                 @csrf
                 @method('PUT')

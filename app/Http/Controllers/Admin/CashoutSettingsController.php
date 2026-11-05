@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CashoutSettings;
+use App\Models\PlatformWallet;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -18,8 +19,9 @@ class CashoutSettingsController extends Controller
     {
         $settings = CashoutSettings::current();
         $roleLimits = $settings->getAllRoleLimits();
+        $cashoutChargesWallet = PlatformWallet::forType(PlatformWallet::TYPE_CASHOUT_CHARGES, 'Cashout Charges Wallet');
 
-        return view('admin.cash-out.settings', compact('settings', 'roleLimits'));
+        return view('admin.cash-out.settings', compact('settings', 'roleLimits', 'cashoutChargesWallet'));
     }
 
     public function update(Request $request): RedirectResponse

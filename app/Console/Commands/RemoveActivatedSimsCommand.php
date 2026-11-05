@@ -11,6 +11,7 @@ use App\Models\SimSwapRequest;
 use App\Support\SimStatus;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class RemoveActivatedSimsCommand extends Command
 {
@@ -84,18 +85,23 @@ class RemoveActivatedSimsCommand extends Command
 
         $this->output->write('Deleting activated SIMs and cascade dependencies... ');
 
-        DB::transaction(function () use ($query) {
-            $simIds = (clone $query)->pluck('id');
+        Schema::disableForeignKeyConstraints();
+        try {
+            DB::transaction(function () use ($query) {
+                $simIds = (clone $query)->pluck('id');
 
-            foreach ($simIds->chunk(500) as $chunkIds) {
-                SimCustomer::whereIn('sim_id', $chunkIds)->delete();
-                SimHistory::whereIn('sim_id', $chunkIds)->delete();
-                SimActivationBonusGrant::whereIn('sim_id', $chunkIds)->delete();
-                SimSwapRequest::whereIn('sim_id', $chunkIds)->delete();
-                SimRequest::whereIn('sim_id', $chunkIds)->update(['sim_id' => null]);
-                Sim::whereIn('id', $chunkIds)->delete();
-            }
-        });
+                foreach ($simIds->chunk(500) as $chunkIds) {
+                    SimCustomer::whereIn('sim_id', $chunkIds)->delete();
+                    SimHistory::whereIn('sim_id', $chunkIds)->delete();
+                    SimActivationBonusGrant::whereIn('sim_id', $chunkIds)->delete();
+                    SimSwapRequest::whereIn('sim_id', $chunkIds)->delete();
+                    SimRequest::whereIn('sim_id', $chunkIds)->update(['sim_id' => null]);
+                    Sim::whereIn('id', $chunkIds)->delete();
+                }
+            });
+        } finally {
+            Schema::enableForeignKeyConstraints();
+        }
 
         $this->info('DONE.');
         $this->info("Successfully removed {$totalCount} activated SIM(s) from the database.");

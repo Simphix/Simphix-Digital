@@ -5,8 +5,10 @@ namespace App\Console\Commands;
 use App\Models\CommissionEarning;
 use App\Models\PlatformWalletTransaction;
 use App\Models\Transaction;
+use App\Models\Verification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ClearTransactionsHistoryCommand extends Command
 {
@@ -18,7 +20,9 @@ class ClearTransactionsHistoryCommand extends Command
     protected $signature = 'transactions:clear-history
                             {--force : Clear without confirmation prompt}
                             {--include-platform : Also clear platform wallet transactions}
-                            {--all : Clear all transaction tables including platform wallet transactions and commission earnings}';
+                            {--include-commissions : Also clear commission earnings}
+                            {--keep-verifications : Keep verification search records without deleting them}
+                            {--all : Clear all transaction tables including platform wallet transactions, commission earnings, and verifications}';
 
     /**
      * Command aliases.
@@ -40,13 +44,15 @@ class ClearTransactionsHistoryCommand extends Command
     public function handle(): int
     {
         $includePlatform = $this->option('include-platform') || $this->option('all');
-        $includeCommissions = (bool) $this->option('all');
+        $includeCommissions = $this->option('include-commissions') || $this->option('all');
+        $clearVerifications = ! $this->option('keep-verifications');
 
         $transactionCount = Transaction::query()->count();
+        $verificationCount = $clearVerifications ? Verification::query()->count() : 0;
         $platformTxCount = $includePlatform ? PlatformWalletTransaction::query()->count() : 0;
         $commissionCount = $includeCommissions ? CommissionEarning::query()->count() : 0;
 
-        $totalRecords = $transactionCount + $platformTxCount + $commissionCount;
+        $totalRecords = $transactionCount + $verificationCount + $platformTxCount + $commissionCount;
 
         if ($totalRecords === 0) {
             $this->warn('No transaction records found to clear.');
@@ -57,6 +63,9 @@ class ClearTransactionsHistoryCommand extends Command
             ['User Transactions (`transactions`)', number_format($transactionCount)],
         ];
 
+        if ($clearVerifications) {
+            $tableRows[] = ['Linked Verifications (`verifications`)', number_format($verificationCount)];
+        }
         if ($includePlatform) {
             $tableRows[] = ['Platform Wallet Transactions (`platform_wallet_transactions`)', number_format($platformTxCount)];
         }
@@ -81,17 +90,35 @@ class ClearTransactionsHistoryCommand extends Command
 
         $this->output->write('Clearing transaction history... ');
 
-        DB::transaction(function () use ($includePlatform, $includeCommissions) {
-            Transaction::query()->delete();
+        // Disable foreign key constraints to prevent MySQL 1451 errors on legacy schemas
+        Schema::disableForeignKeyConstraints();
 
-            if ($includePlatform) {
-                PlatformWalletTransaction::query()->delete();
-            }
+        try {
+            DB::transaction(function () use ($includePlatform, $includeCommissions, $clearVerifications) {
+                if ($clearVerifications) {
+                    Verification::query()->delete();
+                } else {
+                    // Try to nullify transaction_id if the column supports it
+                    try {
+                        Verification::query()->update(['transaction_id' => null]);
+                    } catch (\Throwable $e) {
+                        // If column is NOT NULL, leave as-is since foreign key checks are disabled
+                    }
+                }
 
-            if ($includeCommissions) {
-                CommissionEarning::query()->delete();
-            }
-        });
+                Transaction::query()->delete();
+
+                if ($includePlatform) {
+                    PlatformWalletTransaction::query()->delete();
+                }
+
+                if ($includeCommissions) {
+                    CommissionEarning::query()->delete();
+                }
+            });
+        } finally {
+            Schema::enableForeignKeyConstraints();
+        }
 
         $this->info('DONE.');
         $this->info("Successfully cleared {$totalRecords} transaction record(s).");

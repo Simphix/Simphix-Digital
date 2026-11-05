@@ -22,9 +22,11 @@ use App\Models\Transaction;
 use App\Models\TravelPackage;
 use App\Models\TravelRequest;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Models\WebhookLog;
 use App\Support\SimStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 
 uses(RefreshDatabase::class);
 
@@ -166,10 +168,10 @@ test('enterprise-partners:purge removes enterprise partners and their activated 
         ->and(Sim::where('id', $regularSim->id)->exists())->toBeTrue();
 });
 
-test('transactions:clear-history clears transaction history records', function () {
+test('transactions:clear-history clears transaction history and handles foreign key constraints like verifications', function () {
     $user = User::factory()->create();
 
-    Transaction::create([
+    $tx = Transaction::create([
         'transaction_ref' => 'TX-1001',
         'user_id' => $user->id,
         'amount' => 5000,
@@ -180,20 +182,43 @@ test('transactions:clear-history clears transaction history records', function (
         'description' => 'Test Transaction',
     ]);
 
+    $service = \App\Models\Service::create([
+        'name' => 'NIN Verification Service',
+        'description' => 'NIN Verification Service',
+    ]);
+
+    $field = \App\Models\ServiceField::create([
+        'service_id' => $service->id,
+        'field_name' => 'Standard NIN',
+        'field_code' => 'NIN_STD',
+    ]);
+
+    \App\Models\Verification::create([
+        'reference' => 'VER-1001',
+        'user_id' => $user->id,
+        'service_id' => $service->id,
+        'service_field_id' => $field->id,
+        'transaction_id' => $tx->id,
+        'amount' => 100,
+        'status' => 'successful',
+    ]);
+
     // 1. Cancellation
     $this->artisan('transactions:clear-history')
-        ->expectsConfirmation('Are you sure you want to permanently clear all 1 transaction record(s)? This action cannot be undone.', 'no')
+        ->expectsConfirmation('Are you sure you want to permanently clear all 2 transaction record(s)? This action cannot be undone.', 'no')
         ->expectsOutputToContain('Operation cancelled by user')
         ->assertSuccessful();
 
-    expect(Transaction::count())->toBe(1);
+    expect(Transaction::count())->toBe(1)
+        ->and(\App\Models\Verification::count())->toBe(1);
 
     // 2. Force clear
     $this->artisan('transactions:clear-history --force')
-        ->expectsOutputToContain('Successfully cleared 1 transaction record(s)')
+        ->expectsOutputToContain('Successfully cleared 2 transaction record(s)')
         ->assertSuccessful();
 
-    expect(Transaction::count())->toBe(0);
+    expect(Transaction::count())->toBe(0)
+        ->and(\App\Models\Verification::count())->toBe(0);
 });
 
 test('activation-events:clear clears activation events and bonus grants', function () {
@@ -376,4 +401,147 @@ test('webhooks:clear-logs clears webhook logs matching criteria', function () {
         ->assertSuccessful();
 
     expect(WebhookLog::count())->toBe(0);
+});
+
+test('users:export-balances exports balances to CSV and displays summary', function () {
+    $user1 = User::factory()->create([
+        'first_name' => 'Alice',
+        'last_name' => 'Johnson',
+        'email' => 'alice@example.com',
+        'role' => 'partner',
+    ]);
+    Wallet::create([
+        'user_id' => $user1->id,
+        'wallet_number' => 'WLT0000001',
+        'balance' => 15000.50,
+        'bonus' => 2500.00,
+        'hold_amount' => 500.00,
+        'total_credited' => 20000.00,
+        'total_debited' => 2000.00,
+        'status' => 'active',
+    ]);
+
+    $user2 = User::factory()->create([
+        'first_name' => 'Bob',
+        'last_name' => 'Smith',
+        'email' => 'bob@example.com',
+        'role' => 'business',
+    ]);
+    Wallet::create([
+        'user_id' => $user2->id,
+        'wallet_number' => 'WLT0000002',
+        'balance' => 5000.00,
+        'bonus' => 1000.00,
+        'hold_amount' => 0.00,
+        'total_credited' => 6000.00,
+        'total_debited' => 0.00,
+        'status' => 'active',
+    ]);
+
+    PlatformWallet::create([
+        'type' => 'welfare',
+        'name' => 'Welfare Fund',
+        'balance' => 45000.00,
+        'total_credited' => 50000.00,
+        'total_debited' => 5000.00,
+    ]);
+
+    $tempCsv = storage_path('app/exports/test_user_balances_' . uniqid() . '.csv');
+
+    $this->artisan('users:export-balances', ['--output' => $tempCsv])
+        ->expectsOutputToContain('Gathering user wallet balances')
+        ->expectsOutputToContain('Export completed successfully!')
+        ->expectsOutputToContain('Platform Revenue / Operating Wallets:')
+        ->assertSuccessful();
+
+    expect(File::exists($tempCsv))->toBeTrue();
+
+    $content = File::get($tempCsv);
+    expect($content)->toContain('Alice Johnson')
+        ->and($content)->toContain('alice@example.com')
+        ->and($content)->toContain('15000.50')
+        ->and($content)->toContain('2500.00')
+        ->and($content)->toContain('Bob Smith')
+        ->and($content)->toContain('bob@example.com')
+        ->and($content)->toContain('5000.00');
+
+    File::delete($tempCsv);
+});
+
+test('balances:clear respects cancellation and clears user balances with options', function () {
+    $user1 = User::factory()->create(['role' => 'partner']);
+    $wallet1 = Wallet::create([
+        'user_id' => $user1->id,
+        'wallet_number' => 'WLT0000010',
+        'balance' => 10000.00,
+        'bonus' => 3000.00,
+        'hold_amount' => 1000.00,
+        'total_credited' => 14000.00,
+        'total_debited' => 0.00,
+        'status' => 'active',
+    ]);
+
+    $user2 = User::factory()->create(['role' => 'business']);
+    $wallet2 = Wallet::create([
+        'user_id' => $user2->id,
+        'wallet_number' => 'WLT0000020',
+        'balance' => 20000.00,
+        'bonus' => 5000.00,
+        'hold_amount' => 0.00,
+        'total_credited' => 25000.00,
+        'total_debited' => 0.00,
+        'status' => 'active',
+    ]);
+
+    $platformWallet = PlatformWallet::create([
+        'type' => 'welfare',
+        'name' => 'Welfare Fund',
+        'balance' => 15000.00,
+        'total_credited' => 15000.00,
+        'total_debited' => 0.00,
+    ]);
+
+    // 1. Cancellation test
+    $this->artisan('balances:clear')
+        ->expectsConfirmation('Are you sure you want to permanently clear balances for 2 user wallet(s) totaling ₦38,000.00? This action cannot be undone.', 'no')
+        ->expectsOutputToContain('Operation cancelled by user')
+        ->assertSuccessful();
+
+    expect($wallet1->fresh()->balance)->toEqual(10000.00)
+        ->and($wallet1->fresh()->bonus)->toEqual(3000.00);
+
+    // 2. Role filter + Commission-only test with force
+    $this->artisan('balances:clear --role=partner --commission-only --force')
+        ->expectsOutputToContain('Successfully cleared balances for 1 user wallet(s)')
+        ->assertSuccessful();
+
+    $wallet1->refresh();
+    $wallet2->refresh();
+
+    // User1 (partner) bonus cleared, main balance remains intact
+    expect((float) $wallet1->bonus)->toEqual(0.00)
+        ->and((float) $wallet1->balance)->toEqual(10000.00)
+        // User2 (business) remains completely untouched
+        ->and((float) $wallet2->balance)->toEqual(20000.00)
+        ->and((float) $wallet2->bonus)->toEqual(5000.00);
+
+    // 3. Clear all user balances and platform wallets with transaction recording
+    $this->artisan('balances:clear --force --include-platform-wallets --record-transactions')
+        ->expectsOutputToContain('Successfully cleared balances for 2 user wallet(s)')
+        ->expectsOutputToContain('Platform operating/revenue wallets were also reset to ₦0.00.')
+        ->assertSuccessful();
+
+    $wallet1->refresh();
+    $wallet2->refresh();
+    $platformWallet->refresh();
+
+    expect((float) $wallet1->balance)->toEqual(0.00)
+        ->and((float) $wallet1->bonus)->toEqual(0.00)
+        ->and((float) $wallet1->hold_amount)->toEqual(0.00)
+        ->and((float) $wallet2->balance)->toEqual(0.00)
+        ->and((float) $wallet2->bonus)->toEqual(0.00)
+        ->and((float) $platformWallet->balance)->toEqual(0.00);
+
+    // Verify transactions recorded for debits
+    expect(Transaction::where('type', 'debit')->where('description', 'like', '%System balance clearance%')->count())->toBeGreaterThan(0);
 });
