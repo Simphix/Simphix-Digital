@@ -296,6 +296,14 @@ class RemoveEnterprisePartnersCommand extends Command
                 EnterprisePartnerPayment::whereIn('user_id', $epUserIds)->delete();
                 BusinessCommissionRate::whereIn('business_id', $epUserIds)->delete();
 
+                // Delete any user-level requests and swap requests for target users
+                SimRequest::whereIn('user_id', $allTargetUserIds)->delete();
+                SimSwapRequest::where(function ($q) use ($allTargetUserIds) {
+                    $q->whereIn('requested_by', $allTargetUserIds)
+                        ->orWhereIn('from_holder_id', $allTargetUserIds)
+                        ->orWhereIn('to_holder_id', $allTargetUserIds);
+                })->delete();
+
                 // Clean user financial records and authentication references
                 Transaction::whereIn('user_id', $allTargetUserIds)->delete();
                 Wallet::whereIn('user_id', $allTargetUserIds)->delete();

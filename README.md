@@ -52,6 +52,7 @@ SimPhix provides a suite of administrative Artisan CLI commands for auditing bal
 - `php artisan sims:clear-activation-events`: Clear activation bonus grants and activation events.
 - `php artisan requests:clear-pending`: Clear unfulfilled pending SIM, Loan, POS, or Travel requests.
 - `php artisan webhooks:clear-logs`: Purge webhook logs with provider/status filters.
+- `php artisan tickets:clear`: Clear support tickets and messages with status/category filters.
 
 See [Admin Maintenance Commands Documentation](docs/admin-maintenance-commands.md) for full parameters, safety flags, and examples.
 
