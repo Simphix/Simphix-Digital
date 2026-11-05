@@ -25,20 +25,45 @@
                         <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 font-display tracking-tight">
                             Travel &amp; Tours Requests Desk
                         </h1>
+                        <p class="text-xs text-slate-500 mt-0.5">
+                            Manage traveler requests, visa applications, and configure public catalog packages.
+                        </p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="flex flex-wrap items-center gap-2.5 shrink-0">
                     <a href="{{ route('travel.index') }}" target="_blank"
-                       class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition">
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition">
                         <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-400"></i>
-                        <span>View Customer Catalog</span>
+                        <span>Customer Catalog</span>
+                    </a>
+                    <a href="{{ route('admin.travel-requests.packages.index') }}"
+                       class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-[#0056D2] text-white text-xs sm:text-sm font-bold shadow-sm transition">
+                        <i data-lucide="package" class="w-4 h-4"></i>
+                        <span>Configure Packages ({{ \App\Models\TravelPackage::count() }})</span>
                     </a>
                 </div>
             </div>
 
+            <!-- Main Desk Navigation Tabs -->
+            <div class="flex items-center gap-2 border-b border-slate-100 pt-6 mt-4">
+                <a href="{{ route('admin.travel-requests.index') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-[#0056D2] text-[#0056D2] transition">
+                    <i data-lucide="inbox" class="w-4 h-4"></i>
+                    <span>Travel Requests</span>
+                    <span class="ml-1 px-2 py-0.5 text-[10px] rounded-full bg-blue-50 text-[#0056D2] font-bold">
+                        {{ $stats['total'] }}
+                    </span>
+                </a>
+                <a href="{{ route('admin.travel-requests.packages.index') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition">
+                    <i data-lucide="package-check" class="w-4 h-4"></i>
+                    <span>Configurable Packages</span>
+                </a>
+            </div>
+
             <!-- KPI Cards Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 pt-6 border-t border-slate-100">
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 pt-2">
                 <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Inquiries</span>
                     <span class="text-xl font-bold font-display text-slate-900 mt-1 block">{{ number_format($stats['total']) }}</span>
@@ -48,7 +73,7 @@
                     <span class="text-xl font-bold font-display text-amber-900 mt-1 block">{{ number_format($stats['pending']) }}</span>
                 </div>
                 <div class="bg-blue-50/60 rounded-xl p-3.5 border border-blue-200/60">
-                    <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">In Review / Contacted</span>
+                    <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">Customer Will Be Contacted</span>
                     <span class="text-xl font-bold font-display text-blue-900 mt-1 block">{{ number_format($stats['active']) }}</span>
                 </div>
                 <div class="bg-emerald-50/60 rounded-xl p-3.5 border border-emerald-200/60">

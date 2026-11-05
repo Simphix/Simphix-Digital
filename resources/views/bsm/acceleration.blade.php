@@ -251,7 +251,7 @@
                 </button>
             </div>
 
-            <form method="GET" action="{{ route('bsm.reports.acceleration.export') }}" target="_blank" class="space-y-4">
+            <form method="GET" action="{{ route('bsm.reports.acceleration.export') }}" @submit="showExportModal = false" class="space-y-4">
                 <!-- Date Range Selector -->
                 <div class="space-y-1.5">
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Reporting Period</label>

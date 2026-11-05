@@ -438,9 +438,19 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::delete('/{registration}/documents/{document}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'destroyDocument'])->name('documents.destroy');
     });
 
-    // Travel & Tours Requests (Super Admin)
+    // Travel & Tours Requests & Packages (Super Admin)
     Route::prefix('admin/travel-requests')->name('admin.travel-requests.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'index'])->name('index');
+
+        // Configurable Traveling Packages
+        Route::get('/packages', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'index'])->name('packages.index');
+        Route::get('/packages/create', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'create'])->name('packages.create');
+        Route::post('/packages', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'store'])->name('packages.store');
+        Route::get('/packages/{travelPackage}/edit', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'edit'])->name('packages.edit');
+        Route::put('/packages/{travelPackage}', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'update'])->name('packages.update');
+        Route::patch('/packages/{travelPackage}/toggle-status', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'toggleStatus'])->name('packages.toggle-status');
+        Route::delete('/packages/{travelPackage}', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'destroy'])->name('packages.destroy');
+
         Route::get('/{travelRequest}', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'show'])->name('show');
         Route::patch('/{travelRequest}/status', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'updateStatus'])->name('update-status');
     });

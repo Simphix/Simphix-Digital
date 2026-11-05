@@ -51,7 +51,7 @@
 
         <!-- Request Form Card -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8" x-data="{ quantity: 1, unitPrice: {{ isset($unitPrice) ? (float) $unitPrice : 0 }} }">
-            <form action="{{ route('sims.request') }}" method="POST" class="space-y-5">
+            <form action="{{ route('sims.request') }}" method="POST" autocomplete="off" class="space-y-5">
                 @csrf
                 <input type="hidden" name="category" value="{{ $category }}">
 

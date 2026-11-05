@@ -79,7 +79,10 @@ class SimsOperationsDashboardController extends Controller
                 fclose($output);
             }
         }, 'activated-sim-numbers-' . now()->format('Y-m-d') . '.csv', [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Type'  => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma'        => 'public',
+            'Expires'       => '0',
         ]);
     }
 
@@ -91,7 +94,8 @@ class SimsOperationsDashboardController extends Controller
 
         $rows = $this->activationEvents($base, $rangeStart, $rangeEnd)->get();
 
-        $csv = "Date,Sim Number,Category,Provider,Activated For,Territory,Activated By\n";
+        $csv = "\xEF\xBB\xBF"; // UTF-8 BOM for Microsoft Excel & all browsers
+        $csv .= "Date,Sim Number,Category,Provider,Activated For,Territory,Activated By\n";
         foreach ($rows as $history) {
             $sim = $history->sim;
             $jurisdiction = $this->resolveJurisdictionLabel($sim);
@@ -106,9 +110,15 @@ class SimsOperationsDashboardController extends Controller
             ])) . "\n";
         }
 
+        $filename = 'sim-activations-' . now()->format('Y-m-d') . '.csv';
+
         return response($csv, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="sim-activations-' . now()->format('Y-m-d') . '.csv"',
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filename,
+            'Content-Length'      => strlen($csv),
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma'              => 'public',
+            'Expires'             => '0',
         ]);
     }
 
@@ -122,7 +132,8 @@ class SimsOperationsDashboardController extends Controller
         $filters = $this->resolveActivationBonusFilters($request);
         $rows = $this->activationBonusQuery($filters)->get();
 
-        $csv = "Date,Phone Number,Network,Status,Amount,Reason,Old Balance,New Balance,Ref,Owner,Resolved At\n";
+        $csv = "\xEF\xBB\xBF"; // UTF-8 BOM for Microsoft Excel & all browsers
+        $csv .= "Date,Phone Number,Network,Status,Amount,Reason,Old Balance,New Balance,Ref,Owner,Resolved At\n";
         foreach ($rows as $report) {
             $csv .= implode(',', array_map(fn ($v) => '"' . str_replace('"', '""', (string) $v) . '"', [
                 $report->created_at->toDateTimeString(),
@@ -139,9 +150,15 @@ class SimsOperationsDashboardController extends Controller
             ])) . "\n";
         }
 
+        $filename = 'activation-bonus-operations-' . now()->format('Y-m-d') . '.csv';
+
         return response($csv, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="activation-bonus-operations-' . now()->format('Y-m-d') . '.csv"',
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filename,
+            'Content-Length'      => strlen($csv),
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma'              => 'public',
+            'Expires'             => '0',
         ]);
     }
 

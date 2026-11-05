@@ -50,7 +50,7 @@
                     <span class="text-xl font-bold font-display text-slate-900 mt-1 block">{{ number_format($stats['total']) }}</span>
                 </div>
                 <div class="bg-amber-50/60 rounded-xl p-3.5 border border-amber-200/60">
-                    <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Pending Review</span>
+                    <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Processing</span>
                     <span class="text-xl font-bold font-display text-amber-900 mt-1 block">{{ number_format($stats['pending']) }}</span>
                 </div>
                 <div class="bg-blue-50/60 rounded-xl p-3.5 border border-blue-200/60">

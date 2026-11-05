@@ -500,6 +500,9 @@
                         maxSelect: 50,
                         loading: false,
                         search: '{{ addslashes(request('search', '')) }}',
+                        name: '{{ addslashes(request('name', '')) }}',
+                        email: '{{ addslashes(request('email', '')) }}',
+                        phone: '{{ addslashes(request('phone', '')) }}',
                         category: '{{ addslashes(request('category', '')) }}',
                         provider: '{{ addslashes(request('provider', '')) }}',
                         status: '{{ addslashes(request('status', '')) }}',
@@ -615,6 +618,9 @@
                                 if (!url) {
                                     const params = new URLSearchParams();
                                     if (this.search && this.search.trim()) params.append('search', this.search.trim());
+                                    if (this.name && this.name.trim()) params.append('name', this.name.trim());
+                                    if (this.email && this.email.trim()) params.append('email', this.email.trim());
+                                    if (this.phone && this.phone.trim()) params.append('phone', this.phone.trim());
                                     if (this.category) params.append('category', this.category);
                                     if (this.provider) params.append('provider', this.provider);
                                     if (this.status) params.append('status', this.status);
@@ -662,6 +668,9 @@
 
                         resetFilters() {
                             this.search = '';
+                            this.name = '';
+                            this.email = '';
+                            this.phone = '';
                             this.category = '';
                             this.provider = '';
                             this.status = '';
@@ -708,48 +717,77 @@
                     </div>
 
                     <!-- Filter Form -->
-                    <form @submit.prevent="fetchInventory()" class="grid grid-cols-1 sm:grid-cols-5 gap-3 bg-slate-50 p-3 rounded-2xl">
-                        <div>
-                            <x-text-input type="text" x-model="search" @keydown.enter.prevent="fetchInventory()"
-                                   class="rounded-xl !text-xs" placeholder="Search Number..." />
+                    <form @submit.prevent="fetchInventory()" class="space-y-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/60">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Search SIM / All</label>
+                                <x-text-input type="text" x-model="search" @keydown.enter.prevent="fetchInventory()"
+                                       class="rounded-xl !text-xs w-full" placeholder="Search Number, Name, Email, Phone..." />
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Holder / Customer Name</label>
+                                <x-text-input type="text" x-model="name" @keydown.enter.prevent="fetchInventory()"
+                                       class="rounded-xl !text-xs w-full" placeholder="Filter by Name..." />
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Email</label>
+                                <x-text-input type="text" x-model="email" @keydown.enter.prevent="fetchInventory()"
+                                       class="rounded-xl !text-xs w-full" placeholder="Filter by Email..." />
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Phone</label>
+                                <x-text-input type="text" x-model="phone" @keydown.enter.prevent="fetchInventory()"
+                                       class="rounded-xl !text-xs w-full" placeholder="Filter by Phone..." />
+                            </div>
                         </div>
-                        <div>
-                            <x-select-input x-model="category" @change="fetchInventory()" class="rounded-xl !text-xs">
-                                <option value="">Category</option>
-                                @foreach ($categories as $cat)
-                                    <option value="{{ $cat }}">{{ $cat }}</option>
-                                @endforeach
-                            </x-select-input>
-                        </div>
-                        <div>
-                            <x-select-input x-model="provider" @change="fetchInventory()" class="rounded-xl !text-xs">
-                                <option value="">Network</option>
-                                @foreach ($providers as $prov)
-                                    <option value="{{ $prov }}">{{ strtoupper($prov) }}</option>
-                                @endforeach
-                            </x-select-input>
-                        </div>
-                        <div>
-                            <x-select-input x-model="status" @change="fetchInventory()" class="rounded-xl !text-xs">
-                                <option value="">Status</option>
-                                <option value="UNASSIGNED">NOT ASSIGNED</option>
-                                <option value="ASSIGNED_TO_RM">ASSIGNED TO REGIONAL MANAGER</option>
-                                <option value="ASSIGNED_TO_COORDINATOR">ASSIGNED TO COORDINATOR</option>
-                                <option value="ASSIGNED_TO_PARTNER">ASSIGNED TO PARTNER</option>
-                                <option value="ACTIVATED">ACTIVATED</option>
-                                <option value="DEACTIVATED">DEACTIVATED</option>
-                                <option value="SUSPENDED">SUSPENDED</option>
-                            </x-select-input>
-                        </div>
-                        <div class="flex gap-2">
-                            <x-primary-button type="submit" x-bind:disabled="loading" class="flex-1 !py-2 !px-3 !text-xs disabled:opacity-50">
-                                <span x-show="!loading">Filter</span>
-                                <span x-show="loading" x-cloak class="flex items-center gap-1">
-                                    <svg class="animate-spin w-3 h-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    Filtering…
-                                </span>
-                            </x-primary-button>
-                            <button type="button" @click="resetFilters()" :disabled="loading" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-2 px-3 rounded-xl flex items-center justify-center transition-colors disabled:opacity-50">Reset</button>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-0.5">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Category</label>
+                                <x-select-input x-model="category" @change="fetchInventory()" class="rounded-xl !text-xs w-full">
+                                    <option value="">All Categories</option>
+                                    @foreach ($categories as $cat)
+                                        <option value="{{ $cat }}">{{ $cat }}</option>
+                                    @endforeach
+                                </x-select-input>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Network</label>
+                                <x-select-input x-model="provider" @change="fetchInventory()" class="rounded-xl !text-xs w-full">
+                                    <option value="">All Networks</option>
+                                    @foreach ($providers as $prov)
+                                        <option value="{{ $prov }}">{{ strtoupper($prov) }}</option>
+                                    @endforeach
+                                </x-select-input>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Status / Role</label>
+                                <x-select-input x-model="status" @change="fetchInventory()" class="rounded-xl !text-xs w-full">
+                                    <option value="">All Statuses / Roles</option>
+                                    <option value="UNASSIGNED">NOT ASSIGNED</option>
+                                    <option value="ASSIGNED_TO_BSM">ASSIGNED TO BSM</option>
+                                    <option value="ASSIGNED_TO_RM">ASSIGNED TO REGIONAL MANAGER</option>
+                                    <option value="ASSIGNED_TO_COORDINATOR">ASSIGNED TO COORDINATOR</option>
+                                    <option value="ASSIGNED_TO_PARTNER">ASSIGNED TO PARTNER</option>
+                                    <option value="ASSIGNED_TO_BUSINESS">ASSIGNED TO BUSINESS</option>
+                                    <option value="ASSIGNED_TO_BUSINESS_AGENT">ASSIGNED TO BUSINESS AGENT</option>
+                                    <option value="ACTIVATED">ACTIVATED</option>
+                                    <option value="DEACTIVATED">DEACTIVATED</option>
+                                    <option value="SUSPENDED">SUSPENDED</option>
+                                </x-select-input>
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <x-primary-button type="submit" x-bind:disabled="loading" class="flex-1 !py-2.5 !px-3 !text-xs disabled:opacity-50 h-[38px] justify-center">
+                                    <span x-show="!loading" class="flex items-center gap-1.5">
+                                        <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                                        Filter
+                                    </span>
+                                    <span x-show="loading" x-cloak class="flex items-center gap-1">
+                                        <svg class="animate-spin w-3 h-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        Filtering…
+                                    </span>
+                                </x-primary-button>
+                                <button type="button" @click="resetFilters()" :disabled="loading" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-2.5 px-3 rounded-xl flex items-center justify-center transition-colors disabled:opacity-50 h-[38px]">Reset</button>
+                            </div>
                         </div>
                     </form>
 

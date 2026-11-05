@@ -21,7 +21,7 @@ class MoniepointPosRequest extends Model
     public const STATUSES = [
         self::STATUS_PENDING      => 'Pending Review',
         self::STATUS_UNDER_REVIEW => 'Under Review',
-        self::STATUS_CONTACTED    => 'Customer Contacted',
+        self::STATUS_CONTACTED    => 'Customer Will Be Contacted',
         self::STATUS_DISPATCHED   => 'Dispatched / In Transit',
         self::STATUS_DELIVERED    => 'Delivered & Activated',
         self::STATUS_DECLINED     => 'Declined',

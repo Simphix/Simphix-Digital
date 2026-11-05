@@ -30,9 +30,26 @@ class TravelPackage extends Model
         'is_active'   => 'boolean',
     ];
 
+    public const CATEGORIES = [
+        'umrah'         => 'Umrah Package',
+        'hajj'          => 'Hajj Pilgrimage',
+        'international' => 'International Travel',
+        'custom'        => 'Custom Travel',
+    ];
+
     public function requests(): HasMany
     {
         return $this->hasMany(TravelRequest::class);
+    }
+
+    public function getCategoryLabelAttribute(): string
+    {
+        return self::CATEGORIES[$this->category] ?? ucfirst($this->category);
+    }
+
+    public function getHighlightsTextAttribute(): string
+    {
+        return is_array($this->highlights) ? implode("\n", $this->highlights) : '';
     }
 
     public function scopeActive($query)

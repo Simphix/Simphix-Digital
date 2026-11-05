@@ -80,7 +80,11 @@ class SalesPerformanceController extends Controller
 
             return response($pdfContent, 200, [
                 'Content-Type'        => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filename,
+                'Content-Length'      => strlen($pdfContent),
+                'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+                'Pragma'              => 'public',
+                'Expires'             => '0',
             ]);
         }
 
@@ -166,7 +170,11 @@ class SalesPerformanceController extends Controller
 
         return response($csv, 200, [
             'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filename,
+            'Content-Length'      => strlen($csv),
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma'              => 'public',
+            'Expires'             => '0',
         ]);
     }
 

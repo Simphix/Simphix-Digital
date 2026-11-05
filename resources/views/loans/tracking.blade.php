@@ -84,9 +84,9 @@
                 <!-- Progress Stepper -->
                 @php
                     $steps = [
-                        'pending'      => ['label' => 'Application Submitted', 'desc' => 'Logged into assessment pipeline'],
+                        'pending'      => ['label' => 'Processing', 'desc' => 'Logged into assessment pipeline'],
                         'under_review' => ['label' => 'Credit Review', 'desc' => 'Turnover analysis in progress'],
-                        'contacted'    => ['label' => 'Officer Verification', 'desc' => 'Credit officer reached out'],
+                        'contacted'    => ['label' => 'Customer Will Be Contacted', 'desc' => 'Credit officer will reach out'],
                         'approved'     => ['label' => 'Approved', 'desc' => 'Loan facility sanctioned'],
                         'disbursed'    => ['label' => 'Disbursed', 'desc' => 'Funds credited to Moniepoint wallet'],
                     ];
