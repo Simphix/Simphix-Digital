@@ -67,8 +67,11 @@
                             };
                         @endphp
                         @if ($holder)
-                            <span class="font-semibold text-slate-800 block">{{ $holder->first_name }} {{ $holder->last_name }}</span>
-                            <span class="block text-[11px] text-slate-500 capitalize">{{ str_replace('_', ' ', $holder->role) }}</span>
+                            @php
+                                $holderName = $holder->business_name ?: trim(($holder->first_name ?? '') . ' ' . ($holder->last_name ?? '')) ?: ($holder->name ?? 'User #' . $holder->id);
+                            @endphp
+                            <span class="font-semibold text-slate-800 block">{{ $holderName }}</span>
+                            <span class="block text-[11px] text-slate-500 capitalize">{{ str_replace('_', ' ', $holder->role ?? '') }}</span>
                             @if ($holder->phone || $holder->email)
                                 <span class="block text-[11px] text-slate-400">{{ $holder->phone ?? $holder->email }}</span>
                             @endif

@@ -4,6 +4,8 @@ use App\Models\Service;
 use App\Models\ServiceField;
 use App\Models\ServicePrice;
 use App\Models\Sim;
+use App\Models\SimRequest;
+use App\Models\SimSwapRequest;
 use App\Models\User;
 use App\Support\SimStatus;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -198,4 +200,36 @@ test('admin can download bulk upload sample excel file with valid headers', func
     $response->assertOk();
     $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     $this->assertStringContainsString('sim_bulk_upload_sample.xlsx', (string) $response->headers->get('Content-Disposition'));
+});
+
+test('admin sim-plan index view does not crash when request user is null or deleted', function () {
+    \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+    $orphanedUserId = 999999;
+
+    SimRequest::create([
+        'user_id' => $orphanedUserId,
+        'request_type' => 'purchase',
+        'category' => 'POS SIM',
+        'provider' => 'mtn',
+        'quantity' => 5,
+        'amount' => 5000,
+        'status' => 'pending',
+    ]);
+
+    SimRequest::create([
+        'user_id' => $orphanedUserId,
+        'request_type' => 'activation',
+        'category' => 'POS SIM',
+        'provider' => 'glo',
+        'number' => '08051112233',
+        'amount' => 1000,
+        'status' => 'approved',
+    ]);
+
+    $response = $this->actingAs($this->admin)->get(route('admin.sim-plan.index'));
+
+    \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+
+    $response->assertOk();
+    $response->assertSee('Deleted User (#999999)');
 });

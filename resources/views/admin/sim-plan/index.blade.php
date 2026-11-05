@@ -363,8 +363,13 @@
                                 @forelse ($pendingRequests as $req)
                                     <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                                         <td class="py-3">
-                                            <span class="font-bold text-slate-700">{{ $req->user->first_name }} {{ $req->user->last_name }}</span>
-                                            <span class="block text-xs text-slate-400">{{ $req->user->role }}</span>
+                                            @php
+                                                $reqUser = $req->user;
+                                                $reqUserName = $reqUser ? ($reqUser->business_name ?: trim(($reqUser->first_name ?? '') . ' ' . ($reqUser->last_name ?? '')) ?: ($reqUser->name ?? 'User #' . $req->user_id)) : 'Deleted User (#' . $req->user_id . ')';
+                                                $reqUserRole = $reqUser?->role ? str_replace('_', ' ', $reqUser->role) : 'N/A';
+                                            @endphp
+                                            <span class="font-bold text-slate-700">{{ $reqUserName }}</span>
+                                            <span class="block text-xs text-slate-400 capitalize">{{ $reqUserRole }}</span>
                                         </td>
                                         <td class="py-3 font-semibold text-slate-800">
                                             @if ($req->request_type === 'purchase')
@@ -385,8 +390,11 @@
                                         <td class="py-3">
                                             <span class="font-bold text-slate-700">₦{{ number_format($req->amount, 2) }}</span>
                                             @if ($req->upline)
+                                                @php
+                                                    $uplineName = $req->upline->business_name ?: trim(($req->upline->first_name ?? '') . ' ' . ($req->upline->last_name ?? '')) ?: ($req->upline->name ?? 'Upline #' . $req->upline_id);
+                                                @endphp
                                                 <span class="block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 w-fit">
-                                                    Routed to: {{ $req->upline->first_name }} {{ $req->upline->last_name }}
+                                                    Routed to: {{ $uplineName }}
                                                 </span>
                                             @endif
                                         </td>
@@ -460,8 +468,13 @@
                                 @forelse ($resolvedRequests as $req)
                                     <tr class="border-b border-slate-50">
                                         <td class="py-3">
-                                            <span class="font-bold text-slate-700">{{ $req->user->first_name }} {{ $req->user->last_name }}</span>
-                                            <span class="block text-xs text-slate-400">{{ $req->user->role }}</span>
+                                            @php
+                                                $reqUser = $req->user;
+                                                $reqUserName = $reqUser ? ($reqUser->business_name ?: trim(($reqUser->first_name ?? '') . ' ' . ($reqUser->last_name ?? '')) ?: ($reqUser->name ?? 'User #' . $req->user_id)) : 'Deleted User (#' . $req->user_id . ')';
+                                                $reqUserRole = $reqUser?->role ? str_replace('_', ' ', $reqUser->role) : 'N/A';
+                                            @endphp
+                                            <span class="font-bold text-slate-700">{{ $reqUserName }}</span>
+                                            <span class="block text-xs text-slate-400 capitalize">{{ $reqUserRole }}</span>
                                         </td>
                                         <td class="py-3 font-semibold text-slate-800">
                                             @if ($req->request_type === 'purchase')
@@ -506,7 +519,10 @@
                         category: '{{ addslashes(request('category', '')) }}',
                         provider: '{{ addslashes(request('provider', '')) }}',
                         status: '{{ addslashes(request('status', '')) }}',
-                        assignableUsersMap: {{ \Illuminate\Support\Js::from($assignableUsers->mapWithKeys(fn ($au) => [trim($au->first_name . ' ' . $au->last_name) . ' · ' . ($au->phone ?? '') . ' (' . $au->role . ') #' . $au->id => $au->id]))->toHtml() }},
+                        assignableUsersMap: {{ \Illuminate\Support\Js::from($assignableUsers->mapWithKeys(function ($au) {
+                            $name = $au->business_name ?: trim(($au->first_name ?? '') . ' ' . ($au->last_name ?? '')) ?: ($au->name ?? 'User #' . $au->id);
+                            return [$name . ' · ' . ($au->phone ?? '') . ' (' . str_replace('_', ' ', $au->role ?? 'user') . ') #' . $au->id => $au->id];
+                        }))->toHtml() }},
 
                         toggleAll(checked) {
                             if (checked) {
@@ -542,7 +558,10 @@
                                         <input type='text' id='swal_user_id' list='swal_user_id_list' autocomplete='off' placeholder='Start typing a name or phone…' class='w-full py-2.5 px-3 border rounded-xl font-medium text-slate-700'>
                                         <datalist id='swal_user_id_list'>
                                             @foreach ($assignableUsers as $au)
-                                                <option value='{{ trim($au->first_name . " " . $au->last_name) }} · {{ $au->phone }} ({{ $au->role }}) #{{ $au->id }}'></option>
+                                                @php
+                                                    $auName = $au->business_name ?: trim(($au->first_name ?? '') . ' ' . ($au->last_name ?? '')) ?: ($au->name ?? 'User #' . $au->id);
+                                                @endphp
+                                                <option value='{{ $auName }} · {{ $au->phone ?? "" }} ({{ str_replace("_", " ", $au->role ?? "user") }}) #{{ $au->id }}'></option>
                                             @endforeach
                                         </datalist>
                                     </div>
@@ -579,7 +598,10 @@
                                         <input type='text' id='bulk_user_id' list='bulk_user_id_list' autocomplete='off' placeholder='Start typing a name or phone…' class='w-full py-2.5 px-3 border rounded-xl font-medium text-slate-700'>
                                         <datalist id='bulk_user_id_list'>
                                             @foreach ($assignableUsers as $au)
-                                                <option value='{{ trim($au->first_name . " " . $au->last_name) }} · {{ $au->phone }} ({{ $au->role }}) #{{ $au->id }}'></option>
+                                                @php
+                                                    $auName = $au->business_name ?: trim(($au->first_name ?? '') . ' ' . ($au->last_name ?? '')) ?: ($au->name ?? 'User #' . $au->id);
+                                                @endphp
+                                                <option value='{{ $auName }} · {{ $au->phone ?? "" }} ({{ str_replace("_", " ", $au->role ?? "user") }}) #{{ $au->id }}'></option>
                                             @endforeach
                                         </datalist>
                                     </div>
@@ -819,16 +841,28 @@
                                             <span class="block text-xs text-slate-400">{{ $swap->sim->category ?? '' }} / {{ strtoupper($swap->sim->provider ?? '') }}</span>
                                         </td>
                                         <td class="py-3">
-                                            <span class="font-bold text-slate-700">{{ $swap->requester->first_name ?? '' }} {{ $swap->requester->last_name ?? '' }}</span>
-                                            <span class="block text-xs text-slate-400">{{ $swap->requester->role ?? '' }}</span>
+                                            @php
+                                                $reqUser = $swap->requester;
+                                                $reqUserName = $reqUser ? ($reqUser->business_name ?: trim(($reqUser->first_name ?? '') . ' ' . ($reqUser->last_name ?? '')) ?: ($reqUser->name ?? 'User #' . $swap->requester_id)) : 'N/A';
+                                            @endphp
+                                            <span class="font-bold text-slate-700">{{ $reqUserName }}</span>
+                                            <span class="block text-xs text-slate-400 capitalize">{{ str_replace('_', ' ', $reqUser->role ?? '') }}</span>
                                         </td>
                                         <td class="py-3">
-                                            <span class="font-semibold text-slate-700">{{ $swap->fromHolder->first_name ?? '' }} {{ $swap->fromHolder->last_name ?? '' }}</span>
-                                            <span class="block text-xs text-slate-400 capitalize">{{ $swap->holder_role }}</span>
+                                            @php
+                                                $fromUser = $swap->fromHolder;
+                                                $fromName = $fromUser ? ($fromUser->business_name ?: trim(($fromUser->first_name ?? '') . ' ' . ($fromUser->last_name ?? '')) ?: ($fromUser->name ?? 'User #' . $swap->from_holder_id)) : 'N/A';
+                                            @endphp
+                                            <span class="font-semibold text-slate-700">{{ $fromName }}</span>
+                                            <span class="block text-xs text-slate-400 capitalize">{{ str_replace('_', ' ', $swap->holder_role ?? '') }}</span>
                                         </td>
                                         <td class="py-3">
-                                            <span class="font-semibold text-slate-700">{{ $swap->toHolder->first_name ?? '' }} {{ $swap->toHolder->last_name ?? '' }}</span>
-                                            <span class="block text-xs text-slate-400 capitalize">{{ $swap->holder_role }}</span>
+                                            @php
+                                                $toUser = $swap->toHolder;
+                                                $toName = $toUser ? ($toUser->business_name ?: trim(($toUser->first_name ?? '') . ' ' . ($toUser->last_name ?? '')) ?: ($toUser->name ?? 'User #' . $swap->to_holder_id)) : 'N/A';
+                                            @endphp
+                                            <span class="font-semibold text-slate-700">{{ $toName }}</span>
+                                            <span class="block text-xs text-slate-400 capitalize">{{ str_replace('_', ' ', $swap->holder_role ?? '') }}</span>
                                         </td>
                                         <td class="py-3 text-right space-x-1 whitespace-nowrap">
                                             <form action="{{ route('admin.sim-plan.swaps.approve', $swap->id) }}" method="POST" class="inline-block">
@@ -884,8 +918,14 @@
                                     @foreach ($resolvedSwaps as $swap)
                                         <tr class="border-b border-slate-50">
                                             <td class="py-3 font-semibold text-slate-800">{{ $swap->sim->number ?? 'N/A' }}</td>
-                                            <td class="py-3 text-slate-600">{{ $swap->fromHolder->first_name ?? '' }} {{ $swap->fromHolder->last_name ?? '' }}</td>
-                                            <td class="py-3 text-slate-600">{{ $swap->toHolder->first_name ?? '' }} {{ $swap->toHolder->last_name ?? '' }}</td>
+                                            @php
+                                                $fromUser = $swap->fromHolder;
+                                                $fromName = $fromUser ? ($fromUser->business_name ?: trim(($fromUser->first_name ?? '') . ' ' . ($fromUser->last_name ?? '')) ?: ($fromUser->name ?? 'User #' . $swap->from_holder_id)) : 'N/A';
+                                                $toUser = $swap->toHolder;
+                                                $toName = $toUser ? ($toUser->business_name ?: trim(($toUser->first_name ?? '') . ' ' . ($toUser->last_name ?? '')) ?: ($toUser->name ?? 'User #' . $swap->to_holder_id)) : 'N/A';
+                                            @endphp
+                                            <td class="py-3 text-slate-600">{{ $fromName }}</td>
+                                            <td class="py-3 text-slate-600">{{ $toName }}</td>
                                             <td class="py-3">
                                                 <span class="px-2 py-0.5 rounded-full text-xs font-bold {{ $swap->status === 'approved' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600' }}">
                                                     {{ $swap->status }}
