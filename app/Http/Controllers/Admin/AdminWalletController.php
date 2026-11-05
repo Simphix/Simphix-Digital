@@ -45,6 +45,7 @@ class AdminWalletController extends Controller
         $welfareWallet = PlatformWallet::forType(PlatformWallet::TYPE_WELFARE, 'Platform Welfare Wallet');
         $utilitiesWallet = PlatformWallet::forType(PlatformWallet::TYPE_UTILITIES_REVENUE, 'Utilities Revenue Wallet');
         $simActivationWallet = PlatformWallet::forType(PlatformWallet::TYPE_SIM_ACTIVATION, 'SIM Activation Wallet');
+        $cashoutChargesWallet = PlatformWallet::forType(PlatformWallet::TYPE_CASHOUT_CHARGES, 'Cashout Charges Wallet');
 
         $welfareSettings = PlatformWelfareSettings::current();
         $welfareConfigured = $welfareSettings->is_active && $welfareSettings->amount_per_activation > 0;
@@ -57,6 +58,7 @@ class AdminWalletController extends Controller
             'welfareWallet',
             'utilitiesWallet',
             'simActivationWallet',
+            'cashoutChargesWallet',
             'welfareConfigured'
         ));
     }

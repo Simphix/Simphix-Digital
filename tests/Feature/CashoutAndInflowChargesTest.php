@@ -263,3 +263,74 @@ test('super admin can update cashout charges and money inflow charges settings',
     expect((float) $settings->inflow_threshold_fee)->toBe(100.00);
     expect($settings->inflow_threshold_description)->toBe('Government Stamp Levy');
 });
+
+test('cashout approval credits base fee and threshold tax to admin cashout charges wallet', function () {
+    $settings = CashoutSettings::current();
+    $settings->update([
+        'is_enabled' => true,
+        'cashout_fee' => 25.00,
+        'cashout_fee_type' => 'fixed',
+        'cashout_fee_description' => 'Transfer Processing Fee',
+        'cashout_threshold_amount' => 5000.00,
+        'cashout_threshold_fee' => 50.00,
+        'cashout_threshold_description' => 'Stamp Duty Levy',
+    ]);
+
+    $user = createTestUser('coordinator', 50000.00);
+    $admin = createTestUser('super_admin');
+
+    // 1. Submit cashout for 10,000 (total required: 10,000 + 25 fee + 50 tax = 10,075)
+    $this->actingAs($user)->post(route('withdraw.process'), [
+        'amount' => 10000.00,
+        'pin' => '1234',
+    ])->assertRedirect();
+
+    $cashOutReq = CashOutRequest::where('user_id', $user->id)->latest()->first();
+    expect($cashOutReq)->not->toBeNull();
+    expect((float) $cashOutReq->fee)->toBe(25.00);
+    expect((float) $cashOutReq->tax)->toBe(50.00);
+
+    // Initial platform charges wallet should be 0 before approval
+    $chargesWalletBefore = \App\Models\PlatformWallet::where('type', \App\Models\PlatformWallet::TYPE_CASHOUT_CHARGES)->first();
+    $initialBalance = $chargesWalletBefore ? (float) $chargesWalletBefore->balance : 0.00;
+
+    // 2. Mock PalmPay payout success and approve cashout
+    $this->mock(\App\Services\PalmPayService::class, function ($mock) {
+        $mock->shouldReceive('transfer')->andReturn([
+            'respCode' => '00000000',
+            'respMsg' => 'Transfer success',
+        ]);
+    });
+
+    $res = $this->actingAs($admin)->post(route('admin.cash-out.approve', $cashOutReq));
+    $res->assertSessionHas('success');
+
+    // 3. Verify Admin Cashout Charges Wallet was credited with both fee (25) and tax (50)
+    $chargesWallet = \App\Models\PlatformWallet::where('type', \App\Models\PlatformWallet::TYPE_CASHOUT_CHARGES)->first();
+    expect($chargesWallet)->not->toBeNull();
+    expect((float) $chargesWallet->balance)->toBe($initialBalance + 75.00);
+
+    // 4. Verify PlatformWalletTransaction entries exist
+    $feeTx = \App\Models\PlatformWalletTransaction::where('platform_wallet_id', $chargesWallet->id)
+        ->where('source', 'cashout_fee')
+        ->latest('id')
+        ->first();
+    expect($feeTx)->not->toBeNull();
+    expect((float) $feeTx->amount)->toBe(25.00);
+
+    $taxTx = \App\Models\PlatformWalletTransaction::where('platform_wallet_id', $chargesWallet->id)
+        ->where('source', 'cashout_tax')
+        ->latest('id')
+        ->first();
+    expect($taxTx)->not->toBeNull();
+    expect((float) $taxTx->amount)->toBe(50.00);
+
+    // 5. Verify the Admin Wallet dashboard and Settings views display the charges wallet
+    $this->actingAs($admin)->get(route('admin.manage.adminwallet'))
+        ->assertOk()
+        ->assertSee('Cashout Charges Wallet');
+
+    $this->actingAs($admin)->get(route('admin.cash-out.settings.edit'))
+        ->assertOk()
+        ->assertSee('Cashout Charges Wallet Balance');
+});
