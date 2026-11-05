@@ -128,42 +128,47 @@ class RemoveEnterprisePartnersCommand extends Command
 
         $this->output->write('Purging Enterprise Partners and associated SIMs... ');
 
-        DB::transaction(function () use ($epUserIds, $businessAgentUserIds, $allTargetUserIds, $simQuery) {
-            $simIds = (clone $simQuery)->pluck('id');
+        Schema::disableForeignKeyConstraints();
+        try {
+            DB::transaction(function () use ($epUserIds, $businessAgentUserIds, $allTargetUserIds, $simQuery) {
+                $simIds = (clone $simQuery)->pluck('id');
 
-            // Delete SIM dependent records in chunks
-            foreach ($simIds->chunk(500) as $chunkIds) {
-                SimCustomer::whereIn('sim_id', $chunkIds)->delete();
-                SimHistory::whereIn('sim_id', $chunkIds)->delete();
-                SimActivationBonusGrant::whereIn('sim_id', $chunkIds)->delete();
-                SimSwapRequest::whereIn('sim_id', $chunkIds)->delete();
-                SimRequest::whereIn('sim_id', $chunkIds)->delete();
-                Sim::whereIn('id', $chunkIds)->delete();
-            }
+                // Delete SIM dependent records in chunks
+                foreach ($simIds->chunk(500) as $chunkIds) {
+                    SimCustomer::whereIn('sim_id', $chunkIds)->delete();
+                    SimHistory::whereIn('sim_id', $chunkIds)->delete();
+                    SimActivationBonusGrant::whereIn('sim_id', $chunkIds)->delete();
+                    SimSwapRequest::whereIn('sim_id', $chunkIds)->delete();
+                    SimRequest::whereIn('sim_id', $chunkIds)->delete();
+                    Sim::whereIn('id', $chunkIds)->delete();
+                }
 
-            // Delete Enterprise Partner specific application and payment records
-            $appIds = EnterprisePartnerApplication::whereIn('user_id', $epUserIds)->pluck('id');
-            EnterprisePartnerApplicationItem::whereIn('application_id', $appIds)->delete();
-            EnterprisePartnerApplication::whereIn('id', $appIds)->delete();
-            EnterprisePartnerPayment::whereIn('user_id', $epUserIds)->delete();
-            BusinessCommissionRate::whereIn('business_id', $epUserIds)->delete();
+                // Delete Enterprise Partner specific application and payment records
+                $appIds = EnterprisePartnerApplication::whereIn('user_id', $epUserIds)->pluck('id');
+                EnterprisePartnerApplicationItem::whereIn('application_id', $appIds)->delete();
+                EnterprisePartnerApplication::whereIn('id', $appIds)->delete();
+                EnterprisePartnerPayment::whereIn('user_id', $epUserIds)->delete();
+                BusinessCommissionRate::whereIn('business_id', $epUserIds)->delete();
 
-            // Clean user financial records and authentication references
-            Transaction::whereIn('user_id', $allTargetUserIds)->delete();
-            Wallet::whereIn('user_id', $allTargetUserIds)->delete();
-            VirtualAccount::whereIn('user_id', $allTargetUserIds)->delete();
-            DeviceVerificationChallenge::whereIn('user_id', $allTargetUserIds)->delete();
-            TrustedDevice::whereIn('user_id', $allTargetUserIds)->delete();
+                // Clean user financial records and authentication references
+                Transaction::whereIn('user_id', $allTargetUserIds)->delete();
+                Wallet::whereIn('user_id', $allTargetUserIds)->delete();
+                VirtualAccount::whereIn('user_id', $allTargetUserIds)->delete();
+                DeviceVerificationChallenge::whereIn('user_id', $allTargetUserIds)->delete();
+                TrustedDevice::whereIn('user_id', $allTargetUserIds)->delete();
 
-            // Nullify any referring relations pointing to deleted users
-            User::whereIn('referred_by', $allTargetUserIds)->update(['referred_by' => null]);
-            if (Schema::hasColumn('users', 'parent_id')) {
-                User::whereIn('parent_id', $allTargetUserIds)->update(['parent_id' => null]);
-            }
+                // Nullify any referring relations pointing to deleted users
+                User::whereIn('referred_by', $allTargetUserIds)->update(['referred_by' => null]);
+                if (Schema::hasColumn('users', 'parent_id')) {
+                    User::whereIn('parent_id', $allTargetUserIds)->update(['parent_id' => null]);
+                }
 
-            // Finally, delete the users
-            User::whereIn('id', $allTargetUserIds)->delete();
-        });
+                // Finally, delete the users
+                User::whereIn('id', $allTargetUserIds)->delete();
+            });
+        } finally {
+            Schema::enableForeignKeyConstraints();
+        }
 
         $this->info('DONE.');
         $this->info("Successfully removed {$epUserIds->count()} Enterprise Partner(s), {$businessAgentUserIds->count()} Business Agent(s), and {$totalSims} associated SIM(s).");

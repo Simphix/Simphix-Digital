@@ -166,10 +166,10 @@ test('enterprise-partners:purge removes enterprise partners and their activated 
         ->and(Sim::where('id', $regularSim->id)->exists())->toBeTrue();
 });
 
-test('transactions:clear-history clears transaction history records', function () {
+test('transactions:clear-history clears transaction history and handles foreign key constraints like verifications', function () {
     $user = User::factory()->create();
 
-    Transaction::create([
+    $tx = Transaction::create([
         'transaction_ref' => 'TX-1001',
         'user_id' => $user->id,
         'amount' => 5000,
@@ -180,20 +180,43 @@ test('transactions:clear-history clears transaction history records', function (
         'description' => 'Test Transaction',
     ]);
 
+    $service = \App\Models\Service::create([
+        'name' => 'NIN Verification Service',
+        'description' => 'NIN Verification Service',
+    ]);
+
+    $field = \App\Models\ServiceField::create([
+        'service_id' => $service->id,
+        'field_name' => 'Standard NIN',
+        'field_code' => 'NIN_STD',
+    ]);
+
+    \App\Models\Verification::create([
+        'reference' => 'VER-1001',
+        'user_id' => $user->id,
+        'service_id' => $service->id,
+        'service_field_id' => $field->id,
+        'transaction_id' => $tx->id,
+        'amount' => 100,
+        'status' => 'successful',
+    ]);
+
     // 1. Cancellation
     $this->artisan('transactions:clear-history')
-        ->expectsConfirmation('Are you sure you want to permanently clear all 1 transaction record(s)? This action cannot be undone.', 'no')
+        ->expectsConfirmation('Are you sure you want to permanently clear all 2 transaction record(s)? This action cannot be undone.', 'no')
         ->expectsOutputToContain('Operation cancelled by user')
         ->assertSuccessful();
 
-    expect(Transaction::count())->toBe(1);
+    expect(Transaction::count())->toBe(1)
+        ->and(\App\Models\Verification::count())->toBe(1);
 
     // 2. Force clear
     $this->artisan('transactions:clear-history --force')
-        ->expectsOutputToContain('Successfully cleared 1 transaction record(s)')
+        ->expectsOutputToContain('Successfully cleared 2 transaction record(s)')
         ->assertSuccessful();
 
-    expect(Transaction::count())->toBe(0);
+    expect(Transaction::count())->toBe(0)
+        ->and(\App\Models\Verification::count())->toBe(0);
 });
 
 test('activation-events:clear clears activation events and bonus grants', function () {
