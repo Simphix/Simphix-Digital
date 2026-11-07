@@ -14,7 +14,7 @@ class AdminMoniepointPosController extends Controller
     private function authorizeAdmin(): void
     {
         $user = Auth::user();
-        abort_unless($user && $user->role === 'super_admin', 403, 'Unauthorized access to Moniepoint POS administrative desk.');
+        abort_unless($user && $user->role === 'super_admin', 403, 'Unauthorized access to POS administrative desk.');
     }
 
     /**
@@ -118,6 +118,6 @@ class AdminMoniepointPosController extends Controller
         $posRequest->update($updateData);
 
         return redirect()->route('admin.moniepoint-pos.show', $posRequest)
-            ->with('success', "Moniepoint POS request {$posRequest->reference} status updated to \"{$posRequest->status_label}\".");
+            ->with('success', "POS request {$posRequest->reference} status updated to \"{$posRequest->status_label}\".");
     }
 }

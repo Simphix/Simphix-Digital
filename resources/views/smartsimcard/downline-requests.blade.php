@@ -296,8 +296,9 @@
                             <button type="button" @click="requestModalOpen = false" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
                                 Cancel
                             </button>
-                            <button type="submit" class="px-5 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors shadow">
-                                Submit Request
+                            <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition">
+                                <i data-lucide="send" class="w-4 h-4 text-white"></i>
+                                <span>Submit Request</span>
                             </button>
                         </div>
                     </form>

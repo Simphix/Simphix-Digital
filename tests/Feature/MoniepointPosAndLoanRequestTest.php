@@ -54,8 +54,8 @@ class MoniepointPosAndLoanRequestTest extends TestCase
         $response = $this->actingAs($this->user)->get(route('dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Request Your Moniepoint POS Terminal Today', false);
-        $response->assertSee('Official Moniepoint POS Partner', false);
+        $response->assertSee('Request Your POS Terminal Today', false);
+        $response->assertSee('POS Terminal Hardware Desk', false);
         $response->assertSee('Instant Working Capital &amp; Business Loans', false);
         $response->assertSee('Disclaimer: Moniepoint Business Owners Only', false);
     }
@@ -64,42 +64,74 @@ class MoniepointPosAndLoanRequestTest extends TestCase
     {
         $indexResponse = $this->actingAs($this->user)->get(route('moniepoint.pos.index'));
         $indexResponse->assertOk();
-        $indexResponse->assertSee('Moniepoint POS Terminals Request', false);
-        $indexResponse->assertSee('Moniepoint Smart POS (Android)', false);
+        $indexResponse->assertSee('POS Request', false);
+        $indexResponse->assertSee('Smart POS (Android)', false);
+        $indexResponse->assertSee(route('moniepoint.pos.create'), false);
+
+        $createResponse = $this->actingAs($this->user)->get(route('moniepoint.pos.create'));
+        $createResponse->assertOk();
+        $createResponse->assertSee('POS Terminal Request Application', false);
+        $createResponse->assertSee('Upload picture passport size', false);
+        $createResponse->assertSee('Next of Kin Details', false);
+        $createResponse->assertSee('Referral Details', false);
 
         $trackingResponse = $this->actingAs($this->user)->get(route('moniepoint.pos.tracking'));
         $trackingResponse->assertOk();
-        $trackingResponse->assertSee('Track Moniepoint POS Terminal Request', false);
+        $trackingResponse->assertSee('Track POS Terminal Request', false);
     }
 
     public function test_user_can_submit_pos_request_successfully(): void
     {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $passportFile = \Illuminate\Http\UploadedFile::fake()->image('passport.jpg', 300, 300)->size(500);
+
         $payload = [
-            'name'             => 'Musa Garba Ventures',
-            'phone'            => '08012345678',
-            'email'            => 'musa@example.com',
-            'pos_type'         => 'smart_pos',
-            'quantity'         => 2,
-            'business_name'    => 'Garba Super Stores',
-            'delivery_address' => 'Plot 12 Ahmadu Bello Way, Abuja',
-            'state'            => 'FCT',
-            'lga'              => 'Abuja Municipal',
-            'notes'            => 'Please include extra receipt rolls.',
+            'passport_photo'      => $passportFile,
+            'name'                => 'Musa Garba Ventures',
+            'phone'               => '08012345678',
+            'email'               => 'musa@example.com',
+            'bvn'                 => '22334455667',
+            'nin'                 => '12345678901',
+            'shop_address'        => 'Shop 14, Central Market',
+            'home_address'        => 'No 5 Unity Road, Abuja',
+            'state'               => 'FCT',
+            'lga'                 => 'Abuja Municipal',
+            'next_of_kin_name'    => 'Amina Garba',
+            'next_of_kin_phone'   => '08099887766',
+            'next_of_kin_address' => 'No 5 Unity Road, Abuja',
+            'referral_name'       => 'Chinedu Eze',
+            'referral_phone'      => '08123456789',
+            'pos_type'            => 'smart_pos',
+            'quantity'            => 2,
+            'business_name'       => 'Garba Super Stores',
+            'delivery_address'    => 'Plot 12 Ahmadu Bello Way, Abuja',
+            'notes'               => 'Please include extra receipt rolls.',
         ];
 
         $response = $this->actingAs($this->user)->post(route('moniepoint.pos.store'), $payload);
 
         $this->assertDatabaseHas('moniepoint_pos_requests', [
-            'name'             => 'Musa Garba Ventures',
-            'phone'            => '08012345678',
-            'email'            => 'musa@example.com',
-            'pos_type'         => 'smart_pos',
-            'user_id'          => $this->user->id,
-            'status'           => MoniepointPosRequest::STATUS_PENDING,
+            'name'                => 'Musa Garba Ventures',
+            'phone'               => '08012345678',
+            'email'               => 'musa@example.com',
+            'bvn'                 => '22334455667',
+            'nin'                 => '12345678901',
+            'shop_address'        => 'Shop 14, Central Market',
+            'home_address'        => 'No 5 Unity Road, Abuja',
+            'next_of_kin_name'    => 'Amina Garba',
+            'next_of_kin_phone'   => '08099887766',
+            'referral_name'       => 'Chinedu Eze',
+            'referral_phone'      => '08123456789',
+            'pos_type'            => 'smart_pos',
+            'user_id'             => $this->user->id,
+            'status'              => MoniepointPosRequest::STATUS_PENDING,
         ]);
 
         $created = MoniepointPosRequest::where('phone', '08012345678')->latest()->first();
         $this->assertNotNull($created);
+        $this->assertNotNull($created->passport_photo);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($created->passport_photo);
         $response->assertRedirect(route('moniepoint.pos.tracking', ['ref' => $created->reference]));
     }
 
@@ -122,7 +154,7 @@ class MoniepointPosAndLoanRequestTest extends TestCase
         $response->assertOk();
         $response->assertSee($posRequest->reference);
         $response->assertSee('Dispatched via Courier #TRK12345');
-        $response->assertSee('Moniepoint Smart POS (Android)');
+        $response->assertSee('Smart POS (Android)');
         $response->assertSee('Customer Will Be Contacted');
     }
 
@@ -130,12 +162,18 @@ class MoniepointPosAndLoanRequestTest extends TestCase
     {
         $indexResponse = $this->actingAs($this->user)->get(route('loans.index'));
         $indexResponse->assertOk();
-        $indexResponse->assertSee('Moniepoint Business Working Capital Loans', false);
+        $indexResponse->assertSee('Business Working Capital Loans', false);
         $indexResponse->assertSee('Only Moniepoint business owners can request for loan', false);
+        $indexResponse->assertSee(route('loans.create'), false);
+
+        $createResponse = $this->actingAs($this->user)->get(route('loans.create'));
+        $createResponse->assertOk();
+        $createResponse->assertSee('Apply for Business Loan', false);
+        $createResponse->assertSee('Only Moniepoint business owners can request for loan', false);
 
         $trackingResponse = $this->actingAs($this->user)->get(route('loans.tracking'));
         $trackingResponse->assertOk();
-        $trackingResponse->assertSee('Track Moniepoint Loan Application', false);
+        $trackingResponse->assertSee('Track Business Loan Application', false);
     }
 
     public function test_user_can_submit_loan_request_with_creds_and_optional_email(): void
@@ -226,11 +264,11 @@ class MoniepointPosAndLoanRequestTest extends TestCase
     {
         $posResponse = $this->actingAs($this->superAdmin)->get(route('admin.moniepoint-pos.index'));
         $posResponse->assertOk();
-        $posResponse->assertSee('Moniepoint POS Requests Desk', false);
+        $posResponse->assertSee('POS Requests Desk', false);
 
         $loanResponse = $this->actingAs($this->superAdmin)->get(route('admin.loan-requests.index'));
         $loanResponse->assertOk();
-        $loanResponse->assertSee('Moniepoint Business Loans Desk', false);
+        $loanResponse->assertSee('Business Loans Desk', false);
     }
 
     public function test_admin_can_update_pos_request_status(): void

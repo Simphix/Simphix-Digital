@@ -82,10 +82,11 @@
                     @endif
                 </div>
 
-                <x-primary-button type="submit" class="w-full">
-                    <i data-lucide="send" class="w-4 h-4"></i>
-                    Submit Request
-                </x-primary-button>
+                <button type="submit"
+                        class="w-full inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
+                    <i data-lucide="send" class="w-4 h-4 text-white"></i>
+                    <span>Submit SIM Request</span>
+                </button>
             </form>
         </div>
     </div>

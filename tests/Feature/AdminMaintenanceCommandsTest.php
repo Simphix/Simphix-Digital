@@ -12,6 +12,7 @@ use App\Models\MoniepointPosRequest;
 use App\Models\PlatformCashOutRequest;
 use App\Models\PlatformWallet;
 use App\Models\PlatformWalletTransaction;
+use App\Models\Report;
 use App\Models\Sim;
 use App\Models\SimActivationBonusGrant;
 use App\Models\SimCustomer;
@@ -24,6 +25,7 @@ use App\Models\Transaction;
 use App\Models\TravelPackage;
 use App\Models\TravelRequest;
 use App\Models\User;
+use App\Models\VirtualAccount;
 use App\Models\Wallet;
 use App\Models\WebhookLog;
 use App\Support\SimStatus;
@@ -336,22 +338,65 @@ test('activation-events:clear clears activation events and bonus grants', functi
         'period_week' => now()->startOfWeek(),
     ]);
 
-    // 1. Cancellation
-    $this->artisan('activation-events:clear')
-        ->expectsConfirmation('Are you sure you want to permanently delete 3 all activation events and bonus grant ledgers? This action cannot be undone.', 'no')
+    Report::create([
+        'user_id' => $user->id,
+        'phone_number' => $sim->number,
+        'network' => 'mtn',
+        'ref' => 'REF-FAILED-1',
+        'amount' => 0.00,
+        'status' => 'failed',
+        'type' => 'activation_bonus_data',
+        'description' => 'Bonus delivery failed',
+        'old_balance' => 0.00,
+        'new_balance' => 0.00,
+    ]);
+
+    Report::create([
+        'user_id' => $user->id,
+        'phone_number' => $sim->number,
+        'network' => 'mtn',
+        'ref' => 'REF-SUCCESS-1',
+        'amount' => 0.00,
+        'status' => 'completed',
+        'type' => 'activation_bonus_data',
+        'description' => 'Bonus delivered',
+        'old_balance' => 0.00,
+        'new_balance' => 0.00,
+    ]);
+
+    // 1. Dry-run test (5 records: 1 history, 1 grant, 1 commission, 1 failed bonus report, 1 success bonus report)
+    $this->artisan('sims:clear-activation-events --dry-run')
+        ->expectsOutputToContain('[DRY RUN] No records were deleted. 5 record(s) would be cleared.')
+        ->assertSuccessful();
+
+    // 2. Cancellation
+    $this->artisan('sims:clear-activation-events')
+        ->expectsConfirmation('Are you sure you want to permanently delete 5 activation events, history logs, and activation bonus records? This action cannot be undone.', 'no')
         ->expectsOutputToContain('Operation cancelled by user')
         ->assertSuccessful();
 
     expect(SimHistory::count())->toBe(2)
-        ->and(SimActivationBonusGrant::count())->toBe(1);
+        ->and(SimActivationBonusGrant::count())->toBe(1)
+        ->and(Report::where('type', 'activation_bonus_data')->count())->toBe(2);
 
-    // 2. Force clear
-    $this->artisan('activation-events:clear --force')
-        ->expectsOutputToContain('Successfully cleared 3 activation event record(s)')
+    // 3. Clear ONLY failed bonuses
+    $this->artisan('sims:clear-activation-events --failed-bonuses --bonuses-only --force')
+        ->expectsOutputToContain('Successfully cleared 1 activation record(s)')
+        ->assertSuccessful();
+
+    expect(Report::where('type', 'activation_bonus_data')->where('status', 'failed')->count())->toBe(0)
+        ->and(Report::where('type', 'activation_bonus_data')->where('status', 'completed')->count())->toBe(1)
+        ->and(SimActivationBonusGrant::count())->toBe(1)
+        ->and(CommissionEarning::count())->toBe(1);
+
+    // 4. Force clear all remaining activation events and bonuses
+    $this->artisan('sims:clear-activation-events --force')
+        ->expectsOutputToContain('Successfully cleared 4 activation record(s)')
         ->assertSuccessful();
 
     expect(SimActivationBonusGrant::count())->toBe(0)
         ->and(CommissionEarning::count())->toBe(0)
+        ->and(Report::where('type', 'activation_bonus_data')->count())->toBe(0)
         // Non-activation history should remain
         ->and(SimHistory::where('to_status', SimStatus::ASSIGNED_TO_BSM)->count())->toBe(1);
 });
@@ -809,4 +854,115 @@ test('tickets:clear respects cancellation, filters, and clears support tickets',
 
     expect(Ticket::count())->toBe(0)
         ->and(TicketMessage::count())->toBe(0);
+});
+
+test('accounts:clear clears all or specific generated bank accounts while preserving user KYC', function () {
+    $userA = User::factory()->create([
+        'first_name'   => 'John',
+        'last_name'    => 'Doe',
+        'bvn'          => '22334455667',
+        'nin'          => '12345678901',
+        'account_tier' => 1,
+        'state'        => 'Lagos',
+        'lga'          => 'Ikeja',
+        'address'      => '12 Allen Avenue',
+    ]);
+
+    $userB = User::factory()->create([
+        'first_name'   => 'Fatima',
+        'last_name'    => 'Aliyu',
+        'bvn'          => '99887766554',
+        'nin'          => '98765432109',
+        'account_tier' => 1,
+        'state'        => 'Kano',
+        'lga'          => 'Dala',
+        'address'      => '5 Bompai Road',
+    ]);
+
+    $vaA = VirtualAccount::create([
+        'user_id'           => $userA->id,
+        'account_reference' => 'F24AAA11111',
+        'account_number'    => '9900112233',
+        'account_name'      => 'John Doe',
+        'bank_name'         => 'PalmPay',
+        'provider'          => 'palmpay',
+        'is_active'         => true,
+    ]);
+
+    $vaB = VirtualAccount::create([
+        'user_id'           => $userB->id,
+        'account_reference' => 'F24BBB22222',
+        'account_number'    => '9900445566',
+        'account_name'      => 'Fatima Aliyu',
+        'bank_name'         => 'PalmPay',
+        'provider'          => 'palmpay',
+        'is_active'         => true,
+    ]);
+
+    // 1. Dry run test
+    $this->artisan('accounts:clear --all --dry-run')
+        ->expectsOutputToContain('[Dry Run] No bank accounts were deleted')
+        ->expectsOutputToContain('User KYC records (BVN, NIN, account_tier, addresses) remain intact')
+        ->assertSuccessful();
+
+    expect(VirtualAccount::count())->toBe(2);
+
+    // 2. Cancellation test
+    $this->artisan('accounts:clear --user=' . $userA->id)
+        ->expectsConfirmation("Are you sure you want to clear 1 generated bank account(s) for user '{$userA->email}'? User KYC status will NOT be affected.", 'no')
+        ->expectsOutputToContain('Operation cancelled by user')
+        ->assertSuccessful();
+
+    expect(VirtualAccount::count())->toBe(2);
+
+    // 3. Target specific user by ID with force
+    $this->artisan('accounts:clear --user=' . $userA->id . ' --force')
+        ->expectsOutputToContain('Successfully cleared 1 generated bank account record(s)')
+        ->expectsOutputToContain('User KYC records (BVN, NIN, Tier level, identity details) are completely intact and preserved')
+        ->assertSuccessful();
+
+    // Verify userA virtual account deleted, userB virtual account intact
+    expect(VirtualAccount::where('id', $vaA->id)->exists())->toBeFalse()
+        ->and(VirtualAccount::where('id', $vaB->id)->exists())->toBeTrue()
+        ->and(VirtualAccount::count())->toBe(1);
+
+    // CRITICAL: Verify UserA's KYC is 100% intact!
+    $userARefreshed = $userA->fresh();
+    expect($userARefreshed->bvn)->toBe('22334455667')
+        ->and($userARefreshed->nin)->toBe('12345678901')
+        ->and($userARefreshed->account_tier)->toBe(1)
+        ->and($userARefreshed->state)->toBe('Lagos')
+        ->and($userARefreshed->lga)->toBe('Ikeja')
+        ->and($userARefreshed->address)->toBe('12 Allen Avenue');
+
+    // 4. Create another account and test clearing by specific account number
+    $vaC = VirtualAccount::create([
+        'user_id'           => $userA->id,
+        'account_reference' => 'F24CCC33333',
+        'account_number'    => '9900778899',
+        'account_name'      => 'John Doe',
+        'bank_name'         => 'PalmPay',
+        'provider'          => 'palmpay',
+        'is_active'         => true,
+    ]);
+
+    $this->artisan('accounts:clear --account=9900778899 --force')
+        ->expectsOutputToContain('Successfully cleared 1 generated bank account record(s)')
+        ->assertSuccessful();
+
+    expect(VirtualAccount::where('account_number', '9900778899')->exists())->toBeFalse()
+        ->and(VirtualAccount::count())->toBe(1);
+
+    // 5. Clear all remaining accounts across platform
+    $this->artisan('accounts:clear --all --force')
+        ->expectsOutputToContain('Successfully cleared 1 generated bank account record(s)')
+        ->assertSuccessful();
+
+    expect(VirtualAccount::count())->toBe(0);
+
+    // UserB's KYC also remains 100% intact
+    $userBRefreshed = $userB->fresh();
+    expect($userBRefreshed->bvn)->toBe('99887766554')
+        ->and($userBRefreshed->nin)->toBe('98765432109')
+        ->and($userBRefreshed->account_tier)->toBe(1);
 });

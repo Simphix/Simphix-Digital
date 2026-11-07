@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\PlatformBsmCommissionSettings;
 use App\Models\PlatformWallet;
 use App\Models\PlatformWelfareSettings;
 use App\Models\User;
@@ -43,12 +44,15 @@ class AdminWalletController extends Controller
             ->paginate(10);
 
         $welfareWallet = PlatformWallet::forType(PlatformWallet::TYPE_WELFARE, 'Platform Welfare Wallet');
-        $utilitiesWallet = PlatformWallet::forType(PlatformWallet::TYPE_UTILITIES_REVENUE, 'Utilities Revenue Wallet');
         $simActivationWallet = PlatformWallet::forType(PlatformWallet::TYPE_SIM_ACTIVATION, 'SIM Activation Wallet');
         $cashoutChargesWallet = PlatformWallet::forType(PlatformWallet::TYPE_CASHOUT_CHARGES, 'Cashout Charges Wallet');
+        $bsmCommissionWallet = PlatformWallet::forType(PlatformWallet::TYPE_BSM_COMMISSION, 'BSM Central Commission Wallet');
 
         $welfareSettings = PlatformWelfareSettings::current();
         $welfareConfigured = $welfareSettings->is_active && $welfareSettings->amount_per_activation > 0;
+
+        $bsmSettings = PlatformBsmCommissionSettings::current();
+        $bsmConfigured = $bsmSettings->is_active && $bsmSettings->amount_per_activation > 0;
 
         return view('admin.manage.adminwallet', compact(
             'monthlyManualCredit',
@@ -56,10 +60,11 @@ class AdminWalletController extends Controller
             'totalUsers',
             'transactions',
             'welfareWallet',
-            'utilitiesWallet',
             'simActivationWallet',
             'cashoutChargesWallet',
-            'welfareConfigured'
+            'bsmCommissionWallet',
+            'welfareConfigured',
+            'bsmConfigured'
         ));
     }
 

@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PlatformWallet extends Model
 {
     public const TYPE_WELFARE = 'welfare';
-    public const TYPE_UTILITIES_REVENUE = 'utilities_revenue';
     public const TYPE_SIM_ACTIVATION = 'sim_activation';
     public const TYPE_CASHOUT_CHARGES = 'cashout_charges';
+    public const TYPE_BSM_COMMISSION = 'bsm_commission';
 
     protected $fillable = [
         'type',

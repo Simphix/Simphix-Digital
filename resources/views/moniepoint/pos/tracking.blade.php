@@ -20,17 +20,17 @@
                 <div>
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#00266B] text-xs font-bold mb-2">
                         <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
-                        <span>Moniepoint POS Dispatch Tracking</span>
+                        <span>POS Dispatch Tracking</span>
                     </div>
                     <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
-                        Track Moniepoint POS Terminal Request
+                        Track POS Terminal Request
                     </h1>
                 </div>
 
                 <div class="shrink-0">
-                    <a href="{{ route('moniepoint.pos.index') }}"
-                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00266B] hover:bg-[#001F5C] text-white text-xs sm:text-sm font-bold shadow-sm transition">
-                        <i data-lucide="plus-circle" class="w-4 h-4 text-[#ffcc00]"></i>
+                    <a href="{{ route('moniepoint.pos.create') }}"
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-white"></i>
                         <span>New POS Request</span>
                     </a>
                 </div>
@@ -45,7 +45,7 @@
                            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                 </div>
                 <button type="submit"
-                        class="px-5 py-2.5 rounded-xl bg-[#00266B] hover:bg-[#001F5C] text-white text-xs sm:text-sm font-bold shadow-sm transition shrink-0">
+                        class="px-5 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition shrink-0">
                     Track POS Order
                 </button>
             </form>
@@ -152,11 +152,18 @@
 
                 <!-- Order Details Grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 text-xs">
-                    <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Applicant &amp; Phone</span>
-                        <span class="font-bold text-slate-900 text-sm mt-0.5 block">{{ $matchedRequest->name }}</span>
-                        <span class="text-slate-500 font-mono">{{ $matchedRequest->phone }}</span>
-                        <span class="text-slate-500 block truncate">{{ $matchedRequest->email }}</span>
+                    <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100 flex items-start gap-3">
+                        @if ($matchedRequest->passport_photo_url)
+                            <div class="w-14 h-16 rounded-lg border border-slate-200 overflow-hidden shrink-0 bg-white shadow-xs">
+                                <img src="{{ $matchedRequest->passport_photo_url }}" alt="Passport" class="w-full h-full object-cover">
+                            </div>
+                        @endif
+                        <div class="min-w-0 flex-1">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Applicant &amp; Phone</span>
+                            <span class="font-bold text-slate-900 text-sm mt-0.5 block truncate">{{ $matchedRequest->name }}</span>
+                            <span class="text-slate-500 font-mono block">{{ $matchedRequest->phone }}</span>
+                            <span class="text-slate-500 block truncate">{{ $matchedRequest->email }}</span>
+                        </div>
                     </div>
 
                     <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
@@ -164,13 +171,18 @@
                         <span class="font-bold text-slate-900 text-sm mt-0.5 block">{{ $matchedRequest->pos_type_label }}</span>
                         <span class="text-slate-500 font-medium">{{ $matchedRequest->quantity }} Unit(s)</span>
                         @if ($matchedRequest->business_name)
-                            <span class="text-slate-500 block">Business: {{ $matchedRequest->business_name }}</span>
+                            <span class="text-slate-500 block truncate">Business: {{ $matchedRequest->business_name }}</span>
                         @endif
                     </div>
 
                     <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Delivery Destination</span>
                         <p class="text-slate-700 mt-0.5 leading-relaxed">{{ $matchedRequest->delivery_address ?: 'Contact officer will confirm address' }}</p>
+                        @if ($matchedRequest->state || $matchedRequest->lga)
+                            <span class="text-[10px] text-slate-400 block mt-0.5">
+                                {{ $matchedRequest->lga ? $matchedRequest->lga . ', ' : '' }}{{ $matchedRequest->state ?? '' }}
+                            </span>
+                        @endif
                     </div>
                 </div>
 

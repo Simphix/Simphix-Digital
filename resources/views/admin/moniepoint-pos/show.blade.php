@@ -55,6 +55,37 @@
                         </div>
                     </div>
 
+                    <!-- Passport Photo & Overview -->
+                    <div class="mt-4 flex flex-col sm:flex-row items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                        <div class="w-24 h-28 rounded-xl border border-slate-200 bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                            @if ($posRequest->passport_photo_url)
+                                <a href="{{ $posRequest->passport_photo_url }}" target="_blank" title="Click to view full photo">
+                                    <img src="{{ $posRequest->passport_photo_url }}" alt="Passport" class="w-full h-full object-cover">
+                                </a>
+                            @else
+                                <div class="text-center text-slate-400 p-2">
+                                    <i data-lucide="user" class="w-8 h-8 mx-auto opacity-40"></i>
+                                    <span class="text-[9px] block">No Photo</span>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="flex-1 space-y-1.5">
+                            <span class="text-xs font-bold text-slate-900 block">{{ $posRequest->name }}</span>
+                            <div class="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                                <span class="font-mono">{{ $posRequest->phone }}</span>
+                                <span>&bull;</span>
+                                <span>{{ $posRequest->email }}</span>
+                            </div>
+                            @if ($posRequest->passport_photo_url)
+                                <a href="{{ $posRequest->passport_photo_url }}" target="_blank"
+                                   class="inline-flex items-center gap-1 text-[11px] font-semibold text-[#00266B] hover:underline pt-1">
+                                    <i data-lucide="external-link" class="w-3 h-3"></i>
+                                    <span>Open Full Passport Photo</span>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+
                     <!-- Applicant & Contact Info -->
                     <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
@@ -82,7 +113,52 @@
                                 <span class="text-xs text-slate-400 mt-1 block">Guest / Unlinked</span>
                             @endif
                         </div>
+
+                        <!-- BVN & NIN -->
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">BVN</span>
+                            <span class="text-xs sm:text-sm font-bold font-mono text-slate-800 mt-1 block">
+                                {{ $posRequest->bvn ?? 'Not provided' }}
+                            </span>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">NIN</span>
+                            <span class="text-xs sm:text-sm font-bold font-mono text-slate-800 mt-1 block">
+                                {{ $posRequest->nin ?? 'Not provided' }}
+                            </span>
+                        </div>
+
+                        <!-- State & LGA -->
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">State</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 mt-1 block">
+                                {{ $posRequest->state ?? 'Not provided' }}
+                            </span>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Local Government (LGA)</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 mt-1 block">
+                                {{ $posRequest->lga ?? 'Not provided' }}
+                            </span>
+                        </div>
                     </div>
+
+                    <!-- Shop Address & Home Address -->
+                    @if ($posRequest->shop_address)
+                        <div class="mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Shop Address</span>
+                            <span class="text-xs text-slate-800 mt-1 block leading-relaxed">{{ $posRequest->shop_address }}</span>
+                        </div>
+                    @endif
+
+                    @if ($posRequest->home_address)
+                        <div class="mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Home Address</span>
+                            <span class="text-xs text-slate-800 mt-1 block leading-relaxed">{{ $posRequest->home_address }}</span>
+                        </div>
+                    @endif
 
                     @if ($posRequest->business_name)
                         <div class="mt-4 p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/60">
@@ -91,15 +167,10 @@
                         </div>
                     @endif
 
-                    @if ($posRequest->delivery_address)
+                    @if ($posRequest->delivery_address && $posRequest->delivery_address !== $posRequest->shop_address && $posRequest->delivery_address !== $posRequest->home_address)
                         <div class="mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Dispatch / Delivery Address</span>
                             <span class="text-xs text-slate-800 mt-1 block leading-relaxed">{{ $posRequest->delivery_address }}</span>
-                            @if ($posRequest->state || $posRequest->lga)
-                                <span class="text-[11px] text-slate-500 mt-1 block">
-                                    Location: {{ $posRequest->lga ? $posRequest->lga . ', ' : '' }}{{ $posRequest->state ?? '' }}
-                                </span>
-                            @endif
                         </div>
                     @endif
 
@@ -110,6 +181,54 @@
                         </div>
                     @endif
                 </div>
+
+                <!-- Next of Kin Details Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                    <h2 class="text-sm font-bold text-slate-900 font-display mb-3">Next of Kin Details</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Next of Kin Full Name</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 mt-1 block">
+                                {{ $posRequest->next_of_kin_name ?? 'Not provided' }}
+                            </span>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Next of Kin Phone</span>
+                            <span class="text-xs sm:text-sm font-bold font-mono text-slate-800 mt-1 block">
+                                {{ $posRequest->next_of_kin_phone ?? 'Not provided' }}
+                            </span>
+                        </div>
+                        @if ($posRequest->next_of_kin_address)
+                            <div class="sm:col-span-2 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Next of Kin Home Address</span>
+                                <span class="text-xs text-slate-800 mt-1 block leading-relaxed">
+                                    {{ $posRequest->next_of_kin_address }}
+                                </span>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Referral Details Card -->
+                @if ($posRequest->referral_name || $posRequest->referral_phone)
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                        <h2 class="text-sm font-bold text-slate-900 font-display mb-3">Referral Details</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Referral Full Name</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 mt-1 block">
+                                    {{ $posRequest->referral_name ?? 'Not provided' }}
+                                </span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Referral Phone Number</span>
+                                <span class="text-xs sm:text-sm font-bold font-mono text-slate-800 mt-1 block">
+                                    {{ $posRequest->referral_phone ?? 'Not provided' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Hardware Model Specs -->
                 <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">

@@ -2,7 +2,7 @@
     <div class="max-w-2xl mx-auto space-y-6">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">Platform Withdrawal Account</h1>
-            <p class="text-xs text-slate-400 mt-1">The single shared bank account platform wallet cash-outs (welfare, utilities revenue) are paid into.</p>
+            <p class="text-xs text-slate-400 mt-1">The single shared bank account platform wallet cash-outs are paid into.</p>
         </div>
 
         @if (session('success'))

@@ -25,6 +25,18 @@ class LoanRequestController extends Controller
     }
 
     /**
+     * Show the Business Loan application form page.
+     */
+    public function create(): View
+    {
+        $user = Auth::user();
+
+        return view('loans.create', [
+            'user' => $user,
+        ]);
+    }
+
+    /**
      * Submit a loan request.
      */
     public function store(Request $request): RedirectResponse

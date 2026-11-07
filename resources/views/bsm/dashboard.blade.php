@@ -56,6 +56,10 @@
                     <i data-lucide="user-plus" class="w-4 h-4"></i>
                     <span>Customer Desk</span>
                 </a>
+                <a href="{{ route('bsm.commission-wallet') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold shadow-sm hover:bg-slate-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                    <i data-lucide="wallet" class="w-4 h-4 text-slate-500"></i>
+                    <span>Commission Wallet</span>
+                </a>
                 <a href="{{ route('bsm.reports.jurisdictions.export', request()->query()) }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold shadow-sm hover:bg-slate-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                     <i data-lucide="download" class="w-4 h-4 text-slate-500"></i>
                     <span>Export Territory Report</span>

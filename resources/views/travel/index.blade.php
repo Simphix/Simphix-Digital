@@ -181,8 +181,8 @@
                     <div class="p-6 pt-0 mt-2">
                         <button type="button"
                                 @click="openBooking('{{ $pkg->id }}', '{{ addslashes($pkg->name) }}', '{{ $pkg->category }}')"
-                                class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-[#0056D2] text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
-                            <i data-lucide="bookmark-plus" class="w-4 h-4"></i>
+                                class="w-full py-2.5 px-4 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
+                            <i data-lucide="bookmark-plus" class="w-4 h-4 text-white"></i>
                             <span>Request This Package</span>
                         </button>
                     </div>
@@ -326,14 +326,15 @@
                     </div>
 
                     <!-- Notice & Submit Button -->
-                    <div class="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <p class="text-[11px] text-slate-400">
                             <i data-lucide="shield-check" class="w-3.5 h-3.5 inline text-emerald-500"></i>
                             Your request will generate a unique tracking reference code.
                         </p>
                         <button type="submit"
-                                class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
-                            Submit Travel Request
+                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
+                            <i data-lucide="send" class="w-4 h-4 text-white"></i>
+                            <span>Submit Travel Request</span>
                         </button>
                     </div>
                 </form>
