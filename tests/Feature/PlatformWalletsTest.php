@@ -99,7 +99,8 @@ test('admin wallet dashboard no longer exposes total manual credit/debit but exp
     expect($data)->toHaveKey('monthlyManualCredit');
     expect($data)->toHaveKey('monthlyManualDebit');
     expect($data['welfareWallet'])->toBeInstanceOf(PlatformWallet::class);
-    expect($data['utilitiesWallet'])->toBeInstanceOf(PlatformWallet::class);
+    expect($data['bsmCommissionWallet'])->toBeInstanceOf(PlatformWallet::class);
     expect($data['welfareWallet']->type)->toBe(PlatformWallet::TYPE_WELFARE);
-    expect($data['utilitiesWallet']->type)->toBe(PlatformWallet::TYPE_UTILITIES_REVENUE);
+    expect($data['bsmCommissionWallet']->type)->toBe(PlatformWallet::TYPE_BSM_COMMISSION);
+    expect($data)->not->toHaveKey('utilitiesWallet');
 });

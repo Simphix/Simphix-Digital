@@ -99,59 +99,6 @@
             </div>
         </div>
 
-        <!-- Commission Allocation Policy Card -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0">
-                        <i data-lucide="sliders" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-slate-800">Current Commission Configuration</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Parameters governing automatic allocation on retail SIM activations</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    @if ($settings->is_active)
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Allocation Active
-                        </span>
-                    @else
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/60">
-                            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                            Allocation Paused
-                        </span>
-                    @endif
-                </div>
-            </div>
-
-            <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100">
-                <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Commission Rate</span>
-                    <span class="text-base font-extrabold text-slate-800 mt-1 block">
-                        @if ($settings->commission_type === 'percent')
-                            {{ number_format($settings->amount_per_activation, 2) }}% of SIM Price
-                        @else
-                            ₦{{ number_format($settings->amount_per_activation, 2) }} flat per SIM
-                        @endif
-                    </span>
-                </div>
-                <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Source Funding</span>
-                    <span class="text-base font-extrabold text-slate-800 mt-1 block">
-                        {{ $settings->deduct_from_sim_operations ? 'Debited from SIM Operations Wallet' : 'Direct Platform Commission' }}
-                    </span>
-                </div>
-                <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Statement Narration</span>
-                    <span class="text-base font-extrabold text-slate-800 mt-1 block truncate" title="{{ $settings->description }}">
-                        {{ $settings->description ?: 'BSM Central Commission' }}
-                    </span>
-                </div>
-            </div>
-        </div>
-
         <!-- Filter & Search Section -->
         <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
             <form method="GET" action="{{ route('bsm.commission-wallet') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">

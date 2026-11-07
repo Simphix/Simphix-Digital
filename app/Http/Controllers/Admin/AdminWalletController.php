@@ -44,7 +44,6 @@ class AdminWalletController extends Controller
             ->paginate(10);
 
         $welfareWallet = PlatformWallet::forType(PlatformWallet::TYPE_WELFARE, 'Platform Welfare Wallet');
-        $utilitiesWallet = PlatformWallet::forType(PlatformWallet::TYPE_UTILITIES_REVENUE, 'Utilities Revenue Wallet');
         $simActivationWallet = PlatformWallet::forType(PlatformWallet::TYPE_SIM_ACTIVATION, 'SIM Activation Wallet');
         $cashoutChargesWallet = PlatformWallet::forType(PlatformWallet::TYPE_CASHOUT_CHARGES, 'Cashout Charges Wallet');
         $bsmCommissionWallet = PlatformWallet::forType(PlatformWallet::TYPE_BSM_COMMISSION, 'BSM Central Commission Wallet');
@@ -61,7 +60,6 @@ class AdminWalletController extends Controller
             'totalUsers',
             'transactions',
             'welfareWallet',
-            'utilitiesWallet',
             'simActivationWallet',
             'cashoutChargesWallet',
             'bsmCommissionWallet',

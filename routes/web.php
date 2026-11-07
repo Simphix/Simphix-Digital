@@ -365,7 +365,7 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::post('/{notification}/cancel', [\App\Http\Controllers\Admin\NotificationController::class, 'cancel'])->name('cancel');
     });
                                                                               
-    // Platform Wallets (welfare + utilities revenue)
+    // Platform Wallets (welfare, sim activation, cashout charges, bsm commission)
     Route::prefix('admin/platform-wallets')->name('admin.platform-wallets.')->group(function () {
         Route::get('/welfare-settings', [\App\Http\Controllers\Admin\PlatformWelfareSettingsController::class, 'edit'])->name('welfare-settings.edit');
         Route::put('/welfare-settings', [\App\Http\Controllers\Admin\PlatformWelfareSettingsController::class, 'update'])->name('welfare-settings.update');

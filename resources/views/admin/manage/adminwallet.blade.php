@@ -78,21 +78,6 @@
                 </div>
             </div>
 
-            <!-- Utilities Revenue Wallet Card -->
-            <a href="{{ route('admin.platform-wallets.cashout.show', \App\Models\PlatformWallet::TYPE_UTILITIES_REVENUE) }}"
-               class="block p-6 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Utilities Revenue Wallet</p>
-                        <h3 class="text-2xl font-extrabold text-slate-900 mt-2 tracking-tight">₦{{ number_format($utilitiesWallet->balance, 2) }}</h3>
-                        <p class="text-[11px] text-slate-400 mt-1.5 font-medium">Credited ₦{{ number_format($utilitiesWallet->total_credited, 2) }} all-time &middot; Click to cash out</p>
-                    </div>
-                    <div class="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-100/50 flex items-center justify-center text-violet-600">
-                        <i data-lucide="zap" class="w-5 h-5"></i>
-                    </div>
-                </div>
-            </a>
-
             <!-- Cashout Charges Wallet Card -->
             <div class="relative group p-6 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <a href="{{ route('admin.platform-wallets.cashout.show', \App\Models\PlatformWallet::TYPE_CASHOUT_CHARGES) }}" class="absolute inset-0" aria-label="Cash out Cashout Charges Wallet"></a>

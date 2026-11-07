@@ -15,7 +15,7 @@ architecturally cannot be recorded in those tables. `platform_wallets` +
 platform itself earns, not any individual account.
 
 `platform_wallets` has one row per `type` (a plain string slug, e.g.
-`welfare`, `utilities_revenue`) — a new wallet kind needs no migration,
+`welfare`, `sim_activation`, `cashout_charges`, `bsm_commission`) — a new wallet kind needs no migration,
 just a new type slug and a call into the ledger below.
 
 ## The platform wallets today
@@ -26,12 +26,6 @@ just a new type slug and a call into the ledger below.
   Operations Wallet (`PlatformWallet::TYPE_SIM_ACTIVATION`). See
   `App\Listeners\CreditPlatformWelfareWallet`, which listens on the same
   `App\Events\SimActivated` event `App\Listeners\AwardCommissions` does.
-- **`utilities_revenue`** (`PlatformWallet::TYPE_UTILITIES_REVENUE`) —
-  credited a configurable margin % of the amount charged, per service call.
-  The margin is set per service/role price via the existing
-  `/admin/services` screen (`ServicePrice.margin_percent`, right next to
-  the existing `commission` field) — it defaults to `0`, so a service earns
-  the platform nothing until an admin explicitly sets a margin on it.
 - **`sim_activation`** (`PlatformWallet::TYPE_SIM_ACTIVATION`) —
   the central ledger on top of which the retail SIM activation lifecycle
   runs (Platform SIM Operations Wallet). Credited with the full activation fee whenever
@@ -76,11 +70,11 @@ just a new type slug and a call into the ledger below.
        $marginAmount = ($amountCharged * (float) $priceRecord->margin_percent) / 100;
        if ($marginAmount > 0) {
            app(\App\Services\PlatformWalletLedger::class)->credit(
-               \App\Models\PlatformWallet::TYPE_UTILITIES_REVENUE,
-               'Utilities Revenue Wallet',
-               $marginAmount,
-               '<new_source_slug>',
-               "Platform margin on <service name> ({$transactionRef})",
+               '<target_wallet_slug>',
+               'Target Platform Wallet Name',
+               $amount,
+               '<source_slug>',
+               "Description ({$transactionRef})",
                $transaction
            );
        }
@@ -102,12 +96,6 @@ readable without parsing `metadata`. Current values:
 | `sim_activation_fee`       | `sim_activation`     | `App\Services\SimActivationWalletService` (activation fee credit) |
 | `sim_activation_commission`| `sim_activation`     | `App\Services\SimActivationWalletService` (commission payout debit) |
 | `sim_activation_bsm_commission` | `sim_activation` | `App\Services\SimActivationWalletService` (BSM central commission deduction) |
-| `airtime_topup`             | `utilities_revenue`  | `App\Http\Controllers\Action\AirtimeController`            |
-| `data_topup`                 | `utilities_revenue`  | `App\Http\Controllers\Action\SmeDataController`             |
-| `verification_bvn`         | `utilities_revenue`  | `App\Http\Controllers\Verification\BvnverificationController` |
-| `verification_nin`         | `utilities_revenue`  | `App\Http\Controllers\Verification\NINverificationController` |
-| `verification_nin_phone`   | `utilities_revenue`  | `App\Http\Controllers\Verification\NINPhoneVerificationController` |
-| `verification_nin_demo`    | `utilities_revenue`  | `App\Http\Controllers\Verification\NINDemoVerificationController` |
 | `cashout`                    | any                    | a platform cash-out request debit (`PlatformWalletLedger::debit()`) |
 | `cashout_refund`           | any                    | a rejected/declined cash-out request refunded back        |
 

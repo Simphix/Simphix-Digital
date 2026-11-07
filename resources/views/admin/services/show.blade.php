@@ -509,7 +509,7 @@
                             <!-- Platform Margin -->
                             <div>
                                 <x-input-label>
-                                    Platform Margin (%) <span class="text-slate-400 font-normal normal-case">— credited to the Utilities Revenue Wallet</span>
+                                    Platform Margin (%)
                                 </x-input-label>
                                 <x-text-input type="number" step="0.01" name="margin_percent" value="0.00" placeholder="e.g., 2.00"
                                        class="rounded-xl bg-slate-50/50" />
@@ -614,7 +614,7 @@
                             <!-- Platform Margin -->
                             <div>
                                 <x-input-label>
-                                    Platform Margin (%) <span class="text-slate-400 font-normal normal-case">— credited to the Utilities Revenue Wallet</span>
+                                    Platform Margin (%)
                                 </x-input-label>
                                 <x-text-input type="number" step="0.01" name="margin_percent" x-bind:value="editPrice.margin_percent" placeholder="e.g., 2.00"
                                        class="rounded-xl bg-slate-50/50" />

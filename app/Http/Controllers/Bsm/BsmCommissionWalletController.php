@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Bsm;
 
 use App\Http\Controllers\Controller;
-use App\Models\PlatformBsmCommissionSettings;
 use App\Models\PlatformWallet;
 use App\Models\PlatformWalletTransaction;
 use Illuminate\Http\Request;
@@ -16,7 +15,6 @@ class BsmCommissionWalletController extends Controller
     public function index(Request $request)
     {
         $wallet = PlatformWallet::forType(PlatformWallet::TYPE_BSM_COMMISSION, 'BSM Central Commission Wallet');
-        $settings = PlatformBsmCommissionSettings::current();
 
         $query = PlatformWalletTransaction::where('platform_wallet_id', $wallet->id)
             ->with('related')
@@ -51,7 +49,6 @@ class BsmCommissionWalletController extends Controller
 
         return view('bsm.commission-wallet', compact(
             'wallet',
-            'settings',
             'transactions',
             'thisMonthCredited',
             'totalTransactionsCount'
