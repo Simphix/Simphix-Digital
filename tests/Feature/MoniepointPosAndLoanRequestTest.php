@@ -54,8 +54,8 @@ class MoniepointPosAndLoanRequestTest extends TestCase
         $response = $this->actingAs($this->user)->get(route('dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Request Your Moniepoint POS Terminal Today', false);
-        $response->assertSee('Official Moniepoint POS Partner', false);
+        $response->assertSee('Request Your POS Terminal Today', false);
+        $response->assertSee('POS Terminal Hardware Desk', false);
         $response->assertSee('Instant Working Capital &amp; Business Loans', false);
         $response->assertSee('Disclaimer: Moniepoint Business Owners Only', false);
     }
@@ -64,12 +64,12 @@ class MoniepointPosAndLoanRequestTest extends TestCase
     {
         $indexResponse = $this->actingAs($this->user)->get(route('moniepoint.pos.index'));
         $indexResponse->assertOk();
-        $indexResponse->assertSee('Moniepoint POS Terminals Request', false);
-        $indexResponse->assertSee('Moniepoint Smart POS (Android)', false);
+        $indexResponse->assertSee('POS Request', false);
+        $indexResponse->assertSee('Smart POS (Android)', false);
 
         $trackingResponse = $this->actingAs($this->user)->get(route('moniepoint.pos.tracking'));
         $trackingResponse->assertOk();
-        $trackingResponse->assertSee('Track Moniepoint POS Terminal Request', false);
+        $trackingResponse->assertSee('Track POS Terminal Request', false);
     }
 
     public function test_user_can_submit_pos_request_successfully(): void
@@ -122,7 +122,7 @@ class MoniepointPosAndLoanRequestTest extends TestCase
         $response->assertOk();
         $response->assertSee($posRequest->reference);
         $response->assertSee('Dispatched via Courier #TRK12345');
-        $response->assertSee('Moniepoint Smart POS (Android)');
+        $response->assertSee('Smart POS (Android)');
         $response->assertSee('Customer Will Be Contacted');
     }
 
@@ -130,12 +130,18 @@ class MoniepointPosAndLoanRequestTest extends TestCase
     {
         $indexResponse = $this->actingAs($this->user)->get(route('loans.index'));
         $indexResponse->assertOk();
-        $indexResponse->assertSee('Moniepoint Business Working Capital Loans', false);
+        $indexResponse->assertSee('Business Working Capital Loans', false);
         $indexResponse->assertSee('Only Moniepoint business owners can request for loan', false);
+        $indexResponse->assertSee(route('loans.create'), false);
+
+        $createResponse = $this->actingAs($this->user)->get(route('loans.create'));
+        $createResponse->assertOk();
+        $createResponse->assertSee('Apply for Business Loan', false);
+        $createResponse->assertSee('Only Moniepoint business owners can request for loan', false);
 
         $trackingResponse = $this->actingAs($this->user)->get(route('loans.tracking'));
         $trackingResponse->assertOk();
-        $trackingResponse->assertSee('Track Moniepoint Loan Application', false);
+        $trackingResponse->assertSee('Track Business Loan Application', false);
     }
 
     public function test_user_can_submit_loan_request_with_creds_and_optional_email(): void
@@ -226,11 +232,11 @@ class MoniepointPosAndLoanRequestTest extends TestCase
     {
         $posResponse = $this->actingAs($this->superAdmin)->get(route('admin.moniepoint-pos.index'));
         $posResponse->assertOk();
-        $posResponse->assertSee('Moniepoint POS Requests Desk', false);
+        $posResponse->assertSee('POS Requests Desk', false);
 
         $loanResponse = $this->actingAs($this->superAdmin)->get(route('admin.loan-requests.index'));
         $loanResponse->assertOk();
-        $loanResponse->assertSee('Moniepoint Business Loans Desk', false);
+        $loanResponse->assertSee('Business Loans Desk', false);
     }
 
     public function test_admin_can_update_pos_request_status(): void

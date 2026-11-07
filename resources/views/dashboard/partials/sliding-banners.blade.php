@@ -69,23 +69,23 @@
             
             <!-- Left Content Block -->
             <div class="min-w-0 flex-1 text-left">
-                <!-- Partner Badge with Logo -->
+                <!-- Partner Badge -->
                 <div class="slide-banner-pill"
                      style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; background: rgba(0, 102, 246, 0.25); border: 1px solid rgba(0, 163, 255, 0.45); margin-bottom: 8px;">
-                    <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" style="height: 14px; width: auto; object-fit: contain;">
-                    <span style="font-size: 11px; font-weight: 700; color: #bae6fd; letter-spacing: 0.3px; text-transform: uppercase;">Official Moniepoint POS Partner</span>
+                    <i data-lucide="smartphone" style="width: 14px; height: 14px; stroke: #38bdf8;"></i>
+                    <span style="font-size: 11px; font-weight: 700; color: #bae6fd; letter-spacing: 0.3px; text-transform: uppercase;">POS Terminal Hardware Desk</span>
                 </div>
 
                 <!-- Title -->
                 <h2 class="slide-banner-title"
                     style="font-size: 1.25rem; font-weight: 800; color: #ffffff !important; line-height: 1.3; margin: 0 0 6px 0; letter-spacing: -0.02em;">
-                    Request Your Moniepoint POS Terminal Today
+                    Request Your POS Terminal Today
                 </h2>
 
                 <!-- Subtitle -->
                 <p class="slide-banner-desc"
-                   style="font-size: 0.8125rem; color: #e0e7ff !important; line-height: 1.5; margin: 0 0 10px 0; max-width: 580px; font-weight: 400;">
-                    Get high-speed Moniepoint Smart (Android) or Traditional POS terminals for your business. Enjoy instant card settlement, 99.9% uptime, dual SIM, and long battery life.
+                    style="font-size: 0.8125rem; color: #e0e7ff !important; line-height: 1.5; margin: 0 0 10px 0; max-width: 580px; font-weight: 400;">
+                    Get high-speed Smart (Android) or Traditional POS terminals for your business. Enjoy instant card settlement, 99.9% uptime, dual SIM, and long battery life.
                 </p>
 
                 <!-- Feature Tags (Desktop/Tablet) -->
@@ -109,7 +109,7 @@
                        onmouseover="this.style.backgroundColor='#ffe066'"
                        onmouseout="this.style.backgroundColor='#ffcc00'">
                         <i data-lucide="smartphone" style="width: 16px; height: 16px; stroke: #001F5C; stroke-width: 2.5;"></i>
-                        <span style="color: #001F5C !important;">Request Moniepoint POS</span>
+                        <span style="color: #001F5C !important;">Request POS Terminal</span>
                     </a>
                     <a href="{{ route('moniepoint.pos.tracking') }}"
                        class="slide-banner-btn"
@@ -126,7 +126,7 @@
             <div class="slide-banner-graphic shrink-0 hidden md:flex items-center justify-center pt-2 md:pt-0">
                 <div class="relative flex items-center justify-center p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-sky-400/30 shadow-xl">
                     <img src="{{ asset('assets/images/moniepoint-traditional-pos.png') }}"
-                         alt="Moniepoint Traditional POS Terminal"
+                         alt="POS Terminal"
                          class="h-28 lg:h-36 w-auto object-contain filter drop-shadow-lg transform hover:scale-105 transition-transform duration-300">
                 </div>
             </div>
@@ -184,7 +184,7 @@
 
                 <!-- Action Buttons -->
                 <div class="slide-banner-actions flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                    <a href="{{ route('loans.index') }}"
+                    <a href="{{ route('loans.create') }}"
                        class="slide-banner-btn"
                        style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 12px; background-color: #10b981; color: #022c22 !important; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: nowrap;"
                        onmouseover="this.style.backgroundColor='#34d399'"

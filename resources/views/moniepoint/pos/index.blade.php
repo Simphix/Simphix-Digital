@@ -39,15 +39,15 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5 sm:gap-4">
-                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#001F5C] flex items-center justify-center p-2.5 shrink-0 shadow-sm border border-blue-900/40">
-                        <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" class="h-5 sm:h-6 w-auto object-contain">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#001F5C] flex items-center justify-center shrink-0 shadow-sm border border-blue-900/40 text-[#ffcc00]">
+                        <i data-lucide="smartphone" class="w-7 h-7"></i>
                     </div>
                     <div>
                         <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#00266B] text-[11px] sm:text-xs font-bold mb-1.5">
-                            <span>Official Moniepoint POS Hardware Partner</span>
+                            <span>POS Terminal Hardware Desk</span>
                         </div>
                         <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
-                            Moniepoint POS Terminals Request
+                            POS Request
                         </h1>
                     </div>
                 </div>
@@ -112,10 +112,10 @@
                     </span>
 
                     <div class="h-44 flex items-center justify-center p-3 mb-4 bg-slate-50 rounded-xl overflow-hidden">
-                        <img src="{{ asset('assets/images/moniepoint-pos.png') }}" alt="Moniepoint Smart POS" class="h-36 w-36 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105">
+                        <img src="{{ asset('assets/images/moniepoint-pos.png') }}" alt="Smart POS" class="h-36 w-36 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105">
                     </div>
 
-                    <h3 class="text-lg font-bold text-slate-900 font-display">Moniepoint Smart POS (Android)</h3>
+                    <h3 class="text-lg font-bold text-slate-900 font-display">Smart POS (Android)</h3>
                     <p class="text-xs text-slate-500 mt-1 leading-relaxed">
                         Full-touchscreen 4G Android terminal with built-in high-speed thermal receipt printer, barcode reader, and long-lasting battery.
                     </p>
@@ -157,10 +157,10 @@
                     </span>
 
                     <div class="h-44 flex items-center justify-center p-3 mb-4 bg-slate-50 rounded-xl overflow-hidden">
-                        <img src="{{ asset('assets/images/moniepoint-traditional-pos.png') }}" alt="Moniepoint Traditional POS" class="h-36 w-36 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105">
+                        <img src="{{ asset('assets/images/moniepoint-traditional-pos.png') }}" alt="Traditional POS" class="h-36 w-36 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105">
                     </div>
 
-                    <h3 class="text-lg font-bold text-slate-900 font-display">Moniepoint Traditional POS</h3>
+                    <h3 class="text-lg font-bold text-slate-900 font-display">Traditional POS</h3>
                     <p class="text-xs text-slate-500 mt-1 leading-relaxed">
                         Physical mechanical keypad terminal designed for intense, heavy-duty retail and kiosk transaction processing.
                     </p>
@@ -202,10 +202,10 @@
                     </span>
 
                     <div class="h-44 flex items-center justify-center p-3 mb-4 bg-slate-50 rounded-xl overflow-hidden">
-                        <img src="{{ asset('assets/images/moniepoint-mini-pos.png') }}" alt="Moniepoint Mini POS" class="h-36 w-36 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105">
+                        <img src="{{ asset('assets/images/moniepoint-mini-pos.png') }}" alt="Mini POS" class="h-36 w-36 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105">
                     </div>
 
-                    <h3 class="text-lg font-bold text-slate-900 font-display">Moniepoint Mini POS (MPOS)</h3>
+                    <h3 class="text-lg font-bold text-slate-900 font-display">Mini POS (MPOS)</h3>
                     <p class="text-xs text-slate-500 mt-1 leading-relaxed">
                         Lightweight Bluetooth-paired pocket terminal for delivery riders, mobile sales agents, and pop-up store vendors.
                     </p>
@@ -252,7 +252,7 @@
                             <i data-lucide="smartphone" class="w-5 h-5"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-slate-900 font-display">Moniepoint POS Request</h3>
+                            <h3 class="text-base font-bold text-slate-900 font-display">POS Request</h3>
                             <p class="text-xs text-slate-400">Fill your contact details and desired terminal model.</p>
                         </div>
                     </div>

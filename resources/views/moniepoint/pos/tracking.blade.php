@@ -20,10 +20,10 @@
                 <div>
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#00266B] text-xs font-bold mb-2">
                         <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
-                        <span>Moniepoint POS Dispatch Tracking</span>
+                        <span>POS Dispatch Tracking</span>
                     </div>
                     <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
-                        Track Moniepoint POS Terminal Request
+                        Track POS Terminal Request
                     </h1>
                 </div>
 

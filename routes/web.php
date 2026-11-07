@@ -153,6 +153,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Business Loans (Exclusive for Moniepoint Business Owners)
     Route::prefix('loans')->name('loans.')->group(function () {
         Route::get('/', [\App\Http\Controllers\LoanRequestController::class, 'index'])->name('index');
+        Route::get('/apply', [\App\Http\Controllers\LoanRequestController::class, 'create'])->name('create');
         Route::post('/request', [\App\Http\Controllers\LoanRequestController::class, 'store'])->name('store');
         Route::get('/tracking', [\App\Http\Controllers\LoanRequestController::class, 'tracking'])->name('tracking');
     });

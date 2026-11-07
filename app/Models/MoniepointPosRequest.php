@@ -28,9 +28,9 @@ class MoniepointPosRequest extends Model
     ];
 
     public const POS_TYPES = [
-        'smart_pos'       => 'Moniepoint Smart POS (Android)',
-        'traditional_pos' => 'Moniepoint Traditional POS',
-        'mini_pos'        => 'Moniepoint Mini POS / MPOS',
+        'smart_pos'       => 'Smart POS (Android)',
+        'traditional_pos' => 'Traditional POS',
+        'mini_pos'        => 'Mini POS / MPOS',
     ];
 
     protected $fillable = [

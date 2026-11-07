@@ -29,12 +29,12 @@
                         <span>Business Loan Tracking Desk</span>
                     </div>
                     <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
-                        Track Moniepoint Loan Application
+                        Track Business Loan Application
                     </h1>
                 </div>
 
                 <div class="shrink-0">
-                    <a href="{{ route('loans.index') }}"
+                    <a href="{{ route('loans.create') }}"
                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00266B] hover:bg-[#001F5C] text-white text-xs sm:text-sm font-bold shadow-sm transition">
                         <i data-lucide="plus-circle" class="w-4 h-4 text-[#ffcc00]"></i>
                         <span>New Loan Request</span>

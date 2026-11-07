@@ -18,12 +18,12 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-[#00266B] flex items-center justify-center p-2 shrink-0">
-                        <img src="{{ asset('assets/images/moniepoint-logo.png') }}" alt="Moniepoint" class="w-full h-auto object-contain brightness-0 invert">
+                    <div class="w-12 h-12 rounded-xl bg-[#00266B] flex items-center justify-center text-white shrink-0">
+                        <i data-lucide="smartphone" class="w-6 h-6 text-[#ffcc00]"></i>
                     </div>
                     <div>
                         <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 font-display tracking-tight">
-                            Moniepoint POS Requests Desk
+                            POS Requests Desk
                         </h1>
                     </div>
                 </div>
