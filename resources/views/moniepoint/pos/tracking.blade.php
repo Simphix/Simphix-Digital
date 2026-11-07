@@ -29,8 +29,8 @@
 
                 <div class="shrink-0">
                     <a href="{{ route('moniepoint.pos.create') }}"
-                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/20 transition">
-                        <i data-lucide="plus-circle" class="w-4 h-4 text-[#ffcc00]"></i>
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-white"></i>
                         <span>New POS Request</span>
                     </a>
                 </div>
@@ -45,7 +45,7 @@
                            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                 </div>
                 <button type="submit"
-                        class="px-6 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-blue-600/25 transition shrink-0">
+                        class="px-5 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition shrink-0">
                     Track POS Order
                 </button>
             </form>

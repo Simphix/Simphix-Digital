@@ -181,8 +181,8 @@
                     <div class="p-6 pt-0 mt-2">
                         <button type="button"
                                 @click="openBooking('{{ $pkg->id }}', '{{ addslashes($pkg->name) }}', '{{ $pkg->category }}')"
-                                class="w-full py-3.5 px-4 rounded-xl bg-[#0056D2] hover:bg-blue-700 active:bg-blue-800 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-blue-600/25 transition flex items-center justify-center gap-2">
-                            <i data-lucide="bookmark-plus" class="w-4 h-4 text-amber-300"></i>
+                                class="w-full py-2.5 px-4 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
+                            <i data-lucide="bookmark-plus" class="w-4 h-4 text-white"></i>
                             <span>Request This Package</span>
                         </button>
                     </div>
@@ -326,14 +326,14 @@
                     </div>
 
                     <!-- Notice & Submit Button -->
-                    <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <p class="text-[11px] text-slate-500 font-medium">
-                            <i data-lucide="shield-check" class="w-4 h-4 inline text-emerald-600"></i>
+                    <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <p class="text-[11px] text-slate-400">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 inline text-emerald-500"></i>
                             Your request will generate a unique tracking reference code.
                         </p>
                         <button type="submit"
-                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#0056D2] to-[#003D99] hover:from-[#0047B3] hover:to-[#002E7A] active:scale-[0.98] text-white text-sm sm:text-base font-extrabold shadow-lg shadow-blue-600/30 ring-2 ring-blue-500/20 transition-all transform hover:-translate-y-0.5 cursor-pointer shrink-0">
-                            <i data-lucide="send" class="w-4 h-4 text-amber-300"></i>
+                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
+                            <i data-lucide="send" class="w-4 h-4 text-white"></i>
                             <span>Submit Travel Request</span>
                         </button>
                     </div>

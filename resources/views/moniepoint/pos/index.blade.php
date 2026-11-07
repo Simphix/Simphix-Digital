@@ -52,8 +52,8 @@
                         <span>Track My POS Request</span>
                     </a>
                     <a href="{{ route('moniepoint.pos.create') }}"
-                       class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-600/20 transition">
-                        <i data-lucide="plus-circle" class="w-4 h-4 text-[#ffcc00]"></i>
+                       class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-white"></i>
                         <span>Request POS Terminal</span>
                     </a>
                 </div>
@@ -135,8 +135,8 @@
 
                 <div class="p-6 pt-0 mt-3">
                     <a href="{{ route('moniepoint.pos.create', ['type' => 'smart_pos']) }}"
-                       class="w-full py-3.5 px-4 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-blue-600/25 transition flex items-center justify-center gap-2">
-                        <i data-lucide="shopping-cart" class="w-4 h-4 text-[#ffcc00]"></i>
+                       class="w-full py-2.5 px-4 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
+                        <i data-lucide="shopping-cart" class="w-4 h-4 text-white"></i>
                         <span>Request Smart Android POS</span>
                     </a>
                 </div>
@@ -180,8 +180,8 @@
 
                 <div class="p-6 pt-0 mt-3">
                     <a href="{{ route('moniepoint.pos.create', ['type' => 'traditional_pos']) }}"
-                       class="w-full py-3.5 px-4 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-blue-600/25 transition flex items-center justify-center gap-2">
-                        <i data-lucide="shopping-cart" class="w-4 h-4 text-[#ffcc00]"></i>
+                       class="w-full py-2.5 px-4 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
+                        <i data-lucide="shopping-cart" class="w-4 h-4 text-white"></i>
                         <span>Request Traditional POS</span>
                     </a>
                 </div>
@@ -225,8 +225,8 @@
 
                 <div class="p-6 pt-0 mt-3">
                     <a href="{{ route('moniepoint.pos.create', ['type' => 'mini_pos']) }}"
-                       class="w-full py-3.5 px-4 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-blue-600/25 transition flex items-center justify-center gap-2">
-                        <i data-lucide="shopping-cart" class="w-4 h-4 text-[#ffcc00]"></i>
+                       class="w-full py-2.5 px-4 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
+                        <i data-lucide="shopping-cart" class="w-4 h-4 text-white"></i>
                         <span>Request Mini POS</span>
                     </a>
                 </div>
