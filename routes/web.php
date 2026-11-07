@@ -146,6 +146,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Moniepoint POS Terminal Requests
     Route::prefix('moniepoint/pos')->name('moniepoint.pos.')->group(function () {
         Route::get('/', [\App\Http\Controllers\MoniepointPosController::class, 'index'])->name('index');
+        Route::get('/apply', [\App\Http\Controllers\MoniepointPosController::class, 'create'])->name('create');
+        Route::get('/request', [\App\Http\Controllers\MoniepointPosController::class, 'create']);
         Route::post('/request', [\App\Http\Controllers\MoniepointPosController::class, 'store'])->name('store');
         Route::get('/tracking', [\App\Http\Controllers\MoniepointPosController::class, 'tracking'])->name('tracking');
     });

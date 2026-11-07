@@ -103,7 +103,7 @@
 
                 <!-- Action Buttons -->
                 <div class="slide-banner-actions flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                    <a href="{{ route('moniepoint.pos.index') }}"
+                    <a href="{{ route('moniepoint.pos.create') }}"
                        class="slide-banner-btn"
                        style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 12px; background-color: #ffcc00; color: #001F5C !important; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: nowrap;"
                        onmouseover="this.style.backgroundColor='#ffe066'"

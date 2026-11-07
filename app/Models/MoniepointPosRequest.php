@@ -39,6 +39,18 @@ class MoniepointPosRequest extends Model
         'name',
         'phone',
         'email',
+        'passport_photo',
+        'bvn',
+        'nin',
+        'shop_address',
+        'state',
+        'lga',
+        'home_address',
+        'next_of_kin_name',
+        'next_of_kin_phone',
+        'next_of_kin_address',
+        'referral_name',
+        'referral_phone',
         'pos_type',
         'business_name',
         'delivery_address',
@@ -50,6 +62,15 @@ class MoniepointPosRequest extends Model
         'contacted_at',
         'resolved_at',
     ];
+
+    public function getPassportPhotoUrlAttribute(): ?string
+    {
+        if (! $this->passport_photo) {
+            return null;
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->passport_photo);
+    }
 
     protected $casts = [
         'quantity'     => 'integer',
