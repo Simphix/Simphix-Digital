@@ -46,67 +46,47 @@
             </div>
         </div>
 
-        <!-- Prominent Top Banner with Apply Button (Visible at Top Like Before) -->
-        <div class="relative w-full rounded-2xl shadow-md border border-slate-200 overflow-hidden p-5 sm:p-7 min-h-[170px] flex items-center"
-             style="background: linear-gradient(135deg, #001233 0%, #002875 50%, #0056D2 100%); color: #ffffff;">
+        <!-- Sleek & Compact Top Hero Banner -->
+        <div class="relative w-full rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-4 sm:p-5"
+             style="background: linear-gradient(135deg, #001a44 0%, #002b7a 60%, #0047b3 100%); color: #ffffff;">
 
-            <!-- Decorative Ambient Accents -->
-            <div class="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full"
-                 style="background: radial-gradient(circle, rgba(255, 204, 0, 0.28) 0%, rgba(255, 204, 0, 0) 70%); filter: blur(25px);" aria-hidden="true"></div>
-
-            <div class="relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-5 lg:gap-8">
+            <div class="relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <!-- Left Content Block -->
                 <div class="min-w-0 flex-1 text-left">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[#bae6fd] text-xs font-bold mb-2.5 backdrop-blur-xs">
-                        <i data-lucide="banknote" class="w-3.5 h-3.5 text-[#ffcc00]"></i>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 border border-white/20 text-[#bae6fd] text-[11px] font-bold mb-1.5 backdrop-blur-xs">
+                        <i data-lucide="banknote" class="w-3.5 h-3.5 text-amber-300"></i>
                         <span>SME &amp; Merchant Growth Financing</span>
                     </div>
 
-                    <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white font-display tracking-tight leading-tight mb-2">
+                    <h1 class="text-lg sm:text-xl font-extrabold text-white font-display tracking-tight leading-tight">
                         Business Working Capital Loans
                     </h1>
 
-                    <p class="text-xs sm:text-sm text-blue-100 max-w-2xl leading-relaxed mb-4">
-                        Expand your retail operations or agent liquidity with fast, low-interest working capital loans up to &#8358;50,000,000. Verified turnover evaluation, fast disbursement within 24&ndash;48 hours, and zero physical collateral.
+                    <p class="text-xs text-blue-100/90 max-w-xl leading-relaxed mt-1">
+                        Fast, collateral-free working capital loans up to &#8358;50,000,000 evaluated strictly on your active transaction history.
                     </p>
 
-                    <!-- Feature Tags -->
-                    <div class="hidden sm:flex flex-wrap items-center gap-2 mb-4">
-                        <span class="text-xs px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-emerald-300 font-semibold">
-                            &#10003; 24&ndash;48h Quick Disbursement
-                        </span>
-                        <span class="text-xs px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-emerald-300 font-semibold">
-                            &#10003; Up to &#8358;50,000,000
-                        </span>
-                        <span class="text-xs px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-emerald-300 font-semibold">
-                            &#10003; Zero Physical Collateral
-                        </span>
-                        <span class="text-xs px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-emerald-300 font-semibold">
-                            &#10003; Flexible Repayment
-                        </span>
-                    </div>
-
-                    <!-- Action Buttons Visible at Top -->
-                    <div class="flex flex-wrap items-center gap-3">
+                    <!-- Action Buttons with High-Contrast Distinct Colors -->
+                    <div class="flex flex-wrap items-center gap-2.5 mt-3">
                         <a href="{{ route('loans.create') }}"
-                           class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#ffcc00] hover:bg-[#ffe066] text-[#001F5C] text-xs sm:text-sm font-extrabold shadow-lg transition transform hover:-translate-y-0.5">
-                            <i data-lucide="banknote" class="w-4 h-4 text-[#001F5C]"></i>
+                           class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs sm:text-sm font-bold shadow-md transition transform hover:-translate-y-0.5">
+                            <i data-lucide="banknote" class="w-4 h-4 text-white"></i>
                             <span>Apply for Business Loan</span>
                         </a>
                         <a href="{{ route('loans.tracking') }}"
-                           class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/30 text-xs sm:text-sm font-semibold backdrop-blur-xs transition">
-                            <i data-lucide="search" class="w-4 h-4 text-blue-200"></i>
-                            <span>Track My Loan Request</span>
+                           class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 text-xs sm:text-sm font-semibold shadow-md transition">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-500"></i>
+                            <span>Track Loan Status</span>
                         </a>
                     </div>
                 </div>
 
                 <!-- Right Side Graphic / Illustration -->
                 <div class="shrink-0 hidden md:flex items-center justify-center">
-                    <div class="relative p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-emerald-400/30 shadow-xl">
+                    <div class="relative p-2 rounded-xl bg-white/10 backdrop-blur-sm border border-emerald-400/30 shadow-md">
                         <img src="{{ asset('assets/images/business-loan.png') }}"
                              alt="Business Loan"
-                             class="h-28 lg:h-36 w-auto object-contain filter drop-shadow-lg transform hover:scale-105 transition-transform duration-300">
+                             class="h-16 sm:h-20 w-auto object-contain filter drop-shadow-sm">
                     </div>
                 </div>
             </div>
@@ -228,28 +208,6 @@
                 </div>
             </div>
 
-        </div>
-
-        <!-- Call to Action Banner (Bottom Link to Dedicated Apply Form) -->
-        <div class="bg-gradient-to-r from-[#00266B] via-[#003893] to-[#001F5C] rounded-2xl p-6 sm:p-10 shadow-md text-white flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div class="space-y-2 text-center sm:text-left">
-                <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-[#bae6fd] backdrop-blur-xs">
-                    Quick Online Application
-                </span>
-                <h2 class="text-2xl sm:text-3xl font-extrabold font-display">
-                    Ready to Scale Your Business Operations?
-                </h2>
-                <p class="text-xs sm:text-sm text-blue-100 max-w-xl">
-                    Apply for up to &#8358;50,000,000 in working capital. Click the button below to complete the application form on our secured loan portal.
-                </p>
-            </div>
-            <div class="shrink-0">
-                <a href="{{ route('loans.create') }}"
-                   class="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-[#ffcc00] hover:bg-[#ffe066] text-[#001F5C] text-sm font-extrabold shadow-lg transition transform hover:-translate-y-0.5">
-                    <i data-lucide="banknote" class="w-5 h-5 text-[#001F5C]"></i>
-                    <span>Apply for Business Loan</span>
-                </a>
-            </div>
         </div>
 
     </div>
