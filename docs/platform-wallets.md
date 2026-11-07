@@ -47,6 +47,14 @@ just a new type slug and a call into the ledger below.
   a user's withdrawal request, the flat withdrawal fee deducted from the user is
   automatically credited to this pool (`CashOutController::approve`). Displayed in
   the Admin Platform Wallets dashboard (`/admin/platform-wallets`).
+- **`bsm_commission`** (`PlatformWallet::TYPE_BSM_COMMISSION`) —
+  the BSM Central Commission Wallet. Credited a configurable amount or percentage
+  (`/admin/platform-wallets/bsm-commission-settings`, backed by `PlatformBsmCommissionSettings`)
+  on every retail SIM activation event (`App\Events\SimActivated` handled by
+  `App\Listeners\CreditBsmCentralCommissionWallet`). When configured (`deduct_from_sim_operations`),
+  the commission amount is automatically debited from the Platform SIM Operations Wallet (`sim_activation`).
+  Business Sales Managers have dedicated **view-only** access to this wallet and its transactions ledger
+  at `/bsm/commission-wallet`. Management, withdrawals, and rates remain strictly under Admin control.
 
 ## Adding a new revenue-generating service — the whole checklist
 
@@ -90,9 +98,10 @@ readable without parsing `metadata`. Current values:
 
 | Source                    | Wallet              | Where                                                    |
 |----------------------------|----------------------|-----------------------------------------------------------|
-| `sim_activation`           | `welfare`            | `App\Listeners\CreditPlatformWelfareWallet`               |
+| `sim_activation`           | `welfare`, `bsm_commission` | `App\Listeners\CreditPlatformWelfareWallet`, `App\Listeners\CreditBsmCentralCommissionWallet` |
 | `sim_activation_fee`       | `sim_activation`     | `App\Services\SimActivationWalletService` (activation fee credit) |
 | `sim_activation_commission`| `sim_activation`     | `App\Services\SimActivationWalletService` (commission payout debit) |
+| `sim_activation_bsm_commission` | `sim_activation` | `App\Services\SimActivationWalletService` (BSM central commission deduction) |
 | `airtime_topup`             | `utilities_revenue`  | `App\Http\Controllers\Action\AirtimeController`            |
 | `data_topup`                 | `utilities_revenue`  | `App\Http\Controllers\Action\SmeDataController`             |
 | `verification_bvn`         | `utilities_revenue`  | `App\Http\Controllers\Verification\BvnverificationController` |

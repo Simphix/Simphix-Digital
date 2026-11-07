@@ -248,6 +248,7 @@ Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('bsm')
     Route::get('/lifecycle', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'lifecycle'])->name('lifecycle');
     Route::get('/customers', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'customers'])->name('customers');
     Route::get('/acceleration', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'acceleration'])->name('acceleration');
+    Route::get('/commission-wallet', [\App\Http\Controllers\Bsm\BsmCommissionWalletController::class, 'index'])->name('commission-wallet');
     Route::get('/reports/jurisdictions/export', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'exportJurisdictionReport'])->name('reports.jurisdictions.export');
     Route::get('/reports/acceleration/export', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'exportAccelerationReport'])->name('reports.acceleration.export');
     Route::get('/reports/acceleration/managers', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'searchManagers'])->name('reports.acceleration.managers');
@@ -368,6 +369,8 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
     Route::prefix('admin/platform-wallets')->name('admin.platform-wallets.')->group(function () {
         Route::get('/welfare-settings', [\App\Http\Controllers\Admin\PlatformWelfareSettingsController::class, 'edit'])->name('welfare-settings.edit');
         Route::put('/welfare-settings', [\App\Http\Controllers\Admin\PlatformWelfareSettingsController::class, 'update'])->name('welfare-settings.update');
+        Route::get('/bsm-commission-settings', [\App\Http\Controllers\Admin\PlatformBsmCommissionSettingsController::class, 'edit'])->name('bsm-commission-settings.edit');
+        Route::put('/bsm-commission-settings', [\App\Http\Controllers\Admin\PlatformBsmCommissionSettingsController::class, 'update'])->name('bsm-commission-settings.update');
         Route::get('/withdrawal-account', [\App\Http\Controllers\Admin\PlatformWithdrawalAccountController::class, 'edit'])->name('withdrawal-account.edit');
         Route::post('/withdrawal-account', [\App\Http\Controllers\Admin\PlatformWithdrawalAccountController::class, 'update'])->name('withdrawal-account.update');
         Route::get('/{walletType}/cashout', [\App\Http\Controllers\Admin\PlatformWalletCashOutController::class, 'show'])->name('cashout.show')->middleware('cashout_enabled');

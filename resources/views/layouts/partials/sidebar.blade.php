@@ -206,6 +206,7 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.lifecycle'), 'icon' => 'cpu', 'label' => 'SIM Lifecycle', 'active' => request()->routeIs('bsm.lifecycle')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.customers'), 'icon' => 'user-check', 'label' => 'Customer Desk', 'active' => request()->routeIs('bsm.customers')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.acceleration'), 'icon' => 'zap', 'label' => 'Sales Acceleration', 'active' => request()->routeIs('bsm.acceleration')])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.commission-wallet'), 'icon' => 'wallet', 'label' => 'Commission Wallet', 'active' => request()->routeIs('bsm.commission-wallet')])
                 @include('layouts.partials.sidebar-link', ['href' => route('sims.inventory'), 'icon' => 'database', 'label' => 'All SIMs Inventory', 'active' => request()->routeIs('sims.inventory*')])
 
                 @php
