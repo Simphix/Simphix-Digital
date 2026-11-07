@@ -298,13 +298,20 @@ php artisan transactions:clear-history --all --force
 
 ### 7. `sims:clear-activation-events`
 
-Clears activation bonus grant logs (`sim_activation_bonus_grants`) and activation-related SIM transition histories (`sim_histories` where `to_status = 'activated'`).
+Clears activation events, history logs, and failed/success activation bonus data reports from the platform:
+- Failed/Retrying bonus reports (`reports` table where `type = 'activation_bonus_data'`)
+- Successful/Completed bonus reports (`reports` table where `type = 'activation_bonus_data'`)
+- SIM activation bonus grant tracking records (`sim_activation_bonus_grants`)
+- Activation commission earnings (`commission_earnings`)
+- SIM status transition history logs (`sim_histories` where `to_status = 'activated'`)
 
 - **Signature**:
   ```bash
-  php artisan sims:clear-activation-events {--force} {--keep-histories} {--dry-run}
+  php artisan sims:clear-activation-events {--force} {--dry-run} {--all-history} {--keep-histories} {--bonuses=} {--failed-bonuses} {--success-bonuses} {--all-bonuses} {--bonuses-only} {--keep-bonuses}
   ```
 - **Aliases**:
+  - `activation-events:clear`
+  - `sim:clear-activation-events`
   - `sims:clear-events`
   - `simphix:clear-activation-events`
 
@@ -312,13 +319,32 @@ Clears activation bonus grant logs (`sim_activation_bonus_grants`) and activatio
 | Option | Description |
 |---|---|
 | `--force` | Clear without confirmation prompt |
-| `--keep-histories` | Preserve SIM history rows and only clear bonus grant records |
 | `--dry-run` | Preview record counts without deleting |
+| `--bonuses=all\|failed\|success` | Filter bonus reports to clear: `failed`, `success`, or `all` (default) |
+| `--failed-bonuses` | Clear only failed/retrying activation bonus reports |
+| `--success-bonuses` | Clear only successful/completed activation bonus reports and bonus grants |
+| `--all-bonuses` | Clear all activation bonus reports (both failed and success) |
+| `--bonuses-only` | Clear only activation bonus records/reports without deleting SIM history or commission earnings |
+| `--keep-bonuses` | Preserve all activation bonus records and reports |
+| `--keep-histories` | Preserve SIM history logs |
+| `--all-history` | Clear all SIM history logs, not only activation-specific events |
 
 #### Usage Examples
 ```bash
-php artisan sims:clear-activation-events
+# Clear all activation events, history logs, and all failed & success activation bonuses
 php artisan sims:clear-activation-events --force
+
+# Clear ONLY failed activation bonus reports without touching SIM history or commissions
+php artisan sims:clear-activation-events --failed-bonuses --bonuses-only --force
+
+# Clear ONLY successful activation bonus reports and grants without touching SIM history
+php artisan sims:clear-activation-events --success-bonuses --bonuses-only --force
+
+# Clear all failed and success activation bonuses without touching SIM history
+php artisan sims:clear-activation-events --bonuses-only --force
+
+# Dry-run preview of all matching activation records to be cleared
+php artisan sims:clear-activation-events --dry-run
 ```
 
 ---

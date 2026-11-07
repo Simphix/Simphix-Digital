@@ -12,6 +12,7 @@ use App\Models\MoniepointPosRequest;
 use App\Models\PlatformCashOutRequest;
 use App\Models\PlatformWallet;
 use App\Models\PlatformWalletTransaction;
+use App\Models\Report;
 use App\Models\Sim;
 use App\Models\SimActivationBonusGrant;
 use App\Models\SimCustomer;
@@ -337,22 +338,65 @@ test('activation-events:clear clears activation events and bonus grants', functi
         'period_week' => now()->startOfWeek(),
     ]);
 
-    // 1. Cancellation
-    $this->artisan('activation-events:clear')
-        ->expectsConfirmation('Are you sure you want to permanently delete 3 all activation events and bonus grant ledgers? This action cannot be undone.', 'no')
+    Report::create([
+        'user_id' => $user->id,
+        'phone_number' => $sim->number,
+        'network' => 'mtn',
+        'ref' => 'REF-FAILED-1',
+        'amount' => 0.00,
+        'status' => 'failed',
+        'type' => 'activation_bonus_data',
+        'description' => 'Bonus delivery failed',
+        'old_balance' => 0.00,
+        'new_balance' => 0.00,
+    ]);
+
+    Report::create([
+        'user_id' => $user->id,
+        'phone_number' => $sim->number,
+        'network' => 'mtn',
+        'ref' => 'REF-SUCCESS-1',
+        'amount' => 0.00,
+        'status' => 'completed',
+        'type' => 'activation_bonus_data',
+        'description' => 'Bonus delivered',
+        'old_balance' => 0.00,
+        'new_balance' => 0.00,
+    ]);
+
+    // 1. Dry-run test (5 records: 1 history, 1 grant, 1 commission, 1 failed bonus report, 1 success bonus report)
+    $this->artisan('sims:clear-activation-events --dry-run')
+        ->expectsOutputToContain('[DRY RUN] No records were deleted. 5 record(s) would be cleared.')
+        ->assertSuccessful();
+
+    // 2. Cancellation
+    $this->artisan('sims:clear-activation-events')
+        ->expectsConfirmation('Are you sure you want to permanently delete 5 activation events, history logs, and activation bonus records? This action cannot be undone.', 'no')
         ->expectsOutputToContain('Operation cancelled by user')
         ->assertSuccessful();
 
     expect(SimHistory::count())->toBe(2)
-        ->and(SimActivationBonusGrant::count())->toBe(1);
+        ->and(SimActivationBonusGrant::count())->toBe(1)
+        ->and(Report::where('type', 'activation_bonus_data')->count())->toBe(2);
 
-    // 2. Force clear
-    $this->artisan('activation-events:clear --force')
-        ->expectsOutputToContain('Successfully cleared 3 activation event record(s)')
+    // 3. Clear ONLY failed bonuses
+    $this->artisan('sims:clear-activation-events --failed-bonuses --bonuses-only --force')
+        ->expectsOutputToContain('Successfully cleared 1 activation record(s)')
+        ->assertSuccessful();
+
+    expect(Report::where('type', 'activation_bonus_data')->where('status', 'failed')->count())->toBe(0)
+        ->and(Report::where('type', 'activation_bonus_data')->where('status', 'completed')->count())->toBe(1)
+        ->and(SimActivationBonusGrant::count())->toBe(1)
+        ->and(CommissionEarning::count())->toBe(1);
+
+    // 4. Force clear all remaining activation events and bonuses
+    $this->artisan('sims:clear-activation-events --force')
+        ->expectsOutputToContain('Successfully cleared 4 activation record(s)')
         ->assertSuccessful();
 
     expect(SimActivationBonusGrant::count())->toBe(0)
         ->and(CommissionEarning::count())->toBe(0)
+        ->and(Report::where('type', 'activation_bonus_data')->count())->toBe(0)
         // Non-activation history should remain
         ->and(SimHistory::where('to_status', SimStatus::ASSIGNED_TO_BSM)->count())->toBe(1);
 });
