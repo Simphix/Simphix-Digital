@@ -19,6 +19,7 @@ This document provides a comprehensive reference for the administrative Artisan 
    - [`requests:clear-pending`](#8-requestsclear-pending)
    - [`webhooks:clear-logs`](#9-webhooksclear-logs)
    - [`tickets:clear`](#10-ticketsclear)
+   - [`accounts:clear`](#11-accountsclear)
 
 ---
 
@@ -414,4 +415,55 @@ php artisan tickets:clear --status=closed --force
 
 # Clear all technical tickets without prompt
 php artisan tickets:clear --category=technical --force
+```
+
+---
+
+### 11. `accounts:clear`
+
+Permanently clears generated virtual bank accounts (`virtual_accounts`) across the platform or for a specific user or account number. **Critically, all user KYC records (BVN, NIN, Tier level, residential and shop addresses) remain 100% intact and preserved.**
+
+- **Signature**:
+  ```bash
+  php artisan accounts:clear {target?} {--user=} {--account=} {--provider=} {--bank=} {--all} {--include-enterprise-payments} {--force} {--dry-run}
+  ```
+- **Aliases**:
+  - `virtual-accounts:clear`
+  - `bank-accounts:clear`
+  - `accounts:clear-generated`
+  - `simphix:clear-accounts`
+
+#### Options & Arguments
+| Parameter | Type | Description |
+|---|---|---|
+| `target` | Argument | Optional user ID, email address, phone number, or specific account number |
+| `--user=` | Option | Target a specific user by ID, email, or phone |
+| `--account=` | Option | Target a specific bank account number |
+| `--provider=` | Option | Filter by provider (e.g. `palmpay`, `monnify`, `paystack`) |
+| `--bank=` | Option | Filter by bank name (e.g. `PalmPay`, `Wema Bank`) |
+| `--all` | Option | Clear all generated bank accounts across the entire platform |
+| `--include-enterprise-payments` | Option | Also clear generated enterprise partner registration payment accounts (`enterprise_partner_payments`) |
+| `--force` | Option | Clear without confirmation prompt |
+| `--dry-run` | Option | Preview matching accounts and target users without deleting |
+
+#### Usage Examples
+```bash
+# Interactive mode (prompts to choose between All, Specific User, or Specific Account)
+php artisan accounts:clear
+
+# Preview all generated bank accounts across the platform without deleting
+php artisan accounts:clear --all --dry-run
+
+# Clear all generated accounts across the platform with force
+php artisan accounts:clear --all --force
+
+# Clear bank account for a specific user by email or user ID
+php artisan accounts:clear --user=musa@example.com --force
+php artisan accounts:clear 844 --force
+
+# Clear a specific bank account number directly
+php artisan accounts:clear --account=9900112233 --force
+
+# Clear only PalmPay accounts for a specific user
+php artisan accounts:clear --user=musa@example.com --provider=palmpay --force
 ```
