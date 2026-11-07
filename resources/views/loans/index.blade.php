@@ -46,34 +46,68 @@
             </div>
         </div>
 
-        <!-- Header Card -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div class="flex items-center gap-3.5 sm:gap-4">
-                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#00266B] flex items-center justify-center text-white shrink-0 shadow-sm">
-                        <i data-lucide="banknote" class="w-7 h-7 text-[#ffcc00]"></i>
+        <!-- Prominent Top Banner with Apply Button (Visible at Top Like Before) -->
+        <div class="relative w-full rounded-2xl shadow-md border border-slate-200 overflow-hidden p-5 sm:p-7 min-h-[170px] flex items-center"
+             style="background: linear-gradient(135deg, #001233 0%, #002875 50%, #0056D2 100%); color: #ffffff;">
+
+            <!-- Decorative Ambient Accents -->
+            <div class="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full"
+                 style="background: radial-gradient(circle, rgba(255, 204, 0, 0.28) 0%, rgba(255, 204, 0, 0) 70%); filter: blur(25px);" aria-hidden="true"></div>
+
+            <div class="relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-5 lg:gap-8">
+                <!-- Left Content Block -->
+                <div class="min-w-0 flex-1 text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[#bae6fd] text-xs font-bold mb-2.5 backdrop-blur-xs">
+                        <i data-lucide="banknote" class="w-3.5 h-3.5 text-[#ffcc00]"></i>
+                        <span>SME &amp; Merchant Growth Financing</span>
                     </div>
-                    <div>
-                        <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#00266B] text-[11px] sm:text-xs font-bold mb-1.5">
-                            <span>SME &amp; Merchant Growth Financing</span>
-                        </div>
-                        <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 font-display tracking-tight">
-                            Business Working Capital Loans
-                        </h1>
+
+                    <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white font-display tracking-tight leading-tight mb-2">
+                        Business Working Capital Loans
+                    </h1>
+
+                    <p class="text-xs sm:text-sm text-blue-100 max-w-2xl leading-relaxed mb-4">
+                        Expand your retail operations or agent liquidity with fast, low-interest working capital loans up to &#8358;50,000,000. Verified turnover evaluation, fast disbursement within 24&ndash;48 hours, and zero physical collateral.
+                    </p>
+
+                    <!-- Feature Tags -->
+                    <div class="hidden sm:flex flex-wrap items-center gap-2 mb-4">
+                        <span class="text-xs px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-emerald-300 font-semibold">
+                            &#10003; 24&ndash;48h Quick Disbursement
+                        </span>
+                        <span class="text-xs px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-emerald-300 font-semibold">
+                            &#10003; Up to &#8358;50,000,000
+                        </span>
+                        <span class="text-xs px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-emerald-300 font-semibold">
+                            &#10003; Zero Physical Collateral
+                        </span>
+                        <span class="text-xs px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-emerald-300 font-semibold">
+                            &#10003; Flexible Repayment
+                        </span>
+                    </div>
+
+                    <!-- Action Buttons Visible at Top -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <a href="{{ route('loans.create') }}"
+                           class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#ffcc00] hover:bg-[#ffe066] text-[#001F5C] text-xs sm:text-sm font-extrabold shadow-lg transition transform hover:-translate-y-0.5">
+                            <i data-lucide="banknote" class="w-4 h-4 text-[#001F5C]"></i>
+                            <span>Apply for Business Loan</span>
+                        </a>
+                        <a href="{{ route('loans.tracking') }}"
+                           class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/30 text-xs sm:text-sm font-semibold backdrop-blur-xs transition">
+                            <i data-lucide="search" class="w-4 h-4 text-blue-200"></i>
+                            <span>Track My Loan Request</span>
+                        </a>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
-                    <a href="{{ route('loans.tracking') }}"
-                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold shadow-sm transition">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-                        <span>Track My Loan Request</span>
-                    </a>
-                    <a href="{{ route('loans.create') }}"
-                       class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00266B] hover:bg-[#001b4c] text-white text-xs sm:text-sm font-bold shadow-sm transition">
-                        <i data-lucide="banknote" class="w-4 h-4 text-[#ffcc00]"></i>
-                        <span>Apply for Loan Now</span>
-                    </a>
+                <!-- Right Side Graphic / Illustration -->
+                <div class="shrink-0 hidden md:flex items-center justify-center">
+                    <div class="relative p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-emerald-400/30 shadow-xl">
+                        <img src="{{ asset('assets/images/business-loan.png') }}"
+                             alt="Business Loan"
+                             class="h-28 lg:h-36 w-auto object-contain filter drop-shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    </div>
                 </div>
             </div>
         </div>
@@ -196,7 +230,7 @@
 
         </div>
 
-        <!-- Call to Action Banner (Navigates to Separate Apply Form Page) -->
+        <!-- Call to Action Banner (Bottom Link to Dedicated Apply Form) -->
         <div class="bg-gradient-to-r from-[#00266B] via-[#003893] to-[#001F5C] rounded-2xl p-6 sm:p-10 shadow-md text-white flex flex-col sm:flex-row items-center justify-between gap-6">
             <div class="space-y-2 text-center sm:text-left">
                 <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-[#bae6fd] backdrop-blur-xs">
