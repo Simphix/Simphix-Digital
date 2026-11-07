@@ -35,8 +35,8 @@
 
                 <div class="shrink-0">
                     <a href="{{ route('loans.create') }}"
-                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00266B] hover:bg-[#001F5C] text-white text-xs sm:text-sm font-bold shadow-sm transition">
-                        <i data-lucide="plus-circle" class="w-4 h-4 text-[#ffcc00]"></i>
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-600/20 transition">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-200"></i>
                         <span>New Loan Request</span>
                     </a>
                 </div>
@@ -48,10 +48,10 @@
                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                     <input type="text" name="ref" value="{{ $queryRef }}"
                            placeholder="Enter Tracking Reference (e.g. MPLOAN-202610-XYZ12)..."
-                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
+                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
                 </div>
                 <button type="submit"
-                        class="px-5 py-2.5 rounded-xl bg-[#00266B] hover:bg-[#001F5C] text-white text-xs sm:text-sm font-bold shadow-sm transition shrink-0">
+                        class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-emerald-600/25 transition shrink-0">
                     Track Application
                 </button>
             </form>

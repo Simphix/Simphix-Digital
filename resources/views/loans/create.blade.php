@@ -186,13 +186,15 @@
                 </div>
 
                 <!-- Submission Action -->
-                <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <p class="text-xs text-slate-400">
-                        Submitting generates a tracking reference code.
+                <div class="pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p class="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                        <span>Submitting generates a unique tracking reference code.</span>
                     </p>
                     <button type="submit"
-                            class="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#00266B] hover:bg-[#001b4c] text-white text-xs sm:text-sm font-bold shadow-sm transition">
-                        Submit Loan Application
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-9 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 active:scale-[0.98] text-white text-sm sm:text-base font-extrabold shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-500/20 transition-all transform hover:-translate-y-0.5 shrink-0 cursor-pointer">
+                        <i data-lucide="send" class="w-4 h-4 text-emerald-200"></i>
+                        <span>Submit Loan Application</span>
                     </button>
                 </div>
             </form>

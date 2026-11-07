@@ -459,13 +459,14 @@
             </div>
 
             <!-- Submit Action -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="text-xs text-slate-500">
+            <div class="bg-white rounded-2xl border-2 border-blue-200/80 p-5 sm:p-6 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-xs text-slate-600 flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600 shrink-0"></i>
                     <p class="font-medium">By submitting this form, you confirm that all provided details and identity credentials are valid and true.</p>
                 </div>
                 <button type="submit"
-                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-[#00266B] hover:bg-[#001F5C] text-white text-sm font-bold shadow-md transition transform hover:-translate-y-0.5 shrink-0">
-                    <i data-lucide="send" class="w-4 h-4 text-[#ffcc00]"></i>
+                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-9 py-4 rounded-xl bg-gradient-to-r from-[#0056D2] to-[#003D99] hover:from-[#0047B3] hover:to-[#002E7A] active:scale-[0.98] text-white text-sm sm:text-base font-extrabold shadow-lg shadow-blue-600/30 ring-2 ring-blue-500/20 transition-all transform hover:-translate-y-0.5 shrink-0 cursor-pointer">
+                    <i data-lucide="send" class="w-5 h-5 text-amber-300"></i>
                     <span>Submit POS Application</span>
                 </button>
             </div>
