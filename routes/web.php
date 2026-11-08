@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/wallet', [\App\Http\Controllers\WalletController::class, 'index'])->name('wallet');
     Route::post('/wallet/claim-bonus', [\App\Http\Controllers\WalletController::class, 'claimBonus'])->name('wallet.claimBonus');
     Route::post('/virtual-account/create', [\App\Http\Controllers\WalletController::class, 'createWallet'])->name('virtual.account.create');
+    Route::post('/virtual-account/quick-create', [\App\Http\Controllers\WalletController::class, 'quickCreateWallet'])->name('virtual.account.create.quick');
     Route::get('/wallet/balance', [\App\Http\Controllers\WalletController::class, 'getBalance'])->name('wallet.balance');
 
     // PIN Verification Route

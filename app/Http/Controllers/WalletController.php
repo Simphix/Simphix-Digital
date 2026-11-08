@@ -61,6 +61,10 @@ class WalletController extends Controller
     /**
      * Create Virtual Wallet
      */
+    /**
+     * Create Virtual Wallet / Funding Account.
+     * Both BVN and NIN are required by Fintava BaaS specifications.
+     */
     public function createWallet(Request $request)
     {
         $loginUserId = Auth::id(); 
@@ -73,54 +77,61 @@ class WalletController extends Controller
             ]);
         }
 
-        // Validate details — identity_type picks which of BVN/NIN is
-        // required (NIN is a fallback path for users whose BVN fails
-        // PalmPay's own verification; see VirtualAccountRepository).
         \App\Support\PhoneNumber::normalizeRequestInput($request);
 
         $request->validate([
             'name'          => 'required|string|max:255',
             'phone'         => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), 'unique:users,phone,' . $loginUserId],
-            'identity_type' => 'required|in:bvn,nin',
-            'bvn'           => 'required_if:identity_type,bvn|nullable|string|digits:11|unique:users,bvn,' . $loginUserId,
-            'nin'           => 'required_if:identity_type,nin|nullable|string|digits:11|unique:users,nin,' . $loginUserId,
+            'bvn'           => ['required', 'string', 'digits:11', 'unique:users,bvn,' . $loginUserId],
+            'nin'           => ['required', 'string', 'digits:11', 'unique:users,nin,' . $loginUserId],
+            'date_of_birth' => 'nullable|date',
+            'address'       => 'nullable|string|max:500',
+            'state'         => 'nullable|string|max:100',
+        ], [
+            'bvn.required' => 'Your 11-digit Bank Verification Number (BVN) is required.',
+            'nin.required' => 'Your 11-digit National Identification Number (NIN) is required.',
+            'bvn.digits'   => 'The BVN must be exactly 11 digits.',
+            'nin.digits'   => 'The NIN must be exactly 11 digits.',
         ]);
 
-        $identityType = $request->input('identity_type');
-
-        // Save submitted details to user profile — only overwrite whichever
-        // identity field was actually chosen, never blank out the other.
-        $user->name = $request->input('name');
+        // Save submitted details to user profile
+        $fullName = trim((string) $request->input('name'));
+        $nameParts = preg_split('/\s+/', $fullName, 2);
+        if (!empty($nameParts[0])) {
+            $user->first_name = $nameParts[0];
+        }
+        if (!empty($nameParts[1])) {
+            $user->last_name = $nameParts[1];
+        }
+        $user->name = $fullName;
         $user->phone = $request->input('phone');
-        if ($identityType === 'nin') {
-            $user->nin = $request->input('nin');
-        } else {
-            $user->bvn = $request->input('bvn');
+        $user->bvn = $request->input('bvn');
+        $user->nin = $request->input('nin');
+        if ($request->filled('date_of_birth')) {
+            $user->date_of_birth = $request->input('date_of_birth');
+        }
+        if ($request->filled('address')) {
+            $user->address = $request->input('address');
+        }
+        if ($request->filled('state')) {
+            $user->state = $request->input('state');
         }
         $user->save();
 
-        // Check KYC details
-        $identityValue = $identityType === 'nin' ? $user->nin : $user->bvn;
-        if (empty($identityValue) || empty($user->phone)) {
-            return redirect()->route('wallet')->with([
-                'error' => 'Please complete your registration by providing your BVN or NIN and Phone Number to open a virtual account.'
-            ]);
-        }
-
         // Repository call
         $repObj2 = new VirtualAccountRepository;
-        $result = $repObj2->createVirtualAccount($loginUserId, $identityType);
+        $result = $repObj2->createVirtualAccount($loginUserId);
 
         // Handle failure
         if (!is_array($result) || !isset($result['success']) || !$result['success']) {
             $message = is_array($result) && isset($result['message'])
                 ? $result['message']
-                : 'Wallet creation failed. Please try again later.';
+                : 'Virtual account creation failed. Please check your details and try again.';
 
             if ($request->wantsJson()) {
                 return response()->json(['status' => 'error', 'message' => $message], 400);
             }
-            return redirect()->route('wallet')->with(['error' => $message]);
+            return redirect()->route('wallet')->withInput()->with(['error' => $message]);
         }
 
         // Success
@@ -128,6 +139,42 @@ class WalletController extends Controller
             return response()->json(['status' => 'success', 'message' => $result['message'], 'data' => $result]);
         }
         return redirect()->route('wallet')->with(['success' => $result['message']]);
+    }
+
+    /**
+     * One-click virtual account generation from the dashboard for users
+     * who already have both BVN and NIN on their profile.
+     */
+    public function quickCreateWallet(Request $request)
+    {
+        $loginUserId = Auth::id();
+        $user = User::find($loginUserId);
+
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        if (VirtualAccount::where('user_id', $loginUserId)->exists()) {
+            return redirect()->route('dashboard')->with('error', 'You already have a virtual account generated.');
+        }
+
+        if (empty($user->bvn) || empty($user->nin)) {
+            return redirect()->route('wallet')->with('error', 'Please provide both your BVN and NIN to generate a virtual funding account.');
+        }
+
+        $rep = new VirtualAccountRepository;
+        $result = $rep->createVirtualAccount($loginUserId);
+
+        if (!is_array($result) || empty($result['success'])) {
+            $message = is_array($result) && isset($result['message'])
+                ? $result['message']
+                : 'Virtual account generation failed. Please verify your details.';
+
+            // Redirect to the wallet form with all existing details pre-filled and clear error so they can edit and retry
+            return redirect()->route('wallet')->with('error', $message);
+        }
+
+        return redirect()->route('dashboard')->with('success', 'Virtual funding account generated successfully! You can now make instant deposit transfers.');
     }
 
     /**
