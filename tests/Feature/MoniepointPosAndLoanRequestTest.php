@@ -169,7 +169,8 @@ class MoniepointPosAndLoanRequestTest extends TestCase
         $createResponse = $this->actingAs($this->user)->get(route('loans.create'));
         $createResponse->assertOk();
         $createResponse->assertSee('Apply for Business Loan', false);
-        $createResponse->assertSee('Only Moniepoint business owners can request for loan', false);
+        $createResponse->assertSee('SimPhix Nig Ltd. staff will NEVER request or demand payment of any amount from you', false);
+        $createResponse->assertDontSee('Only Moniepoint business owners can request for loan', false);
 
         $trackingResponse = $this->actingAs($this->user)->get(route('loans.tracking'));
         $trackingResponse->assertOk();
@@ -352,6 +353,10 @@ class MoniepointPosAndLoanRequestTest extends TestCase
         $response->assertDontSee('Registered Business / Store Name', false);
         $response->assertDontSee('Quantity Requested', false);
         $response->assertDontSee('Special Delivery Instructions', false);
+
+        // Official fraud disclaimer is present at the top
+        $response->assertSee('Disclaimer');
+        $response->assertSee('SimPhix Nig Ltd. staff will NEVER request or demand payment of any amount from you over the phone, WhatsApp, or any online platform for this service', false);
     }
 
     public function test_loan_request_page_renders_referral_details_and_omits_email_business_name_purpose(): void
@@ -363,6 +368,19 @@ class MoniepointPosAndLoanRequestTest extends TestCase
         $response->assertSee('Referral Details');
         $response->assertSee('referral_name');
         $response->assertSee('referral_phone');
+
+        // Official fraud disclaimer is present at the top
+        $response->assertSee('Disclaimer');
+        $response->assertSee('SimPhix Nig Ltd. staff will NEVER request or demand payment of any amount from you over the phone, WhatsApp, or any online platform for this service', false);
+
+        // Moniepoint disclaimer must be completely removed
+        $response->assertDontSee('Only registered and active Moniepoint business owners', false);
+        $response->assertDontSee('Only Moniepoint business owners can request for loan', false);
+        $response->assertDontSee('Important Eligibility Disclaimer', false);
+
+        // Preferred Repayment Tenure removed
+        $response->assertDontSee('name="loan_tenure"', false);
+        $response->assertDontSee('Preferred Repayment Tenure', false);
 
         // Removed fields must not be present
         $response->assertDontSee('name="email"', false);
@@ -378,7 +396,6 @@ class MoniepointPosAndLoanRequestTest extends TestCase
             'phone'                     => '08033221100',
             'moniepoint_account_number' => '8101234567',
             'amount_requested'          => 1200000,
-            'loan_tenure'               => '60_days',
             'referral_name'             => 'Chinedu Eze',
             'referral_phone'            => '08123456789',
         ];
@@ -390,7 +407,7 @@ class MoniepointPosAndLoanRequestTest extends TestCase
             'phone'                     => '08033221100',
             'moniepoint_account_number' => '8101234567',
             'amount_requested'          => 1200000,
-            'loan_tenure'               => '60_days',
+            'loan_tenure'               => null,
             'referral_name'             => 'Chinedu Eze',
             'referral_phone'            => '08123456789',
             'email'                     => null,

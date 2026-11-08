@@ -43,20 +43,19 @@
             </a>
         </div>
 
-        <!-- Prominent Disclaimer (Kept Intact) -->
-        <div class="rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 p-4 sm:p-5 flex items-start gap-4 shadow-xs">
-            <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-900 flex items-center justify-center shrink-0 font-bold shadow-xs">
-                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        <!-- Official Fraud Prevention Disclaimer -->
+        <div class="rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 font-bold shadow-xs">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i>
             </div>
             <div class="flex-1">
-                <div class="flex flex-wrap items-center gap-2">
+                <div class="flex items-center gap-2">
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-slate-950">
-                        Important Eligibility Disclaimer
+                        Disclaimer
                     </span>
-                    <span class="text-xs font-bold text-amber-900 dark:text-amber-300">Moniepoint Business Account Required</span>
                 </div>
-                <p class="text-xs sm:text-sm text-slate-800 dark:text-slate-200 mt-1 font-medium leading-relaxed">
-                    <strong>Notice:</strong> Only registered and active <strong>Moniepoint business owners</strong> (merchants with an active Moniepoint business account / POS terminal) can request for working capital loans. All loan requests are audited against transaction turnover history on your Moniepoint business account.
+                <p class="text-xs sm:text-sm text-slate-900 mt-1.5 font-bold leading-relaxed mb-0">
+                    Please note that SimPhix Nig Ltd. staff will NEVER request or demand payment of any amount from you over the phone, WhatsApp, or any online platform for this service.
                 </p>
             </div>
         </div>
@@ -79,12 +78,6 @@
 
             <form method="POST" action="{{ route('loans.store') }}" autocomplete="off" class="space-y-6">
                 @csrf
-
-                <!-- Disclaimer Notice inside Form -->
-                <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2.5">
-                    <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600 shrink-0"></i>
-                    <span><strong>Disclaimer:</strong> Only Moniepoint business owners can request for loan. Your Moniepoint account number will be verified.</span>
-                </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Full Name -->
@@ -134,21 +127,6 @@
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                         <p class="text-[10px] text-slate-400 mt-1">Min: &#8358;1,000 &bull; Max: &#8358;50,000,000</p>
                     </div>
-                </div>
-
-                <!-- Loan Tenure -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">
-                        Preferred Repayment Tenure
-                    </label>
-                    <select name="loan_tenure"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B] bg-white">
-                        @foreach (\App\Models\LoanRequest::TENURES as $k => $label)
-                            <option value="{{ $k }}" {{ old('loan_tenure', '3_months') === $k ? 'selected' : '' }}>
-                                {{ $label }}
-                            </option>
-                        @endforeach
-                    </select>
                 </div>
 
                 <!-- Referral Details -->

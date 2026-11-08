@@ -67,6 +67,23 @@
             </a>
         </div>
 
+        <!-- Official Fraud Prevention Disclaimer -->
+        <div class="rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 font-bold shadow-xs">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-slate-950">
+                        Disclaimer
+                    </span>
+                </div>
+                <p class="text-xs sm:text-sm text-slate-900 mt-1.5 font-bold leading-relaxed mb-0">
+                    Please note that SimPhix Nig Ltd. staff will NEVER request or demand payment of any amount from you over the phone, WhatsApp, or any online platform for this service.
+                </p>
+            </div>
+        </div>
+
         <!-- Header Card -->
         <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
             <div class="flex items-center gap-3.5 sm:gap-4">
