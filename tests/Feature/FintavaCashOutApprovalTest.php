@@ -71,7 +71,7 @@ test('a successful bank/credit approves the request, completes the transaction, 
     $user = User::factory()->create(['role' => 'coordinator']);
     $cashOutRequest = pendingCashOut($user);
 
-    Http::fake(['*/bank/credit' => Http::response([
+    Http::fake(['*/bank/credit*' => Http::response([
         'status' => 200,
         'message' => 'successful',
         'data' => ['reference' => 'FTV-REF-001'],
@@ -98,7 +98,7 @@ test('an explicit Fintava rejection refunds the wallet and marks the request rej
     $wallet->update(['balance' => 1000]);
     $cashOutRequest = pendingCashOut($user, 5000, 5000);
 
-    Http::fake(['*/bank/credit' => Http::response(['status' => 400, 'message' => 'Insufficient funds in source account'], 400)]);
+    Http::fake(['*/bank/credit*' => Http::response(['status' => 400, 'message' => 'Insufficient funds in source account'], 400)]);
 
     $response = $this->actingAs($admin)->post(route('admin.cash-out.approve', $cashOutRequest));
 
@@ -115,7 +115,7 @@ test('a system/auth error leaves the request pending and does not refund', funct
     $wallet->update(['balance' => 1000]);
     $cashOutRequest = pendingCashOut($user, 5000, 5000);
 
-    Http::fake(['*/bank/credit' => Http::response(['status' => 401, 'message' => 'Invalid authorization token'], 401)]);
+    Http::fake(['*/bank/credit*' => Http::response(['status' => 401, 'message' => 'Invalid authorization token'], 401)]);
 
     $response = $this->actingAs($admin)->post(route('admin.cash-out.approve', $cashOutRequest));
 
@@ -176,7 +176,7 @@ test('platform cash-out approval debits the same configured master sourceId', fu
         'requested_by' => $requester->id,
     ]);
 
-    Http::fake(['*/bank/credit' => Http::response(['status' => 200, 'message' => 'successful', 'data' => ['reference' => 'FTV-PLAT-001']], 200)]);
+    Http::fake(['*/bank/credit*' => Http::response(['status' => 200, 'message' => 'successful', 'data' => ['reference' => 'FTV-PLAT-001']], 200)]);
 
     $response = $this->actingAs($approver)->post(route('admin.platform-wallets.approvals.approve', $platformCashOutRequest));
 
@@ -202,7 +202,7 @@ test('platform cash-out rejection refunds the platform wallet via the ledger', f
         'requested_by' => $requester->id,
     ]);
 
-    Http::fake(['*/bank/credit' => Http::response(['status' => 400, 'message' => 'Rejected'], 400)]);
+    Http::fake(['*/bank/credit*' => Http::response(['status' => 400, 'message' => 'Rejected'], 400)]);
 
     $response = $this->actingAs($approver)->post(route('admin.platform-wallets.approvals.approve', $platformCashOutRequest));
 
@@ -238,7 +238,7 @@ test('a 201 bank/credit is a success, not a rejection with a refund', function (
     $wallet->update(['balance' => 1000]);
     $cashOutRequest = pendingCashOut($user, 5000, 5000);
 
-    Http::fake(['*/bank/credit' => Http::response(['status' => 201, 'message' => 'created', 'data' => ['reference' => 'FTV-201']], 201)]);
+    Http::fake(['*/bank/credit*' => Http::response(['status' => 201, 'message' => 'created', 'data' => ['reference' => 'FTV-201']], 201)]);
 
     $this->actingAs($admin)->post(route('admin.cash-out.approve', $cashOutRequest))->assertSessionHas('success');
 
@@ -254,7 +254,7 @@ test('an unrecognised 2xx status leaves the cash-out pending and does not refund
     $wallet->update(['balance' => 1000]);
     $cashOutRequest = pendingCashOut($user, 5000, 5000);
 
-    Http::fake(['*/bank/credit' => Http::response(['status' => 202, 'message' => 'accepted'], 202)]);
+    Http::fake(['*/bank/credit*' => Http::response(['status' => 202, 'message' => 'accepted'], 202)]);
 
     $this->actingAs($admin)->post(route('admin.cash-out.approve', $cashOutRequest))->assertSessionHas('error');
 
@@ -269,7 +269,7 @@ test('a list-shaped rejection message no longer crashes the approval and still r
     $wallet->update(['balance' => 1000]);
     $cashOutRequest = pendingCashOut($user, 5000, 5000);
 
-    Http::fake(['*/bank/credit' => Http::response(['status' => 400, 'message' => ['Insufficient funds in source account']], 400)]);
+    Http::fake(['*/bank/credit*' => Http::response(['status' => 400, 'message' => ['Insufficient funds in source account']], 400)]);
 
     $this->actingAs($admin)->post(route('admin.cash-out.approve', $cashOutRequest))->assertSessionHas('error');
 
@@ -280,7 +280,7 @@ test('a list-shaped rejection message no longer crashes the approval and still r
 
 test('platform cash-out: a 201 approves', function () {
     [$approver, $request] = platformCashOut();
-    Http::fake(['*/bank/credit' => Http::response(['status' => 201, 'message' => 'created'], 201)]);
+    Http::fake(['*/bank/credit*' => Http::response(['status' => 201, 'message' => 'created'], 201)]);
 
     $this->actingAs($approver)->post(route('admin.platform-wallets.approvals.approve', $request))->assertSessionHas('success');
 
@@ -289,7 +289,7 @@ test('platform cash-out: a 201 approves', function () {
 
 test('platform cash-out: an unrecognised 2xx stays pending without refund', function () {
     [$approver, $request, $wallet] = platformCashOut();
-    Http::fake(['*/bank/credit' => Http::response(['status' => 202, 'message' => 'accepted'], 202)]);
+    Http::fake(['*/bank/credit*' => Http::response(['status' => 202, 'message' => 'accepted'], 202)]);
 
     $this->actingAs($approver)->post(route('admin.platform-wallets.approvals.approve', $request))->assertSessionHas('error');
 

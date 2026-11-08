@@ -43,6 +43,7 @@ return [
         'webhook_secret'   => env('FINTAVA_WEBHOOK_SECRET'),
         // The one Fintava account every cash-out (personal and platform) debits
         'master_source_id' => env('FINTAVA_MASTER_SOURCE_ID'),
+        'payout_endpoint'  => env('FINTAVA_PAYOUT_ENDPOINT', 'bank/credit/merchant'),
     ],
 
     'palmpay' => [

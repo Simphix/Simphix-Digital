@@ -117,7 +117,9 @@ class FintavaService
      */
     public function bankCredit(array $params): array
     {
-        return $this->post('bank/credit', $params);
+        $endpoint = config('services.fintava.payout_endpoint', 'bank/credit/merchant');
+
+        return $this->post($endpoint, $params);
     }
 
     public function getTransactionByReference(string $reference): array
