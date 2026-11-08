@@ -111,17 +111,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Email Address (Optional) -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">
-                            Email Address <span class="text-slate-400 font-normal">(Optional)</span>
-                        </label>
-                        <input type="email" name="email" autocomplete="off"
-                               value="{{ old('email', $user?->email) }}"
-                               placeholder="e.g. merchant@example.com"
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
-                    </div>
-
                     <!-- Moniepoint Account Number (Required) -->
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">
@@ -133,9 +122,7 @@
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                         <p class="text-[10px] text-slate-400 mt-1">Must be an active Moniepoint merchant account.</p>
                     </div>
-                </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Amount Requested -->
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">
@@ -147,42 +134,53 @@
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                         <p class="text-[10px] text-slate-400 mt-1">Min: &#8358;1,000 &bull; Max: &#8358;50,000,000</p>
                     </div>
+                </div>
 
-                    <!-- Loan Tenure -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">
-                            Preferred Repayment Tenure
-                        </label>
-                        <select name="loan_tenure"
-                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B] bg-white">
-                            @foreach (\App\Models\LoanRequest::TENURES as $k => $label)
-                                <option value="{{ $k }}" {{ old('loan_tenure', '3_months') === $k ? 'selected' : '' }}>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
+                <!-- Loan Tenure -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">
+                        Preferred Repayment Tenure
+                    </label>
+                    <select name="loan_tenure"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B] bg-white">
+                        @foreach (\App\Models\LoanRequest::TENURES as $k => $label)
+                            <option value="{{ $k }}" {{ old('loan_tenure', '3_months') === $k ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Referral Details -->
+                <div class="pt-4 border-t border-slate-100">
+                    <div class="mb-3">
+                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Referral Details</h3>
+                        <p class="text-[11px] text-slate-500">Provide details of the agent or partner who referred you (Optional)</p>
                     </div>
-                </div>
 
-                <!-- Business Name -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">
-                        Registered Business / Store Name <span class="text-slate-400 font-normal">(Optional)</span>
-                    </label>
-                    <input type="text" name="business_name" autocomplete="off"
-                           value="{{ old('business_name') }}"
-                           placeholder="e.g. Adebayo Enterprise"
-                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
-                </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Referral Name -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">
+                                Referral Full Name <span class="text-slate-400 font-normal">(Optional)</span>
+                            </label>
+                            <input type="text" name="referral_name"
+                                   value="{{ old('referral_name') }}"
+                                   placeholder="e.g. Emmanuel Chukwu"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
+                        </div>
 
-                <!-- Loan Purpose / Business Summary -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">
-                        Purpose of Facility / Working Capital Needs <span class="text-slate-400 font-normal">(Optional)</span>
-                    </label>
-                    <textarea name="purpose" rows="3"
-                              placeholder="Briefly describe what inventory, expansion or liquidity need this facility is for..."
-                              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">{{ old('purpose') }}</textarea>
+                        <!-- Referral Phone -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">
+                                Referral Phone Number <span class="text-slate-400 font-normal">(Optional)</span>
+                            </label>
+                            <input type="tel" name="referral_phone"
+                                   value="{{ old('referral_phone') }}"
+                                   placeholder="e.g. 08123456789"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Submission Action -->

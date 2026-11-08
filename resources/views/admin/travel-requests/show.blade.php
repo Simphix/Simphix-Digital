@@ -104,6 +104,22 @@
                         </div>
                     </div>
 
+                    @if ($travelRequest->referral_name || $travelRequest->referral_phone)
+                        <div class="pt-3 border-t border-slate-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Referral Details</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">Referral Full Name</span>
+                                    <span class="text-xs sm:text-sm font-bold text-slate-800">{{ $travelRequest->referral_name ?? 'Not provided' }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">Referral Phone Number</span>
+                                    <span class="text-xs sm:text-sm font-bold font-mono text-slate-800">{{ $travelRequest->referral_phone ?? 'Not provided' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     @if ($travelRequest->departure_date)
                         <div class="pt-2 border-t border-slate-100 text-xs">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Preferred Departure Period</span>

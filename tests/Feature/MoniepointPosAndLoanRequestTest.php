@@ -342,4 +342,64 @@ class MoniepointPosAndLoanRequestTest extends TestCase
         $loanResponse = $this->actingAs($this->regularAgent)->get(route('admin.loan-requests.index'));
         $loanResponse->assertStatus(403);
     }
+
+    public function test_pos_request_page_does_not_render_business_and_order_configuration_section(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('moniepoint.pos.create', ['type' => 'smart_pos']));
+
+        $response->assertOk();
+        $response->assertDontSee('Business &amp; Order Configuration', false);
+        $response->assertDontSee('Registered Business / Store Name', false);
+        $response->assertDontSee('Quantity Requested', false);
+        $response->assertDontSee('Special Delivery Instructions', false);
+    }
+
+    public function test_loan_request_page_renders_referral_details_and_omits_email_business_name_purpose(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('loans.create'));
+
+        $response->assertOk();
+        // Referral fields present
+        $response->assertSee('Referral Details');
+        $response->assertSee('referral_name');
+        $response->assertSee('referral_phone');
+
+        // Removed fields must not be present
+        $response->assertDontSee('name="email"', false);
+        $response->assertDontSee('name="business_name"', false);
+        $response->assertDontSee('name="purpose"', false);
+        $response->assertDontSee('Purpose of Facility / Working Capital Needs', false);
+    }
+
+    public function test_user_can_submit_loan_request_with_referral_details(): void
+    {
+        $payload = [
+            'name'                      => 'Suleiman Babatunde',
+            'phone'                     => '08033221100',
+            'moniepoint_account_number' => '8101234567',
+            'amount_requested'          => 1200000,
+            'loan_tenure'               => '60_days',
+            'referral_name'             => 'Chinedu Eze',
+            'referral_phone'            => '08123456789',
+        ];
+
+        $response = $this->actingAs($this->user)->post(route('loans.store'), $payload);
+
+        $this->assertDatabaseHas('loan_requests', [
+            'name'                      => 'Suleiman Babatunde',
+            'phone'                     => '08033221100',
+            'moniepoint_account_number' => '8101234567',
+            'amount_requested'          => 1200000,
+            'loan_tenure'               => '60_days',
+            'referral_name'             => 'Chinedu Eze',
+            'referral_phone'            => '08123456789',
+            'email'                     => null,
+            'business_name'             => null,
+            'purpose'                   => null,
+        ]);
+
+        $created = LoanRequest::where('phone', '08033221100')->latest()->first();
+        $this->assertNotNull($created);
+        $response->assertRedirect(route('loans.tracking', ['ref' => $created->reference]));
+    }
 }

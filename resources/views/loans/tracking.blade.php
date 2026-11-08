@@ -180,6 +180,19 @@
                     </div>
                 </div>
 
+                @if ($matchedRequest->referral_name || $matchedRequest->referral_phone)
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Referral Full Name</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 mt-1 block">{{ $matchedRequest->referral_name ?? 'Not provided' }}</span>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Referral Phone Number</span>
+                            <span class="text-xs sm:text-sm font-bold font-mono text-slate-800 mt-1 block">{{ $matchedRequest->referral_phone ?? 'Not provided' }}</span>
+                        </div>
+                    </div>
+                @endif
+
                 @if ($matchedRequest->purpose)
                     <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700">
                         <span class="font-bold text-slate-900 block mb-1">Business Loan Purpose:</span>

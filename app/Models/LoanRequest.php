@@ -45,6 +45,8 @@ class LoanRequest extends Model
         'business_name',
         'loan_tenure',
         'purpose',
+        'referral_name',
+        'referral_phone',
         'status',
         'admin_notes',
         'customer_notes',

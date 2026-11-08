@@ -417,47 +417,6 @@
                 </div>
             </div>
 
-            <!-- STEP 6: Business Details & Quantity (Optional/Config) -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
-                <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-                    <span class="w-6 h-6 rounded-full bg-[#00266B] text-white flex items-center justify-center text-xs font-bold shrink-0">6</span>
-                    <h2 class="text-sm sm:text-base font-bold text-slate-900 font-display">Business &amp; Order Configuration</h2>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <!-- Business Name -->
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-bold text-slate-700 mb-1">
-                            Registered Business / Store Name <span class="text-slate-400 font-normal">(Optional)</span>
-                        </label>
-                        <input type="text" name="business_name"
-                               value="{{ old('business_name', $user->business_name ?? '') }}"
-                               placeholder="e.g. Adebayo Stores &amp; Ventures"
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
-                    </div>
-
-                    <!-- Quantity -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">
-                            Quantity Requested
-                        </label>
-                        <input type="number" name="quantity" min="1" max="50"
-                               value="{{ old('quantity', 1) }}"
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
-                    </div>
-
-                    <!-- Special Notes -->
-                    <div class="sm:col-span-3">
-                        <label class="block text-xs font-bold text-slate-700 mb-1">
-                            Special Delivery Instructions / Notes <span class="text-slate-400 font-normal">(Optional)</span>
-                        </label>
-                        <textarea name="notes" rows="2"
-                                  placeholder="e.g. Prefer delivery during morning hours, include extra thermal paper rolls..."
-                                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">{{ old('notes') }}</textarea>
-                    </div>
-                </div>
-            </div>
-
             <!-- Submit Action -->
             <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="text-xs text-slate-500">

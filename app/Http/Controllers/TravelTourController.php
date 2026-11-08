@@ -57,6 +57,8 @@ class TravelTourController extends Controller
             'number_of_travelers' => ['nullable', 'integer', 'min:1', 'max:100'],
             'departure_date'      => ['nullable', 'string', 'max:100'],
             'notes'               => ['nullable', 'string', 'max:3000'],
+            'referral_name'       => ['nullable', 'string', 'max:255'],
+            'referral_phone'      => ['nullable', 'string', 'max:30'],
         ]);
 
         $travelPackage = null;
@@ -79,6 +81,8 @@ class TravelTourController extends Controller
             'number_of_travelers' => (int) ($validated['number_of_travelers'] ?? 1),
             'departure_date'      => $validated['departure_date'] ?? null,
             'notes'               => $validated['notes'] ?? null,
+            'referral_name'       => !empty($validated['referral_name']) ? trim($validated['referral_name']) : null,
+            'referral_phone'      => !empty($validated['referral_phone']) ? trim($validated['referral_phone']) : null,
             'status'              => TravelRequest::STATUS_PENDING,
         ]);
 
