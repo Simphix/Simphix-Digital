@@ -11,6 +11,7 @@ Route::get('/welcome2', function () {
     return redirect()->route('welcome2', [], 301);
 });
 
+Route::post('/fintava/webhook', [\App\Http\Controllers\FintavaWebhookController::class, 'handleWebhook'])->name('fintava.webhook');
 Route::post('/palmpay/webhook', [\App\Http\Controllers\PaymentWebhookController::class, 'handleWebhook'])->name('palmpay.webhook');
 
 // Enterprise Partner registration — reached via a referral link shared by an

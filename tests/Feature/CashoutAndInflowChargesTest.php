@@ -33,7 +33,7 @@ function createTestUser(string $role = 'coordinator', float $initialBalance = 10
     WithdrawalAccount::create([
         'user_id' => $user->id,
         'bank_code' => '999991',
-        'bank_name' => 'PalmPay',
+        'bank_name' => 'Loma Bank',
         'account_no' => '0123456789',
         'account_name' => $user->first_name . ' ' . $user->last_name,
     ]);
@@ -294,11 +294,14 @@ test('cashout approval credits base fee and threshold tax to admin cashout charg
     $chargesWalletBefore = \App\Models\PlatformWallet::where('type', \App\Models\PlatformWallet::TYPE_CASHOUT_CHARGES)->first();
     $initialBalance = $chargesWalletBefore ? (float) $chargesWalletBefore->balance : 0.00;
 
-    // 2. Mock PalmPay payout success and approve cashout
-    $this->mock(\App\Services\PalmPayService::class, function ($mock) {
-        $mock->shouldReceive('transfer')->andReturn([
-            'respCode' => '00000000',
-            'respMsg' => 'Transfer success',
+    // 2. Mock Fintava payout success and approve cashout
+    $this->mock(\App\Services\FintavaService::class, function ($mock) {
+        $mock->shouldReceive('bankCredit')->andReturn([
+            'status' => 200,
+            'message' => 'Transfer success',
+            'data' => [
+                'reference' => 'FTV-REF-12345',
+            ],
         ]);
     });
 

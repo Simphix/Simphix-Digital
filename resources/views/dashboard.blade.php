@@ -143,7 +143,7 @@
                     </div>
                     @if($virtualAccount)
                         <div class="min-w-0 flex-1">
-                            <p class="text-xs text-slate-400 mb-0.5 truncate">{{ $virtualAccount->bank_name ?? ($virtualAccount->bankName ?? 'PalmPay') }} &middot; Instant Funding</p>
+                            <p class="text-xs text-slate-400 mb-0.5 truncate">{{ $virtualAccount->bank_name ?? ($virtualAccount->bankName ?? 'Loma Bank') }} &middot; Instant Funding</p>
                             <p class="text-lg font-bold font-display text-primary tracking-wide mb-0 truncate">
                                 {{ $virtualAccount->account_number ?? ($virtualAccount->accountNo ?? 'N/A') }}
                             </p>

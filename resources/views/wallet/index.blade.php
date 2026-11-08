@@ -328,7 +328,7 @@
                             <i data-lucide="lock" class="w-3.5 h-3.5"></i>
                             <span>PCI-DSS Compliant</span>
                         </div>
-                        <span>Powered by PalmPay</span>
+                        <span>Powered by Loma Bank</span>
                     </div>
 
                 </div>

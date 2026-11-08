@@ -9,7 +9,8 @@ use App\Models\Report;
 use App\Models\Service;
 use App\Models\Transaction;
 use App\Models\Wallet;
-use App\Services\PalmPayService;
+use App\Services\FintavaService;
+use App\Support\FundingAccountErrors;
 use App\Services\PlatformWalletLedger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,11 +20,11 @@ use Illuminate\Support\Str;
 
 class CashOutController extends Controller
 {
-    protected $palmPay;
+    protected $fintava;
 
-    public function __construct(PalmPayService $palmPay)
+    public function __construct(FintavaService $fintava)
     {
-        $this->palmPay = $palmPay;
+        $this->fintava = $fintava;
     }
 
     /**
@@ -69,21 +70,20 @@ class CashOutController extends Controller
         $user = $cashOutRequest->user;
 
         try {
-            $payoutResponse = $this->palmPay->transfer([
-                'orderId' => $cashOutRequest->transaction_ref,
-                'payeeName' => $cashOutRequest->account_name,
-                'payeeBankCode' => $cashOutRequest->bank_code,
-                'payeeBankAccNo' => $cashOutRequest->account_no,
-                'payeePhoneNo' => $user->phone_number ?? '0000000000',
-                'amount' => (int) ($cashOutRequest->amount * 100), // kobo
-                'currency' => 'NGN',
-                'notifyUrl' => url('/api/palmpay/webhook'),
-                'remark' => "Cash out approval for {$cashOutRequest->transaction_ref}",
+            $payoutResponse = $this->fintava->bankCredit([
+                'sourceId' => config('services.fintava.master_source_id'),
+                'accountNumber' => $cashOutRequest->account_no,
+                'accountName' => $cashOutRequest->account_name,
+                'sortCode' => $cashOutRequest->bank_code,
+                'amount' => (float) $cashOutRequest->amount,
+                'narration' => "Cash out approval for {$cashOutRequest->transaction_ref}",
             ]);
 
-            if (isset($payoutResponse['respCode']) && $payoutResponse['respCode'] === '00000000') {
+            if (FintavaService::isSuccessStatus($payoutResponse)) {
+                $providerReference = $payoutResponse['data']['reference'] ?? null;
+
                 // Success — finalize
-                DB::transaction(function () use ($cashOutRequest, $transaction, $report, $payoutResponse, $user) {
+                DB::transaction(function () use ($cashOutRequest, $transaction, $report, $payoutResponse, $providerReference, $user) {
                     $cashOutRequest->update([
                         'status' => 'approved',
                         'approved_by' => Auth::id(),
@@ -95,6 +95,7 @@ class CashOutController extends Controller
                         $meta['api_response'] = $payoutResponse;
                         $transaction->metadata = $meta;
                         $transaction->status = 'completed';
+                        $transaction->provider_reference = $providerReference;
                         $transaction->save();
                     }
 
@@ -198,7 +199,16 @@ class CashOutController extends Controller
                 return back()->with('success', "Cash out approved and paid to {$cashOutRequest->account_name}.");
             }
 
-            $errorMsg = $payoutResponse['respMsg'] ?? 'PalmPay rejected the transaction.';
+            if (FintavaService::isUnrecognisedSuccessStatus($payoutResponse)) {
+                // Accepted by Fintava with a status we do not recognise: the
+                // money may already have left. Do not refund; leave pending
+                // for a manual check against Fintava.
+                Log::critical('Cash Out approval got an unrecognised 2xx from Fintava (not refunded): ' . json_encode($payoutResponse));
+
+                return back()->with('error', 'Fintava accepted this transfer with an unexpected status (' . ($payoutResponse['status'] ?? '?') . '). The request remains pending. Check the transfer in Fintava before retrying so it is not paid twice.');
+            }
+
+            $errorMsg = implode('; ', FundingAccountErrors::normalize($payoutResponse['message'] ?? [])) ?: 'Fintava rejected the transaction.';
 
             if ($this->isSystemError($errorMsg)) {
                 // A signature/auth/config failure, not a genuine vendor
@@ -206,16 +216,16 @@ class CashOutController extends Controller
                 // is fixed, so don't refund-and-close (which would force the
                 // user to resubmit) or mislabel it as "recipient rejected".
                 // Leave pending for a retry once the underlying issue is fixed.
-                Log::critical('Cash Out approval blocked by a PalmPay system/signature error: ' . $errorMsg);
+                Log::critical('Cash Out approval blocked by a Fintava system/signature error: ' . $errorMsg);
 
-                return back()->with('error', "PalmPay could not process this approval due to a system/authentication error, not a recipient rejection: {$errorMsg}. The request remains pending — retry after this is fixed.");
+                return back()->with('error', "Fintava could not process this approval due to a system/authentication error, not a recipient rejection: {$errorMsg}. The request remains pending — retry after this is fixed.");
             }
 
             // Explicit API rejection — refund the user
-            DB::transaction(function () use ($cashOutRequest, $transaction, $report, $payoutResponse) {
+            DB::transaction(function () use ($cashOutRequest, $transaction, $report, $errorMsg) {
                 $cashOutRequest->update([
                     'status' => 'rejected',
-                    'admin_notes' => $payoutResponse['respMsg'] ?? 'PalmPay rejected the transaction.',
+                    'admin_notes' => $errorMsg,
                     'approved_by' => Auth::id(),
                     'resolved_at' => now(),
                 ]);
@@ -236,12 +246,12 @@ class CashOutController extends Controller
                 }
             });
 
-            Log::error('Cash Out approval rejected by PalmPay: ' . $errorMsg);
+            Log::error('Cash Out approval rejected by Fintava: ' . $errorMsg);
 
-            return back()->with('error', 'PalmPay rejected the transfer: ' . $errorMsg . ' (Funds refunded).');
+            return back()->with('error', 'Fintava rejected the transfer: ' . $errorMsg . ' (Funds refunded).');
         } catch (\Exception $e) {
             // TIMEOUT / NETWORK ERROR / AMBIGUOUS FAILURE.
-            // Do NOT refund and do NOT mark resolved — PalmPay might still be
+            // Do NOT refund and do NOT mark resolved — Fintava might still be
             // processing it. Leave the request exactly as 'pending' so it
             // shows up for another approval attempt or manual reconciliation.
             Log::error('Cash Out approval API exception (not refunded automatically): ' . $e->getMessage());

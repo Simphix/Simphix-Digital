@@ -32,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         // CACHE_STORE is configured (this app uses 'database'); no Redis
         // dependency required.
         RateLimiter::for('sme-data-vendor', fn () => Limit::perMinute(30));
+        RateLimiter::for('fintava-vendor', fn () => Limit::perMinute(30));
         RateLimiter::for('palmpay-vendor', fn () => Limit::perMinute(30));
 
         // Named (not bare numeric) so each of the three device-challenge

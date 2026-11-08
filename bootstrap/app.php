@@ -37,6 +37,8 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
          $middleware->validateCsrfTokens(except: [
+            '/fintava/webhook',
+            '/api/fintava/webhook',
             '/palmpay/webhook',
         ]);
     })

@@ -35,6 +35,16 @@ return [
         ],
     ],
 
+    'fintava' => [
+        // Domain for the random per-customer email sent to Fintava (internal only).
+        'internal_email_domain' => env('FINTAVA_INTERNAL_EMAIL_DOMAIN', 'simphix.ng'),
+        'base_url'         => env('FINTAVA_BASE_URL', 'https://dev.fintavapay.com/api/dev'),
+        'api_key'          => env('FINTAVA_API_KEY'),
+        'webhook_secret'   => env('FINTAVA_WEBHOOK_SECRET'),
+        // The one Fintava account every cash-out (personal and platform) debits
+        'master_source_id' => env('FINTAVA_MASTER_SOURCE_ID'),
+    ],
+
     'palmpay' => [
         'base_url'     => env('BASE_URL_PALMPAY', 'https://open-gw-prod.palmpay-inc.com/'),
         'bearer_token' => env('BEARER_TOKEN'),

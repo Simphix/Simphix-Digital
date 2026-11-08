@@ -6,7 +6,7 @@ use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Bank;
 use App\Models\TrustedDevice;
 use App\Models\WithdrawalAccount;
-use App\Services\PalmPayService;
+use App\Services\FintavaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -215,7 +215,7 @@ class ProfileController extends Controller
     /**
      * Set or replace the user's single saved cash-out withdrawal account.
      */
-    public function updateWithdrawalAccount(Request $request, PalmPayService $palmPay): RedirectResponse
+    public function updateWithdrawalAccount(Request $request, FintavaService $fintava): RedirectResponse
     {
         abort_if(\App\Support\StaffAccess::isInternal($request->user()), 403, 'Withdrawal accounts are not available for internal staff accounts.');
 
@@ -228,25 +228,21 @@ class ProfileController extends Controller
 
         // Resolve the account name server-side rather than trusting whatever
         // the client submits — this is the account money will actually be
-        // sent to, so it must come from PalmPay's own lookup, not the form.
+        // sent to, so it must come from Fintava's own lookup, not the form.
+        // bankCode is passed through as Fintava's sortCode.
         try {
-            $response = $palmPay->queryBankAccount($request->bankCode, $request->account_no);
+            $response = $fintava->resolveAccountName($request->account_no, $request->bankCode);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return Redirect::route('profile.edit')
                 ->withErrors(['account_no' => 'Unable to reach the bank verification service. Please try again shortly.'], 'updateWithdrawal')
                 ->withInput();
         }
 
-        $accountName = null;
-        if (isset($response['respCode']) && $response['respCode'] === '00000000' && ($response['data']['Status'] ?? null) === 'Success') {
-            $accountName = $response['data']['accountName'] ?? null;
-        }
+        $accountName = FintavaService::accountNameFrom($response);
 
         if (!$accountName) {
-            $message = $response['data']['errorMessage'] ?? $response['respMsg'] ?? 'Could not verify that account number.';
-
             return Redirect::route('profile.edit')
-                ->withErrors(['account_no' => $message], 'updateWithdrawal')
+                ->withErrors(['account_no' => FintavaService::accountLookupError($response)], 'updateWithdrawal')
                 ->withInput();
         }
 

@@ -10,6 +10,7 @@ class WebhookLog extends Model
         'provider',
         'event_type',
         'payload',
+        'payload_hash',
         'status',
         'error_message',
         'attempts',

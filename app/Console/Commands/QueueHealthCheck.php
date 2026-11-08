@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * Cheap probe for a stalled/never-started queue worker — the app relies
  * entirely on the `database` queue (activation bonuses, payment
- * notification emails, PalmPay bank-list sync, ...), and a dead worker
+ * notification emails, Fintava bank-list sync, ...), and a dead worker
  * fails completely silently: jobs just accumulate in the `jobs` table with
  * zero log output, discovered only when a user notices something never
  * arrived. Intended to be run on a schedule (e.g. every 15-30 minutes) via
