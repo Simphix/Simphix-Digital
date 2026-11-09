@@ -74,12 +74,13 @@
         <form method="GET" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-wrap items-center gap-3">
             <x-select-input name="status" class="rounded-xl font-medium text-sm w-auto" onchange="this.form.submit()">
                 <option value="">All Statuses</option>
-                @foreach (['received', 'invalid_signature', 'success', 'failed'] as $s)
+                @foreach (['received', 'invalid_signature', 'success', 'failed', 'unmatched'] as $s)
                     <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $s)) }}</option>
                 @endforeach
             </x-select-input>
             <x-select-input name="provider" class="rounded-xl font-medium text-sm w-auto" onchange="this.form.submit()">
                 <option value="">All Providers</option>
+                <option value="fintava" {{ request('provider') === 'fintava' ? 'selected' : '' }}>Fintava</option>
                 <option value="palmpay" {{ request('provider') === 'palmpay' ? 'selected' : '' }}>PalmPay</option>
             </x-select-input>
             @if (request('status') || request('provider'))
@@ -112,12 +113,12 @@
                                         'px-2 py-0.5 rounded-full text-xs font-bold',
                                         'bg-emerald-50 text-emerald-600' => $log->status === 'success',
                                         'bg-rose-50 text-rose-600' => $log->status === 'failed',
-                                        'bg-amber-50 text-amber-600' => $log->status === 'invalid_signature',
+                                        'bg-amber-50 text-amber-600' => in_array($log->status, ['invalid_signature', 'unmatched'], true),
                                         'bg-slate-100 text-slate-500' => $log->status === 'received',
                                     ])>
                                         {{ ucfirst(str_replace('_', ' ', $log->status)) }}
                                     </span>
-                                    @if ($log->status === 'failed' && $log->error_message)
+                                    @if (in_array($log->status, ['failed', 'unmatched'], true) && $log->error_message)
                                         <p class="text-[11px] text-rose-500 mt-1 max-w-xs">{{ $log->error_message }}</p>
                                     @endif
                                 </td>
@@ -130,7 +131,7 @@
                                     </details>
                                 </td>
                                 <td class="py-3 text-right whitespace-nowrap">
-                                    @if ($canRetryWebhooks && $log->status === 'failed')
+                                    @if ($canRetryWebhooks && in_array($log->status, ['failed', 'unmatched'], true))
                                         <button type="button" @click="Swal.fire({
                                             title: 'Retry Webhook #{{ $log->id }}?',
                                             text: 'This will re-run the stored payload through processing. Safe to retry — it cannot double-credit a wallet.',
@@ -149,6 +150,31 @@
                                                 f.submit();
                                             }
                                         })" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2.5 py-1 rounded-lg transition-colors">
+                                            Retry
+                                        </button>
+                                    @elseif ($canRetryWebhooks && $log->status === 'invalid_signature' && $log->provider === 'fintava')
+                                        <button type="button" @click="Swal.fire({
+                                            title: 'Retry Webhook #{{ $log->id }} with an invalid signature?',
+                                            html: 'This request could not be proven to come from Fintava, and retrying it can credit a wallet. Only continue if you have found this exact event in the Fintava dashboard.',
+                                            icon: 'warning',
+                                            input: 'checkbox',
+                                            inputValue: 0,
+                                            inputPlaceholder: 'I have verified this event in the Fintava dashboard',
+                                            inputValidator: (value) => !value && 'Please confirm you have verified this event.',
+                                            showCancelButton: true,
+                                            confirmButtonColor: '#0056D2',
+                                            cancelButtonColor: '#64748b',
+                                            confirmButtonText: 'Retry'
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                let f = document.createElement('form');
+                                                f.action = '{{ route('admin.webhooks.retry', $log->id) }}';
+                                                f.method = 'POST';
+                                                f.innerHTML = '<input type=\'hidden\' name=\'_token\' value=\'{{ csrf_token() }}\'><input type=\'hidden\' name=\'confirm_verified\' value=\'1\'>';
+                                                document.body.appendChild(f);
+                                                f.submit();
+                                            }
+                                        })" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1 rounded-lg transition-colors">
                                             Retry
                                         </button>
                                     @else

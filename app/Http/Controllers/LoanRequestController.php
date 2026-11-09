@@ -44,12 +44,14 @@ class LoanRequestController extends Controller
         $validated = $request->validate([
             'name'                      => ['required', 'string', 'max:255'],
             'phone'                     => ['required', 'string', 'max:30'],
-            'email'                     => ['nullable', 'email', 'max:255'], // Optional email
-            'moniepoint_account_number' => ['required', 'string', 'max:30'], // Moniepoint wallet account number
-            'amount_requested'          => ['required', 'numeric', 'min:1000', 'max:50000000'], // Amount requesting
+            'email'                     => ['nullable', 'email', 'max:255'],
+            'moniepoint_account_number' => ['required', 'string', 'max:30'],
+            'amount_requested'          => ['required', 'numeric', 'min:1000', 'max:50000000'],
             'business_name'             => ['nullable', 'string', 'max:255'],
             'loan_tenure'               => ['nullable', 'string', 'in:' . implode(',', array_keys(LoanRequest::TENURES))],
             'purpose'                   => ['nullable', 'string', 'max:2000'],
+            'referral_name'             => ['nullable', 'string', 'max:255'],
+            'referral_phone'            => ['nullable', 'string', 'max:30'],
         ]);
 
         $loanRequest = LoanRequest::create([
@@ -63,6 +65,8 @@ class LoanRequestController extends Controller
             'business_name'             => $validated['business_name'] ?? null,
             'loan_tenure'               => $validated['loan_tenure'] ?? null,
             'purpose'                   => $validated['purpose'] ?? null,
+            'referral_name'             => !empty($validated['referral_name']) ? trim($validated['referral_name']) : null,
+            'referral_phone'            => !empty($validated['referral_phone']) ? trim($validated['referral_phone']) : null,
             'status'                    => LoanRequest::STATUS_PENDING,
         ]);
 

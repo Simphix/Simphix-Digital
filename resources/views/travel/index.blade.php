@@ -325,6 +325,37 @@
                                   class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">{{ old('notes') }}</textarea>
                     </div>
 
+                    <!-- Referral Details -->
+                    <div class="pt-2 border-t border-slate-100">
+                        <div class="mb-2">
+                            <span class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Referral Details</span>
+                            <span class="text-[11px] text-slate-500">Provide details of the agent or partner who referred you (Optional)</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Referral Full Name -->
+                            <div>
+                                <label for="req_ref_name" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Referral Full Name <span class="text-slate-400 font-normal lowercase">(optional)</span>
+                                </label>
+                                <input type="text" id="req_ref_name" name="referral_name" autocomplete="off"
+                                       value="{{ old('referral_name') }}"
+                                       placeholder="e.g. Emmanuel Chukwu"
+                                       class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                            </div>
+
+                            <!-- Referral Phone Number -->
+                            <div>
+                                <label for="req_ref_phone" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Referral Phone Number <span class="text-slate-400 font-normal lowercase">(optional)</span>
+                                </label>
+                                <input type="tel" id="req_ref_phone" name="referral_phone" autocomplete="off"
+                                       value="{{ old('referral_phone') }}"
+                                       placeholder="e.g. 08123456789"
+                                       class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Notice & Submit Button -->
                     <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <p class="text-[11px] text-slate-400">

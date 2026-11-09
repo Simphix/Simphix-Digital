@@ -159,28 +159,22 @@ class DownlineDetailController extends Controller
         \App\Support\PhoneNumber::normalizeRequestInput($request);
 
         $validated = $request->validate([
-            'phone'         => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), 'unique:users,phone,' . $user->id],
-            'identity_type' => 'required|in:bvn,nin',
-            'bvn'           => 'required_if:identity_type,bvn|nullable|string|digits:11|unique:users,bvn,' . $user->id,
-            'nin'           => 'required_if:identity_type,nin|nullable|string|digits:11|unique:users,nin,' . $user->id,
+            'phone' => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), 'unique:users,phone,' . $user->id],
+            'bvn'   => ['required', 'string', 'digits:11', 'unique:users,bvn,' . $user->id],
+            'nin'   => ['required', 'string', 'digits:11', 'unique:users,nin,' . $user->id],
         ]);
 
-        $identityType = $validated['identity_type'];
-
         $user->phone = $validated['phone'];
-        if ($identityType === 'nin') {
-            $user->nin = $validated['nin'];
-        } else {
-            $user->bvn = $validated['bvn'];
-        }
+        $user->bvn = $validated['bvn'];
+        $user->nin = $validated['nin'];
         $user->save();
 
-        $result = app(VirtualAccountRepository::class)->createVirtualAccount($user->id, $identityType);
+        $result = app(VirtualAccountRepository::class)->createVirtualAccount($user->id);
 
         if (!is_array($result) || empty($result['success'])) {
             $message = is_array($result) && isset($result['message']) ? $result['message'] : 'Virtual account creation failed. Please try again later.';
 
-            return back()->with('error', $message);
+            return back()->withInput()->with('error', $message);
         }
 
         return back()->with('success', "Virtual account generated for {$user->first_name} {$user->last_name}.");

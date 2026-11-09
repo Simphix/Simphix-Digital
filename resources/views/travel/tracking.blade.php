@@ -161,6 +161,19 @@
                     </div>
                 </div>
 
+                @if ($matchedRequest->referral_name || $matchedRequest->referral_phone)
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100 text-xs">
+                        <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Referral Full Name</span>
+                            <span class="font-bold text-slate-900 text-sm mt-0.5 block">{{ $matchedRequest->referral_name ?? 'Not provided' }}</span>
+                        </div>
+                        <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Referral Phone Number</span>
+                            <span class="font-bold font-mono text-slate-900 text-sm mt-0.5 block">{{ $matchedRequest->referral_phone ?? 'Not provided' }}</span>
+                        </div>
+                    </div>
+                @endif
+
                 @if ($matchedRequest->notes)
                     <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 text-xs">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Your Special Instructions</span>

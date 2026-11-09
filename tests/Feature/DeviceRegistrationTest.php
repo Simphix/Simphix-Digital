@@ -19,6 +19,7 @@ function deviceRegUser(bool $enabled = true, string $password = 'Passw0rd!123'):
 }
 
 test('login from an unrecognized device with the feature on redirects to the challenge screen and does not authenticate', function () {
+    Mail::fake();
     $user = deviceRegUser();
 
     $response = $this->post(route('login'), ['email' => $user->email, 'password' => 'Passw0rd!123']);
@@ -27,6 +28,27 @@ test('login from an unrecognized device with the feature on redirects to the cha
     expect($response->headers->get('Location'))->toContain('device-challenge');
     expect(Auth::check())->toBeFalse();
     expect(DeviceVerificationChallenge::where('user_id', $user->id)->exists())->toBeTrue();
+    Mail::assertSent(\App\Mail\DeviceLoginOtpMail::class, 1);
+});
+
+test('device challenge automatically sends OTP to email and displays code entry form without channel picker', function () {
+    Mail::fake();
+    $user = deviceRegUser();
+
+    $this->post(route('login'), ['email' => $user->email, 'password' => 'Passw0rd!123']);
+    $challenge = DeviceVerificationChallenge::where('user_id', $user->id)->first();
+
+    Mail::assertSent(\App\Mail\DeviceLoginOtpMail::class, function ($mail) use ($user) {
+        return $mail->hasTo($user->email);
+    });
+
+    $showResponse = $this->get(route('device-challenge.show', $challenge->token));
+    $showResponse->assertOk();
+    $showResponse->assertSee('verification code to');
+    $showResponse->assertSee($user->email);
+    $showResponse->assertDontSee('Text Message (SMS)');
+    $showResponse->assertDontSee('Notify a trusted device');
+    $showResponse->assertDontSee('Choose a different channel');
 });
 
 test('login from an unrecognized device with the feature off logs straight in as before', function () {
@@ -45,8 +67,7 @@ test('completing the OTP challenge with the correct code logs in, sets the trust
     $this->post(route('login'), ['email' => $user->email, 'password' => 'Passw0rd!123']);
     $challenge = DeviceVerificationChallenge::where('user_id', $user->id)->first();
 
-    $this->post(route('device-challenge.send', $challenge->token), ['channel' => 'email']);
-
+    // The code is automatically sent via email upon login.
     // The code is only ever stored as a hash — read the real value back out
     // of the mail payload, which is what the user actually receives.
     Mail::assertSent(\App\Mail\DeviceLoginOtpMail::class, function ($mail) use (&$sentOtp) {
@@ -69,7 +90,6 @@ test('a wrong code is rejected and does not authenticate; 5 wrong attempts kill 
 
     $this->post(route('login'), ['email' => $user->email, 'password' => 'Passw0rd!123']);
     $challenge = DeviceVerificationChallenge::where('user_id', $user->id)->first();
-    $this->post(route('device-challenge.send', $challenge->token), ['channel' => 'email']);
 
     for ($i = 0; $i < 5; $i++) {
         $response = $this->post(route('device-challenge.verify', $challenge->token), ['code' => '000000']);
@@ -89,7 +109,6 @@ test('an expired OTP is rejected', function () {
 
     $this->post(route('login'), ['email' => $user->email, 'password' => 'Passw0rd!123']);
     $challenge = DeviceVerificationChallenge::where('user_id', $user->id)->first();
-    $this->post(route('device-challenge.send', $challenge->token), ['channel' => 'email']);
 
     $challenge->update(['otp_expires_at' => now()->subMinute()]);
 
@@ -105,7 +124,6 @@ test('resending issues a new code', function () {
 
     $this->post(route('login'), ['email' => $user->email, 'password' => 'Passw0rd!123']);
     $challenge = DeviceVerificationChallenge::where('user_id', $user->id)->first();
-    $this->post(route('device-challenge.send', $challenge->token), ['channel' => 'email']);
 
     $firstHash = $challenge->fresh()->otp_hash;
 
@@ -198,6 +216,7 @@ test('a user cannot revoke another users trusted device', function () {
 });
 
 test('a user with no verified phone and no other trusted device only sees email as an available channel', function () {
+    Mail::fake();
     $user = deviceRegUser();
 
     $response = $this->post(route('login'), ['email' => $user->email, 'password' => 'Passw0rd!123']);

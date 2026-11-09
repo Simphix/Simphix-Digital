@@ -245,70 +245,90 @@
                             <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 space-y-4">
                                 <div class="text-center space-y-1.5 mb-4">
                                     <h4 class="font-bold text-slate-800 text-sm">Generate Funding Account</h4>
-                                    <p class="text-xs text-slate-400">Generate your dedicated virtual account to start automated funding.</p>
+                                    <p class="text-xs text-slate-500">Provide your verified identity details to open your dedicated Loma Bank virtual account for automated wallet funding.</p>
                                 </div>
 
-                                <form method="POST" action="{{ route('virtual.account.create') }}" class="space-y-4"
-                                      x-data="{ idType: '{{ old('identity_type', 'bvn') }}' }">
+                                @if (session('error'))
+                                    <div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5 text-rose-800 flex items-start gap-2.5 text-xs font-semibold">
+                                        <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
+                                        <div class="leading-relaxed">{{ session('error') }}</div>
+                                    </div>
+                                @endif
+
+                                @if ($errors->any())
+                                    <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-rose-800 text-xs space-y-1">
+                                        @foreach ($errors->all() as $err)
+                                            <p class="flex items-center gap-1.5 font-medium mb-0">
+                                                <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-rose-500 shrink-0"></i>
+                                                {{ $err }}
+                                            </p>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                <form method="POST" action="{{ route('virtual.account.create') }}" class="space-y-4">
                                     @csrf
-                                    <input type="hidden" name="identity_type" x-bind:value="idType">
+
                                     <div>
-                                        <x-input-label value="Full Name" />
+                                        <x-input-label value="Full Name (as registered on BVN/NIN)" />
                                         <x-text-input type="text" name="name"
-                                               :value="auth()->user()->first_name . ' ' . auth()->user()->last_name . ' ' . auth()->user()->middle_name"
+                                               :value="old('name', trim(auth()->user()->first_name . ' ' . (auth()->user()->middle_name ? auth()->user()->middle_name . ' ' : '') . auth()->user()->last_name))"
+                                               placeholder="First Middle Last"
                                                required />
                                     </div>
 
                                     <div>
                                         <x-input-label value="Phone Number" />
                                         <x-text-input type="tel" name="phone"
-                                               :value="auth()->user()->phone"
+                                               :value="old('phone', auth()->user()->phone)"
+                                               placeholder="08012345678"
                                                required />
                                     </div>
 
-                                    <div>
-                                        <x-input-label value="Verify Identity With" />
-                                        <div class="flex gap-2">
-                                            <button type="button" @click="idType = 'bvn'"
-                                                    :class="idType === 'bvn' ? 'bg-[#0056D2] text-white' : 'bg-white text-slate-600 border border-slate-200'"
-                                                    class="flex-1 py-2 rounded-lg text-xs font-bold transition-colors">
-                                                BVN
-                                            </button>
-                                            <button type="button" @click="idType = 'nin'"
-                                                    :class="idType === 'nin' ? 'bg-[#0056D2] text-white' : 'bg-white text-slate-600 border border-slate-200'"
-                                                    class="flex-1 py-2 rounded-lg text-xs font-bold transition-colors">
-                                                NIN
-                                            </button>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <x-input-label value="Bank Verification Number (BVN)" />
+                                            <x-text-input type="text" name="bvn"
+                                                   :value="old('bvn', auth()->user()->bvn)"
+                                                   placeholder="11-digit BVN"
+                                                   maxlength="11"
+                                                   pattern="\d{11}"
+                                                   title="BVN must be exactly 11 digits"
+                                                   required />
                                         </div>
-                                        <p class="text-[11px] text-slate-400 mt-1">If your BVN fails verification, try NIN instead.</p>
+
+                                        <div>
+                                            <x-input-label value="National Identification Number (NIN)" />
+                                            <x-text-input type="text" name="nin"
+                                                   :value="old('nin', auth()->user()->nin)"
+                                                   placeholder="11-digit NIN"
+                                                   maxlength="11"
+                                                   pattern="\d{11}"
+                                                   title="NIN must be exactly 11 digits"
+                                                   required />
+                                        </div>
                                     </div>
 
-                                    <div x-show="idType === 'bvn'">
-                                        <x-input-label value="Bank Verification Number (BVN)" />
-                                        <x-text-input type="text" name="bvn"
-                                               :value="old('bvn', auth()->user()->bvn)"
-                                               placeholder="Enter 11-digit BVN"
-                                               maxlength="11"
-                                               pattern="\d{11}"
-                                               title="BVN must be exactly 11 digits"
-                                               x-bind:required="idType === 'bvn'" />
-                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <x-input-label value="Date of Birth" />
+                                            <x-text-input type="date" name="date_of_birth"
+                                                   :value="old('date_of_birth', auth()->user()->date_of_birth ? (auth()->user()->date_of_birth instanceof \Carbon\CarbonInterface ? auth()->user()->date_of_birth->format('Y-m-d') : substr(auth()->user()->date_of_birth, 0, 10)) : '')" />
+                                            <p class="text-[11px] text-slate-400 mt-1">Must match your BVN/NIN date of birth.</p>
+                                        </div>
 
-                                    <div x-show="idType === 'nin'" x-cloak>
-                                        <x-input-label value="National Identification Number (NIN)" />
-                                        <x-text-input type="text" name="nin"
-                                               :value="old('nin', auth()->user()->nin)"
-                                               placeholder="Enter 11-digit NIN"
-                                               maxlength="11"
-                                               pattern="\d{11}"
-                                               title="NIN must be exactly 11 digits"
-                                               x-bind:required="idType === 'nin'" />
+                                        <div>
+                                            <x-input-label value="Residential Address" />
+                                            <x-text-input type="text" name="address"
+                                                   :value="old('address', auth()->user()->address)"
+                                                   placeholder="House/Street address" />
+                                        </div>
                                     </div>
 
                                     <div class="flex items-start gap-2.5 pt-2">
                                         <input type="checkbox" id="confirmCheck" class="mt-0.5 rounded border-slate-300 text-primary focus:ring-primary/20 shrink-0" required>
                                         <label for="confirmCheck" class="text-[11px] text-slate-500 leading-relaxed">
-                                            I confirm that the above details are accurate and consent to create a virtual account.
+                                            I confirm that the above details are accurate and match my official identification records.
                                         </label>
                                     </div>
 
@@ -320,15 +340,6 @@
                             </div>
                         @endif
 
-                    </div>
-
-                    <!-- Card Footer -->
-                    <div class="bg-slate-50 border-t border-slate-100 px-6 py-4 flex items-center justify-between text-xs text-slate-400 font-semibold">
-                        <div class="flex items-center gap-1.5">
-                            <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-                            <span>PCI-DSS Compliant</span>
-                        </div>
-                        <span>Powered by PalmPay</span>
                     </div>
 
                 </div>

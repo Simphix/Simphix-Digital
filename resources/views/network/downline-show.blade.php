@@ -525,36 +525,24 @@
                     </div>
                 @else
                     <p class="text-xs text-slate-400">{{ $user->first_name }} doesn't have a virtual funding account yet. Generate one on their behalf below.</p>
-                    <form method="POST" action="{{ route('network.downline.virtual-account', $user) }}" class="space-y-4" x-data="{ idType: '{{ old('identity_type', 'bvn') }}' }">
+                    <form method="POST" action="{{ route('network.downline.virtual-account', $user) }}" class="space-y-4">
                         @csrf
-                        <input type="hidden" name="identity_type" x-bind:value="idType">
                         <div>
                             <x-input-label value="Phone Number" />
                             <x-text-input type="tel" name="phone" :value="old('phone', $user->phone)" required />
+                            <x-input-error :messages="$errors->get('phone')" class="mt-1" />
                         </div>
-                        <div>
-                            <x-input-label value="Verify Identity With" />
-                            <div class="flex gap-2">
-                                <button type="button" @click="idType = 'bvn'"
-                                        :class="idType === 'bvn' ? 'bg-[#0056D2] text-white' : 'bg-white text-slate-600 border border-slate-200'"
-                                        class="flex-1 py-2 rounded-lg text-xs font-bold transition-colors">
-                                    BVN
-                                </button>
-                                <button type="button" @click="idType = 'nin'"
-                                        :class="idType === 'nin' ? 'bg-[#0056D2] text-white' : 'bg-white text-slate-600 border border-slate-200'"
-                                        class="flex-1 py-2 rounded-lg text-xs font-bold transition-colors">
-                                    NIN
-                                </button>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label value="Bank Verification Number (BVN)" />
+                                <x-text-input type="text" name="bvn" :value="old('bvn', $user->bvn)" placeholder="Enter 11-digit BVN" maxlength="11" pattern="\d{11}" required />
+                                <x-input-error :messages="$errors->get('bvn')" class="mt-1" />
                             </div>
-                            <p class="text-[11px] text-slate-400 mt-1">If BVN fails verification, try NIN instead.</p>
-                        </div>
-                        <div x-show="idType === 'bvn'">
-                            <x-input-label value="Bank Verification Number (BVN)" />
-                            <x-text-input type="text" name="bvn" :value="old('bvn', $user->bvn)" placeholder="Enter 11-digit BVN" maxlength="11" pattern="\d{11}" x-bind:required="idType === 'bvn'" />
-                        </div>
-                        <div x-show="idType === 'nin'" x-cloak>
-                            <x-input-label value="National Identification Number (NIN)" />
-                            <x-text-input type="text" name="nin" :value="old('nin', $user->nin)" placeholder="Enter 11-digit NIN" maxlength="11" pattern="\d{11}" x-bind:required="idType === 'nin'" />
+                            <div>
+                                <x-input-label value="National Identification Number (NIN)" />
+                                <x-text-input type="text" name="nin" :value="old('nin', $user->nin)" placeholder="Enter 11-digit NIN" maxlength="11" pattern="\d{11}" required />
+                                <x-input-error :messages="$errors->get('nin')" class="mt-1" />
+                            </div>
                         </div>
                         <x-primary-button type="submit" class="w-full sm:w-auto">Generate Funding Account</x-primary-button>
                     </form>

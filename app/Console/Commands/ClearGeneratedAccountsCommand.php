@@ -20,8 +20,8 @@ class ClearGeneratedAccountsCommand extends Command
                             {target? : Optional user ID, email, phone, or specific account number}
                             {--user= : Clear bank accounts for a specific user ID, email, or phone}
                             {--account= : Clear a specific bank account number}
-                            {--provider= : Filter by provider (e.g. palmpay, monnify, paystack)}
-                            {--bank= : Filter by bank name (e.g. PalmPay, Wema Bank)}
+                            {--provider= : Filter by provider (e.g. fintava, palmpay, monnify, paystack)}
+                            {--bank= : Filter by bank name (e.g. Loma Bank, PalmPay, Wema Bank)}
                             {--all : Clear all generated bank accounts across the platform}
                             {--include-enterprise-payments : Also clear generated enterprise partner payment accounts}
                             {--force : Clear without confirmation prompt}

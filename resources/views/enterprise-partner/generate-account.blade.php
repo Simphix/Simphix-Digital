@@ -97,8 +97,7 @@
                 </div>
             </div>
         @else
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5"
-                 x-data="{ idType: '{{ old('identity_type', 'bvn') }}' }">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
                 <h3 class="text-sm font-semibold text-slate-800 font-display pb-3 border-b border-slate-100">Verify your identity to generate an account</h3>
 
                 @if ($application)
@@ -118,38 +117,20 @@
 
                 <form method="POST" action="{{ route('enterprise-partner.generate-account.create') }}" class="space-y-4">
                     @csrf
-                    <input type="hidden" name="identity_type" x-bind:value="idType">
 
                     <div>
-                        <x-input-label value="Verify Identity With" />
-                        <div class="flex gap-2">
-                            <button type="button" @click="idType = 'bvn'"
-                                    :class="idType === 'bvn' ? 'bg-[#0056D2] text-white' : 'bg-white text-slate-600 border border-slate-200'"
-                                    class="flex-1 py-2 rounded-lg text-xs font-bold transition-colors">
-                                BVN
-                            </button>
-                            <button type="button" @click="idType = 'nin'"
-                                    :class="idType === 'nin' ? 'bg-[#0056D2] text-white' : 'bg-white text-slate-600 border border-slate-200'"
-                                    class="flex-1 py-2 rounded-lg text-xs font-bold transition-colors">
-                                NIN
-                            </button>
-                        </div>
-                        <p class="text-[11px] text-slate-400 mt-1">If your BVN fails verification, try NIN instead.</p>
-                    </div>
-
-                    <div x-show="idType === 'bvn'">
                         <x-input-label value="Bank Verification Number (BVN)" />
-                        <x-text-input type="text" name="bvn" :value="old('bvn')" placeholder="Enter 11-digit BVN"
+                        <x-text-input type="text" name="bvn" :value="old('bvn', auth()->user()->bvn)" placeholder="Enter 11-digit BVN"
                                maxlength="11" pattern="\d{11}" title="BVN must be exactly 11 digits"
-                               x-bind:required="idType === 'bvn'" class="w-full" />
+                               required class="w-full" />
                         <x-input-error :messages="$errors->get('bvn')" class="mt-1.5" />
                     </div>
 
-                    <div x-show="idType === 'nin'">
+                    <div>
                         <x-input-label value="National Identification Number (NIN)" />
-                        <x-text-input type="text" name="nin" :value="old('nin')" placeholder="Enter 11-digit NIN"
+                        <x-text-input type="text" name="nin" :value="old('nin', auth()->user()->nin)" placeholder="Enter 11-digit NIN"
                                maxlength="11" pattern="\d{11}" title="NIN must be exactly 11 digits"
-                               x-bind:required="idType === 'nin'" class="w-full" />
+                               required class="w-full" />
                         <x-input-error :messages="$errors->get('nin')" class="mt-1.5" />
                     </div>
 

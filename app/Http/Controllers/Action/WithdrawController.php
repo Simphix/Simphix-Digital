@@ -9,7 +9,7 @@ use App\Models\ServiceField;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
-use App\Services\PalmPayService;
+use App\Services\FintavaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,11 +19,11 @@ use Illuminate\Support\Str;
 
 class WithdrawController extends Controller
 {
-    protected $palmPay;
+    protected $fintava;
 
-    public function __construct(PalmPayService $palmPay)
+    public function __construct(FintavaService $fintava)
     {
-        $this->palmPay = $palmPay;
+        $this->fintava = $fintava;
     }
 
     /**
@@ -79,7 +79,7 @@ class WithdrawController extends Controller
     }
 
     /**
-     * Sync banks from PalmPay.
+     * Sync banks from Fintava.
      */
     public function syncBanks()
     {
@@ -87,9 +87,12 @@ class WithdrawController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        \App\Jobs\SyncPalmPayBankListJob::dispatch();
+        $result = (new \App\Jobs\SyncFintavaBankListJob())->sync($this->fintava);
 
-        return back()->with('success', 'Bank sync queued — the list will update in a moment.');
+        return back()->with(
+            $result['success'] ? 'success' : 'error',
+            $result['success'] ? "Bank list synced ({$result['count']} banks updated)." : $result['message']
+        );
     }
 
     /**
@@ -105,7 +108,7 @@ class WithdrawController extends Controller
         ]);
 
         try {
-            $response = $this->palmPay->queryBankAccount($request->bankCode, $request->account_no);
+            $response = $this->fintava->resolveAccountName($request->account_no, $request->bankCode);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return response()->json([
                 'success' => false,
@@ -113,22 +116,18 @@ class WithdrawController extends Controller
             ]);
         }
 
-        if (isset($response['respCode']) && $response['respCode'] === '00000000') {
-            if ($response['data']['Status'] === 'Success') {
-                return response()->json([
-                    'success' => true,
-                    'account_name' => $response['data']['accountName']
-                ]);
-            }
+        $accountName = FintavaService::accountNameFrom($response);
+
+        if ($accountName) {
             return response()->json([
-                'success' => false,
-                'message' => $response['data']['errorMessage'] ?? 'Account verification failed.'
+                'success' => true,
+                'account_name' => $accountName,
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'PalmPay API Error: ' . ($response['respMsg'] ?? 'Unable to verify account.')
+            'message' => FintavaService::accountLookupError($response),
         ]);
     }
 

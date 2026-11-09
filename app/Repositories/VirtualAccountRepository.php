@@ -2,34 +2,27 @@
 
 namespace App\Repositories;
 
-use Exception;
-use App\Helpers\noncestrHelper;
-use App\Helpers\signatureHelper;
+use App\Exceptions\FundingAccountRejected;
 use App\Models\EnterprisePartnerApplication;
 use App\Models\EnterprisePartnerPayment;
 use App\Models\User;
-use App\Services\CircuitBreaker;
-use App\Support\LogRedactor;
-use Illuminate\Http\Client\ConnectionException;
+use App\Models\VirtualAccount;
+use App\Services\FintavaService;
+use App\Support\FintavaCustomerIdentity;
+use App\Support\FundingAccountErrors;
+use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class VirtualAccountRepository
 {
-    private const CONNECT_TIMEOUT = 3;
-    private const TIMEOUT = 20;
-
     /**
-     * Create a PalmPay virtual account for the given user.
+     * Create a Fintava virtual account for the given user.
      *
      * $identityType is our own app-level choice ('bvn' or 'nin' — which field
-     * the user supplied), mapped below to PalmPay's actual identityType
-     * values ('personal' / 'personal_nin'). NIN is a fallback path: PalmPay's
-     * BVN verification (identityType: personal) rejects some real, valid
-     * accounts (confirmed via production logs — respCode AC100007,
-     * "LicenseNumber verification failed") and NIN is PalmPay's own
-     * documented alternative identity check.
+     * the user supplied) — kept for signature compatibility with existing
+     * callers (WalletController, DownlineDetailController); Fintava's
+     * create/customer endpoint takes bvn and nin.
      */
     public function createVirtualAccount(int $loginUserId, string $identityType = 'bvn'): array
     {
@@ -40,23 +33,41 @@ class VirtualAccountRepository
         }
 
         try {
-            $accountReference = 'F24' . strtoupper(bin2hex(random_bytes(5)));
-            $decoded = $this->callCreateAccountApi($userDetails, $identityType, $accountReference);
+            ['response' => $decoded, 'email' => $providerEmail, 'phone' => $providerPhone] = $this->callCreateCustomerApi($userDetails);
+
+            $accountNumber = $decoded['data']['wallet']['accountNumber'];
+            $accountName = $decoded['data']['wallet']['accountName'] ?? trim($userDetails->first_name . ' ' . $userDetails->last_name);
+
+            // Fintava's customer and wallet IDs
+            $customerId = $decoded['data']['userInfo']['id'] ?? null;
+            $walletId = $decoded['data']['wallet']['id'] ?? null;
+
+            if (!$customerId) {
+                Log::warning('Fintava created a customer for user ' . $loginUserId . ' but returned no customer id.');
+            }
 
             DB::table('virtual_accounts')->insert([
-                'user_id'           => $loginUserId,
-                'account_reference' => $decoded['data']['accountReference'],
-                'account_number'    => $decoded['data']['virtualAccountNo'],
-                'account_name'      => $decoded['data']['virtualAccountName'],
-                'bank_name'         => 'PalmPay',
-                'bank_code'         => null,
-                'provider'          => 'palmpay',
-                'is_active'         => true,
-                'created_at'        => now(),
-                'updated_at'        => now(),
+                'user_id'              => $loginUserId,
+                'account_reference'    => $customerId ?? $accountNumber,
+                'provider_customer_id' => $customerId,
+                'provider_wallet_id'   => $walletId,
+                'provider_email'       => $providerEmail,
+                'provider_phone'       => $providerPhone,
+                'account_number'       => $accountNumber,
+                'account_name'         => $accountName,
+                'bank_name'            => VirtualAccount::BANK_NAME,
+                'bank_code'            => null,
+                'provider'             => 'fintava',
+                'is_active'            => true,
+                'created_at'           => now(),
+                'updated_at'           => now(),
             ]);
 
             return ['success' => true, 'message' => 'Virtual account created successfully.'];
+        } catch (FundingAccountRejected $e) {
+            Log::warning('Funding account rejected for user ' . $loginUserId . ': ' . $e->getMessage());
+
+            return ['success' => false, 'message' => FundingAccountErrors::forUser($e->messages) ?? $this->genericFailureMessage()];
         } catch (Exception $e) {
             Log::error('Error creating virtual account for user ' . $loginUserId . ': ' . $e->getMessage());
 
@@ -65,30 +76,36 @@ class VirtualAccountRepository
     }
 
     /**
-     * Same PalmPay virtual account creation, for an Enterprise Partner's
-     * eligibility payment instead of the general wallet flow — inserts into
-     * enterprise_partner_payments (not virtual_accounts) with an
-     * EPP-prefixed account_reference (vs. the wallet flow's F24 prefix) so
-     * PaymentWebhookController can tell which table a webhook belongs to.
+     * Same Fintava virtual account creation, for an Enterprise Partner's
+     * eligibility payment — inserts into enterprise_partner_payments (not
+     * virtual_accounts) with Loma Bank so PaymentWebhookController /
+     * FintavaWebhookController can tell which table a webhook belongs to.
      */
     public function createVirtualAccountForEnterprisePartner(EnterprisePartnerApplication $application, User $user, string $identityType = 'bvn'): array
     {
         try {
-            $accountReference = 'EPP' . strtoupper(bin2hex(random_bytes(5)));
-            $decoded = $this->callCreateAccountApi($user, $identityType, $accountReference);
+            ['response' => $decoded, 'email' => $providerEmail, 'phone' => $providerPhone] = $this->callCreateCustomerApi($user);
+
+            $accountNumber = $decoded['data']['wallet']['accountNumber'];
+            $accountName = $decoded['data']['wallet']['accountName'] ?? trim($user->first_name . ' ' . $user->last_name);
+            $customerId = $decoded['data']['userInfo']['id'] ?? null;
 
             $payment = EnterprisePartnerPayment::create([
-                'application_id' => $application->id,
+                'application_id'    => $application->id,
                 'user_id'           => $user->id,
                 'expected_amount'   => $application->total_amount_snapshot,
-                'account_reference' => $decoded['data']['accountReference'],
-                'account_number'    => $decoded['data']['virtualAccountNo'],
-                'account_name'      => $decoded['data']['virtualAccountName'],
-                'bank_name'         => 'PalmPay',
+                'account_reference' => $customerId ?? $accountNumber,
+                'account_number'    => $accountNumber,
+                'account_name'      => $accountName,
+                'bank_name'         => VirtualAccount::BANK_NAME,
                 'status'            => 'pending',
             ]);
 
             return ['success' => true, 'message' => 'Payment account created successfully.', 'payment' => $payment];
+        } catch (FundingAccountRejected $e) {
+            Log::warning('EP funding account rejected for user ' . $user->id . ': ' . $e->getMessage());
+
+            return ['success' => false, 'message' => FundingAccountErrors::forUser($e->messages) ?? $this->genericFailureMessage()];
         } catch (Exception $e) {
             Log::error('Error creating EP virtual account for user ' . $user->id . ': ' . $e->getMessage());
 
@@ -97,109 +114,76 @@ class VirtualAccountRepository
     }
 
     /**
-     * The actual PalmPay HTTP call — signature, headers, circuit breaker,
-     * response handling — shared by both createVirtualAccount() and
-     * createVirtualAccountForEnterprisePartner(). Returns the decoded
-     * successful response array, or throws on any failure (bad config,
-     * open circuit, connection error, invalid/error response) — callers
-     * decide what to do with their own respective tables.
+     * The actual Fintava HTTP call — used by createVirtualAccount(). Returns
+     * the decoded successful response plus the random email and phone that
+     * were sent, or throws: FundingAccountRejected when Fintava refused the
+     * user's own details, a plain Exception for anything else (bad config,
+     * open circuit, connection error, unexpected response).
+     *
+     * @return array{response: array, email: string, phone: string}
      */
-    protected function callCreateAccountApi(User $userDetails, string $identityType, string $accountReference): array
+    protected function callCreateCustomerApi(User $userDetails): array
     {
-        $customer_name = trim($userDetails->first_name . ' ' . $userDetails->last_name);
+        // Fintava rejects an email/phone that already belongs to any other
+        // customer, so it gets a fresh random pair every time — see
+        // App\Support\FintavaCustomerIdentity.
+        $contact = FintavaCustomerIdentity::generate($userDetails);
 
-        $requestTime = (int) (microtime(true) * 1000);
-        $noncestr    = noncestrHelper::generateNonceStr();
+        $fullName = trim($userDetails->first_name . ' ' . $userDetails->last_name);
+        $parts = explode(' ', $fullName, 2);
+        $firstName = !empty($userDetails->first_name) ? $userDetails->first_name : ($parts[0] ?? 'User');
+        $lastName = !empty($userDetails->last_name) ? $userDetails->last_name : ($parts[1] ?? 'Customer');
 
-        $palmpayIdentityType = $identityType === 'nin' ? 'personal_nin' : 'personal';
-        $licenseNumber = $identityType === 'nin' ? $userDetails->nin : $userDetails->bvn;
+        $dob = $userDetails->date_of_birth;
+        $dobString = $dob ? ($dob instanceof \Carbon\CarbonInterface ? $dob->format('Y-m-d') : substr((string) $dob, 0, 10)) : '1990-01-01';
 
         $data = [
-            'requestTime'        => $requestTime,
-            'identityType'       => $palmpayIdentityType,
-            'licenseNumber'      => $licenseNumber,
-            'virtualAccountName' => $customer_name,
-            'version'            => config('services.palmpay.version', 'V2.0'),
-            'customerName'       => $customer_name,
-            'email'              => $userDetails->email,
-            'accountReference'   => $accountReference,
-            'nonceStr'           => $noncestr,
+            'firstName'     => $firstName,
+            'lastName'      => $lastName,
+            'phoneNumber'   => $contact['phone'],
+            'email'         => $contact['email'],
+            // Confirmed with Fintava directly: DYNAMIC_FUND produces a
+            // permanent, non-expiring customer + wallet + account number —
+            // this is what makes create/customer usable as a persistent
+            // per-user deposit account.
+            'fundingMethod' => 'DYNAMIC_FUND',
+            'address'       => $userDetails->address ?: ($userDetails->state ? $userDetails->state . ', Nigeria' : 'Nigeria'),
+            'dateOfBirth'   => $dobString,
+            'bvn'           => $userDetails->bvn,
+            'nin'           => $userDetails->nin,
         ];
 
-        Log::info('PalmPay virtual account request', LogRedactor::redact($data));
-
-        $signature = signatureHelper::generate_signature($data, config('keys.private'));
-
-        // Use config() — NOT env() — so this works when config is cached in production
-        $baseUrl = config('services.palmpay.base_url');
-        $token   = config('services.palmpay.bearer_token');
-
-        if (empty($baseUrl) || empty($token)) {
-            throw new Exception('PalmPay API credentials are not configured.');
+        if (empty($data['bvn']) && empty($data['nin'])) {
+            throw new Exception('Missing required BVN or NIN for virtual account creation.');
         }
 
-        $url = rtrim($baseUrl, '/') . '/api/v2/virtual/account/label/create';
+        $decoded = app(FintavaService::class)->createCustomer($data);
 
-        $breaker = new CircuitBreaker('palmpay');
-
-        if ($breaker->isOpen()) {
-            throw new Exception('PalmPay is temporarily unavailable. Please try again shortly.');
+        // 200 or 201 "User created successfully" is what Fintava returns for a new customer.
+        if (in_array((int) ($decoded['status'] ?? 0), [200, 201], true) && !empty($decoded['data']['wallet']['accountNumber'])) {
+            return ['response' => $decoded, 'email' => $contact['email'], 'phone' => $contact['phone']];
         }
 
-        $headers = [
-            'Accept'        => 'application/json, text/plain, */*',
-            'CountryCode'   => 'NG',
-            'Authorization' => "Bearer {$token}",
-            'Signature'     => $signature,
-            'Content-Type'  => 'application/json',
-        ];
+        // Fintava's `message` is sometimes a list of strings, not a string.
+        $messages = FundingAccountErrors::normalize($decoded['message'] ?? []) ?: ['Unknown error from Fintava.'];
 
-        try {
-            $response = Http::connectTimeout(self::CONNECT_TIMEOUT)
-                ->timeout(self::TIMEOUT)
-                ->retry(times: 2, sleepMilliseconds: 300, when: fn ($e) => $e instanceof ConnectionException, throw: false)
-                ->withHeaders($headers)
-                ->post($url, $data);
-        } catch (ConnectionException $e) {
-            $breaker->recordFailure();
-            throw new Exception('Connection error: ' . $e->getMessage());
+        // A 4xx validation answer means Fintava disagreed with the user's own details;
+        if (in_array((int) ($decoded['status'] ?? 0), [400, 404, 409, 422], true)) {
+            throw new FundingAccountRejected($messages);
         }
 
-        $httpCode = $response->status();
-        $decoded = $response->json();
-
-        Log::info('PalmPay virtual account response', [
-            'http_code' => $httpCode,
-            'body'      => LogRedactor::redact((array) $decoded),
-        ]);
-
-        if ($decoded === null) {
-            $breaker->recordFailure();
-            throw new Exception('Invalid JSON response from PalmPay API.');
-        }
-
-        if (isset($decoded['respCode']) && $decoded['respCode'] === '00000000') {
-            $breaker->recordSuccess();
-
-            return $decoded;
-        }
-
-        $breaker->recordFailure();
-        $errorMsg = $decoded['respMsg'] ?? $decoded['message'] ?? 'Unknown error from PalmPay.';
-        throw new Exception('PalmPay API error: ' . $errorMsg);
+        throw new Exception('Fintava API error: ' . implode('; ', $messages));
     }
 
-    /**
-     * Never surface the vendor's raw error text (or that a third-party
-     * vendor is even involved) to end users — the real reason is already in
-     * the log line above for debugging. Users only get a generic hint,
-     * specific enough to act on when we know the ID number itself was the
-     * problem.
-     */
+    private function genericFailureMessage(): string
+    {
+        return 'We could not generate your virtual account right now. Please check your profile details or try again shortly.';
+    }
+
     private function userFacingMessage(string $rawMessage): string
     {
-        if (stripos($rawMessage, 'licensenumber') !== false || stripos($rawMessage, 'verification failed') !== false) {
-            return 'We could not verify the ID number you provided. Please double-check it and try again, or try the other verification option (BVN/NIN).';
+        if (stripos($rawMessage, 'bvn') !== false || stripos($rawMessage, 'nin') !== false || stripos($rawMessage, 'verification') !== false) {
+            return 'We could not verify the identity details you provided. Please double-check your BVN/NIN and name, then try again.';
         }
 
         return 'We could not generate your virtual account right now. Please try again shortly, or contact support if this continues.';

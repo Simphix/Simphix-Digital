@@ -45,6 +45,8 @@ class TravelRequest extends Model
         'number_of_travelers',
         'departure_date',
         'notes',
+        'referral_name',
+        'referral_phone',
         'status',
         'admin_notes',
         'customer_notes',

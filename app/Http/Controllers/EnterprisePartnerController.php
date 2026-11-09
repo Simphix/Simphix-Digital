@@ -386,20 +386,15 @@ class EnterprisePartnerController extends Controller
         }
 
         $validated = $request->validate([
-            'identity_type' => 'required|in:bvn,nin',
-            'bvn' => 'required_if:identity_type,bvn|nullable|string|digits:11|unique:users,bvn,' . $user->id,
-            'nin' => 'required_if:identity_type,nin|nullable|string|digits:11|unique:users,nin,' . $user->id,
+            'bvn' => ['required', 'string', 'digits:11', 'unique:users,bvn,' . $user->id],
+            'nin' => ['required', 'string', 'digits:11', 'unique:users,nin,' . $user->id],
         ]);
 
-        $identityType = $validated['identity_type'];
-        if ($identityType === 'nin') {
-            $user->nin = $validated['nin'];
-        } else {
-            $user->bvn = $validated['bvn'];
-        }
+        $user->bvn = $validated['bvn'];
+        $user->nin = $validated['nin'];
         $user->save();
 
-        $result = (new VirtualAccountRepository())->createVirtualAccountForEnterprisePartner($application, $user, $identityType);
+        $result = (new VirtualAccountRepository())->createVirtualAccountForEnterprisePartner($application, $user);
 
         if (!$result['success']) {
             return redirect()->route('enterprise-partner.generate-account')->with('error', $result['message']);

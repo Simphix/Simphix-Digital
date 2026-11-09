@@ -9,6 +9,7 @@ class Transaction extends Model
 {
     protected $fillable = [
         'transaction_ref',
+        'provider_reference',
         'user_id',
         'amount',
         'fee',

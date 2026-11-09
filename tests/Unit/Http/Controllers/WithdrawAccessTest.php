@@ -2,14 +2,14 @@
 
 use App\Http\Controllers\Action\WithdrawController;
 use App\Models\User;
-use App\Services\PalmPayService;
+use App\Services\FintavaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 test('restricted roles cannot access cashout actions before any processing', function (string $role, string $action) {
     Auth::shouldReceive('user')->once()->andReturn(new User(['role' => $role]));
-    $controller = new WithdrawController(Mockery::mock(PalmPayService::class));
+    $controller = new WithdrawController(Mockery::mock(FintavaService::class));
 
     try {
         $controller->{$action}(Request::create('/withdraw', 'POST'));

@@ -11,6 +11,7 @@ Route::get('/welcome2', function () {
     return redirect()->route('welcome2', [], 301);
 });
 
+Route::post('/fintava/webhook', [\App\Http\Controllers\FintavaWebhookController::class, 'handleWebhook'])->name('fintava.webhook');
 Route::post('/palmpay/webhook', [\App\Http\Controllers\PaymentWebhookController::class, 'handleWebhook'])->name('palmpay.webhook');
 
 // Enterprise Partner registration — reached via a referral link shared by an
@@ -31,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/wallet', [\App\Http\Controllers\WalletController::class, 'index'])->name('wallet');
     Route::post('/wallet/claim-bonus', [\App\Http\Controllers\WalletController::class, 'claimBonus'])->name('wallet.claimBonus');
     Route::post('/virtual-account/create', [\App\Http\Controllers\WalletController::class, 'createWallet'])->name('virtual.account.create');
+    Route::post('/virtual-account/quick-create', [\App\Http\Controllers\WalletController::class, 'quickCreateWallet'])->name('virtual.account.create.quick');
     Route::get('/wallet/balance', [\App\Http\Controllers\WalletController::class, 'getBalance'])->name('wallet.balance');
 
     // PIN Verification Route

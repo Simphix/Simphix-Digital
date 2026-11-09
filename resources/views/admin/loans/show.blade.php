@@ -102,6 +102,22 @@
                         </div>
                     </div>
 
+                    @if ($loanRequest->referral_name || $loanRequest->referral_phone)
+                        <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Referral Details</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">Referral Full Name</span>
+                                    <span class="text-xs sm:text-sm font-bold text-slate-800">{{ $loanRequest->referral_name ?? 'Not provided' }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block">Referral Phone Number</span>
+                                    <span class="text-xs sm:text-sm font-bold font-mono text-slate-800">{{ $loanRequest->referral_phone ?? 'Not provided' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     @if ($loanRequest->business_name)
                         <div class="mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Business / Store Trade Name</span>

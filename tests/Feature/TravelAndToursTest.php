@@ -519,4 +519,40 @@ class TravelAndToursTest extends TestCase
         $this->actingAs($this->user)->put(route('admin.travel-requests.packages.update', $package), ['name' => 'Hack'])
             ->assertForbidden();
     }
+
+    public function test_travel_request_page_renders_referral_details(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('travel.index'));
+
+        $response->assertOk();
+        $response->assertSee('Referral Details');
+        $response->assertSee('req_ref_name');
+        $response->assertSee('req_ref_phone');
+    }
+
+    public function test_user_can_submit_travel_request_with_referral_details(): void
+    {
+        $package = TravelPackage::first();
+
+        $payload = [
+            'name'                => 'Fatima Aliyu',
+            'phone'               => '08099887766',
+            'email'               => 'fatima@example.com',
+            'travel_package_id'   => $package->id,
+            'number_of_travelers' => 2,
+            'departure_date'      => 'November 2026',
+            'notes'               => 'Pilgrimage with family.',
+            'referral_name'       => 'Ibrahim Referral',
+            'referral_phone'      => '08123456789',
+        ];
+
+        $response = $this->actingAs($this->user)->post(route('travel.store'), $payload);
+
+        $created = TravelRequest::where('phone', '08099887766')->latest()->first();
+        $this->assertNotNull($created);
+        $this->assertEquals('Ibrahim Referral', $created->referral_name);
+        $this->assertEquals('08123456789', $created->referral_phone);
+
+        $response->assertRedirect(route('travel.tracking', ['ref' => $created->reference]));
+    }
 }

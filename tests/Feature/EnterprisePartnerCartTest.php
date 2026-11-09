@@ -5,11 +5,27 @@ use App\Models\EnterprisePartnerApplicationItem;
 use App\Models\EnterprisePartnerPayment;
 use App\Models\Service;
 use App\Models\ServiceField;
+use App\Models\Sim;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Support\SimStatus;
 use Illuminate\Support\Facades\Http;
 
 uses(\Illuminate\Foundation\Testing\DatabaseTransactions::class);
+
+if (!function_exists('seedEligibleStock')) {
+    function seedEligibleStock(string $category, string $provider = 'mtn', int $count = 100): void
+    {
+        for ($i = 0; $i < $count; $i++) {
+            Sim::create([
+                'number' => '080' . fake()->unique()->numerify('########'),
+                'category' => $category,
+                'provider' => $provider,
+                'status' => SimStatus::UNASSIGNED,
+            ]);
+        }
+    }
+}
 
 function makeEpWithEmptyCart(): array
 {
@@ -174,29 +190,40 @@ test('add/update/remove are all rejected once a payment account exists for the a
 });
 
 test('generateAccount is blocked below the 100-total minimum and succeeds once reached across two combined items', function () {
-    config(['services.palmpay.bearer_token' => 'test-token', 'services.palmpay.base_url' => 'https://fake-palmpay.test']);
-    Http::fake(function (\Illuminate\Http\Client\Request $request) {
-        return Http::response([
-            'respCode' => '00000000',
+    config([
+        'services.fintava.api_key' => 'test-key',
+        'services.fintava.base_url' => 'https://fake-fintava.test',
+    ]);
+    Http::fake([
+        '*/create/customer' => Http::response([
+            'status' => 200,
+            'message' => 'User created successfully',
             'data' => [
-                'accountReference' => $request->data()['accountReference'] ?? 'UNKNOWN',
-                'virtualAccountNo' => '9999888877',
-                'virtualAccountName' => 'Test Account',
+                'userInfo' => [
+                    'id' => 'fintava-user-123',
+                    'email' => 'test@example.com',
+                    'phoneNumber' => '08012345678',
+                ],
+                'wallet' => [
+                    'id' => 'fintava-wallet-123',
+                    'accountNumber' => '9999888877',
+                    'accountName' => 'Test Account',
+                ],
             ],
-        ], 200);
-    });
+        ], 200),
+    ]);
 
     [$ep, $application] = makeEpWithEmptyCart();
-    $ep->update(['bvn' => '12345678901']);
+    $ep->update(['bvn' => '12345678901', 'nin' => '12345678902']);
     $this->actingAs($ep)->post(route('enterprise-partner.cart.items.store'), ['sim_category' => 'POS SIM', 'provider' => 'mtn', 'quantity' => 60]);
 
-    $blocked = $this->actingAs($ep)->post(route('enterprise-partner.generate-account.create'), ['identity_type' => 'bvn', 'bvn' => '12345678901']);
+    $blocked = $this->actingAs($ep)->post(route('enterprise-partner.generate-account.create'), ['bvn' => '12345678901', 'nin' => '12345678902']);
     $blocked->assertRedirect(route('enterprise-partner.info'));
     expect(EnterprisePartnerPayment::where('application_id', $application->id)->exists())->toBeFalse();
 
     $this->actingAs($ep)->post(route('enterprise-partner.cart.items.store'), ['sim_category' => 'CAMERA SIM', 'provider' => 'glo', 'quantity' => 40]);
 
-    $allowed = $this->actingAs($ep)->post(route('enterprise-partner.generate-account.create'), ['identity_type' => 'bvn', 'bvn' => '12345678901']);
+    $allowed = $this->actingAs($ep)->post(route('enterprise-partner.generate-account.create'), ['bvn' => '12345678901', 'nin' => '12345678902']);
     $allowed->assertRedirect(route('enterprise-partner.generate-account'));
     expect(EnterprisePartnerPayment::where('application_id', $application->id)->exists())->toBeTrue();
 });

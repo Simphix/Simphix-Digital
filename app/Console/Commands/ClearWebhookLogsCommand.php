@@ -15,7 +15,7 @@ class ClearWebhookLogsCommand extends Command
      */
     protected $signature = 'webhooks:clear-logs
                             {--force : Clear without confirmation prompt}
-                            {--provider= : Filter by webhook provider (e.g. palmpay, paystack, moniepoint)}
+                            {--provider= : Filter by webhook provider (e.g. fintava, palmpay, paystack, moniepoint)}
                             {--status= : Filter by status (e.g. processed, failed, pending)}';
 
     /**

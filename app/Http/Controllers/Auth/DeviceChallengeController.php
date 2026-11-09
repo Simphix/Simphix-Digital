@@ -33,11 +33,15 @@ class DeviceChallengeController extends Controller
             ]);
         }
 
-        $available = app(DeviceOtpDispatcher::class)->availableChannels($challenge->user);
+        if (!$challenge->channel || !$challenge->otp_hash || ($challenge->otp_expires_at && $challenge->otp_expires_at->isPast())) {
+            $code = $challenge->generateOtp('email');
+            app(DeviceOtpDispatcher::class)->resolve('email')->send($challenge->user, $code, $challenge);
+            $challenge->refresh();
+        }
 
         return view('auth.device-challenge', [
             'challenge' => $challenge,
-            'availableChannels' => $available,
+            'availableChannels' => ['email'],
         ]);
     }
 
@@ -48,21 +52,18 @@ class DeviceChallengeController extends Controller
             return redirect()->route('login')->withErrors(['email' => 'This sign-in verification link has expired. Please log in again.']);
         }
 
+        $channel = 'email';
         $dispatcher = app(DeviceOtpDispatcher::class);
-        $available = $dispatcher->availableChannels($challenge->user);
-
-        $request->validate(['channel' => 'required|string|in:' . implode(',', $available)]);
-
-        $code = $challenge->generateOtp($request->string('channel'));
-        $sent = $dispatcher->resolve($request->string('channel'))->send($challenge->user, $code, $challenge);
+        $code = $challenge->generateOtp($channel);
+        $sent = $dispatcher->resolve($channel)->send($challenge->user, $code, $challenge);
 
         if (!$sent) {
             return redirect()->route('device-challenge.show', ['token' => $token])
-                ->with('error', 'Could not send a code via that channel right now — please try another.');
+                ->with('error', 'Could not send verification code right now. Please try again.');
         }
 
         return redirect()->route('device-challenge.show', ['token' => $token])
-            ->with('success', 'A verification code has been sent.');
+            ->with('success', 'A verification code has been sent to your email.');
     }
 
     public function resend(Request $request, string $token): RedirectResponse
@@ -72,18 +73,19 @@ class DeviceChallengeController extends Controller
             return redirect()->route('login')->withErrors(['email' => 'This sign-in verification link has expired. Please log in again.']);
         }
 
-        if (!$challenge->channel || !$challenge->canResend()) {
+        if (!$challenge->canResend()) {
             return redirect()->route('device-challenge.show', ['token' => $token])
                 ->with('error', 'You have requested too many codes. Please try again later.');
         }
 
+        $channel = 'email';
         $dispatcher = app(DeviceOtpDispatcher::class);
-        $code = $challenge->generateOtp($challenge->channel);
-        $sent = $dispatcher->resolve($challenge->channel)->send($challenge->user, $code, $challenge);
+        $code = $challenge->generateOtp($channel);
+        $sent = $dispatcher->resolve($channel)->send($challenge->user, $code, $challenge);
         $challenge->registerResend();
 
         return redirect()->route('device-challenge.show', ['token' => $token])
-            ->with($sent ? 'success' : 'error', $sent ? 'A new code has been sent.' : 'Could not resend the code right now.');
+            ->with($sent ? 'success' : 'error', $sent ? 'A new verification code has been sent to your email.' : 'Could not resend the code right now.');
     }
 
     public function verify(Request $request, string $token): RedirectResponse

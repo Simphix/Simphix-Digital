@@ -18,7 +18,7 @@ function callIsSystemError(string $respMsg): bool
     return $method->invoke($controller, $respMsg);
 }
 
-it('classifies a PalmPay sign error as a system error, not a business rejection', function () {
+it('classifies a Fintava sign error as a system error, not a business rejection', function () {
     expect(callIsSystemError('sign error'))->toBeTrue()
         ->and(callIsSystemError('Invalid signature'))->toBeTrue()
         ->and(callIsSystemError('Authorization does not start with Bearer'))->toBeTrue()

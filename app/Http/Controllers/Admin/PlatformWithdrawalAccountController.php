@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Bank;
 use App\Models\PlatformWithdrawalAccount;
-use App\Services\PalmPayService;
+use App\Services\FintavaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +21,7 @@ class PlatformWithdrawalAccountController extends Controller
         return view('admin.platform-wallets.withdrawal-account-edit', compact('account', 'banks'));
     }
 
-    public function update(Request $request, PalmPayService $palmPay): RedirectResponse
+    public function update(Request $request, FintavaService $fintava): RedirectResponse
     {
         $request->validate([
             'bankCode' => ['required', 'string', 'exists:banks,bank_code'],
@@ -32,24 +32,19 @@ class PlatformWithdrawalAccountController extends Controller
 
         // Resolve the account name server-side rather than trusting whatever
         // the client submits — this is the account platform revenue will
-        // actually be sent to.
+        // actually be sent to. bankCode is passed through as Fintava's sortCode.
         try {
-            $response = $palmPay->queryBankAccount($request->bankCode, $request->account_no);
+            $response = $fintava->resolveAccountName($request->account_no, $request->bankCode);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return back()
                 ->withErrors(['account_no' => 'Unable to reach the bank verification service. Please try again shortly.'])
                 ->withInput();
         }
 
-        $accountName = null;
-        if (isset($response['respCode']) && $response['respCode'] === '00000000' && ($response['data']['Status'] ?? null) === 'Success') {
-            $accountName = $response['data']['accountName'] ?? null;
-        }
+        $accountName = FintavaService::accountNameFrom($response);
 
         if (!$accountName) {
-            $message = $response['data']['errorMessage'] ?? $response['respMsg'] ?? 'Could not verify that account number.';
-
-            return back()->withErrors(['account_no' => $message])->withInput();
+            return back()->withErrors(['account_no' => FintavaService::accountLookupError($response)])->withInput();
         }
 
         $attributes = [

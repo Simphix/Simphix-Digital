@@ -92,6 +92,33 @@
             </div>
         @endif
 
+        {{-- Quick Virtual Account Generation Banner for Verified KYC Users without an Account --}}
+        @if(!$virtualAccount && !empty(Auth::user()->bvn) && !empty(Auth::user()->nin))
+            <div class="dash-card p-3.5 sm:p-4 mb-4 bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-white border border-blue-200/80 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#0056D2] text-white flex items-center justify-center shrink-0 shadow-sm">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h4 class="text-sm font-bold text-slate-800 mb-0 font-display">Generate Funding Account</h4>
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                                <i data-lucide="check-circle" class="w-3 h-3"></i> BVN & NIN Verified
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5 mb-0 truncate sm:whitespace-normal">Generate your dedicated Loma Bank virtual account with 1 click using your verified identity details.</p>
+                    </div>
+                </div>
+                <form method="POST" action="{{ route('virtual.account.create.quick') }}" class="m-0 shrink-0">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center justify-center gap-2 bg-[#0056D2] hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm whitespace-nowrap w-full sm:w-auto">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        Generate Account
+                    </button>
+                </form>
+            </div>
+        @endif
+
         <!-- TOP FINANCIAL GRID (Balances & Virtual Accounts using Bootstrap grid) -->
         <div class="row g-3 mb-4">
 
@@ -143,7 +170,7 @@
                     </div>
                     @if($virtualAccount)
                         <div class="min-w-0 flex-1">
-                            <p class="text-xs text-slate-400 mb-0.5 truncate">{{ $virtualAccount->bank_name ?? ($virtualAccount->bankName ?? 'PalmPay') }} &middot; Instant Funding</p>
+                            <p class="text-xs text-slate-400 mb-0.5 truncate">{{ $virtualAccount->bank_name ?? ($virtualAccount->bankName ?? 'Loma Bank') }} &middot; Instant Funding</p>
                             <p class="text-lg font-bold font-display text-primary tracking-wide mb-0 truncate">
                                 {{ $virtualAccount->account_number ?? ($virtualAccount->accountNo ?? 'N/A') }}
                             </p>
@@ -158,9 +185,18 @@
                             <p class="text-xs text-slate-400 mb-0.5">Instant Funding</p>
                             <p class="text-sm font-semibold text-slate-800 mb-0">No account yet</p>
                         </div>
-                        <a href="{{ route('wallet') }}" class="shrink-0 text-xs font-semibold text-primary no-underline hover:underline">
-                            Set up
-                        </a>
+                        @if(!empty(Auth::user()->bvn) && !empty(Auth::user()->nin))
+                            <form method="POST" action="{{ route('virtual.account.create.quick') }}" class="m-0 shrink-0">
+                                @csrf
+                                <button type="submit" class="shrink-0 text-xs font-bold text-[#0056D2] hover:underline bg-transparent border-0 p-0 cursor-pointer">
+                                    Generate
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('wallet') }}" class="shrink-0 text-xs font-semibold text-primary no-underline hover:underline">
+                                Set up
+                            </a>
+                        @endif
                     @endif
                 </div>
             </div>
