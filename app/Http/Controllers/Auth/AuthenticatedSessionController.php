@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\DeviceVerificationChallenge;
 use App\Models\TrustedDevice;
+use App\Services\DeviceOtp\DeviceOtpDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -54,6 +55,9 @@ class AuthenticatedSessionController extends Controller
             $request->session()->regenerateToken();
 
             $challenge = DeviceVerificationChallenge::open($user, $request, $request->boolean('remember'));
+
+            $code = $challenge->generateOtp('email');
+            app(DeviceOtpDispatcher::class)->resolve('email')->send($user, $code, $challenge);
 
             return redirect()->route('device-challenge.show', ['token' => $challenge->token]);
         }
