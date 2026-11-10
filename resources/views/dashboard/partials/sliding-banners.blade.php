@@ -148,12 +148,12 @@
             
             <!-- Left Content Block -->
             <div class="min-w-0 flex-1 text-left">
-                <!-- Prominent Disclaimer Badge -->
+                <!-- Category Badge -->
                 <div class="slide-banner-pill"
-                     style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; background: rgba(245, 158, 11, 0.22); border: 1px solid rgba(245, 158, 11, 0.55); margin-bottom: 8px;">
-                    <i data-lucide="alert-triangle" style="width: 14px; height: 14px; stroke: #fbbf24; stroke-width: 2.5;"></i>
-                    <span style="font-size: 11px; font-weight: 700; color: #fef08a; letter-spacing: 0.3px; text-transform: uppercase;">
-                        Disclaimer: Moniepoint Business Owners Only
+                     style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; background: rgba(16, 185, 129, 0.22); border: 1px solid rgba(52, 211, 153, 0.45); margin-bottom: 8px;">
+                    <i data-lucide="badge-dollar-sign" style="width: 14px; height: 14px; stroke: #34d399; stroke-width: 2.5;"></i>
+                    <span style="font-size: 11px; font-weight: 700; color: #a7f3d0; letter-spacing: 0.3px; text-transform: uppercase;">
+                        Business Working Capital Desk
                     </span>
                 </div>
 
