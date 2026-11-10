@@ -122,6 +122,21 @@ class FintavaService
         return $this->post($endpoint, $params);
     }
 
+    /**
+     * Transfer between Fintava wallets (sweep funds from a customer's virtual account to the merchant wallet).
+     * Endpoint: POST transaction/wallet-to-wallet
+     * Parameters:
+     * - senderAccount: Account number of the customer being debited
+     * - receiverAccount: Merchant wallet account number
+     * - amount: Amount to transfer
+     * - CustomerReference: Unique transaction reference
+     * - narration: Optional transfer description
+     */
+    public function walletTransfer(array $params): array
+    {
+        return $this->post('transaction/wallet-to-wallet', $params);
+    }
+
     public function getTransactionByReference(string $reference): array
     {
         return $this->get('transaction/reference/' . urlencode($reference));

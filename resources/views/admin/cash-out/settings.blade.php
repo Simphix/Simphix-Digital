@@ -279,7 +279,7 @@
                             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                             Base Money Inflow Fee
                         </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
                                 <label for="inflow_fee" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                                     Fee Amount / Rate
@@ -288,13 +288,13 @@
                                     <input type="number"
                                            name="inflow_fee"
                                            id="inflow_fee"
-                                           value="{{ old('inflow_fee', $settings->inflow_fee ?? 0) }}"
+                                           value="{{ old('inflow_fee', $settings->inflow_fee ?? 0.30) }}"
                                            step="0.01"
                                            min="0"
                                            class="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
-                                           placeholder="0.00" />
+                                           placeholder="0.30" />
                                 </div>
-                                <p class="text-[10px] text-slate-400 mt-1">Set 0 for free wallet funding.</p>
+                                <p class="text-[10px] text-slate-400 mt-1">e.g. 0.3 for 0.3% rate.</p>
                             </div>
 
                             <div>
@@ -303,10 +303,28 @@
                                 </label>
                                 <select name="inflow_fee_type" id="inflow_fee_type"
                                         class="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs">
-                                    <option value="fixed" {{ old('inflow_fee_type', $settings->inflow_fee_type) === 'fixed' ? 'selected' : '' }}>Fixed Amount (₦)</option>
                                     <option value="percent" {{ old('inflow_fee_type', $settings->inflow_fee_type) === 'percent' ? 'selected' : '' }}>Percentage (%)</option>
+                                    <option value="fixed" {{ old('inflow_fee_type', $settings->inflow_fee_type) === 'fixed' ? 'selected' : '' }}>Fixed Amount (₦)</option>
                                 </select>
-                                <p class="text-[10px] text-slate-400 mt-1">Fixed currency fee or percent of deposit.</p>
+                                <p class="text-[10px] text-slate-400 mt-1">Percent of deposit or fixed fee.</p>
+                            </div>
+
+                            <div>
+                                <label for="inflow_fee_cap" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    Fee Cap (₦)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">₦</span>
+                                    <input type="number"
+                                           name="inflow_fee_cap"
+                                           id="inflow_fee_cap"
+                                           value="{{ old('inflow_fee_cap', $settings->inflow_fee_cap ?? 300.00) }}"
+                                           step="0.01"
+                                           min="0"
+                                           class="w-full pl-7 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
+                                           placeholder="300.00" />
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">Max fee cap in Naira (e.g. 300).</p>
                             </div>
 
                             <div>
@@ -320,7 +338,7 @@
                                        maxlength="255"
                                        class="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 focus:border-[#0056D2] focus:ring-1 focus:ring-[#0056D2] transition shadow-xs"
                                        placeholder="e.g. Wallet Funding Fee" />
-                                <p class="text-[10px] text-slate-400 mt-1">Description on user transaction statement.</p>
+                                <p class="text-[10px] text-slate-400 mt-1">Description on user statement.</p>
                             </div>
                         </div>
                     </div>

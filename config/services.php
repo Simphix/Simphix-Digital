@@ -43,6 +43,8 @@ return [
         'webhook_secret'   => env('FINTAVA_WEBHOOK_SECRET'),
         // The one Fintava account every cash-out (personal and platform) debits
         'master_source_id' => env('FINTAVA_MASTER_SOURCE_ID'),
+        // Merchant wallet account that receives swept customer deposits via wallet-to-wallet transfer
+        'merchant_account' => env('FINTAVA_MERCHANT_ACCOUNT', env('FINTAVA_MASTER_SOURCE_ID')),
         'payout_endpoint'  => env('FINTAVA_PAYOUT_ENDPOINT', 'bank/credit/merchant'),
     ],
 

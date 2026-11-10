@@ -23,6 +23,15 @@
                 </h1>
                 <p class="text-sm text-slate-500 mt-1">Every recorded webhook attempt across all providers — retry any that failed.</p>
             </div>
+
+            @if (!$onSupportDesk)
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('admin.fintava-sweeps.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 transition shadow-xs">
+                        <i data-lucide="arrow-left-right" class="w-4 h-4 text-slate-400"></i>
+                        Fintava Sweeps (Audits)
+                    </a>
+                </div>
+            @endif
         </div>
 
         <!-- Header Statistics Cards -->

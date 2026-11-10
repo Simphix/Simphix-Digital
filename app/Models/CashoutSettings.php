@@ -37,6 +37,7 @@ class CashoutSettings extends Model
         'cashout_threshold_description',
         'inflow_fee',
         'inflow_fee_type',
+        'inflow_fee_cap',
         'inflow_fee_description',
         'inflow_threshold_amount',
         'inflow_threshold_fee',
@@ -50,6 +51,7 @@ class CashoutSettings extends Model
         'cashout_threshold_amount' => 'decimal:2',
         'cashout_threshold_fee' => 'decimal:2',
         'inflow_fee' => 'decimal:2',
+        'inflow_fee_cap' => 'decimal:2',
         'inflow_threshold_amount' => 'decimal:2',
         'inflow_threshold_fee' => 'decimal:2',
     ];
@@ -169,6 +171,9 @@ class CashoutSettings extends Model
         if ((float) $this->inflow_fee > 0) {
             if ($this->inflow_fee_type === 'percent') {
                 $baseFee = round(($amount * (float) $this->inflow_fee) / 100, 2);
+                if ($this->inflow_fee_cap !== null && (float) $this->inflow_fee_cap > 0) {
+                    $baseFee = min($baseFee, (float) $this->inflow_fee_cap);
+                }
             } else {
                 $baseFee = (float) $this->inflow_fee;
             }
@@ -191,6 +196,7 @@ class CashoutSettings extends Model
             'base_fee' => $baseFee,
             'base_fee_type' => $this->inflow_fee_type ?? 'fixed',
             'base_fee_rate' => (float) ($this->inflow_fee ?? 0),
+            'base_fee_cap' => $this->inflow_fee_cap !== null ? (float) $this->inflow_fee_cap : null,
             'base_fee_description' => $this->inflow_fee_description ?: 'Wallet Funding Fee',
             'has_base_fee' => $baseFee > 0,
             'threshold_amount' => $this->inflow_threshold_amount !== null ? (float) $this->inflow_threshold_amount : null,
