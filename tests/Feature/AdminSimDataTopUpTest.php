@@ -32,7 +32,7 @@ function activatedSimWithHolder(string $provider = 'mtn'): array
     return [$sim, $holder];
 }
 
-function enabledTopUpPlan(string $network = 'MTN', string $provider = 'legacy'): SmeData
+function enabledTopUpPlan(string $network = 'MTN', string $provider = 'kvdata'): SmeData
 {
     return SmeData::create([
         'data_id' => 'PLAN-' . fake()->unique()->numerify('####'),
@@ -54,7 +54,7 @@ beforeEach(function () {
     Cache::flush();
     // Force a known, single-HTTP-call vendor active for deterministic
     // tests, regardless of whatever the shared dev DB currently has active.
-    SmeDataProviderSetting::activate('legacy');
+    SmeDataProviderSetting::activate('kvdata');
 });
 
 test('a non-super_admin is forbidden from the index and topup routes', function () {
@@ -120,7 +120,7 @@ test('a successful top-up creates an admin_data_topup Report with zero amount an
     $admin = topUpAdmin();
     [$sim, $holder] = activatedSimWithHolder();
     Wallet::create(['user_id' => $holder->id, 'balance' => 500, 'wallet_number' => 'WLT' . str_pad((string) $holder->id, 7, '0', STR_PAD_LEFT)]);
-    $plan = enabledTopUpPlan('MTN', 'legacy');
+    $plan = enabledTopUpPlan('MTN', 'kvdata');
 
     $response = $this->actingAs($admin)->post(route('admin.sim-data-topup.topup', $sim), ['plan' => $plan->data_id]);
 
@@ -144,7 +144,7 @@ test('the same sim can be topped up more than once in the same calendar month â€
     Http::fake(fn () => Http::response(['status' => 'success', 'transid' => 'VEND-' . uniqid()], 200));
     $admin = topUpAdmin();
     [$sim] = activatedSimWithHolder();
-    $plan = enabledTopUpPlan('MTN', 'legacy');
+    $plan = enabledTopUpPlan('MTN', 'kvdata');
 
     $this->actingAs($admin)->post(route('admin.sim-data-topup.topup', $sim), ['plan' => $plan->data_id]);
     $this->actingAs($admin)->post(route('admin.sim-data-topup.topup', $sim), ['plan' => $plan->data_id])->assertSessionHas('success');
@@ -156,7 +156,7 @@ test('a plan whose network does not match the sim provider is rejected server-si
     Http::fake(['*' => Http::response(['status' => 'success', 'transid' => 'VEND-1'], 200)]);
     $admin = topUpAdmin();
     [$sim] = activatedSimWithHolder('mtn');
-    $wrongNetworkPlan = enabledTopUpPlan('GLO', 'legacy');
+    $wrongNetworkPlan = enabledTopUpPlan('GLO', 'kvdata');
 
     $response = $this->actingAs($admin)->post(route('admin.sim-data-topup.topup', $sim), ['plan' => $wrongNetworkPlan->data_id]);
 

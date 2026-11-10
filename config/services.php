@@ -76,9 +76,9 @@ return [
         'api_key'  => env('GOGOZ_API_KEY'),
     ],
 
-    'smedata' => [
-        'base_url' => env('BASE_URL', 'https://fadeelposdatasub.com.ng/api/data/purchase'),
-        'api_key'  => env('API_KEYS'),
+    'kvdata' => [
+        'base_url' => env('KVDATA_BASE_URL', 'https://kvdataapi.net/api/data/'),
+        'api_key'  => env('KVDATA_API_KEY'),
     ],
 
     'smeplug' => [

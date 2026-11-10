@@ -36,7 +36,7 @@ function enableBonusPlan(string $provider = 'mtn'): void
 {
     $plan = SmeData::create([
         'data_id' => 'PLAN-' . fake()->unique()->numerify('####'),
-        'provider' => 'fadeel', // routes to the generic SmeDataPurchaseApi adapter
+        'provider' => 'kvdata', // routes to KvdataApi adapter
         'network' => $provider,
         'plan_type' => 'SME',
         'personal_price' => 0,

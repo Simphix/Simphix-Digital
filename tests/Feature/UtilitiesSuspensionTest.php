@@ -138,7 +138,7 @@ test('the SIM activation data bonus still grants normally while utilities are su
 
     $plan = \App\Models\SmeData::create([
         'data_id' => 'PLAN-' . fake()->unique()->numerify('####'),
-        'provider' => 'fadeel', // routes to the generic SmeDataPurchaseApi adapter
+        'provider' => 'kvdata', // routes to KvdataApi adapter
         'network' => 'mtn',
         'plan_type' => 'SME',
         'personal_price' => 0,
@@ -173,7 +173,7 @@ test('sim:grant-bulk-activation-bonus still queues and grants normally while uti
 
     $plan = \App\Models\SmeData::create([
         'data_id' => 'PLAN-' . fake()->unique()->numerify('####'),
-        'provider' => 'fadeel',
+        'provider' => 'kvdata',
         'network' => 'mtn',
         'plan_type' => 'SME',
         'personal_price' => 0,

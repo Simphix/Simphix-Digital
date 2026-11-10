@@ -123,10 +123,7 @@ it('recovers on retry after a transient connection failure', function () {
         ->and($attempts)->toBe(2);
 });
 
-it('is resolved by SmeDataProviderFactory as default and for gogoz provider', function () {
+it('is resolved by SmeDataProviderFactory for gogoz provider', function () {
     $apiByProvider = SmeDataProviderFactory::forProvider('gogoz');
     expect($apiByProvider)->toBeInstanceOf(GogozDataApi::class);
-
-    $defaultApi = SmeDataProviderFactory::forProvider('unknown_provider');
-    expect($defaultApi)->toBeInstanceOf(GogozDataApi::class);
 });
