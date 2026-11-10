@@ -163,6 +163,28 @@ class CashoutSettings extends Model
     }
 
     /**
+     * Calculate Fintava provider inbound fee deducted from the virtual account.
+     * Used exclusively to determine the exact sweepable balance for wallet-to-wallet transfer
+     * so transfers never fail due to insufficient funds.
+     */
+    public function calculateFintavaInflowFee(float $amount): float
+    {
+        $fee = 0.00;
+        if ((float) $this->inflow_fee > 0) {
+            if ($this->inflow_fee_type === 'percent') {
+                $fee = round(($amount * (float) $this->inflow_fee) / 100, 2);
+                if ($this->inflow_fee_cap !== null && (float) $this->inflow_fee_cap > 0) {
+                    $fee = min($fee, (float) $this->inflow_fee_cap);
+                }
+            } else {
+                $fee = (float) $this->inflow_fee;
+            }
+        }
+
+        return min($fee, $amount);
+    }
+
+    /**
      * Calculate inflow charges breakdown for incoming funds.
      */
     public function calculateInflowCharges(float $amount): array

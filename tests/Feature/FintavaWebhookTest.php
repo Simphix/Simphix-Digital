@@ -339,22 +339,19 @@ test('account_funded applies configurable inflow fee (0.3% capped at 300) withou
 
     $response->assertOk();
 
-    // 1. Verify customer platform level balance: 10,000 credited - 30 fee = 9,970 (NOT charged for W2W)
-    expect((float) $wallet->fresh()->balance)->toBe(9970.00);
+    // 1. Verify customer platform level balance: full 10,000 credited (NOT charged on platform)
+    expect((float) $wallet->fresh()->balance)->toBe(10000.00);
 
-    // 2. Verify fee transaction exists on customer's account
+    // 2. Verify no fee was debited from customer's platform account
     $feeTx = Transaction::where('user_id', $user->id)->where('type', 'debit')->first();
-    expect($feeTx)->not->toBeNull();
-    expect((float) $feeTx->amount)->toBe(30.00);
-    expect($feeTx->description)->toBe('Wallet Funding Fee');
-    expect($feeTx->metadata['type'])->toBe('inflow_fee');
+    expect($feeTx)->toBeNull();
 
-    // 3. Verify Fintava wallet-to-wallet transfer API was called with exact customer account & merchant account
+    // 3. Verify Fintava wallet-to-wallet transfer API was called with net sweep amount (10,000 - 30 fee = 9,970)
     Http::assertSent(function ($request) {
         return str_contains($request->url(), 'transaction/wallet-to-wallet')
             && $request['senderAccount'] === '1122334455'
             && $request['receiverAccount'] === '0099887766'
-            && (float) $request['amount'] === 10000.00
+            && (float) $request['amount'] === 9970.00
             && $request['CustomerReference'] === 'W2W-DEP-SWEEP-001';
     });
 
@@ -364,13 +361,16 @@ test('account_funded applies configurable inflow fee (0.3% capped at 300) withou
     expect($transfer->status)->toBe('completed');
     expect($transfer->sender_account)->toBe('1122334455');
     expect($transfer->receiver_account)->toBe('0099887766');
-    expect((float) $transfer->amount)->toBe(10000.00);
-    expect((float) $transfer->fee_charged)->toBe(0.00); // ₦0 charged to customer for the W2W sweep
+    expect((float) $transfer->amount)->toBe(9970.00); // ₦9,970 swept to merchant
+    expect((float) $transfer->fee_charged)->toBe(30.00); // ₦30 Fintava fee accounted for
+    expect((float) $transfer->net_amount)->toBe(10000.00); // ₦10,000 total deposit
     expect($transfer->provider_reference)->toBe('FNT-W2W-12345');
 
     // 5. Verify deposit transaction metadata contains sweep audit
     $depositTx = Transaction::where('provider_reference', 'DEP-SWEEP-001')->first();
     expect($depositTx->metadata['fintava_sweep']['status'])->toBe('completed');
+    expect((float) $depositTx->metadata['fintava_sweep']['amount_swept'])->toBe(9970.00);
+    expect((float) $depositTx->metadata['fintava_sweep']['fintava_fee'])->toBe(30.00);
 });
 
 test('inflow charge percentage is capped at ₦300 on large deposits', function () {
@@ -424,11 +424,18 @@ test('inflow charge percentage is capped at ₦300 on large deposits', function 
         'HTTP_x-fintava-signature' => $signature,
     ], $body)->assertOk();
 
-    // 200,000 - 300 (cap) = 199,700
-    expect((float) $wallet->fresh()->balance)->toBe(199700.00);
+    // Customer platform balance gets full 200,000
+    expect((float) $wallet->fresh()->balance)->toBe(200000.00);
 
-    $feeTx = Transaction::where('user_id', $user->id)->where('type', 'debit')->first();
-    expect((float) $feeTx->amount)->toBe(300.00);
+    // Sweep amount transferred to merchant wallet is 200,000 - 300 (cap) = 199,700
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), 'transaction/wallet-to-wallet')
+            && (float) $request['amount'] === 199700.00;
+    });
+
+    $transfer = FintavaWalletTransfer::where('deposit_reference', 'DEP-CAP-001')->first();
+    expect((float) $transfer->amount)->toBe(199700.00);
+    expect((float) $transfer->fee_charged)->toBe(300.00);
 });
 
 test('fintava wallet-to-wallet failure is audited as failed without breaking user credit or webhook acknowledgement', function () {
