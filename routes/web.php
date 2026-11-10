@@ -591,6 +591,12 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\WebhookLogController::class, 'index'])->name('index');
         Route::post('/{webhookLog}/retry', [\App\Http\Controllers\Admin\WebhookLogController::class, 'retry'])->name('retry');
     });
+
+    // Fintava wallet sweeps — audit trail for automated customer-to-merchant wallet-to-wallet transfers.
+    Route::prefix('admin/fintava-sweeps')->name('admin.fintava-sweeps.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\FintavaSweepController::class, 'index'])->name('index');
+        Route::post('/{sweep}/retry', [\App\Http\Controllers\Admin\FintavaSweepController::class, 'retry'])->name('retry');
+    });
 });
 
 // Onboarding invite acceptance — invitee is not authenticated yet, gated by the signed URL instead.

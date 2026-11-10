@@ -8,12 +8,14 @@ use App\Jobs\ProcessVatCharge;
 use App\Mail\PaymentNotifyMail;
 use App\Models\CashoutSettings;
 use App\Models\EnterprisePartnerPayment;
+use App\Models\FintavaWalletTransfer;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\VirtualAccount;
 use App\Models\Wallet;
 use App\Models\WebhookLog;
 use App\Services\EnterprisePartnerPaymentService;
+use App\Services\FintavaService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\Request;
@@ -181,9 +183,14 @@ class FintavaWebhookController extends Controller
 
     private function creditDeposit(array $data): void
     {
-        DB::transaction(function () use ($data) {
+        $virtualAccount = null;
+        $amountPaid = 0.0;
+        $reference = null;
+        $shouldSweep = false;
+
+        DB::transaction(function () use ($data, &$virtualAccount, &$amountPaid, &$reference, &$shouldSweep) {
             $reference = $data['reference'] ?? null;
-            $amountPaid = isset($data['amount']) ? (float) $data['amount'] : 0;
+            $amountPaid = isset($data['amount']) ? (float) $data['amount'] : 0.0;
             $senderName = $data['accountName'] ?? '';
             $status = $data['status'] ?? null;
             $description = 'Your wallet has been credited with ₦' . number_format($amountPaid, 2);
@@ -237,6 +244,7 @@ class FintavaWebhookController extends Controller
 
                 if (strtolower((string) $status) === 'success') {
                     $this->processSuccessFunding($userId, $amountPaid, $reference, $senderName, $data);
+                    $shouldSweep = true;
                 }
 
                 return;
@@ -245,10 +253,15 @@ class FintavaWebhookController extends Controller
             if (strtolower((string) $status) === 'success' || $status === null) {
                 $this->insertDepositTransaction($userId, $reference, $amountPaid, $senderName, $description, $data);
                 $this->processSuccessFunding($userId, $amountPaid, $reference, $senderName, $data);
+                $shouldSweep = true;
             } else {
                 Log::info("Fintava deposit {$reference} skipped due to status: {$status}");
             }
         });
+
+        if ($shouldSweep && $virtualAccount && $reference) {
+            $this->sweepToMerchantWallet($virtualAccount, $amountPaid, $reference, $data);
+        }
     }
 
     private function handleBankTransfer(array $data): void
@@ -337,7 +350,7 @@ class FintavaWebhookController extends Controller
             $chargeDesc = $inflowCharges['threshold_description'];
             $chargeRef = 'CHG-' . strtoupper(Str::random(10));
 
-            $this->debitWallet($userId, $chargeAmount, $chargeDesc, $chargeRef, $reference);
+            $this->debitWallet($userId, $chargeAmount, $chargeDesc, $chargeRef, $reference, 'levy_charge');
 
             try {
                 ProcessVatCharge::dispatch($userId, $reference)->delay(now()->addMinute());
@@ -346,10 +359,10 @@ class FintavaWebhookController extends Controller
             }
         }
 
-        // 2. Base Inflow Fee (if configured)
+        // 2. Base Inflow Fee (if configured, e.g. 0.3% capped at ₦300)
         if ($inflowCharges['has_base_fee'] && $inflowCharges['base_fee'] > 0) {
             $baseChargeRef = 'CHG-FEE-' . strtoupper(Str::random(8));
-            $this->debitWallet($userId, $inflowCharges['base_fee'], $inflowCharges['base_fee_description'], $baseChargeRef, $reference);
+            $this->debitWallet($userId, $inflowCharges['base_fee'], $inflowCharges['base_fee_description'], $baseChargeRef, $reference, 'inflow_fee');
         }
 
         $this->sendNotificationAndEmail($userId, $amountPaid, $reference, 'Loma Bank', 'Topup');
@@ -408,7 +421,7 @@ class FintavaWebhookController extends Controller
         }
     }
 
-    private function debitWallet($userId, $amount, $desc, $ref, $relatedRef): void
+    private function debitWallet($userId, $amount, $desc, $ref, $relatedRef, string $chargeType = 'levy_charge'): void
     {
         $wallet = Wallet::where('user_id', $userId)->first();
         if ($wallet) {
@@ -424,8 +437,117 @@ class FintavaWebhookController extends Controller
                 'description'     => $desc,
                 'status'          => 'completed',
                 'performed_by'    => 'System',
-                'metadata'        => ['related_transaction' => $relatedRef, 'type' => 'levy_charge'],
+                'metadata'        => ['related_transaction' => $relatedRef, 'type' => $chargeType],
             ]);
+        }
+    }
+
+    /**
+     * Move deposited funds from the customer's Loma Bank virtual account to the merchant's Fintava wallet.
+     * Note: The customer is NEVER charged for this wallet-to-wallet transfer on their platform balance.
+     */
+    private function sweepToMerchantWallet(VirtualAccount $virtualAccount, float $amount, string $reference, array $data): ?FintavaWalletTransfer
+    {
+        $senderAccount = $virtualAccount->account_number ?? $data['beneficiaryAccountNumber'] ?? $data['accountNumber'] ?? null;
+        $merchantAccount = config('services.fintava.merchant_account') ?: config('services.fintava.master_source_id');
+
+        if (!$senderAccount || !$merchantAccount) {
+            Log::info('Fintava wallet sweep skipped: missing sender account or merchant account is not configured.', [
+                'sender'   => $senderAccount,
+                'merchant' => $merchantAccount,
+                'deposit'  => $reference,
+            ]);
+
+            return null;
+        }
+
+        $customerReference = 'W2W-' . $reference;
+
+        $existing = FintavaWalletTransfer::where('customer_reference', $customerReference)->first();
+        if ($existing && $existing->status === 'completed') {
+            Log::info("Fintava wallet sweep {$customerReference} already completed. Skipping.");
+
+            return $existing;
+        }
+
+        $transfer = $existing ?? FintavaWalletTransfer::create([
+            'user_id'            => $virtualAccount->user_id,
+            'virtual_account_id' => $virtualAccount->id,
+            'deposit_reference'  => $reference,
+            'customer_reference' => $customerReference,
+            'sender_account'     => $senderAccount,
+            'receiver_account'   => $merchantAccount,
+            'amount'             => $amount,
+            'fee_charged'        => 0.00,
+            'net_amount'         => $amount,
+            'status'             => 'pending',
+        ]);
+
+        try {
+            $fintava = app(FintavaService::class);
+            $params = [
+                'senderAccount'     => $senderAccount,
+                'receiverAccount'   => $merchantAccount,
+                'amount'            => (float) $amount,
+                'CustomerReference' => $customerReference,
+                'customerReference' => $customerReference,
+                'narration'         => "Wallet sweep for deposit {$reference}",
+            ];
+
+            $response = $fintava->walletTransfer($params);
+
+            $isSuccess = FintavaService::isSuccessStatus($response);
+            $providerRef = $response['data']['reference'] ?? $response['data']['transactionReference'] ?? null;
+            $errorMsg = !$isSuccess
+                ? (is_array($response['message'] ?? null) ? implode('; ', $response['message']) : ($response['message'] ?? 'Transfer failed'))
+                : null;
+
+            $transfer->update([
+                'status'             => $isSuccess ? 'completed' : 'failed',
+                'provider_reference' => $providerRef,
+                'request_payload'    => $params,
+                'response_payload'   => $response,
+                'error_message'      => $errorMsg,
+            ]);
+
+            // Update deposit transaction metadata with sweep audit info
+            $depositTx = Transaction::where('provider_reference', $reference)
+                ->orWhere('transaction_ref', $reference)
+                ->first();
+
+            if ($depositTx) {
+                $meta = $depositTx->metadata ?? [];
+                $meta['fintava_sweep'] = [
+                    'transfer_id'        => $transfer->id,
+                    'customer_reference' => $customerReference,
+                    'status'             => $transfer->status,
+                    'sender_account'     => $senderAccount,
+                    'receiver_account'   => $merchantAccount,
+                    'amount'             => $amount,
+                    'provider_reference' => $providerRef,
+                    'error'              => $errorMsg,
+                ];
+                $depositTx->update(['metadata' => $meta]);
+            }
+
+            if ($isSuccess) {
+                Log::info("Fintava wallet sweep completed: {$amount} moved from {$senderAccount} to {$merchantAccount} (ref {$customerReference})");
+            } else {
+                Log::error("Fintava wallet sweep failed for {$customerReference}: {$errorMsg}", ['response' => $response]);
+            }
+
+            return $transfer;
+        } catch (\Throwable $e) {
+            Log::error("Fintava wallet sweep exception for {$customerReference}: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            $transfer->update([
+                'status'        => 'failed',
+                'error_message' => $e->getMessage(),
+            ]);
+
+            return $transfer;
         }
     }
 

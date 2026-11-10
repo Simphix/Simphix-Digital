@@ -129,6 +129,26 @@ test('CashoutSettings calculates inflow charges and threshold deductions correct
     expect($above['threshold_description'])->toBe('Electronic Money Transfer Levy');
     expect($above['total_deductions'])->toBe(60.00);
     expect($above['net_credited'])->toBe(14940.00);
+
+    // Case 3: Percentage fee with cap (0.3% capped at 300)
+    $settings->update([
+        'inflow_fee' => 0.30,
+        'inflow_fee_type' => 'percent',
+        'inflow_fee_cap' => 300.00,
+        'inflow_threshold_amount' => null,
+    ]);
+
+    // 10,000 -> 30 fee
+    $tenK = $settings->calculateInflowCharges(10000.00);
+    expect($tenK['base_fee'])->toBe(30.00);
+    expect($tenK['total_deductions'])->toBe(30.00);
+    expect($tenK['net_credited'])->toBe(9970.00);
+
+    // 200,000 -> 600 capped at 300
+    $twoHundredK = $settings->calculateInflowCharges(200000.00);
+    expect($twoHundredK['base_fee'])->toBe(300.00);
+    expect($twoHundredK['total_deductions'])->toBe(300.00);
+    expect($twoHundredK['net_credited'])->toBe(199700.00);
 });
 
 test('inflow webhook automatically applies threshold deduction when exceeding threshold', function () {

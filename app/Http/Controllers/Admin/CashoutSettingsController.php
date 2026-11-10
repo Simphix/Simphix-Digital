@@ -83,6 +83,7 @@ class CashoutSettingsController extends Controller
             $validated = $request->validate([
                 'inflow_fee' => ['nullable', 'numeric', 'min:0'],
                 'inflow_fee_type' => ['required', 'in:fixed,percent'],
+                'inflow_fee_cap' => ['nullable', 'numeric', 'min:0'],
                 'inflow_fee_description' => ['nullable', 'string', 'max:255'],
                 'inflow_threshold_amount' => ['nullable', 'numeric', 'min:0'],
                 'inflow_threshold_fee' => ['nullable', 'numeric', 'min:0'],
@@ -90,12 +91,13 @@ class CashoutSettingsController extends Controller
             ]);
 
             $settings->update([
-                'inflow_fee' => $validated['inflow_fee'] !== null && $validated['inflow_fee'] !== '' ? (float) $validated['inflow_fee'] : 0,
+                'inflow_fee' => isset($validated['inflow_fee']) && $validated['inflow_fee'] !== '' ? (float) $validated['inflow_fee'] : 0,
                 'inflow_fee_type' => $validated['inflow_fee_type'] ?? 'fixed',
-                'inflow_fee_description' => $validated['inflow_fee_description'] ?: 'Wallet Funding Fee',
-                'inflow_threshold_amount' => $validated['inflow_threshold_amount'] !== null && $validated['inflow_threshold_amount'] !== '' ? (float) $validated['inflow_threshold_amount'] : null,
-                'inflow_threshold_fee' => $validated['inflow_threshold_fee'] !== null && $validated['inflow_threshold_fee'] !== '' ? (float) $validated['inflow_threshold_fee'] : 0,
-                'inflow_threshold_description' => $validated['inflow_threshold_description'] ?: 'Electronic Money Transfer Levy',
+                'inflow_fee_cap' => isset($validated['inflow_fee_cap']) && $validated['inflow_fee_cap'] !== '' ? (float) $validated['inflow_fee_cap'] : null,
+                'inflow_fee_description' => ($validated['inflow_fee_description'] ?? null) ?: 'Wallet Funding Fee',
+                'inflow_threshold_amount' => isset($validated['inflow_threshold_amount']) && $validated['inflow_threshold_amount'] !== '' ? (float) $validated['inflow_threshold_amount'] : null,
+                'inflow_threshold_fee' => isset($validated['inflow_threshold_fee']) && $validated['inflow_threshold_fee'] !== '' ? (float) $validated['inflow_threshold_fee'] : 0,
+                'inflow_threshold_description' => ($validated['inflow_threshold_description'] ?? null) ?: 'Electronic Money Transfer Levy',
             ]);
 
             return back()->with('success', 'Money inflow charges and threshold settings updated successfully.');

@@ -1,11 +1,14 @@
 <?php
 
+use App\Models\CashoutSettings;
+use App\Models\FintavaWalletTransfer;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\VirtualAccount;
 use App\Models\Wallet;
 use App\Models\WebhookLog;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 
 uses(DatabaseTransactions::class);
@@ -270,4 +273,260 @@ test('an unhandled event type is acknowledged with 200 but not processed as a de
 
     $response->assertOk();
     expect(WebhookLog::where('provider', 'fintava')->latest()->first()->status)->toBe('ignored');
+});
+
+// -----------------------------------------------------------------------
+// Inflow charges & Wallet-to-Wallet sweep audits
+// -----------------------------------------------------------------------
+
+test('account_funded applies configurable inflow fee (0.3% capped at 300) without charging customer for wallet-to-wallet transfer', function () {
+    config([
+        'services.fintava.merchant_account' => '0099887766',
+        'services.fintava.api_key' => 'test-api-key',
+    ]);
+
+    $settings = CashoutSettings::current();
+    $settings->update([
+        'inflow_fee' => 0.30,
+        'inflow_fee_type' => 'percent',
+        'inflow_fee_cap' => 300.00,
+        'inflow_fee_description' => 'Wallet Funding Fee',
+        'inflow_threshold_amount' => 999999.00, // keep threshold inactive for this test
+        'inflow_threshold_fee' => 0.00,
+    ]);
+
+    Http::fake([
+        '*transaction/wallet-to-wallet*' => Http::response([
+            'status' => 200,
+            'message' => 'Wallet transfer successful',
+            'data' => [
+                'reference' => 'FNT-W2W-12345',
+                'transactionReference' => 'FNT-W2W-12345',
+            ],
+        ], 200),
+    ]);
+
+    Mail::fake();
+
+    $user = User::factory()->create();
+    $wallet = Wallet::firstOrCreateForUser($user->id);
+    $wallet->update(['balance' => 0.00]);
+
+    $va = VirtualAccount::create([
+        'user_id' => $user->id,
+        'account_reference' => 'cust-w2w-1',
+        'account_number' => '1122334455',
+        'account_name' => $user->first_name . ' ' . $user->last_name,
+        'bank_name' => 'Loma Bank',
+        'provider' => 'fintava',
+        'is_active' => true,
+    ]);
+
+    // Deposit ₦10,000. 0.3% of 10,000 = ₦30 fee.
+    $payload = ['event' => 'account_funded', 'data' => [
+        'accountNumber' => '1122334455',
+        'reference' => 'DEP-SWEEP-001',
+        'amount' => '10000.00',
+        'status' => 'success',
+        'accountName' => 'Alice Sender',
+    ]];
+    [$body, $signature] = fintavaWebhookRequest($payload);
+
+    $response = $this->call('POST', route('fintava.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_x-fintava-signature' => $signature,
+    ], $body);
+
+    $response->assertOk();
+
+    // 1. Verify customer platform level balance: 10,000 credited - 30 fee = 9,970 (NOT charged for W2W)
+    expect((float) $wallet->fresh()->balance)->toBe(9970.00);
+
+    // 2. Verify fee transaction exists on customer's account
+    $feeTx = Transaction::where('user_id', $user->id)->where('type', 'debit')->first();
+    expect($feeTx)->not->toBeNull();
+    expect((float) $feeTx->amount)->toBe(30.00);
+    expect($feeTx->description)->toBe('Wallet Funding Fee');
+    expect($feeTx->metadata['type'])->toBe('inflow_fee');
+
+    // 3. Verify Fintava wallet-to-wallet transfer API was called with exact customer account & merchant account
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), 'transaction/wallet-to-wallet')
+            && $request['senderAccount'] === '1122334455'
+            && $request['receiverAccount'] === '0099887766'
+            && (float) $request['amount'] === 10000.00
+            && $request['CustomerReference'] === 'W2W-DEP-SWEEP-001';
+    });
+
+    // 4. Verify FintavaWalletTransfer audit record
+    $transfer = FintavaWalletTransfer::where('deposit_reference', 'DEP-SWEEP-001')->first();
+    expect($transfer)->not->toBeNull();
+    expect($transfer->status)->toBe('completed');
+    expect($transfer->sender_account)->toBe('1122334455');
+    expect($transfer->receiver_account)->toBe('0099887766');
+    expect((float) $transfer->amount)->toBe(10000.00);
+    expect((float) $transfer->fee_charged)->toBe(0.00); // ₦0 charged to customer for the W2W sweep
+    expect($transfer->provider_reference)->toBe('FNT-W2W-12345');
+
+    // 5. Verify deposit transaction metadata contains sweep audit
+    $depositTx = Transaction::where('provider_reference', 'DEP-SWEEP-001')->first();
+    expect($depositTx->metadata['fintava_sweep']['status'])->toBe('completed');
+});
+
+test('inflow charge percentage is capped at ₦300 on large deposits', function () {
+    config([
+        'services.fintava.merchant_account' => '0099887766',
+        'services.fintava.api_key' => 'test-api-key',
+    ]);
+
+    $settings = CashoutSettings::current();
+    $settings->update([
+        'inflow_fee' => 0.30,
+        'inflow_fee_type' => 'percent',
+        'inflow_fee_cap' => 300.00,
+        'inflow_fee_description' => 'Wallet Funding Fee',
+        'inflow_threshold_amount' => null,
+        'inflow_threshold_fee' => 0.00,
+    ]);
+
+    Http::fake([
+        '*transaction/wallet-to-wallet*' => Http::response(['status' => 200, 'message' => 'OK', 'data' => ['reference' => 'W2W-CAP-1']], 200),
+    ]);
+
+    Mail::fake();
+
+    $user = User::factory()->create();
+    $wallet = Wallet::firstOrCreateForUser($user->id);
+    $wallet->update(['balance' => 0.00]);
+
+    VirtualAccount::create([
+        'user_id' => $user->id,
+        'account_reference' => 'cust-w2w-cap',
+        'account_number' => '5544332211',
+        'account_name' => $user->first_name . ' ' . $user->last_name,
+        'bank_name' => 'Loma Bank',
+        'provider' => 'fintava',
+        'is_active' => true,
+    ]);
+
+    // Deposit ₦200,000. 0.3% of 200,000 = ₦600. Capped at ₦300.
+    $payload = ['event' => 'account_funded', 'data' => [
+        'accountNumber' => '5544332211',
+        'reference' => 'DEP-CAP-001',
+        'amount' => '200000.00',
+        'status' => 'success',
+        'accountName' => 'Bob Sender',
+    ]];
+    [$body, $signature] = fintavaWebhookRequest($payload);
+
+    $this->call('POST', route('fintava.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_x-fintava-signature' => $signature,
+    ], $body)->assertOk();
+
+    // 200,000 - 300 (cap) = 199,700
+    expect((float) $wallet->fresh()->balance)->toBe(199700.00);
+
+    $feeTx = Transaction::where('user_id', $user->id)->where('type', 'debit')->first();
+    expect((float) $feeTx->amount)->toBe(300.00);
+});
+
+test('fintava wallet-to-wallet failure is audited as failed without breaking user credit or webhook acknowledgement', function () {
+    config([
+        'services.fintava.merchant_account' => '0099887766',
+        'services.fintava.api_key' => 'test-api-key',
+    ]);
+
+    $settings = CashoutSettings::current();
+    $settings->update([
+        'inflow_fee' => 0.00,
+        'inflow_threshold_amount' => null,
+    ]);
+
+    // Simulate Fintava BaaS rejecting the wallet-to-wallet transfer
+    Http::fake([
+        '*transaction/wallet-to-wallet*' => Http::response(['status' => 400, 'message' => 'Insufficient funds in sender account'], 400),
+    ]);
+
+    Mail::fake();
+
+    $user = User::factory()->create();
+    $wallet = Wallet::firstOrCreateForUser($user->id);
+    $wallet->update(['balance' => 0.00]);
+
+    VirtualAccount::create([
+        'user_id' => $user->id,
+        'account_reference' => 'cust-w2w-fail',
+        'account_number' => '7788990011',
+        'account_name' => $user->first_name . ' ' . $user->last_name,
+        'bank_name' => 'Loma Bank',
+        'provider' => 'fintava',
+        'is_active' => true,
+    ]);
+
+    $payload = ['event' => 'account_funded', 'data' => [
+        'accountNumber' => '7788990011',
+        'reference' => 'DEP-FAIL-001',
+        'amount' => '5000.00',
+        'status' => 'success',
+        'accountName' => 'Charlie Sender',
+    ]];
+    [$body, $signature] = fintavaWebhookRequest($payload);
+
+    $response = $this->call('POST', route('fintava.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_x-fintava-signature' => $signature,
+    ], $body);
+
+    $response->assertOk();
+
+    // User is still credited their money (the money arrived at Fintava)
+    expect((float) $wallet->fresh()->balance)->toBe(5000.00);
+
+    // Audit transfer record tracks the failure and exact error message
+    $transfer = FintavaWalletTransfer::where('deposit_reference', 'DEP-FAIL-001')->first();
+    expect($transfer)->not->toBeNull();
+    expect($transfer->status)->toBe('failed');
+    expect($transfer->error_message)->toContain('Insufficient funds');
+});
+
+test('super admin can view fintava wallet sweeps and retry a failed sweep', function () {
+    config(['services.fintava.api_key' => 'test-api-key']);
+    $admin = User::factory()->create(['role' => 'super_admin']);
+
+    $sweep = FintavaWalletTransfer::create([
+        'deposit_reference' => 'DEP-RETRY-01',
+        'customer_reference' => 'W2W-DEP-RETRY-01',
+        'sender_account' => '1234567890',
+        'receiver_account' => '9876543210',
+        'amount' => 5000.00,
+        'fee_charged' => 0.00,
+        'net_amount' => 5000.00,
+        'status' => 'failed',
+        'error_message' => 'Network timeout',
+    ]);
+
+    // Admin views sweeps index
+    $this->actingAs($admin)
+        ->get(route('admin.fintava-sweeps.index'))
+        ->assertOk()
+        ->assertSee('W2W-DEP-RETRY-01')
+        ->assertSee('Failed');
+
+    // Admin retries sweep with success
+    Http::fake([
+        '*transaction/wallet-to-wallet*' => Http::response([
+            'status' => 200,
+            'message' => 'Success',
+            'data' => ['reference' => 'FNT-RETRY-SUCCESS'],
+        ], 200),
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.fintava-sweeps.retry', $sweep->id))
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect($sweep->fresh()->status)->toBe('completed');
+    expect($sweep->fresh()->provider_reference)->toBe('FNT-RETRY-SUCCESS');
 });
