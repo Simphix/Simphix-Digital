@@ -359,11 +359,9 @@ class FintavaWebhookController extends Controller
             }
         }
 
-        // 2. Base Inflow Fee (if configured, e.g. 0.3% capped at ₦300)
-        if ($inflowCharges['has_base_fee'] && $inflowCharges['base_fee'] > 0) {
-            $baseChargeRef = 'CHG-FEE-' . strtoupper(Str::random(8));
-            $this->debitWallet($userId, $inflowCharges['base_fee'], $inflowCharges['base_fee_description'], $baseChargeRef, $reference, 'inflow_fee');
-        }
+        // Note: Fintava provider inflow fee (e.g. 0.3% capped at ₦300) is NOT deducted
+        // from the customer on the platform level. It is used exclusively when sweeping
+        // funds to the merchant wallet so the transfer does not hit "insufficient funds".
 
         $this->sendNotificationAndEmail($userId, $amountPaid, $reference, 'Loma Bank', 'Topup');
     }
@@ -470,6 +468,12 @@ class FintavaWebhookController extends Controller
             return $existing;
         }
 
+        // Calculate Fintava's inflow fee (e.g. 0.3% capped at ₦300) to sweep
+        // only the net funds remaining in the virtual account, preventing "insufficient funds".
+        $settings = CashoutSettings::current();
+        $fintavaFee = $settings->calculateFintavaInflowFee($amount);
+        $sweepAmount = max(0.00, round($amount - $fintavaFee, 2));
+
         $transfer = $existing ?? FintavaWalletTransfer::create([
             'user_id'            => $virtualAccount->user_id,
             'virtual_account_id' => $virtualAccount->id,
@@ -477,8 +481,8 @@ class FintavaWebhookController extends Controller
             'customer_reference' => $customerReference,
             'sender_account'     => $senderAccount,
             'receiver_account'   => $merchantAccount,
-            'amount'             => $amount,
-            'fee_charged'        => 0.00,
+            'amount'             => $sweepAmount,
+            'fee_charged'        => $fintavaFee,
             'net_amount'         => $amount,
             'status'             => 'pending',
         ]);
@@ -488,7 +492,7 @@ class FintavaWebhookController extends Controller
             $params = [
                 'senderAccount'     => $senderAccount,
                 'receiverAccount'   => $merchantAccount,
-                'amount'            => (float) $amount,
+                'amount'            => (float) $sweepAmount,
                 'CustomerReference' => $customerReference,
                 'customerReference' => $customerReference,
                 'narration'         => "Wallet sweep for deposit {$reference}",
@@ -523,7 +527,9 @@ class FintavaWebhookController extends Controller
                     'status'             => $transfer->status,
                     'sender_account'     => $senderAccount,
                     'receiver_account'   => $merchantAccount,
-                    'amount'             => $amount,
+                    'amount_swept'       => $sweepAmount,
+                    'fintava_fee'        => $fintavaFee,
+                    'deposit_amount'     => $amount,
                     'provider_reference' => $providerRef,
                     'error'              => $errorMsg,
                 ];
@@ -531,7 +537,7 @@ class FintavaWebhookController extends Controller
             }
 
             if ($isSuccess) {
-                Log::info("Fintava wallet sweep completed: {$amount} moved from {$senderAccount} to {$merchantAccount} (ref {$customerReference})");
+                Log::info("Fintava wallet sweep completed: {$sweepAmount} moved from {$senderAccount} to {$merchantAccount} (Fintava fee: {$fintavaFee}, ref {$customerReference})");
             } else {
                 Log::error("Fintava wallet sweep failed for {$customerReference}: {$errorMsg}", ['response' => $response]);
             }

@@ -275,10 +275,16 @@
                 <div class="p-6 space-y-6">
                     <!-- Base Fee Section -->
                     <div class="space-y-4">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            Base Money Inflow Fee
-                        </h3>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                Fintava Inbound Transfer Fee / Sweep Deduction
+                            </h3>
+                            <span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                Not deducted from customer platform balance
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-400">Fintava (Loma Bank) deducts this fee on incoming deposits into the virtual account (e.g. 0.3% capped at ₦300). This fee is not charged to the customer on their platform balance — it is used exclusively when sweeping funds via wallet-to-wallet transfer to the merchant wallet so transfers never fail due to insufficient funds.</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
                                 <label for="inflow_fee" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
