@@ -65,8 +65,13 @@
                         @forelse ($pending as $req)
                             <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                                 <td class="py-3">
-                                    <span class="font-bold text-slate-700">{{ $req->user->first_name }} {{ $req->user->last_name }}</span>
-                                    <span class="block text-xs text-slate-400">{{ $req->user->role }}</span>
+                                    @if ($req->user)
+                                        <span class="font-bold text-slate-700">{{ $req->user->first_name }} {{ $req->user->last_name }}</span>
+                                        <span class="block text-xs text-slate-400">{{ $req->user->role }}</span>
+                                    @else
+                                        <span class="font-bold text-slate-400">User #{{ $req->user_id }}</span>
+                                        <span class="block text-xs text-slate-400 italic">Deleted / Unknown User</span>
+                                    @endif
                                 </td>
                                 <td class="py-3 font-semibold text-slate-700">{{ $req->bank_name }}</td>
                                 <td class="py-3">
@@ -137,8 +142,13 @@
                         @forelse ($resolved as $req)
                             <tr class="border-b border-slate-50">
                                 <td class="py-3">
-                                    <span class="font-bold text-slate-700">{{ $req->user->first_name }} {{ $req->user->last_name }}</span>
-                                    <span class="block text-xs text-slate-400">{{ $req->user->role }}</span>
+                                    @if ($req->user)
+                                        <span class="font-bold text-slate-700">{{ $req->user->first_name }} {{ $req->user->last_name }}</span>
+                                        <span class="block text-xs text-slate-400">{{ $req->user->role }}</span>
+                                    @else
+                                        <span class="font-bold text-slate-400">User #{{ $req->user_id }}</span>
+                                        <span class="block text-xs text-slate-400 italic">Deleted / Unknown User</span>
+                                    @endif
                                 </td>
                                 <td class="py-3">
                                     <span class="font-semibold text-slate-800 block">{{ $req->bank_name }}</span>
