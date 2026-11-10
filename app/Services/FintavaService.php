@@ -137,6 +137,25 @@ class FintavaService
         return $this->post('transaction/wallet-to-wallet', $params);
     }
 
+    /**
+     * Get live wallet balance for a customer wallet.
+     * Endpoint: GET customer/wallet/balance/{walletId}
+     */
+    public function getCustomerWalletBalance(string $walletId): array
+    {
+        return $this->get('customer/wallet/balance/' . urlencode($walletId));
+    }
+
+    /**
+     * Fetch customer transactions from Fintava.
+     * Endpoint: GET txn
+     * Query parameters typically include: customerId, take, page, order
+     */
+    public function getCustomerTransactions(array $query): array
+    {
+        return $this->get('txn', $query);
+    }
+
     public function getTransactionByReference(string $reference): array
     {
         return $this->get('transaction/reference/' . urlencode($reference));
