@@ -597,6 +597,14 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\FintavaSweepController::class, 'index'])->name('index');
         Route::post('/{sweep}/retry', [\App\Http\Controllers\Admin\FintavaSweepController::class, 'retry'])->name('retry');
     });
+
+    // Customer Fintava Virtual Accounts — live balance check, manual transfer/sweep, and transaction export.
+    Route::prefix('admin/fintava-accounts')->name('admin.fintava-accounts.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\CustomerFintavaAccountController::class, 'index'])->name('index');
+        Route::get('/{virtualAccount}', [\App\Http\Controllers\Admin\CustomerFintavaAccountController::class, 'show'])->name('show');
+        Route::post('/{virtualAccount}/transfer', [\App\Http\Controllers\Admin\CustomerFintavaAccountController::class, 'transfer'])->name('transfer');
+        Route::get('/{virtualAccount}/export', [\App\Http\Controllers\Admin\CustomerFintavaAccountController::class, 'exportTransactions'])->name('export');
+    });
 });
 
 // Onboarding invite acceptance — invitee is not authenticated yet, gated by the signed URL instead.

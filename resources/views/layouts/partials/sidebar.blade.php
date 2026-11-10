@@ -331,6 +331,8 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.moniepoint-pos.index'), 'icon' => 'smartphone', 'label' => 'POS Requests', 'active' => request()->routeIs('admin.moniepoint-pos*'), 'badge' => $pendingPosBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.loan-requests.index'), 'icon' => 'banknote', 'label' => 'Business Loans', 'active' => request()->routeIs('admin.loan-requests*'), 'badge' => $pendingLoansBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.webhooks.index'), 'icon' => 'webhook', 'label' => 'Webhook Logs', 'active' => request()->routeIs('admin.webhooks*'), 'badge' => $failedWebhooksBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.fintava-sweeps.index'), 'icon' => 'arrow-left-right', 'label' => 'Fintava Sweeps', 'active' => request()->routeIs('admin.fintava-sweeps*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.fintava-accounts.index'), 'icon' => 'landmark', 'label' => 'Fintava Accounts', 'active' => request()->routeIs('admin.fintava-accounts*')])
             </div>
 
             <!-- Advanced Dashboard Section -->

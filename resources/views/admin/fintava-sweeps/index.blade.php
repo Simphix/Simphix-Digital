@@ -15,6 +15,10 @@
             </div>
 
             <div class="flex items-center gap-2">
+                <a href="{{ route('admin.fintava-accounts.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 transition shadow-xs">
+                    <i data-lucide="landmark" class="w-4 h-4 text-[#0056D2]"></i>
+                    Customer Accounts
+                </a>
                 <a href="{{ route('admin.webhooks.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 transition shadow-xs">
                     <i data-lucide="webhook" class="w-4 h-4 text-slate-400"></i>
                     Webhook Logs
@@ -131,7 +135,15 @@
                                         <span class="text-slate-400">—</span>
                                     @endif
                                 </td>
-                                <td class="py-3 font-mono text-slate-600">{{ $sweep->sender_account }}</td>
+                                <td class="py-3 font-mono text-slate-600">
+                                    @if ($sweep->virtual_account_id)
+                                        <a href="{{ route('admin.fintava-accounts.show', $sweep->virtual_account_id) }}" class="text-[#0056D2] hover:underline font-bold">
+                                            {{ $sweep->sender_account }}
+                                        </a>
+                                    @else
+                                        {{ $sweep->sender_account }}
+                                    @endif
+                                </td>
                                 <td class="py-3 font-mono text-slate-600">{{ $sweep->receiver_account }}</td>
                                 <td class="py-3 font-bold text-slate-800">₦{{ number_format((float) $sweep->amount, 2) }}</td>
                                 <td class="py-3">
@@ -168,16 +180,21 @@
                                     </details>
                                 </td>
                                 <td class="py-3 text-right whitespace-nowrap">
-                                    @if ($sweep->status === 'failed')
-                                        <form method="POST" action="{{ route('admin.fintava-sweeps.retry', $sweep->id) }}" class="inline">
-                                            @csrf
-                                            <button type="submit" class="px-2.5 py-1 text-xs font-bold text-[#0056D2] hover:bg-blue-50 rounded-lg transition border border-blue-200">
-                                                Retry Sweep
-                                            </button>
-                                        </form>
-                                    @else
-                                        <span class="text-slate-300 text-xs">—</span>
-                                    @endif
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        @if ($sweep->virtual_account_id)
+                                            <a href="{{ route('admin.fintava-accounts.show', $sweep->virtual_account_id) }}" class="px-2 py-1 text-xs font-bold text-slate-600 hover:text-[#0056D2] hover:bg-slate-100 rounded-lg transition" title="Inspect Account">
+                                                Inspect
+                                            </a>
+                                        @endif
+                                        @if ($sweep->status === 'failed')
+                                            <form method="POST" action="{{ route('admin.fintava-sweeps.retry', $sweep->id) }}" class="inline">
+                                                @csrf
+                                                <button type="submit" class="px-2.5 py-1 text-xs font-bold text-[#0056D2] hover:bg-blue-50 rounded-lg transition border border-blue-200">
+                                                    Retry Sweep
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty

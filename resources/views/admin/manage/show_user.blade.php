@@ -607,6 +607,15 @@
                                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Account Name</span>
                                         <span class="text-xs font-semibold text-slate-500">{{ $acc->account_name }}</span>
                                     </div>
+                                    @if ($acc->provider === 'fintava')
+                                        <div class="pt-2 border-t border-slate-200/60">
+                                            <a href="{{ route('admin.fintava-accounts.show', $acc) }}"
+                                               class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0056D2] hover:bg-[#0046ad] text-white text-xs font-bold transition shadow-xs">
+                                                <i data-lucide="external-link" class="w-3 h-3"></i>
+                                                Check Balance & Transfer
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         @empty
