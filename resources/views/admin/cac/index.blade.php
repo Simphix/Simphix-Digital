@@ -66,7 +66,7 @@
                         @forelse ($registrations as $r)
                             <tr class="hover:bg-slate-50/30">
                                 <td class="py-4 px-6 font-mono text-xs font-bold">{{ $r->reference }}</td>
-                                <td class="py-4 px-6 text-xs"><span class="block font-bold text-slate-800">{{ $r->user->first_name }} {{ $r->user->last_name }}</span><span class="text-slate-400">{{ $r->user->email }}</span></td>
+                                <td class="py-4 px-6 text-xs"><span class="block font-bold text-slate-800">{{ $r->user?->first_name ?? 'User #' . $r->user_id }} {{ $r->user?->last_name ?? '' }}</span><span class="text-slate-400">{{ $r->user?->email ?? 'N/A' }}</span></td>
                                 <td class="py-4 px-6 text-xs"><span class="block font-bold">{{ $r->category_label }}</span><span class="text-slate-400">{{ $r->form_data['names'][0] ?? '' }}</span></td>
                                 <td class="py-4 px-6 text-xs text-slate-500">{{ $r->submitted_at?->format('M d, Y') }}</td>
                                 <td class="py-4 px-6 text-right text-xs font-bold">₦{{ number_format($r->amount, 2) }}</td>

@@ -69,7 +69,7 @@
                             <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                                 <td class="py-3 font-bold text-slate-700">{{ $req->wallet->name }}</td>
                                 <td class="py-3">
-                                    <span class="font-bold text-slate-700">{{ $req->requestedBy->first_name }} {{ $req->requestedBy->last_name }}</span>
+                                    <span class="font-bold text-slate-700">{{ $req->requestedBy?->first_name ?? 'User #' . $req->requested_by }} {{ $req->requestedBy?->last_name ?? '' }}</span>
                                 </td>
                                 <td class="py-3">
                                     <span class="font-semibold text-slate-800 block">{{ $req->account_name }}</span>
@@ -138,7 +138,7 @@
                         @forelse ($resolved as $req)
                             <tr class="border-b border-slate-50">
                                 <td class="py-3 font-bold text-slate-700">{{ $req->wallet->name }}</td>
-                                <td class="py-3 text-slate-600 font-semibold">{{ $req->requestedBy->first_name }} {{ $req->requestedBy->last_name }}</td>
+                                <td class="py-3 text-slate-600 font-semibold">{{ $req->requestedBy?->first_name ?? 'User #' . $req->requested_by }} {{ $req->requestedBy?->last_name ?? '' }}</td>
                                 <td class="py-3 font-bold text-slate-700">₦{{ number_format($req->amount, 2) }}</td>
                                 <td class="py-3">
                                     <span class="px-2 py-0.5 rounded-full text-xs font-bold {{ $req->status === 'approved' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600' }}">

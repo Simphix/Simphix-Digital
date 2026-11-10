@@ -106,17 +106,18 @@ class CashOutController extends Controller
 
                     // Credit configured cashout base fee to the Admin Cashout Charges Wallet
                     if ((float) $cashOutRequest->fee > 0) {
+                        $userName = $user ? "{$user->first_name} {$user->last_name}" : "User #{$cashOutRequest->user_id}";
                         app(PlatformWalletLedger::class)->credit(
                             PlatformWallet::TYPE_CASHOUT_CHARGES,
                             'Cashout Charges Wallet',
                             (float) $cashOutRequest->fee,
                             'cashout_fee',
-                            "Cashout fee from {$user->first_name} {$user->last_name} for Ref #{$cashOutRequest->transaction_ref}",
+                            "Cashout fee from {$userName} for Ref #{$cashOutRequest->transaction_ref}",
                             $cashOutRequest,
                             [
                                 'cashout_request_id' => $cashOutRequest->id,
                                 'transaction_ref' => $cashOutRequest->transaction_ref,
-                                'user_id' => $user->id,
+                                'user_id' => $user?->id ?? $cashOutRequest->user_id,
                                 'charge_type' => 'base_fee',
                             ]
                         );

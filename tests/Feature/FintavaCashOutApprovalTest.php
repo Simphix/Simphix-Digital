@@ -296,3 +296,49 @@ test('platform cash-out: an unrecognised 2xx stays pending without refund', func
     expect($request->fresh()->status)->toBe('pending');
     expect($wallet->fresh()->balance)->toEqualWithDelta(20000, 0.01);
 });
+
+test('admin cash-out index renders without error when a cash-out request has an orphaned or null user', function () {
+    $admin = User::factory()->create(['role' => 'super_admin']);
+
+    \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+    // Create a resolved cash-out request whose user does not exist in DB (e.g. deleted user)
+    CashOutRequest::create([
+        'user_id'         => 99999999, // non-existent user ID
+        'transaction_ref' => 'WDL-ORPHANED-TEST',
+        'bank_code'       => '000013',
+        'bank_name'       => 'GTBANK',
+        'account_no'      => '0123456789',
+        'account_name'    => 'Orphaned User',
+        'amount'          => 5000,
+        'fee'             => 50,
+        'tax'             => 0,
+        'total_charge'    => 5050,
+        'status'          => 'approved',
+        'approved_by'     => $admin->id,
+        'resolved_at'     => now(),
+    ]);
+
+    // Pending request with non-existent user
+    CashOutRequest::create([
+        'user_id'         => 99999998,
+        'transaction_ref' => 'WDL-ORPHANED-PENDING',
+        'bank_code'       => '000013',
+        'bank_name'       => 'GTBANK',
+        'account_no'      => '0123456789',
+        'account_name'    => 'Orphaned User Pending',
+        'amount'          => 2000,
+        'fee'             => 20,
+        'tax'             => 0,
+        'total_charge'    => 2020,
+        'status'          => 'pending',
+    ]);
+
+    \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+    $response = $this->actingAs($admin)->get(route('admin.cash-out.index'));
+
+    $response->assertOk();
+    $response->assertSee('User #99999999');
+    $response->assertSee('User #99999998');
+});
