@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 
 class SmeDataProviderSetting extends Model
 {
-    public const PROVIDERS = ['gogoz', 'smeplug', 'amsub', 'legacy'];
+    public const PROVIDERS = ['kvdata', 'gogoz', 'smeplug', 'amsub'];
 
     protected $fillable = [
         'provider',
@@ -27,23 +27,23 @@ class SmeDataProviderSetting extends Model
     ];
 
     /**
-     * One row per vendor, created on first access. 'gogoz' is the primary
-     * #1 vendor and starts active by default.
+     * One row per vendor, created on first access. 'kvdata' is the primary
+     * default vendor and starts active by default.
      */
     public static function forProvider(string $provider): self
     {
         return static::firstOrCreate(
             ['provider' => $provider],
             match ($provider) {
-                'gogoz' => [
+                'kvdata' => [
                     'is_active' => true,
+                    'base_url' => config('services.kvdata.base_url', 'https://kvdataapi.net/api/data/'),
+                    'api_key' => config('services.kvdata.api_key'),
+                ],
+                'gogoz' => [
+                    'is_active' => false,
                     'base_url' => config('services.gogoz.base_url', 'https://www.gongozconcept.com/api/data/'),
                     'api_key' => config('services.gogoz.api_key'),
-                ],
-                'legacy' => [
-                    'is_active' => false,
-                    'base_url' => config('services.smedata.base_url'),
-                    'api_key' => config('services.smedata.api_key'),
                 ],
                 'amsub' => [
                     'is_active' => false,
@@ -74,7 +74,7 @@ class SmeDataProviderSetting extends Model
 
     public static function activeProvider(): string
     {
-        return static::where('is_active', true)->value('provider') ?? 'gogoz';
+        return static::where('is_active', true)->value('provider') ?? 'kvdata';
     }
 
     /**

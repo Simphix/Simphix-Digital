@@ -2,8 +2,8 @@
     <div x-data="{ 
         addModalOpen: false,
         editModalOpen: false,
-        addProvider: 'legacy',
-        editPlan: { id: '', data_id: '', provider: 'legacy', network: '', plan_type: '', business_price: '', personal_price: '', agent_price: '', partner_price: '', vendor_amount: '', size: '', validity: '', status: 'enabled' }
+        addProvider: 'kvdata',
+        editPlan: { id: '', data_id: '', provider: 'kvdata', network: '', plan_type: '', business_price: '', personal_price: '', agent_price: '', partner_price: '', vendor_amount: '', size: '', validity: '', status: 'enabled' }
     }" class="space-y-8 max-w-7xl mx-auto">
         
         <!-- Header -->
@@ -56,7 +56,7 @@
             </div>
         @endif
 
-        @php $vendorLabels = ['gogoz' => 'Gogoz Concept', 'smeplug' => 'SME Plug', 'amsub' => 'AMSUB', 'legacy' => 'Fadeelposdatasub (Legacy)']; @endphp
+        @php $vendorLabels = ['kvdata' => 'KVDATAAPI', 'gogoz' => 'Gogoz Concept', 'smeplug' => 'SME Plug', 'amsub' => 'AMSUB']; @endphp
 
         <!-- Activation Bonus Settings -->
         <div class="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
@@ -268,10 +268,10 @@
                             <x-select-input name="provider" onchange="this.form.submit()"
                                     class="pl-3 pr-8 rounded-2xl !text-xs font-bold text-slate-600 shadow-sm appearance-none cursor-pointer">
                                 <option value="">All Vendors</option>
+                                <option value="kvdata" {{ request('provider') === 'kvdata' ? 'selected' : '' }}>KVDATAAPI</option>
                                 <option value="gogoz" {{ request('provider') === 'gogoz' ? 'selected' : '' }}>Gogoz Concept</option>
                                 <option value="smeplug" {{ request('provider') === 'smeplug' ? 'selected' : '' }}>SME Plug</option>
                                 <option value="amsub" {{ request('provider') === 'amsub' ? 'selected' : '' }}>AMSUB</option>
-                                <option value="legacy" {{ request('provider') === 'legacy' ? 'selected' : '' }}>Legacy</option>
                             </x-select-input>
                             <div class="absolute right-3.5 top-4 pointer-events-none text-slate-400">
                                 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
@@ -524,10 +524,10 @@
                             <div>
                                 <x-input-label value="Vendor" />
                                 <x-select-input name="provider" x-model="addProvider" required class="rounded-2xl bg-slate-50/50">
+                                    <option value="kvdata">KVDATAAPI</option>
                                     <option value="gogoz">Gogoz Concept</option>
                                     <option value="smeplug">SME Plug</option>
                                     <option value="amsub">AMSUB</option>
-                                    <option value="legacy">Legacy (Fadeelposdatasub)</option>
                                 </x-select-input>
                             </div>
 
@@ -656,10 +656,10 @@
                             <div>
                                 <x-input-label value="Vendor" />
                                 <x-select-input name="provider" x-model="editPlan.provider" required class="rounded-2xl bg-slate-50/50">
+                                    <option value="kvdata">KVDATAAPI</option>
                                     <option value="gogoz">Gogoz Concept</option>
                                     <option value="smeplug">SME Plug</option>
                                     <option value="amsub">AMSUB</option>
-                                    <option value="legacy">Legacy (Fadeelposdatasub)</option>
                                 </x-select-input>
                             </div>
 
