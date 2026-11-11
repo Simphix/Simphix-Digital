@@ -196,8 +196,13 @@
                             <div class="sm:col-span-1">
                                 <x-input-label value="API Key" />
                                 <x-text-input type="password" name="api_key" form="provider-settings-form-{{ $providerKey }}"
-                                       placeholder="{{ $vendorSettings->api_key ? '•••••••• (leave blank to keep current)' : 'Not set' }}"
-                                       class="rounded-xl !text-xs" />
+                                       placeholder="{{ $vendorSettings->isKeyCorrupted('api_key') ? 'Key outdated — please re-enter' : ($vendorSettings->api_key ? '•••••••• (leave blank to keep current)' : 'Not set') }}"
+                                       class="rounded-xl !text-xs {{ $vendorSettings->isKeyCorrupted('api_key') ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200' : '' }}" />
+                                @if ($vendorSettings->isKeyCorrupted('api_key'))
+                                    <span class="text-[10px] text-amber-600 font-semibold block mt-1">
+                                        <i data-lucide="alert-triangle" class="w-3 h-3 inline"></i> Key encrypted with outdated APP_KEY. Re-enter &amp; save.
+                                    </span>
+                                @endif
                             </div>
                             <div class="sm:col-span-1">
                                 <x-primary-button type="submit" form="provider-settings-form-{{ $providerKey }}" class="w-full !text-xs">
