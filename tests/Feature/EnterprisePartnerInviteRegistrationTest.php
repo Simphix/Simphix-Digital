@@ -9,16 +9,18 @@ use App\Support\SimStatus;
 
 uses(\Illuminate\Foundation\Testing\DatabaseTransactions::class);
 
-/** Seeds >= 100 UNASSIGNED sims for a category/provider so it clears the eligibility stock gate. */
-function seedEligibleStock(string $category, string $provider = 'mtn', int $count = 100): void
-{
-    for ($i = 0; $i < $count; $i++) {
-        Sim::create([
-            'number' => '080' . fake()->unique()->numerify('########'),
-            'category' => $category,
-            'provider' => $provider,
-            'status' => SimStatus::UNASSIGNED,
-        ]);
+if (!function_exists('seedEligibleStock')) {
+    /** Seeds >= 100 UNASSIGNED sims for a category/provider so it clears the eligibility stock gate. */
+    function seedEligibleStock(string $category, string $provider = 'mtn', int $count = 100): void
+    {
+        for ($i = 0; $i < $count; $i++) {
+            Sim::create([
+                'number' => '080' . fake()->unique()->numerify('########'),
+                'category' => $category,
+                'provider' => $provider,
+                'status' => SimStatus::UNASSIGNED,
+            ]);
+        }
     }
 }
 
