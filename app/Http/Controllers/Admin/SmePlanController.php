@@ -165,7 +165,11 @@ class SmePlanController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'data_id' => 'required|string|unique:sme_data,data_id',
+            'data_id' => [
+                'required',
+                'string',
+                Rule::unique('sme_data', 'data_id')->where('provider', $request->provider),
+            ],
             'provider' => 'required|string|in:' . implode(',', SmeDataProviderSetting::PROVIDERS),
             'network' => 'required|string|in:MTN,GLO,AIRTEL,9MOBILE',
             'plan_type' => 'required|string',
@@ -190,7 +194,11 @@ class SmePlanController extends Controller
     public function update(Request $request, SmeData $plan)
     {
         $validated = $request->validate([
-            'data_id' => 'required|string|unique:sme_data,data_id,' . $plan->id,
+            'data_id' => [
+                'required',
+                'string',
+                Rule::unique('sme_data', 'data_id')->where('provider', $request->provider)->ignore($plan->id),
+            ],
             'provider' => 'required|string|in:' . implode(',', SmeDataProviderSetting::PROVIDERS),
             'network' => 'required|string|in:MTN,GLO,AIRTEL,9MOBILE',
             'plan_type' => 'required|string',

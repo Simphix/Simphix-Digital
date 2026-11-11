@@ -116,13 +116,15 @@ class SmeDataController extends Controller
         $user = Auth::user();
         $mobile = $request->mobileno;
         $planId = $request->plan;
+        $activeProvider = SmeDataProviderSetting::activeProvider();
         
-        $plan = SmeData::where('data_id', $planId)->first();
+        $plan = SmeData::where('provider', $activeProvider)->where('data_id', $planId)->first()
+            ?? SmeData::where('data_id', $planId)->first();
         if (!$plan) {
             return back()->with('error', 'Invalid data plan selected.');
         }
 
-        if ($plan->provider !== SmeDataProviderSetting::activeProvider()) {
+        if ($plan->provider !== $activeProvider) {
             return back()->with('error', 'This plan is no longer available. Please refresh and try again.');
         }
 

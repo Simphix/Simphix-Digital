@@ -9,6 +9,24 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // 0. Drop the table-wide unique constraint on `data_id` so plans can be scoped per provider
+        if (Schema::hasTable('sme_data')) {
+            try {
+                $indexes = collect(Schema::getIndexes('sme_data'))->pluck('name')->all();
+                if (in_array('sme_data_data_id_unique', $indexes)) {
+                    Schema::table('sme_data', function (Blueprint $table) {
+                        $table->dropUnique('sme_data_data_id_unique');
+                    });
+                }
+            } catch (\Throwable $e) {
+                try {
+                    Schema::table('sme_data', function (Blueprint $table) {
+                        $table->dropUnique('sme_data_data_id_unique');
+                    });
+                } catch (\Throwable $ignored) {}
+            }
+        }
+
         // 1. Remove legacy (Fadeelposdatasub) from provider settings
         DB::table('sme_data_provider_settings')->where('provider', 'legacy')->delete();
 
@@ -27,7 +45,7 @@ return new class extends Migration
             ]
         );
 
-        // 4. Update existing legacy plans to kvdata if no collision, or replicate active plans under kvdata
+        // 4. Update existing legacy plans to kvdata if no collision, or clean them up
         $legacyPlans = DB::table('sme_data')->where('provider', 'legacy')->get();
         foreach ($legacyPlans as $plan) {
             $existingKvdataPlan = DB::table('sme_data')
@@ -42,17 +60,24 @@ return new class extends Migration
             }
         }
 
-        // If kvdata has no plans, duplicate existing plans from other providers so plans are immediately available
+        // 5. If kvdata has no plans, duplicate existing plans from other providers so plans are immediately available
         $kvdataCount = DB::table('sme_data')->where('provider', 'kvdata')->count();
         if ($kvdataCount === 0) {
             $otherPlans = DB::table('sme_data')->where('provider', 'gogoz')->get();
+            $seenTargetIds = [];
             foreach ($otherPlans as $plan) {
                 $targetDataId = str_replace(['_gogoz', '_legacy'], '', $plan->data_id);
-                $exists = DB::table('sme_data')->where('provider', 'kvdata')->where('data_id', $targetDataId)->exists();
-                if (!$exists) {
-                    DB::table('sme_data')->insert([
-                        'provider'       => 'kvdata',
-                        'data_id'        => $targetDataId,
+                if (isset($seenTargetIds[$targetDataId])) {
+                    continue;
+                }
+                $seenTargetIds[$targetDataId] = true;
+
+                DB::table('sme_data')->updateOrInsert(
+                    [
+                        'provider' => 'kvdata',
+                        'data_id'  => $targetDataId,
+                    ],
+                    [
                         'network'        => $plan->network,
                         'plan_type'      => $plan->plan_type,
                         'personal_price' => $plan->personal_price,
@@ -65,12 +90,24 @@ return new class extends Migration
                         'status'         => $plan->status,
                         'created_at'     => now(),
                         'updated_at'     => now(),
-                    ]);
-                }
+                    ]
+                );
             }
         }
 
-        // 5. Update default value of provider column on sme_data table
+        // 6. Add composite unique constraint on (provider, data_id)
+        if (Schema::hasTable('sme_data')) {
+            try {
+                $indexes = collect(Schema::getIndexes('sme_data'))->pluck('name')->all();
+                if (!in_array('sme_data_provider_data_id_unique', $indexes)) {
+                    Schema::table('sme_data', function (Blueprint $table) {
+                        $table->unique(['provider', 'data_id'], 'sme_data_provider_data_id_unique');
+                    });
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        // 7. Update default value of provider column on sme_data table
         if (Schema::hasColumn('sme_data', 'provider')) {
             Schema::table('sme_data', function (Blueprint $table) {
                 $table->string('provider')->default('kvdata')->change();
@@ -80,6 +117,22 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (Schema::hasTable('sme_data')) {
+            try {
+                $indexes = collect(Schema::getIndexes('sme_data'))->pluck('name')->all();
+                if (in_array('sme_data_provider_data_id_unique', $indexes)) {
+                    Schema::table('sme_data', function (Blueprint $table) {
+                        $table->dropUnique('sme_data_provider_data_id_unique');
+                    });
+                }
+                if (!in_array('sme_data_data_id_unique', $indexes)) {
+                    Schema::table('sme_data', function (Blueprint $table) {
+                        $table->unique('data_id', 'sme_data_data_id_unique');
+                    });
+                }
+            } catch (\Throwable $e) {}
+        }
+
         DB::table('sme_data_provider_settings')->where('provider', 'kvdata')->delete();
         DB::table('sme_data')->where('provider', 'kvdata')->delete();
 
