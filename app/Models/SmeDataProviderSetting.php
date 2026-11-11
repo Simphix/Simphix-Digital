@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 
@@ -22,9 +24,27 @@ class SmeDataProviderSetting extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'api_key' => 'encrypted',
-        'secret_key' => 'encrypted',
+        'api_key' => SafeEncrypted::class,
+        'secret_key' => SafeEncrypted::class,
     ];
+
+    /**
+     * Check if a stored encrypted attribute cannot be decrypted with the current APP_KEY.
+     */
+    public function isKeyCorrupted(string $attribute = 'api_key'): bool
+    {
+        $raw = $this->getRawOriginal($attribute) ?? ($this->attributes[$attribute] ?? null);
+        if (empty($raw)) {
+            return false;
+        }
+
+        try {
+            Crypt::decryptString($raw);
+            return false;
+        } catch (\Throwable $e) {
+            return true;
+        }
+    }
 
     /**
      * One row per vendor, created on first access. 'kvdata' is the primary
