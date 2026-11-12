@@ -334,6 +334,7 @@ Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('admin
     // Downline Batches & Bulk Transfer
     Route::get('/downline-batches', [\App\Http\Controllers\Admin\DownlineBatchController::class, 'index'])->name('downline-batches.index');
     Route::get('/downline-batches/{batch}', [\App\Http\Controllers\Admin\DownlineBatchController::class, 'show'])->name('downline-batches.show');
+    Route::get('/downline-batches/{batch}/search-destinations', [\App\Http\Controllers\Admin\DownlineBatchController::class, 'searchDestinations'])->name('downline-batches.search-destinations');
     Route::post('/downline-batches/{batch}/transfer', [\App\Http\Controllers\Admin\DownlineBatchController::class, 'transfer'])->name('downline-batches.transfer');
 
     Route::get('/upgrades', [\App\Http\Controllers\Admin\ManageController::class, 'upgrades'])->name('upgrades');

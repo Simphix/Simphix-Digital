@@ -30,117 +30,91 @@
                     @if ($batch->creator) by {{ $batch->creator->name }} @endif
                 </p>
             </div>
-
             <div class="flex items-center gap-3">
                 <a href="{{ route('admin.manage.replace-manager.index') }}"
-                   class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold shadow-sm transition">
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold shadow-sm transition">
                     <i data-lucide="repeat" class="w-3.5 h-3.5 text-slate-400"></i>
-                    Replace Manager
+                    Replace Another Manager
                 </a>
             </div>
         </div>
 
         @if (session('success'))
-            <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-semibold shadow-sm animate-in fade-in duration-300">
-                {{ session('success') }}
+            <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-semibold shadow-sm animate-in fade-in duration-300 flex items-center gap-2">
+                <i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
+                <span>{{ session('success') }}</span>
             </div>
         @endif
 
         @if (session('error'))
-            <div class="p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold shadow-sm animate-in fade-in duration-300">
-                {{ session('error') }}
+            <div class="p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold shadow-sm animate-in fade-in duration-300 flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+                <span>{{ session('error') }}</span>
             </div>
         @endif
 
-        <!-- Batch Info Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Source / Original Upline -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Original Upline</span>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide bg-slate-100 text-slate-600">
-                        {{ str_replace('_', ' ', $batch->source_role ?? 'Manager') }}
-                    </span>
+        <!-- Batch Summary Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Source Manager -->
+                <div class="space-y-1">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Source Manager</span>
+                    @if ($batch->sourceUser)
+                        <div class="font-bold text-slate-800 text-sm">{{ $batch->sourceUser->name }}</div>
+                        <div class="text-xs text-slate-500">{{ $batch->sourceUser->email }}</div>
+                        <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-slate-100 text-slate-700">
+                            {{ str_replace('_', ' ', $batch->source_role ?? $batch->sourceUser->role) }}
+                        </span>
+                    @else
+                        <span class="text-xs text-slate-400 italic">No source manager recorded</span>
+                    @endif
                 </div>
-                @if ($batch->sourceUser)
-                    <div>
-                        <a href="{{ route('admin.manage.users.show', $batch->sourceUser) }}" class="text-base font-bold text-slate-800 hover:text-indigo-600 transition">
-                            {{ $batch->sourceUser->name }}
-                        </a>
-                        <div class="text-xs text-slate-500 mt-0.5">{{ $batch->sourceUser->email }}</div>
-                        <div class="text-xs text-slate-500">{{ $batch->sourceUser->phone }}</div>
+
+                <!-- Current Holding Upline -->
+                <div class="space-y-1">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Current Holding Upline</span>
+                    <div class="font-bold text-indigo-700 text-sm flex items-center gap-1.5">
+                        <i data-lucide="shield" class="w-4 h-4 text-indigo-500"></i>
+                        {{ $batch->masterManager?->name ?? 'Platform Master Manager' }}
                     </div>
-                @else
-                    <div class="text-xs text-slate-400 italic">User #{{ $batch->source_user_id }} (Deleted)</div>
-                @endif
-                <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                    <span>Batch Type:</span>
-                    <strong class="text-slate-700 capitalize">{{ str_replace('_', ' ', $batch->source_type ?? 'detached') }}</strong>
+                    <div class="text-xs text-slate-500">Temporary holding seat pending reassignment</div>
+                </div>
+
+                <!-- Counts Breakdown -->
+                <div class="space-y-1">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Downline Status</span>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-2xl font-black text-slate-800">{{ $batch->initial_count }}</span>
+                        <span class="text-xs text-slate-400 font-semibold">total initial</span>
+                    </div>
+                    <div class="text-xs text-slate-500">
+                        <strong class="text-amber-600 font-bold">{{ $batch->current_count }} held</strong> &bull;
+                        <strong class="text-emerald-600 font-bold">{{ $batch->transferred_count }} transferred</strong>
+                    </div>
+                </div>
+
+                <!-- Source Type & Progress -->
+                <div class="space-y-2">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Transfer Progress</span>
+                    @php
+                        $pct = $batch->initial_count > 0 ? round(($batch->transferred_count / $batch->initial_count) * 100) : 0;
+                    @endphp
+                    <div class="flex items-center justify-between text-xs font-bold">
+                        <span class="text-slate-700">{{ $pct }}% Complete</span>
+                        <span class="text-slate-400">{{ $batch->transferred_count }}/{{ $batch->initial_count }}</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: {{ $pct }}%"></div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Holding Anchor (Master Manager) -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-extrabold text-indigo-500 uppercase tracking-wider">Holding Master Manager</span>
-                    <i data-lucide="shield-check" class="w-4 h-4 text-indigo-500"></i>
-                </div>
-                @if ($batch->masterManager)
-                    <div>
-                        <div class="text-base font-bold text-slate-800">{{ $batch->masterManager->name }}</div>
-                        <div class="text-xs text-slate-500 mt-0.5">{{ $batch->masterManager->email }}</div>
-                        <div class="text-xs text-slate-400 mt-0.5">Acts as temporary upline anchor so no users are left orphaned.</div>
-                    </div>
-                @else
-                    <div class="text-xs text-slate-400">Platform Level Master Manager</div>
-                @endif
-                <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                    <span>Current Upline ID:</span>
-                    <strong class="font-mono text-slate-700">#{{ $batch->master_manager_id }}</strong>
-                </div>
-            </div>
-
-            <!-- Counts & Progress -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Transfer Progress</span>
-                <div class="grid grid-cols-3 gap-2 text-center">
-                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                        <div class="text-lg font-black text-slate-800">{{ $batch->initial_count }}</div>
-                        <div class="text-[10px] font-bold text-slate-400 uppercase">Initial</div>
-                    </div>
-                    <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-100">
-                        <div class="text-lg font-black text-amber-600">{{ $batch->current_count }}</div>
-                        <div class="text-[10px] font-bold text-amber-600 uppercase">Held</div>
-                    </div>
-                    <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
-                        <div class="text-lg font-black text-emerald-600">{{ $batch->transferred_count }}</div>
-                        <div class="text-[10px] font-bold text-emerald-600 uppercase">Done</div>
-                    </div>
-                </div>
-
-                @php
-                    $percent = $batch->initial_count > 0 ? round(($batch->transferred_count / $batch->initial_count) * 100) : 100;
-                @endphp
-                <div>
-                    <div class="flex items-center justify-between text-[11px] font-semibold text-slate-500 mb-1">
-                        <span>Transferred</span>
-                        <span>{{ $percent }}%</span>
-                    </div>
-                    <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                        <div class="h-full bg-emerald-500 transition-all duration-300" style="width: {{ $percent }}%"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        @if ($batch->notes)
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-start gap-3">
-                <i data-lucide="info" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
-                <div>
+            @if ($batch->notes)
+                <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
                     <span class="font-bold text-slate-700">Audit Notes:</span> {{ $batch->notes }}
                 </div>
-            </div>
-        @endif
+            @endif
+        </div>
 
         <!-- Bulk Transfer Action Panel (Only if held users remain) -->
         @if ($batch->current_count > 0)
@@ -153,7 +127,7 @@
                         <div>
                             <h3 class="text-base font-bold text-slate-800">Bulk Transfer Held Downlines</h3>
                             <p class="text-xs text-slate-500 mt-0.5">
-                                Select a destination manager below to transfer downlines to. Their upline (<code class="font-mono text-indigo-700">referred_by</code>) will be reassigned immediately.
+                                Search and select an eligible destination upline manager below to receive these downlines. Their upline (<code class="font-mono text-indigo-700">referred_by</code>) will be reassigned immediately.
                             </p>
                         </div>
                     </div>
@@ -165,32 +139,136 @@
                     </div>
                 </div>
 
-                <form id="bulk-transfer-form" method="POST" action="{{ route('admin.manage.downline-batches.transfer', $batch) }}" @submit.prevent="confirmTransfer">
+                <!-- Hierarchy & Role Eligibility Banner -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-indigo-50/80 border border-indigo-200/80">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 text-xs font-bold shadow-xs">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        </div>
+                        <div class="text-xs">
+                            <span class="font-bold text-slate-700">Eligible Destination Role:</span>
+                            <span class="inline-block font-extrabold uppercase px-2 py-0.5 ml-1 rounded bg-white text-indigo-700 border border-indigo-300 shadow-xs">
+                                {{ $eligibleRolesLabel }}
+                            </span>
+                            <span class="text-slate-500 ml-1.5 hidden md:inline">
+                                Only managers with this role can receive these downlines to preserve hierarchy integrity.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="text-xs font-semibold text-indigo-800 shrink-0">
+                        <span x-text="managersList.length"></span> eligible manager(s) available
+                    </div>
+                </div>
+
+                <form id="bulk-transfer-form" method="POST" action="{{ route('admin.manage.downline-batches.transfer', $batch) }}" @submit.prevent="confirmTransfer" class="space-y-4">
                     @csrf
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                        <!-- Destination Manager Select -->
-                        <div class="md:col-span-2 space-y-2">
-                            <label for="destination_user_id" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                                Destination Manager <span class="text-rose-500">*</span>
+                    <input type="hidden" name="destination_user_id" id="destination_user_id" :value="selectedManagerId" required>
+
+                    <!-- Hidden inputs for selected users to ensure reliable submission -->
+                    <template x-for="id in selectedUserIds" :key="id">
+                        <input type="hidden" name="user_ids[]" :value="id">
+                    </template>
+
+                    <!-- Destination Manager Search & Selector -->
+                    <div class="space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                                Search & Select Destination Manager <span class="text-rose-500">*</span>
                             </label>
-                            <select name="destination_user_id" id="destination_user_id" required
-                                    class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-medium text-slate-800 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                                <option value="">-- Choose active destination manager --</option>
-                                @foreach ($destinationManagers as $destManager)
-                                    <option value="{{ $destManager->id }}" {{ old('destination_user_id') == $destManager->id ? 'selected' : '' }}>
-                                        {{ $destManager->name }} ({{ ucwords(str_replace('_', ' ', $destManager->role)) }}) &mdash; {{ $destManager->email }} [{{ $destManager->phone }}]
-                                    </option>
-                                @endforeach
-                            </select>
-                            <p class="text-[11px] text-slate-400">
-                                Eligible managers: Regional Managers, Coordinators, Partners, and Business Managers.
-                            </p>
+                            <span x-show="selectedManagerId" class="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                Selected: <strong x-text="selectedManagerName"></strong> (<span x-text="selectedManagerRole"></span>)
+                            </span>
                         </div>
 
-                        <!-- Submit Button -->
+                        <!-- Search Input -->
+                        <div class="relative">
+                            <input type="text"
+                                   x-model="searchQuery"
+                                   @input="onSearchInput()"
+                                   placeholder="Search eligible {{ $eligibleRolesLabel }} by name, email, or phone number..."
+                                   class="w-full pl-10 pr-24 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition shadow-xs">
+                            <div class="absolute left-3.5 top-3 text-slate-400 pointer-events-none">
+                                <i data-lucide="search" class="w-4 h-4"></i>
+                            </div>
+                            <div class="absolute right-3 top-2.5 flex items-center gap-1.5">
+                                <div x-show="isLoadingManagers" class="text-indigo-600 text-xs animate-spin">
+                                    <i data-lucide="loader-2" class="w-4 h-4"></i>
+                                </div>
+                                <button type="button"
+                                        x-show="searchQuery.length > 0"
+                                        @click="clearSearch()"
+                                        class="px-2 py-0.5 rounded text-[11px] font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition">
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Managers List -->
+                        <div class="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 max-h-64 overflow-y-auto bg-white shadow-xs">
+                            <template x-if="managersList.length === 0">
+                                <div class="text-center py-8 text-slate-400 text-xs flex flex-col items-center justify-center p-4">
+                                    <i data-lucide="user-x" class="w-8 h-8 text-slate-300 mb-2"></i>
+                                    <span class="font-bold text-slate-700">No eligible destination managers found</span>
+                                    <span class="text-[11px] mt-0.5 text-slate-400">
+                                        No active {{ $eligibleRolesLabel }} matches your search criteria. Try a different query.
+                                    </span>
+                                </div>
+                            </template>
+
+                            <template x-for="m in managersList" :key="m.id">
+                                <label @click="selectManager(m)"
+                                       :class="selectedManagerId == m.id ? 'bg-indigo-50/70 border-l-4 border-l-indigo-600 ring-1 ring-inset ring-indigo-500/20' : 'hover:bg-slate-50/80'"
+                                       class="p-3.5 flex items-center gap-3.5 cursor-pointer transition duration-150">
+                                    <input type="radio"
+                                           :name="'dest_mgr_picker'"
+                                           :value="m.id"
+                                           :checked="selectedManagerId == m.id"
+                                           class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
+
+                                    <div class="min-w-0 flex-grow">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="text-xs font-bold text-slate-800" x-text="m.name"></span>
+                                            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200" x-text="m.role_label"></span>
+                                            <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                                Eligible Upline
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-3 text-[11px] text-slate-500 mt-1 flex-wrap">
+                                            <span x-text="m.email"></span>
+                                            <span class="text-slate-300">&bull;</span>
+                                            <span x-text="m.phone || 'No phone'"></span>
+                                            <span class="text-slate-300">&bull;</span>
+                                            <span class="text-indigo-600 font-semibold" x-text="m.downline_count + ' current downline(s)'"></span>
+                                        </div>
+                                    </div>
+
+                                    <div x-show="selectedManagerId == m.id" class="text-indigo-600 shrink-0">
+                                        <i data-lucide="check" class="w-5 h-5"></i>
+                                    </div>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Selected Manager Confirmation Bar & Submit Button -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-indigo-100/80">
                         <div>
-                            <x-primary-button type="submit" class="w-full justify-center !py-2.5 !text-xs !bg-indigo-600 hover:!bg-indigo-700 shadow-sm font-bold">
+                            <template x-if="selectedManagerId">
+                                <div class="text-xs text-slate-600">
+                                    Destination: <strong class="text-slate-800" x-text="selectedManagerName"></strong> &bull; Role: <span class="font-bold text-indigo-700" x-text="selectedManagerRole"></span>
+                                </div>
+                            </template>
+                            <template x-if="!selectedManagerId">
+                                <span class="text-xs text-slate-400 italic">Please search or select an eligible destination manager from the list above.</span>
+                            </template>
+                        </div>
+
+                        <div class="shrink-0">
+                            <x-primary-button type="submit"
+                                              :disabled="!selectedManagerId"
+                                              class="w-full sm:w-auto justify-center !py-2.5 !px-6 !text-xs !bg-indigo-600 hover:!bg-indigo-700 shadow-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed">
                                 <i data-lucide="arrow-right-left" class="w-4 h-4 mr-1.5"></i>
                                 <span x-text="selectedUserIds.length > 0 ? 'Transfer Selected (' + selectedUserIds.length + ')' : 'Transfer All Held ({{ $batch->current_count }})'"></span>
                             </x-primary-button>
@@ -297,7 +375,7 @@
                                 @if ($batch->current_count > 0)
                                     <td class="py-4 px-4 text-center">
                                         @if ($item->status === 'held')
-                                            <input type="checkbox" name="user_ids[]" value="{{ $item->user_id }}" form="bulk-transfer-form"
+                                            <input type="checkbox" value="{{ $item->user_id }}"
                                                    x-model="selectedUserIds"
                                                    class="batch-user-checkbox rounded border-slate-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
                                         @else
@@ -397,6 +475,72 @@
                 selectedUserIds: [],
                 visibleHeldIds: @json($batchUsers->where('status', 'held')->pluck('user_id')->all()),
                 
+                // Destination manager search & picker state
+                selectedManagerId: '{{ old("destination_user_id", "") }}',
+                selectedManagerName: '',
+                selectedManagerRole: '',
+                searchQuery: '{{ addslashes($managerSearch ?? "") }}',
+                isLoadingManagers: false,
+                managersList: @json($destinationManagersData),
+                searchTimeout: null,
+
+                init() {
+                    if (this.selectedManagerId) {
+                        const found = this.managersList.find(m => String(m.id) === String(this.selectedManagerId));
+                        if (found) {
+                            this.selectedManagerName = found.name;
+                            this.selectedManagerRole = found.role_label;
+                        }
+                    }
+                    if (typeof lucide !== 'undefined') {
+                        this.$nextTick(() => lucide.createIcons());
+                    }
+                },
+
+                selectManager(manager) {
+                    this.selectedManagerId = String(manager.id);
+                    this.selectedManagerName = manager.name;
+                    this.selectedManagerRole = manager.role_label;
+                },
+
+                onSearchInput() {
+                    clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => {
+                        this.fetchManagers();
+                    }, 300);
+                },
+
+                async fetchManagers() {
+                    const query = this.searchQuery.trim();
+                    this.isLoadingManagers = true;
+                    try {
+                        const url = '{{ route("admin.manage.downline-batches.search-destinations", $batch) }}?q=' + encodeURIComponent(query);
+                        const res = await fetch(url, {
+                            credentials: 'same-origin',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.managersList = data;
+                            if (typeof lucide !== 'undefined') {
+                                this.$nextTick(() => lucide.createIcons());
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Failed to search destination managers', e);
+                    } finally {
+                        this.isLoadingManagers = false;
+                    }
+                },
+
+                clearSearch() {
+                    this.searchQuery = '';
+                    this.fetchManagers();
+                },
+
                 isAllSelected() {
                     if (this.visibleHeldIds.length === 0) return false;
                     return this.visibleHeldIds.every(id => this.selectedUserIds.includes(String(id)) || this.selectedUserIds.includes(Number(id)));
@@ -420,29 +564,28 @@
                 },
 
                 confirmTransfer() {
-                    const select = document.getElementById('destination_user_id');
-                    if (!select || !select.value) {
+                    if (!this.selectedManagerId) {
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
                                 icon: 'warning',
                                 title: 'Destination Manager Required',
-                                text: 'Please select a destination manager to receive the transferred downlines.',
+                                text: 'Please search or select an eligible destination manager to receive the transferred downlines.',
                                 confirmButtonColor: '#4f46e5',
                             });
                         } else {
-                            alert('Please select a destination manager to receive the transferred downlines.');
+                            alert('Please search or select an eligible destination manager to receive the transferred downlines.');
                         }
                         return;
                     }
 
-                    const managerText = select.options[select.selectedIndex].text;
                     const count = this.selectedUserIds.length > 0 ? this.selectedUserIds.length : {{ $batch->current_count }};
+                    const managerText = `${this.selectedManagerName} (${this.selectedManagerRole})`;
                     const message = `Are you sure you want to bulk transfer ${count} downline user(s) to:\n\n${managerText}\n\nTheir upline manager will be updated immediately.`;
 
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             title: 'Confirm Bulk Downline Transfer',
-                            html: `<p class="text-sm text-slate-600 mb-2">You are about to transfer <strong>${count}</strong> downline user(s) to:</p><p class="text-sm font-bold text-slate-800 bg-slate-100 p-2 rounded">${managerText}</p><p class="text-xs text-amber-600 mt-2">Their upline manager will be updated immediately.</p>`,
+                            html: `<p class="text-sm text-slate-600 mb-2">You are about to transfer <strong>${count}</strong> downline user(s) to eligible upline:</p><p class="text-sm font-bold text-slate-800 bg-slate-100 p-2.5 rounded-xl border border-slate-200">${managerText}</p><p class="text-xs text-amber-600 mt-2">Their upline manager will be updated immediately.</p>`,
                             icon: 'question',
                             showCancelButton: true,
                             confirmButtonColor: '#4f46e5',
