@@ -48,7 +48,19 @@
     </main>
 
     <script>
-        lucide.createIcons();
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+
+        function resetGuestButton(button) {
+            if (!button) return;
+            button.dataset.processing = 'false';
+            button.classList.remove('opacity-80');
+            const text = button.querySelector('[data-submit-text]');
+            if (text && button.__originalText) {
+                text.textContent = button.__originalText;
+            }
+        }
 
         document.querySelectorAll('form').forEach((form) => {
             form.addEventListener('submit', function (event) {
@@ -64,8 +76,22 @@
                 button.classList.add('opacity-80');
 
                 const text = button.querySelector('[data-submit-text]');
-                if (text) text.textContent = 'Signing in...';
+                if (text) {
+                    if (!button.__originalText) {
+                        button.__originalText = text.textContent;
+                    }
+                    text.textContent = 'Signing in...';
+                }
+
+                // Safety timeout: automatically reset after 10s if login page didn't redirect
+                setTimeout(() => {
+                    resetGuestButton(button);
+                }, 10000);
             });
+        });
+
+        window.addEventListener('pageshow', function () {
+            document.querySelectorAll('button[data-processing="true"]').forEach(btn => resetGuestButton(btn));
         });
     </script>
 

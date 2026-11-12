@@ -79,10 +79,11 @@ class SimsOperationsDashboardController extends Controller
                 fclose($output);
             }
         }, 'activated-sim-numbers-' . now()->format('Y-m-d') . '.csv', [
-            'Content-Type'  => 'text/csv; charset=UTF-8',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Pragma'        => 'public',
-            'Expires'       => '0',
+            'Content-Type'                  => 'text/csv; charset=UTF-8',
+            'Access-Control-Expose-Headers' => 'Content-Disposition, Content-Length',
+            'Cache-Control'                 => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma'                        => 'public',
+            'Expires'                       => '0',
         ]);
     }
 
@@ -113,12 +114,13 @@ class SimsOperationsDashboardController extends Controller
         $filename = 'sim-activations-' . now()->format('Y-m-d') . '.csv';
 
         return response($csv, 200, [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filename,
-            'Content-Length'      => strlen($csv),
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Pragma'              => 'public',
-            'Expires'             => '0',
+            'Content-Type'                  => 'text/csv; charset=UTF-8',
+            'Content-Disposition'           => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename),
+            'Access-Control-Expose-Headers' => 'Content-Disposition, Content-Length',
+            'Content-Length'                => strlen($csv),
+            'Cache-Control'                 => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma'                        => 'public',
+            'Expires'                       => '0',
         ]);
     }
 
@@ -153,12 +155,13 @@ class SimsOperationsDashboardController extends Controller
         $filename = 'activation-bonus-operations-' . now()->format('Y-m-d') . '.csv';
 
         return response($csv, 200, [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filename,
-            'Content-Length'      => strlen($csv),
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Pragma'              => 'public',
-            'Expires'             => '0',
+            'Content-Type'                  => 'text/csv; charset=UTF-8',
+            'Content-Disposition'           => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename),
+            'Access-Control-Expose-Headers' => 'Content-Disposition, Content-Length',
+            'Content-Length'                => strlen($csv),
+            'Cache-Control'                 => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma'                        => 'public',
+            'Expires'                       => '0',
         ]);
     }
 

@@ -4,26 +4,38 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
-// Global "Copied!" snackbar — one shared store + helper so every copy
-// button in the app gets identical feedback with a one-line @click, instead
-// of each page reinventing its own toast/text-swap/SweetAlert.
+// Global notification toast snackbar — one shared store + helper so all
+// feedback (copy, export, actions) gets unified, accessible feedback.
 document.addEventListener('alpine:init', () => {
     Alpine.store('toast', {
         show: false,
         message: '',
+        type: 'success', // 'success' | 'error' | 'warning' | 'info'
         _timer: null,
-        display(message) {
+        display(message, type = 'success') {
             this.message = message;
+            this.type = type;
             this.show = true;
             clearTimeout(this._timer);
-            this._timer = setTimeout(() => { this.show = false; }, 2500);
+            this._timer = setTimeout(() => { this.show = false; }, type === 'error' ? 5000 : 3000);
+            if (window.lucide) {
+                setTimeout(() => window.lucide.createIcons(), 50);
+            }
         },
     });
 });
 
+window.showToast = function (message, type = 'success') {
+    if (window.Alpine && window.Alpine.store && window.Alpine.store('toast')) {
+        window.Alpine.store('toast').display(message, type);
+    } else {
+        console.log(`[Toast ${type}] ${message}`);
+    }
+};
+
 window.copyToClipboard = function (text, label) {
     navigator.clipboard.writeText(text).then(() => {
-        Alpine.store('toast').display((label ? label + ' ' : '') + 'copied to clipboard!');
+        window.showToast((label ? label + ' ' : '') + 'copied to clipboard!', 'success');
     });
 };
 
