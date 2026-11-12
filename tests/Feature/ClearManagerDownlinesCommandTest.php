@@ -11,7 +11,7 @@ class ClearManagerDownlinesCommandTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_catalog_role_downlines_are_moved_to_platform_master_manager(): void
+    public function test_only_catalog_downlines_with_wrong_upline_are_moved_to_platform_master_manager(): void
     {
         $masterManager = User::platformMasterManager();
 
@@ -20,9 +20,14 @@ class ClearManagerDownlinesCommandTest extends TestCase
             'status' => 'active',
         ]);
 
+        $wrongUpline = User::factory()->create([
+            'role'   => 'partner',
+            'status' => 'active',
+        ]);
+
         $coordinator = User::factory()->create([
             'role'        => 'coordinator',
-            'referred_by' => $regionalManager->id,
+            'referred_by' => $wrongUpline->id,
             'status'      => 'active',
         ]);
 
@@ -35,9 +40,9 @@ class ClearManagerDownlinesCommandTest extends TestCase
         $this->artisan('downlines:clear', ['--force' => true])
             ->assertSuccessful();
 
-        // Catalog roles should now point to Master Manager
+        // Invalid role pairing is corrected; valid hierarchy stays intact.
         $this->assertEquals($masterManager->id, $coordinator->fresh()->referred_by);
-        $this->assertEquals($masterManager->id, $partner->fresh()->referred_by);
+        $this->assertEquals($coordinator->id, $partner->fresh()->referred_by);
     }
 
     public function test_catalog_role_already_under_master_manager_remains_under_master_manager(): void
@@ -61,7 +66,7 @@ class ClearManagerDownlinesCommandTest extends TestCase
         $masterManager = User::platformMasterManager();
 
         $someManager = User::factory()->create([
-            'role'   => 'regional_manager',
+            'role'   => 'coordinator',
             'status' => 'active',
         ]);
 
@@ -99,6 +104,11 @@ class ClearManagerDownlinesCommandTest extends TestCase
             'status' => 'active',
         ]);
 
+        $wrongUpline = User::factory()->create([
+            'role'   => 'coordinator',
+            'status' => 'active',
+        ]);
+
         $personal = User::factory()->create([
             'role'        => 'personal',
             'referred_by' => $partner->id,
@@ -107,15 +117,15 @@ class ClearManagerDownlinesCommandTest extends TestCase
 
         $agent = User::factory()->create([
             'role'        => 'agent',
-            'referred_by' => $partner->id,
+            'referred_by' => $wrongUpline->id,
             'status'      => 'active',
         ]);
 
         $this->artisan('downlines:clear', ['--force' => true])
             ->assertSuccessful();
 
-        // Personal and Agent customer downlines have uplines removed
-        $this->assertNull($personal->fresh()->referred_by);
+        // A valid customer link remains; an invalid one is cleared.
+        $this->assertEquals($partner->id, $personal->fresh()->referred_by);
         $this->assertNull($agent->fresh()->referred_by);
     }
 
@@ -130,7 +140,7 @@ class ClearManagerDownlinesCommandTest extends TestCase
 
         $personal = User::factory()->create([
             'role'        => 'personal',
-            'referred_by' => $partner->id,
+            'referred_by' => User::factory()->create(['role' => 'coordinator'])->id,
             'status'      => 'active',
         ]);
 
@@ -149,9 +159,11 @@ class ClearManagerDownlinesCommandTest extends TestCase
             'status' => 'active',
         ]);
 
+        $wrongUpline = User::factory()->create(['role' => 'partner']);
+
         $coordinator = User::factory()->create([
             'role'        => 'coordinator',
-            'referred_by' => $regionalManager->id,
+            'referred_by' => $wrongUpline->id,
             'status'      => 'active',
         ]);
 
@@ -166,7 +178,7 @@ class ClearManagerDownlinesCommandTest extends TestCase
             ->assertSuccessful();
 
         // No database changes in dry-run
-        $this->assertEquals($regionalManager->id, $coordinator->fresh()->referred_by);
+        $this->assertEquals($wrongUpline->id, $coordinator->fresh()->referred_by);
         $this->assertEquals($regionalManager->id, $superAdmin->fresh()->referred_by);
     }
 
@@ -175,12 +187,12 @@ class ClearManagerDownlinesCommandTest extends TestCase
         $masterManager = User::platformMasterManager();
 
         $mgr1 = User::factory()->create([
-            'role'   => 'regional_manager',
+            'role'   => 'partner',
             'status' => 'active',
         ]);
 
         $mgr2 = User::factory()->create([
-            'role'   => 'regional_manager',
+            'role'   => 'partner',
             'status' => 'active',
         ]);
 
