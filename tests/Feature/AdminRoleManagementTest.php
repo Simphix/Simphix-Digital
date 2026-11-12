@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\AdminNotification;
+use App\Models\DownlineBatch;
+use App\Models\DownlineBatchUser;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\StaffAccess;
@@ -31,6 +33,80 @@ test('admin cannot assign stale roles staff or checker via user edit', function 
     $response->assertSessionHasErrors('role');
     expect($targetUser->fresh()->role)->toBe('personal');
 })->with(['staff', 'checker']);
+
+test('changing a catalog role batches its direct downlines under the platform master manager', function () {
+    $target = User::factory()->create(['role' => 'partner', 'status' => 'active']);
+    $downline = User::factory()->create(['role' => 'personal', 'referred_by' => $target->id]);
+
+    $this->actingAs($this->admin)->put(route('admin.manage.users.update', $target), [
+        'first_name' => $target->first_name,
+        'middle_name' => $target->middle_name,
+        'last_name' => $target->last_name,
+        'email' => $target->email,
+        'phone' => '08012345678',
+        'status' => 'active',
+        'role' => 'personal',
+    ])->assertRedirect(route('admin.manage.users'));
+
+    $master = User::where('email', 'master.manager@platform.internal')->firstOrFail();
+    $batch = DownlineBatch::where('source_user_id', $target->id)->where('source_type', 'role_change')->firstOrFail();
+    expect($target->fresh()->role)->toBe('personal')
+        ->and($downline->fresh()->referred_by)->toBe($master->id)
+        ->and($batch->initial_count)->toBe(1)
+        ->and($batch->current_count)->toBe(1);
+    expect(DownlineBatchUser::where('batch_id', $batch->id)->where('user_id', $downline->id)->exists())->toBeTrue();
+});
+
+test('admin edit can search and assign an eligible upline to a catalog role', function () {
+    $coordinator = User::factory()->create(['role' => 'coordinator', 'status' => 'active']);
+    $target = User::factory()->create(['role' => 'personal', 'status' => 'active']);
+
+    $this->actingAs($this->admin)
+        ->getJson(route('admin.manage.users.eligible-uplines', $target) . '?role=partner&q=' . urlencode($coordinator->first_name))
+        ->assertOk()
+        ->assertJsonFragment(['id' => $coordinator->id]);
+
+    $this->actingAs($this->admin)->put(route('admin.manage.users.update', $target), [
+        'first_name' => $target->first_name,
+        'middle_name' => $target->middle_name,
+        'last_name' => $target->last_name,
+        'email' => $target->email,
+        'phone' => '08012345678',
+        'status' => 'active',
+        'role' => 'partner',
+        'referred_by' => $coordinator->id,
+    ])->assertSessionHasNoErrors();
+
+    expect($target->fresh()->referred_by)->toBe($coordinator->id);
+});
+
+test('catalog role edit form exposes the searchable upline manager field', function () {
+    $target = User::factory()->create(['role' => 'partner', 'status' => 'active']);
+
+    $this->actingAs($this->admin)
+        ->get(route('admin.manage.users.edit', $target))
+        ->assertOk()
+        ->assertSee('Upline Manager')
+        ->assertSee('eligible-uplines');
+});
+
+test('admin edit rejects a role-ineligible upline manager', function () {
+    $regionalManager = User::factory()->create(['role' => 'regional_manager', 'status' => 'active']);
+    $target = User::factory()->create(['role' => 'personal', 'status' => 'active']);
+
+    $this->actingAs($this->admin)->put(route('admin.manage.users.update', $target), [
+        'first_name' => $target->first_name,
+        'middle_name' => $target->middle_name,
+        'last_name' => $target->last_name,
+        'email' => $target->email,
+        'phone' => '08012345678',
+        'status' => 'active',
+        'role' => 'partner',
+        'referred_by' => $regionalManager->id,
+    ])->assertSessionHasErrors('referred_by');
+
+    expect($target->fresh()->role)->toBe('personal');
+});
 
 test('admin cannot assign stale roles staff or checker via access update', function (string $staleRole) {
     $targetUser = User::factory()->create(['role' => 'personal', 'status' => 'active']);

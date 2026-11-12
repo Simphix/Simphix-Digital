@@ -318,6 +318,7 @@ Route::middleware(['auth', 'verified', 'support_staff'])->prefix('support-desk')
 Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('admin/manage')->name('admin.manage.')->group(function () {
     // Users Management & Role Control
     Route::get('/users', [\App\Http\Controllers\Admin\ManageController::class, 'users'])->name('users');
+    Route::get('/users/{user}/eligible-uplines', [\App\Http\Controllers\Admin\ManageController::class, 'searchEligibleUplines'])->name('users.eligible-uplines');
     Route::get('/users/{user}/edit', [\App\Http\Controllers\Admin\ManageController::class, 'editUser'])->name('users.edit');
     Route::put('/users/{user}', [\App\Http\Controllers\Admin\ManageController::class, 'updateUser'])->name('users.update');
     Route::get('/users/{user}', [\App\Http\Controllers\Admin\ManageController::class, 'showUser'])->name('users.show');
