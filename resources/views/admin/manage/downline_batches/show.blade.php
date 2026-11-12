@@ -267,7 +267,7 @@
 
                         <div class="shrink-0">
                             <x-primary-button type="submit"
-                                              :disabled="!selectedManagerId"
+                                              ::disabled="!selectedManagerId"
                                               class="w-full sm:w-auto justify-center !py-2.5 !px-6 !text-xs !bg-indigo-600 hover:!bg-indigo-700 shadow-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed">
                                 <i data-lucide="arrow-right-left" class="w-4 h-4 mr-1.5"></i>
                                 <span x-text="selectedUserIds.length > 0 ? 'Transfer Selected (' + selectedUserIds.length + ')' : 'Transfer All Held ({{ $batch->current_count }})'"></span>
