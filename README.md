@@ -53,8 +53,21 @@ SimPhix provides a suite of administrative Artisan CLI commands for auditing bal
 - `php artisan requests:clear-pending`: Clear unfulfilled pending SIM, Loan, POS, or Travel requests.
 - `php artisan webhooks:clear-logs`: Purge webhook logs with provider/status filters.
 - `php artisan tickets:clear`: Clear support tickets and messages with status/category filters.
+- `php artisan accounts:clear`: Clear generated virtual bank accounts while preserving KYC verification data.
+- `php artisan topups:clear-history`: Clear data top-up transactions with status, date, and network filters.
+- `php artisan downlines:clear`: Clear downlines on upline managers, reassign catalog roles to Platform Master Manager, and strip uplines from staff accounts.
 
 See [Admin Maintenance Commands Documentation](docs/admin-maintenance-commands.md) for full parameters, safety flags, and examples.
+
+### Downline Batches & Referral Hierarchy Management
+
+SimPhix provides a dedicated bulk transfer dashboard and live-search manager reassignment workflow for detached downlines at `/admin/manage/downline-batches`:
+
+- **Platform Master Manager**: Central holding upline (`master.manager@platform.internal`) preserving downlines during manager replacement.
+- **Role-Eligible Destination Restrictions**: Enforces strict referral hierarchy rules (Regional Managers manage Coordinators; Coordinators manage Partners; Partners manage Personal/Agents).
+- **Interactive Live Search**: Live-filtered candidate search by name, phone, or email with verified eligibility badges.
+
+See [Downline Batches and Hierarchy Documentation](docs/downline-batches-and-hierarchy.md) for full architectural details and workflows.
 
 ## Learning Laravel
 
