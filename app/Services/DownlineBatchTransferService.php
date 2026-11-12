@@ -21,7 +21,7 @@ class DownlineBatchTransferService
     public function eligibleDestinationRoles(DownlineBatch $batch): array
     {
         // 1. If batch has source_role, that directly defines the manager seat level that was replaced:
-        if (!empty($batch->source_role)) {
+        if (!empty($batch->source_role) && $batch->source_type !== 'role_change') {
             return match ($batch->source_role) {
                 'regional_manager' => ['regional_manager'],
                 'coordinator'      => ['coordinator'],
@@ -54,8 +54,10 @@ class DownlineBatchTransferService
         $eligible = [];
         foreach ($memberRoles as $role) {
             $uplines = match ($role) {
+                'regional_manager'            => ['regional_manager'],
                 'coordinator'               => ['regional_manager'],
                 'partner'                   => ['coordinator'],
+                'business'                  => ['regional_manager', 'coordinator', 'partner'],
                 'business_agent'            => ['business'],
                 'personal', 'agent', 'user' => ['partner', 'business_agent'],
                 default                     => [],

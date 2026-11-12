@@ -3,17 +3,22 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DownlineBatch;
+use App\Models\DownlineBatchUser;
 use App\Models\Region;
 use App\Models\SenatorialDistrict;
 use App\Models\User;
 use App\Support\DownlineMetrics;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ManageController extends Controller
 {
+    private const CATALOG_ROLES = ['regional_manager', 'coordinator', 'partner', 'business', 'business_agent'];
+
     /**
      * Display a list of all users.
      */
@@ -69,7 +74,45 @@ class ManageController extends Controller
             }
         }
 
-        return view('admin.manage.edit_user', compact('user'));
+        $currentUpline = $user->referrer;
+
+        return view('admin.manage.edit_user', compact('user', 'currentUpline'));
+    }
+
+    /** Search active, role-eligible upline managers for the edit-user form. */
+    public function searchEligibleUplines(Request $request, User $user): JsonResponse
+    {
+        $role = (string) $request->query('role', $user->role);
+        abort_unless(in_array($role, self::CATALOG_ROLES, true), 422);
+
+        $allowedRoles = $this->eligibleUplineRoles($role);
+        $master = User::platformMasterManager();
+        $query = User::query()
+            ->where('status', 'active')
+            ->where('id', '!=', $user->id)
+            ->where(function ($q) use ($allowedRoles, $master) {
+                $q->whereIn('role', $allowedRoles)->orWhere('id', $master->id);
+            });
+
+        $term = trim((string) $request->query('q', ''));
+        if ($term !== '') {
+            $query->where(function ($q) use ($term) {
+                $q->where('first_name', 'like', "%{$term}%")
+                    ->orWhere('middle_name', 'like', "%{$term}%")
+                    ->orWhere('last_name', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%")
+                    ->orWhere('phone', 'like', "%{$term}%");
+            });
+        }
+
+        return response()->json($query->orderBy('first_name')->limit(30)->get()->map(fn (User $manager) => [
+            'id' => $manager->id,
+            'name' => $manager->name,
+            'role' => $manager->role,
+            'role_label' => ucwords(str_replace('_', ' ', $manager->role)),
+            'email' => $manager->email,
+            'phone' => $manager->phone,
+        ])->values());
     }
 
     /**
@@ -112,25 +155,69 @@ class ManageController extends Controller
             'phone' => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), Rule::unique(User::class)->ignore($user->id)],
             'status' => ['required', 'string', 'in:active,suspended,inactive,banned'],
             'role' => $roleRules,
+            'referred_by' => ['sometimes', 'nullable', 'integer', 'exists:users,id'],
         ], [
             'role.in' => $roleErrorMsg,
         ]);
 
         $previousRole = $user->role;
+        $newRole = $request->string('role')->toString();
+        $newUplineId = $user->referred_by;
 
-        $user->forceFill([
-            'first_name' => $request->first_name,
-            'middle_name' => $request->middle_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'status' => $request->status,
-            'role' => $request->role,
-        ])->save();
+        if (in_array($newRole, self::CATALOG_ROLES, true)) {
+            if ($request->exists('referred_by')) {
+                $newUplineId = $request->input('referred_by') ?: null;
+            } elseif ($newRole !== $previousRole) {
+                $currentUpline = $user->referrer;
+                if (! $currentUpline || ! $this->isEligibleUpline($user, $currentUpline, $newRole)) {
+                    $newUplineId = User::platformMasterManager()->id;
+                }
+            }
+
+            if ($newUplineId) {
+                $selectedUpline = User::find($newUplineId);
+                if (! $selectedUpline || ! $this->isEligibleUpline($user, $selectedUpline, $newRole)) {
+                    return back()->withErrors([
+                        'referred_by' => 'Select an active upline manager eligible for this role.',
+                    ])->withInput();
+                }
+            }
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request, $user, $previousRole, $newRole, $newUplineId, $actor) {
+            if ($newRole !== $previousRole
+                && (in_array($previousRole, self::CATALOG_ROLES, true) || in_array($newRole, self::CATALOG_ROLES, true))
+                && $user->referrals()->exists()) {
+                $this->batchDownlinesUnderMasterManager($user, $actor);
+            }
+
+            $attributes = [
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'status' => $request->status,
+                'role' => $newRole,
+            ];
+
+            if (in_array($newRole, self::CATALOG_ROLES, true)) {
+                $attributes['referred_by'] = $newUplineId;
+            } elseif (in_array($newRole, ['support', 'business_sales_manager'], true)) {
+                $attributes['referred_by'] = null;
+            }
+
+            $user->forceFill($attributes)->save();
+        });
 
         $this->clearStaleJurisdiction($user, $previousRole);
 
-        return redirect()->route('admin.manage.users')->with('success', 'User ' . $user->first_name . ' has been updated successfully.');
+        $message = 'User ' . $user->first_name . ' has been updated successfully.';
+        if ($newRole !== $previousRole && (in_array($previousRole, self::CATALOG_ROLES, true) || in_array($newRole, self::CATALOG_ROLES, true))) {
+            $message .= ' Any direct downlines were moved to the Platform Master Manager in a batch.';
+        }
+
+        return redirect()->route('admin.manage.users')->with('success', $message);
     }
 
     /**
@@ -344,5 +431,63 @@ class ManageController extends Controller
         if ($previousRole === 'coordinator' && $user->role !== 'coordinator') {
             SenatorialDistrict::where('coordinator_id', $user->id)->update(['coordinator_id' => null]);
         }
+    }
+
+    private function eligibleUplineRoles(string $role): array
+    {
+        return match ($role) {
+            'coordinator' => ['regional_manager'],
+            'partner' => ['coordinator'],
+            'business' => ['regional_manager', 'coordinator', 'partner'],
+            'business_agent' => ['business'],
+            default => [], // Regional Managers may be attached to the platform master only.
+        };
+    }
+
+    private function isEligibleUpline(User $subject, User $candidate, string $role): bool
+    {
+        if ($candidate->id === $subject->id || $candidate->status !== 'active' || $candidate->role === 'super_admin') {
+            return false;
+        }
+
+        return $candidate->id === User::platformMasterManager()->id
+            || in_array($candidate->role, $this->eligibleUplineRoles($role), true);
+    }
+
+    private function batchDownlinesUnderMasterManager(User $source, ?User $actor): void
+    {
+        $downlines = $source->referrals()->get();
+        if ($downlines->isEmpty()) {
+            return;
+        }
+
+        $masterManager = User::platformMasterManager();
+        $batch = DownlineBatch::create([
+            'batch_reference' => DownlineBatch::generateReference('ROLE', $source),
+            'source_user_id' => $source->id,
+            'source_role' => $source->role,
+            'source_type' => 'role_change',
+            'master_manager_id' => $masterManager->id,
+            'title' => "Downline from {$source->name} after role change",
+            'notes' => 'Held under the Platform Master Manager after an admin role change.',
+            'initial_count' => $downlines->count(),
+            'current_count' => $downlines->count(),
+            'transferred_count' => 0,
+            'status' => DownlineBatch::STATUS_HELD,
+            'created_by' => $actor?->id,
+        ]);
+
+        $now = now();
+        DownlineBatchUser::insert($downlines->map(fn (User $downline) => [
+            'batch_id' => $batch->id,
+            'user_id' => $downline->id,
+            'original_referred_by' => $source->id,
+            'current_referred_by' => $masterManager->id,
+            'status' => DownlineBatchUser::STATUS_HELD,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->all());
+
+        User::whereIn('id', $downlines->pluck('id'))->update(['referred_by' => $masterManager->id]);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Support\RoleHierarchy;
 use App\Support\StaffAccess;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -103,22 +104,25 @@ class ClearManagerDownlinesCommand extends Command
         $uplineManagers = $managerQuery->get();
         $uplineManagerIds = $uplineManagers->pluck('id')->all();
 
-        // 3. Find downline users linked to these upline managers
+        // 3. Find only downlines whose current upline violates the role hierarchy.
         $downlineUsers = User::query()
             ->whereIn('referred_by', $uplineManagerIds)
+            ->with('referrer:id,role')
             ->get();
 
-        // 4. In addition, find any Admin/Staff accounts that carry ANY upline (must have upline removed completely)
+        // Internal accounts are invalid under any upline, including the
+        // platform master seat, so include them while respecting explicit filters.
         $staffWithUpline = User::query()
             ->whereNotNull('referred_by')
-            ->where(function ($q) {
-                $q->whereIn('role', StaffAccess::ROLES)
-                    ->orWhere('role', 'super_admin');
-            })
+            ->whereIn('role', StaffAccess::ROLES)
+            ->with('referrer:id,role')
+            ->when($managerIdOption, fn ($query) => $query->where('referred_by', (int) $managerIdOption))
+            ->when($managerRoleOption, fn ($query) => $query->whereHas('referrer', fn ($referrer) => $referrer->where('role', strtolower(trim((string) $managerRoleOption)))))
             ->get();
 
-        // Merge and unique all targeted users
-        $allTargetedUsers = $downlineUsers->concat($staffWithUpline)->unique('id');
+        $allTargetedUsers = $downlineUsers->concat($staffWithUpline)->unique('id')
+            ->filter(fn (User $user) => ! $this->hasExpectedUpline($user, $masterManager->id))
+            ->values();
 
         if ($allTargetedUsers->isEmpty()) {
             $this->info('No downlines found on targeted upline managers and no staff accounts carry an upline.');
@@ -273,5 +277,35 @@ class ClearManagerDownlinesCommand extends Command
         $this->newLine();
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Whether the user's current upline is valid for their role.
+     * The platform master manager is an intentional holding upline for catalog
+     * accounts, regardless of the account's normal direct-parent role.
+     */
+    private function hasExpectedUpline(User $user, int $masterManagerId): bool
+    {
+        if ($user->isStaff() || in_array($user->role, StaffAccess::ROLES, true)) {
+            return false;
+        }
+
+        if ((int) $user->referred_by === $masterManagerId) {
+            return in_array($user->role, self::CATALOG_ROLES, true);
+        }
+
+        $allowedParentRoles = [];
+        foreach (RoleHierarchy::CHAIN as $parentRole => $childRole) {
+            if ($childRole === $user->role) {
+                $allowedParentRoles[] = $parentRole;
+            }
+        }
+
+        // Both personal and agent accounts can be referred by either catalog chain.
+        if (in_array($user->role, ['personal', 'agent'], true)) {
+            $allowedParentRoles = ['partner', 'business_agent'];
+        }
+
+        return in_array($user->referrer?->role, $allowedParentRoles, true);
     }
 }
