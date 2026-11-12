@@ -20,6 +20,9 @@ This document provides a comprehensive reference for the administrative Artisan 
    - [`webhooks:clear-logs`](#9-webhooksclear-logs)
    - [`tickets:clear`](#10-ticketsclear)
    - [`accounts:clear`](#11-accountsclear)
+   - [`topups:clear-history`](#12-topupsclear-history)
+5. [Hierarchy & Downline Re-alignment Commands](#hierarchy--downline-re-alignment-commands)
+   - [`downlines:clear`](#13-downlinesclear)
 
 ---
 
@@ -492,4 +495,90 @@ php artisan accounts:clear --account=9900112233 --force
 
 # Clear only PalmPay accounts for a specific user
 php artisan accounts:clear --user=musa@example.com --provider=palmpay --force
+```
+
+---
+
+### 12. `topups:clear-history`
+
+Permanently clears historical data top-up records from `data_transactions` and data-related transaction records across the platform. Enables purging legacy test runs, vendor simulation records, or aging log data while maintaining financial integrity.
+
+- **Signature**:
+  ```bash
+  php artisan topups:clear-history {--before=} {--status=} {--user-id=} {--network=} {--force} {--dry-run}
+  ```
+- **Aliases**:
+  - `history:clear-data-topups`
+  - `data-topups:clear-history`
+  - `topups:clear`
+
+#### Options & Arguments
+| Parameter | Type | Description |
+|---|---|---|
+| `--before=` | Option | Only clear records created before a specific date/time (e.g. `2026-10-01` or `2026-10-01 00:00:00`) |
+| `--status=` | Option | Filter by transaction status (e.g. `successful`, `failed`, `pending`) |
+| `--user-id=` | Option | Filter by a specific user ID |
+| `--network=` | Option | Filter by network provider (`MTN`, `GLO`, `AIRTEL`, `9MOBILE`) |
+| `--force` | Option | Execute without confirmation prompt |
+| `--dry-run` | Option | Preview matching records without modifying or deleting anything |
+
+#### Usage Examples
+```bash
+# Preview all data top-up transactions to be cleared
+php artisan topups:clear-history --dry-run
+
+# Clear all failed data top-ups older than October 1st, 2026
+php artisan topups:clear-history --status=failed --before=2026-10-01 --force
+
+# Clear data top-ups for a specific user
+php artisan topups:clear-history --user-id=42 --force
+```
+
+---
+
+## Hierarchy & Downline Re-alignment Commands
+
+### 13. `downlines:clear`
+
+Clears downlines from upline managers across the platform, automatically realigning the referral hierarchy:
+1. **Catalog Role Members** (`regional_manager`, `coordinator`, `partner`, `business`, `business_agent`):
+   - Detached from previous upline managers and assigned to or retained under the central **Platform Level Master Manager** (`User::platformMasterManager()`).
+2. **Admin & Staff Accounts** (`super_admin`, `business_sales_manager`, `support`):
+   - Completely stripped of any referral upline (`referred_by = null`), enforcing the platform rule that internal staff accounts carry no upline manager.
+3. **Customer & Retail Accounts** (`personal`, `agent`):
+   - Detached from upline managers (`referred_by = null`), or optionally reassigned to Master Manager via `--customers=master`.
+4. **Master Manager Protection**:
+   - The central Platform Level Master Manager holding seat is protected and cannot have its downlines cleared.
+
+- **Signature**:
+  ```bash
+  php artisan downlines:clear {--manager-id=} {--manager-role=} {--customers=remove} {--dry-run} {--force}
+  ```
+- **Aliases**:
+  - `managers:clear-downlines`
+  - `downlines:clear-upline-managers`
+  - `upline:clear-downlines`
+
+#### Options & Arguments
+| Parameter | Type | Description |
+|---|---|---|
+| `--manager-id=` | Option | Clear downlines for a specific upline manager ID |
+| `--manager-role=` | Option | Clear downlines for upline managers of a specific role (`regional_manager`, `coordinator`, `partner`, `business`, `business_agent`) |
+| `--customers=` | Option | Action for retail customer downlines: `remove` (default, set `referred_by = null`) or `master` (move to Platform Master Manager) |
+| `--dry-run` | Option | Simulate and preview the downline clearance with summary and sample tables without writing changes |
+| `--force` | Option | Execute without interactive confirmation prompt |
+
+#### Usage Examples
+```bash
+# Preview downline clearance across all upline managers
+php artisan downlines:clear --dry-run
+
+# Clear downlines across all upline managers and strip uplines from all staff accounts
+php artisan downlines:clear --force
+
+# Clear downlines for a specific coordinator (#19)
+php artisan downlines:clear --manager-id=19 --force
+
+# Clear downlines for all Partners and reassign retail customers to Master Manager
+php artisan downlines:clear --manager-role=partner --customers=master --force
 ```

@@ -434,4 +434,147 @@ class ManagerReplacementDownlineBatchTest extends TestCase
         $dataAdmin = $responseAdmin->json();
         $this->assertEmpty($dataAdmin);
     }
+
+    public function test_destination_manager_query_and_search_endpoint_only_return_eligible_roles_for_batch(): void
+    {
+        $masterManager = User::platformMasterManager();
+
+        $sourceCoordinator = User::factory()->create([
+            'role' => 'coordinator',
+            'status' => 'active',
+        ]);
+
+        $batch = DownlineBatch::create([
+            'batch_reference'   => 'BATCH-TEST-SEARCH-001',
+            'source_user_id'    => $sourceCoordinator->id,
+            'source_role'       => 'coordinator',
+            'source_type'       => 'outgoing_manager',
+            'master_manager_id' => $masterManager->id,
+            'title'             => 'Test Search Batch',
+            'initial_count'     => 1,
+            'current_count'     => 1,
+            'transferred_count' => 0,
+            'status'            => DownlineBatch::STATUS_HELD,
+            'created_by'        => $this->admin->id,
+        ]);
+
+        // Eligible destination coordinators
+        $coord1 = User::factory()->create([
+            'first_name' => 'TargetCoordinator',
+            'role'       => 'coordinator',
+            'status'     => 'active',
+        ]);
+        $coord2 = User::factory()->create([
+            'first_name' => 'SecondCoordinator',
+            'role'       => 'coordinator',
+            'status'     => 'active',
+        ]);
+
+        // Ineligible roles: regional manager and partner
+        $regMgr = User::factory()->create([
+            'first_name' => 'BossRegional',
+            'role'       => 'regional_manager',
+            'status'     => 'active',
+        ]);
+        $partner = User::factory()->create([
+            'first_name' => 'RetailPartner',
+            'role'       => 'partner',
+            'status'     => 'active',
+        ]);
+
+        // 1. Search all destinations without keyword: should only return coordinators
+        $responseAll = $this->actingAs($this->admin)
+            ->getJson(route('admin.manage.downline-batches.search-destinations', $batch));
+
+        $responseAll->assertOk();
+        $allData = $responseAll->json();
+        $returnedIds = collect($allData)->pluck('id')->all();
+
+        $this->assertContains($coord1->id, $returnedIds);
+        $this->assertContains($coord2->id, $returnedIds);
+        $this->assertNotContains($regMgr->id, $returnedIds);
+        $this->assertNotContains($partner->id, $returnedIds);
+        $this->assertNotContains($sourceCoordinator->id, $returnedIds); // source excluded
+
+        // 2. Search destinations with keyword 'TargetCoordinator'
+        $responseSearch = $this->actingAs($this->admin)
+            ->getJson(route('admin.manage.downline-batches.search-destinations', [
+                'batch' => $batch,
+                'q'     => 'TargetCoordinator',
+            ]));
+
+        $responseSearch->assertOk();
+        $searchData = $responseSearch->json();
+        $this->assertCount(1, $searchData);
+        $this->assertEquals($coord1->id, $searchData[0]['id']);
+        $this->assertEquals('Coordinator', $searchData[0]['role_label']);
+    }
+
+    public function test_cannot_transfer_downlines_to_ineligible_upline_role(): void
+    {
+        $masterManager = User::platformMasterManager();
+
+        $sourceCoordinator = User::factory()->create([
+            'role' => 'coordinator',
+            'status' => 'active',
+        ]);
+
+        $downline = User::factory()->create([
+            'role' => 'partner',
+            'referred_by' => $masterManager->id,
+            'status' => 'active',
+        ]);
+
+        $batch = DownlineBatch::create([
+            'batch_reference'   => 'BATCH-TEST-INELIGIBLE-001',
+            'source_user_id'    => $sourceCoordinator->id,
+            'source_role'       => 'coordinator',
+            'source_type'       => 'outgoing_manager',
+            'master_manager_id' => $masterManager->id,
+            'title'             => 'Test Ineligible Role Transfer',
+            'initial_count'     => 1,
+            'current_count'     => 1,
+            'transferred_count' => 0,
+            'status'            => DownlineBatch::STATUS_HELD,
+            'created_by'        => $this->admin->id,
+        ]);
+
+        DownlineBatchUser::create([
+            'batch_id'             => $batch->id,
+            'user_id'              => $downline->id,
+            'original_referred_by' => $sourceCoordinator->id,
+            'current_referred_by'  => $masterManager->id,
+            'status'               => DownlineBatchUser::STATUS_HELD,
+        ]);
+
+        // Attempt transfer to a regional_manager (ineligible: batch requires coordinator)
+        $ineligibleRegional = User::factory()->create([
+            'role' => 'regional_manager',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.manage.downline-batches.transfer', $batch), [
+                'destination_user_id' => $ineligibleRegional->id,
+            ]);
+
+        $response->assertSessionHas('error');
+        $this->assertEquals($masterManager->id, $downline->fresh()->referred_by);
+        $this->assertEquals(DownlineBatch::STATUS_HELD, $batch->fresh()->status);
+
+        // Attempt transfer to a partner (ineligible: batch requires coordinator)
+        $ineligiblePartner = User::factory()->create([
+            'role' => 'partner',
+            'status' => 'active',
+        ]);
+
+        $responsePartner = $this->actingAs($this->admin)
+            ->post(route('admin.manage.downline-batches.transfer', $batch), [
+                'destination_user_id' => $ineligiblePartner->id,
+            ]);
+
+        $responsePartner->assertSessionHas('error');
+        $this->assertEquals($masterManager->id, $downline->fresh()->referred_by);
+        $this->assertEquals(DownlineBatch::STATUS_HELD, $batch->fresh()->status);
+    }
 }

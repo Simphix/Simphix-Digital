@@ -7,6 +7,7 @@ use App\Models\DownlineBatch;
 use App\Models\DownlineBatchUser;
 use App\Models\User;
 use App\Services\DownlineBatchTransferService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -45,10 +46,10 @@ class DownlineBatchController extends Controller
         $batches = $query->paginate(15)->withQueryString();
 
         $stats = [
-            'total_batches'    => DownlineBatch::count(),
-            'held_batches'     => DownlineBatch::where('status', DownlineBatch::STATUS_HELD)->count(),
-            'total_held_users' => DownlineBatch::sum('current_count'),
-            'transferred_users'=> DownlineBatch::sum('transferred_count'),
+            'total_batches'     => DownlineBatch::count(),
+            'held_batches'      => DownlineBatch::where('status', DownlineBatch::STATUS_HELD)->count(),
+            'total_held_users'  => DownlineBatch::sum('current_count'),
+            'transferred_users' => DownlineBatch::sum('transferred_count'),
         ];
 
         return view('admin.manage.downline_batches.index', compact('batches', 'stats'));
@@ -80,12 +81,56 @@ class DownlineBatchController extends Controller
 
         $batchUsers = $userQuery->paginate(25)->withQueryString();
 
-        // Query eligible destination managers
-        $destinationManagers = $this->transferService->destinationManagerQuery($request->manager_search, $request->manager_role)
+        // Determine eligible upline destination roles for this batch
+        $eligibleRoles = $this->transferService->eligibleDestinationRoles($batch);
+        $eligibleRolesLabel = implode(', ', array_map(fn ($r) => ucwords(str_replace('_', ' ', $r)), $eligibleRoles));
+
+        // Query eligible destination managers (filterable by manager_search)
+        $managerSearch = $request->query('manager_search');
+        $destinationManagers = $this->transferService->destinationManagerQuery($batch, $managerSearch)
+            ->limit(50)
+            ->get();
+
+        $destinationManagersData = $destinationManagers->map(fn (User $u) => [
+            'id'             => $u->id,
+            'name'           => $u->name,
+            'email'          => $u->email,
+            'phone'          => $u->phone,
+            'role'           => $u->role,
+            'role_label'     => ucwords(str_replace('_', ' ', $u->role)),
+            'downline_count' => $u->referrals()->count(),
+        ])->values()->all();
+
+        return view('admin.manage.downline_batches.show', compact(
+            'batch',
+            'batchUsers',
+            'destinationManagers',
+            'destinationManagersData',
+            'eligibleRoles',
+            'eligibleRolesLabel',
+            'managerSearch'
+        ));
+    }
+
+    /**
+     * Search endpoint returning eligible destination managers matching a phone, email, or name query.
+     */
+    public function searchDestinations(Request $request, DownlineBatch $batch): JsonResponse
+    {
+        $query = $request->query('search') ?? $request->query('q');
+        $managers = $this->transferService->destinationManagerQuery($batch, $query)
             ->limit(30)
             ->get();
 
-        return view('admin.manage.downline_batches.show', compact('batch', 'batchUsers', 'destinationManagers'));
+        return response()->json($managers->map(fn (User $u) => [
+            'id'             => $u->id,
+            'name'           => $u->name,
+            'email'          => $u->email,
+            'phone'          => $u->phone,
+            'role'           => $u->role,
+            'role_label'     => ucwords(str_replace('_', ' ', $u->role)),
+            'downline_count' => $u->referrals()->count(),
+        ]));
     }
 
     /**
@@ -98,10 +143,18 @@ class DownlineBatchController extends Controller
             'user_ids'            => ['nullable', 'array'],
             'user_ids.*'          => ['exists:users,id'],
         ], [
-            'destination_user_id.required' => 'Please select a destination manager to receive the transferred downlines.',
+            'destination_user_id.required' => 'Please select an eligible destination manager to receive the transferred downlines.',
         ]);
 
         $destination = User::findOrFail($validated['destination_user_id']);
+
+        // Enforce role eligibility check
+        $eligibleRoles = $this->transferService->eligibleDestinationRoles($batch);
+        if (!in_array($destination->role, $eligibleRoles, true)) {
+            $readable = implode(', ', array_map(fn ($r) => ucwords(str_replace('_', ' ', $r)), $eligibleRoles));
+            $actual = ucwords(str_replace('_', ' ', $destination->role));
+            return back()->with('error', "Selected destination manager has an ineligible role ({$actual}). Downlines from this batch can only be transferred to: {$readable}.");
+        }
 
         try {
             $count = $this->transferService->transfer(
