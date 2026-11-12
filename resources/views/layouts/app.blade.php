@@ -61,46 +61,317 @@
 
         <script>
             // Initialize Lucide Icons
-            lucide.createIcons();
+            if (window.lucide) {
+                lucide.createIcons();
+            }
 
-            // Form submission processing state visual handler
+            // Helper: Reset button state
+            function resetButton(btn) {
+                if (!btn) return;
+                btn.classList.remove('is-processing');
+                btn.disabled = false;
+                btn.style.opacity = '';
+                if (btn.__originalHtml) {
+                    btn.innerHTML = btn.__originalHtml;
+                    delete btn.__originalHtml;
+                } else if (btn.__originalText) {
+                    const span = btn.querySelector('span') || btn;
+                    span.textContent = btn.__originalText;
+                    delete btn.__originalText;
+                }
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            }
+
+            // Helper: Set button to loading/processing state
+            function setButtonLoading(btn, loadingText = 'Processing...') {
+                if (!btn) return;
+                if (!btn.__originalHtml) {
+                    btn.__originalHtml = btn.innerHTML;
+                }
+                const textSpan = btn.querySelector('span');
+                if (!btn.__originalText) {
+                    btn.__originalText = textSpan ? textSpan.textContent : btn.textContent;
+                }
+
+                btn.classList.add('is-processing');
+                btn.disabled = true;
+                btn.style.opacity = '0.8';
+
+                if (textSpan) {
+                    textSpan.textContent = loadingText;
+                } else {
+                    btn.textContent = loadingText;
+                }
+
+                let icon = btn.querySelector('[data-lucide]');
+                if (icon) {
+                    icon.setAttribute('data-lucide', 'loader-2');
+                    icon.classList.add('animate-spin');
+                } else {
+                    const newIcon = document.createElement('i');
+                    newIcon.setAttribute('data-lucide', 'loader-2');
+                    newIcon.className = 'w-4 h-4 animate-spin ml-2 inline-block';
+                    btn.appendChild(newIcon);
+                }
+
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            }
+
+            // Helper: Determine if a form or link is an export or download
+            function isExportTarget(elemOrUrl) {
+                if (!elemOrUrl) return false;
+                if (typeof elemOrUrl === 'string') {
+                    return /\/(export|download)(\/|\?|$)/i.test(elemOrUrl) || /export/i.test(elemOrUrl);
+                }
+                const hasAttr = elemOrUrl.dataset && (elemOrUrl.dataset.export !== undefined || elemOrUrl.dataset.download !== undefined);
+                const action = elemOrUrl.getAttribute('action') || elemOrUrl.getAttribute('href') || '';
+                return hasAttr || /\/(export|download)(\/|\?|$)/i.test(action) || /export/i.test(action);
+            }
+
+            // Universal Export Downloader — reliable across iOS Safari, Android Chrome, and all desktop browsers
+            window.triggerExportDownload = async function(url, options = {}) {
+                const {
+                    method = 'GET',
+                    body = null,
+                    button = null,
+                    loadingText = 'Preparing Export...',
+                    onSuccess = null,
+                    onError = null
+                } = options;
+
+                if (button) {
+                    setButtonLoading(button, loadingText);
+                }
+
+                // Safety fallback timer: NEVER allow a button to stay frozen longer than 15s
+                const safetyTimer = setTimeout(() => {
+                    if (button && button.classList.contains('is-processing')) {
+                        resetButton(button);
+                    }
+                }, 15000);
+
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    const headers = {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/csv, application/pdf, application/octet-stream, application/json, */*',
+                    };
+                    if (csrfToken && method.toUpperCase() === 'POST') {
+                        headers['X-CSRF-TOKEN'] = csrfToken;
+                    }
+
+                    const fetchOptions = {
+                        method: method.toUpperCase(),
+                        headers: headers,
+                        credentials: 'same-origin',
+                    };
+
+                    if (body && method.toUpperCase() === 'POST') {
+                        fetchOptions.body = body;
+                    }
+
+                    const response = await fetch(url, fetchOptions);
+
+                    if (!response.ok) {
+                        clearTimeout(safetyTimer);
+                        let errorMessage = 'Export failed (' + response.status + ' ' + response.statusText + ')';
+                        try {
+                            const contentType = response.headers.get('content-type') || '';
+                            if (contentType.includes('application/json')) {
+                                const json = await response.json();
+                                errorMessage = json.message || json.error || errorMessage;
+                            } else {
+                                const text = await response.text();
+                                if (text && text.length > 0 && text.length < 300 && !text.includes('<!DOCTYPE')) {
+                                    errorMessage = text.trim();
+                                }
+                            }
+                        } catch (_) {}
+
+                        if (button) resetButton(button);
+                        if (window.showToast) {
+                            window.showToast(errorMessage, 'error');
+                        } else {
+                            alert(errorMessage);
+                        }
+                        if (typeof onError === 'function') onError(errorMessage);
+                        return false;
+                    }
+
+                    // Extract filename from Content-Disposition header
+                    let filename = 'export-' + (new Date().toISOString().slice(0, 10)) + '.csv';
+                    const disposition = response.headers.get('content-disposition');
+                    if (disposition) {
+                        const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+                        if (utf8Match && utf8Match[1]) {
+                            filename = decodeURIComponent(utf8Match[1]);
+                        } else {
+                            const stdMatch = disposition.match(/filename="?([^";]+)"?/i);
+                            if (stdMatch && stdMatch[1]) {
+                                filename = stdMatch[1].trim();
+                            }
+                        }
+                    }
+
+                    // Stream / blob conversion
+                    const blob = await response.blob();
+                    clearTimeout(safetyTimer);
+
+                    // Cross-device download trigger (iOS 13+, Android Chrome, Safari, Firefox, Edge, Chrome)
+                    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                        window.navigator.msSaveOrOpenBlob(blob, filename);
+                    } else {
+                        const blobUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = blobUrl;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+
+                        setTimeout(() => {
+                            window.URL.revokeObjectURL(blobUrl);
+                            a.remove();
+                        }, 1500);
+                    }
+
+                    // Show quick success state on the button
+                    if (button) {
+                        const textSpan = button.querySelector('span');
+                        if (textSpan) textSpan.textContent = '✓ Downloaded!';
+                        button.style.opacity = '1';
+                        setTimeout(() => {
+                            resetButton(button);
+                        }, 1200);
+                    }
+
+                    if (window.showToast) {
+                        window.showToast('Download started: ' + filename, 'success');
+                    }
+
+                    if (typeof onSuccess === 'function') {
+                        onSuccess(filename);
+                    }
+
+                    return true;
+
+                } catch (err) {
+                    clearTimeout(safetyTimer);
+                    console.error('SimPhix Export Download Error:', err);
+                    if (button) resetButton(button);
+                    const errStr = err.message || 'Network communication error';
+                    if (window.showToast) {
+                        window.showToast('Download failed: ' + errStr, 'error');
+                    } else {
+                        alert('Download failed: ' + errStr);
+                    }
+                    if (typeof onError === 'function') onError(err);
+                    return false;
+                }
+            };
+
+            // Form submission processing state visual handler & export interceptor
             document.querySelectorAll('form').forEach(form => {
                 form.addEventListener('submit', function (e) {
-                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const submitBtn = this.querySelector('button[type="submit"]') || this.querySelector('button');
+
+                    // 1. Export & Download Forms
+                    if (isExportTarget(this)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        if (submitBtn && submitBtn.classList.contains('is-processing')) {
+                            return;
+                        }
+
+                        let url = this.getAttribute('action') || window.location.href;
+                        const method = (this.getAttribute('method') || 'GET').toUpperCase();
+                        let body = null;
+
+                        if (method === 'GET') {
+                            const formData = new FormData(this);
+                            const params = new URLSearchParams();
+                            for (const [key, value] of formData.entries()) {
+                                if (value !== '') {
+                                    params.append(key, value);
+                                }
+                            }
+                            const qs = params.toString();
+                            if (qs) {
+                                url = url + (url.includes('?') ? '&' : '?') + qs;
+                            }
+                        } else {
+                            body = new FormData(this);
+                        }
+
+                        window.triggerExportDownload(url, {
+                            method: method,
+                            body: body,
+                            button: submitBtn,
+                            loadingText: 'Preparing Download...',
+                            onSuccess: () => {
+                                // If inside an Alpine modal, close it smoothly after download starts
+                                setTimeout(() => {
+                                    const modalContainer = this.closest('[x-data]');
+                                    if (modalContainer && modalContainer.__x) {
+                                        const xData = modalContainer.__x.$data;
+                                        if (xData && typeof xData.showExportModal !== 'undefined') {
+                                            xData.showExportModal = false;
+                                        }
+                                    }
+                                }, 800);
+                            }
+                        });
+                        return;
+                    }
+
+                    // 2. Normal Forms
                     if (submitBtn) {
                         // Prevent double submission
                         if (submitBtn.classList.contains('is-processing')) {
                             e.preventDefault();
                             return;
                         }
-                        
-                        submitBtn.classList.add('is-processing');
-                        submitBtn.style.opacity = '0.8';
-                        
-                        // Look for span and icon to replace
-                        const textSpan = submitBtn.querySelector('span');
-                        const icon = submitBtn.querySelector('[data-lucide]');
-                        
-                        if (textSpan) {
-                            textSpan.textContent = 'Processing...';
-                        } else {
-                            submitBtn.textContent = 'Processing...';
-                        }
-                        
-                        if (icon) {
-                            icon.setAttribute('data-lucide', 'loader-2');
-                            icon.classList.add('animate-spin');
-                        } else {
-                            // Create icon if not present
-                            const newIcon = document.createElement('i');
-                            newIcon.setAttribute('data-lucide', 'loader-2');
-                            newIcon.className = 'w-4 h-4 animate-spin ml-2 inline-block';
-                            submitBtn.appendChild(newIcon);
-                        }
-                        
-                        lucide.createIcons();
+
+                        setButtonLoading(submitBtn, 'Processing...');
+
+                        // Auto-recovery timeout: NEVER leave a normal button stuck longer than 10s
+                        setTimeout(() => {
+                            if (submitBtn && submitBtn.classList.contains('is-processing')) {
+                                resetButton(submitBtn);
+                            }
+                        }, 10000);
                     }
                 });
+            });
+
+            // Delegate click for export / download anchor links
+            document.addEventListener('click', function (e) {
+                const link = e.target.closest('a[href]');
+                if (!link) return;
+
+                if (isExportTarget(link)) {
+                    // Don't intercept if modifier keys held or new tab requested
+                    if (e.ctrlKey || e.metaKey || e.shiftKey || link.target === '_blank') return;
+
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    window.triggerExportDownload(link.href, {
+                        method: 'GET',
+                        button: link,
+                        loadingText: 'Downloading...'
+                    });
+                }
+            });
+
+            // Global reset on page show (e.g. Back button or bfcache)
+            window.addEventListener('pageshow', function () {
+                document.querySelectorAll('.is-processing').forEach(btn => resetButton(btn));
             });
         </script>
 
@@ -206,8 +477,8 @@
 
         @include('layouts.partials.pwa-install-banner')
 
-        <!-- Global "Copied!" snackbar — see resources/js/app.js's copyToClipboard() helper -->
-        <div x-data class="fixed bottom-5 right-5 z-50">
+        <!-- Global Notification Snackbar (Success, Error, Warning, Info) -->
+        <div x-data class="fixed bottom-5 right-5 z-50 pointer-events-none">
             <div x-show="$store.toast.show"
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 translate-y-2 scale-95"
@@ -215,12 +486,29 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                  x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                 class="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-800"
+                 class="pointer-events-auto bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-800 max-w-md"
                  x-cloak>
-                <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                    <i data-lucide="check" class="w-4 h-4"></i>
+                <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+                     :class="{
+                         'bg-emerald-500/20 text-emerald-400': ($store.toast.type || 'success') === 'success',
+                         'bg-rose-500/20 text-rose-400': $store.toast.type === 'error',
+                         'bg-amber-500/20 text-amber-400': $store.toast.type === 'warning',
+                         'bg-blue-500/20 text-blue-400': $store.toast.type === 'info'
+                     }">
+                    <template x-if="($store.toast.type || 'success') === 'success'">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                    </template>
+                    <template x-if="$store.toast.type === 'error'">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                    </template>
+                    <template x-if="$store.toast.type === 'warning'">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                    </template>
+                    <template x-if="$store.toast.type === 'info'">
+                        <i data-lucide="info" class="w-4 h-4"></i>
+                    </template>
                 </div>
-                <span class="text-xs font-semibold" x-text="$store.toast.message"></span>
+                <span class="text-xs font-semibold leading-relaxed" x-text="$store.toast.message"></span>
             </div>
         </div>
 

@@ -79,7 +79,7 @@
                     </div>
 
                     <!-- Modal Body / Form -->
-                    <form action="{{ route('sales-performance.export') }}" method="GET" @submit="showExportModal = false">
+                    <form action="{{ route('sales-performance.export') }}" method="GET" data-export="true">
                         <div class="p-6 space-y-5">
                             
                             <!-- 1. Document Format (PDF vs CSV) -->

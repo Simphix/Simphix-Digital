@@ -79,12 +79,13 @@ class SalesPerformanceController extends Controller
             $filename = 'sales-performance-report-' . str_replace('_', '-', $user->role) . '-' . now()->format('Y-m-d') . '.pdf';
 
             return response($pdfContent, 200, [
-                'Content-Type'        => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filename,
-                'Content-Length'      => strlen($pdfContent),
-                'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-                'Pragma'              => 'public',
-                'Expires'             => '0',
+                'Content-Type'                  => 'application/pdf',
+                'Content-Disposition'           => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename),
+                'Access-Control-Expose-Headers' => 'Content-Disposition, Content-Length',
+                'Content-Length'                => strlen($pdfContent),
+                'Cache-Control'                 => 'must-revalidate, post-check=0, pre-check=0',
+                'Pragma'                        => 'public',
+                'Expires'                       => '0',
             ]);
         }
 
@@ -169,12 +170,13 @@ class SalesPerformanceController extends Controller
         $filename = 'sales-performance-report-' . str_replace('_', '-', $user->role) . '-' . now()->format('Y-m-d') . '.csv';
 
         return response($csv, 200, [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filename,
-            'Content-Length'      => strlen($csv),
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Pragma'              => 'public',
-            'Expires'             => '0',
+            'Content-Type'                  => 'text/csv; charset=UTF-8',
+            'Content-Disposition'           => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename),
+            'Access-Control-Expose-Headers' => 'Content-Disposition, Content-Length',
+            'Content-Length'                => strlen($csv),
+            'Cache-Control'                 => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma'                        => 'public',
+            'Expires'                       => '0',
         ]);
     }
 

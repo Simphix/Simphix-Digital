@@ -259,11 +259,12 @@ class CustomerFintavaAccountController extends Controller
         $filename = "fintava_transactions_{$virtualAccount->account_number}_" . now()->format('Ymd_His') . ".csv";
 
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            'Pragma'              => 'no-cache',
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires'             => '0',
+            'Content-Type'                   => 'text/csv; charset=UTF-8',
+            'Content-Disposition'            => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename),
+            'Access-Control-Expose-Headers'  => 'Content-Disposition, Content-Length',
+            'Pragma'                         => 'no-cache',
+            'Cache-Control'                  => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'                        => '0',
         ];
 
         return response()->stream(function () use ($transactions, $virtualAccount) {

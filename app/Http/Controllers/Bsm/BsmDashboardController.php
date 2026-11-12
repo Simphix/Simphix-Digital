@@ -664,12 +664,13 @@ class BsmDashboardController extends Controller
         $filename = 'bsm-territory-sales-report-' . now()->format('Y-m-d') . '.csv';
 
         return response($csv, 200, [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filename,
-            'Content-Length'      => strlen($csv),
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Pragma'              => 'public',
-            'Expires'             => '0',
+            'Content-Type'                  => 'text/csv; charset=UTF-8',
+            'Content-Disposition'           => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename),
+            'Access-Control-Expose-Headers' => 'Content-Disposition, Content-Length',
+            'Content-Length'                => strlen($csv),
+            'Cache-Control'                 => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma'                        => 'public',
+            'Expires'                       => '0',
         ]);
     }
 
@@ -692,12 +693,13 @@ class BsmDashboardController extends Controller
             $filename = "bsm-sales-acceleration-report-{$filenameSuffix}.pdf";
 
             return response($pdfContent, 200, [
-                'Content-Type'        => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filename,
-                'Content-Length'      => strlen($pdfContent),
-                'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-                'Pragma'              => 'public',
-                'Expires'             => '0',
+                'Content-Type'                  => 'application/pdf',
+                'Content-Disposition'           => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename),
+                'Access-Control-Expose-Headers' => 'Content-Disposition, Content-Length',
+                'Content-Length'                => strlen($pdfContent),
+                'Cache-Control'                 => 'must-revalidate, post-check=0, pre-check=0',
+                'Pragma'                        => 'public',
+                'Expires'                       => '0',
             ]);
         }
 
@@ -705,12 +707,13 @@ class BsmDashboardController extends Controller
         $filename = "bsm-sales-acceleration-report-{$filenameSuffix}.csv";
 
         return response($csvContent, 200, [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filename,
-            'Content-Length'      => strlen($csvContent),
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Pragma'              => 'public',
-            'Expires'             => '0',
+            'Content-Type'                  => 'text/csv; charset=UTF-8',
+            'Content-Disposition'           => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename),
+            'Access-Control-Expose-Headers' => 'Content-Disposition, Content-Length',
+            'Content-Length'                => strlen($csvContent),
+            'Cache-Control'                 => 'must-revalidate, post-check=0, pre-check=0',
+            'Pragma'                        => 'public',
+            'Expires'                       => '0',
         ]);
     }
 
