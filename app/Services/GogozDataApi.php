@@ -107,8 +107,11 @@ class GogozDataApi implements SmeDataProviderInterface
             'raw_body' => $response->body(),
         ]);
 
+        $rawStatus = $data['Status'] ?? $data['status'] ?? null;
+        $statusStr = is_string($rawStatus) ? strtolower(trim($rawStatus)) : (is_numeric($rawStatus) ? (string) $rawStatus : null);
+
         $isSuccess = $response->successful() && (
-            (isset($data['status']) && in_array(strtolower((string) $data['status']), ['success', 'successful', 'true', '1'], true)) ||
+            ($statusStr !== null && in_array($statusStr, ['success', 'successful', 'true', '1'], true)) ||
             (isset($data['success']) && $data['success'] === true) ||
             (isset($data['code']) && in_array((string) $data['code'], ['200', '201', '0', '00', '000'], true))
         );
