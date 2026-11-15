@@ -67,12 +67,12 @@
                                     @endif
                                 </td>
                                 <td class="py-4 px-6 text-right">
-                                    @if ($u->role === 'super_admin')
+                                    @if ($u->role === 'super_admin' && auth()->user()->role !== 'super_admin')
                                         <div class="inline-flex items-center gap-2">
                                             <span class="inline-flex items-center px-2.5 py-1 text-xs font-extrabold rounded-xl bg-purple-50 text-purple-700 border border-purple-200 uppercase tracking-wider">
                                                 Super Admin
                                             </span>
-                                            <span class="text-[11px] text-slate-400 italic font-medium">(CLI only)</span>
+                                            <span class="text-[11px] text-slate-400 italic font-medium">(Protected)</span>
                                         </div>
                                     @elseif (auth()->user()->role === 'business_sales_manager' && $u->role === 'business_sales_manager')
                                         <div class="inline-flex items-center gap-2">
@@ -99,6 +99,9 @@
                                                     <option value="business_sales_manager" {{ $u->role === 'business_sales_manager' ? 'selected' : '' }}>Business Sales Manager</option>
                                                 @endif
                                                 <option value="support" {{ $u->role === 'support' ? 'selected' : '' }}>Support</option>
+                                                @if (auth()->user()->role === 'super_admin')
+                                                    <option value="super_admin" {{ $u->role === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
+                                                @endif
                                             </x-select-input>
 
                                             <x-primary-button type="submit" class="!px-4 !py-1.5 !text-xs">

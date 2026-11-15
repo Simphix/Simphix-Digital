@@ -347,6 +347,9 @@ Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('admin
 });
 
 Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/manage')->name('admin.manage.')->group(function () {
+    Route::get('/admins/create', [\App\Http\Controllers\Admin\ManageController::class, 'createAdmin'])->name('admins.create');
+    Route::post('/admins', [\App\Http\Controllers\Admin\ManageController::class, 'storeAdmin'])->name('admins.store');
+
     // Admin Support Tickets Routes
     Route::get('/support', [\App\Http\Controllers\Admin\SupportController::class, 'index'])->name('support.index');
     Route::get('/support/{ticket}', [\App\Http\Controllers\Admin\SupportController::class, 'show'])->name('support.show');
