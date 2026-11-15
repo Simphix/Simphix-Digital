@@ -7,6 +7,7 @@ use App\Models\Service;
 use App\Models\User;
 use App\Support\StaffAccess;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Hash;
 
 uses(DatabaseTransactions::class);
 
@@ -133,16 +134,17 @@ test('admin can assign valid platform roles including business_sales_manager, bu
     'regional_manager', 'coordinator', 'business_sales_manager', 'support',
 ]);
 
-test('admin cannot assign super_admin via access update or user edit', function () {
+test('non-super-admin cannot assign super_admin via access update or user edit', function () {
+    $bsm = User::factory()->create(['role' => 'business_sales_manager', 'status' => 'active']);
     $targetUser = User::factory()->create(['role' => 'personal', 'status' => 'active']);
 
-    $accessResponse = $this->actingAs($this->admin)->put(route('admin.manage.access.update', $targetUser), [
+    $accessResponse = $this->actingAs($bsm)->put(route('admin.manage.access.update', $targetUser), [
         'role' => 'super_admin',
     ]);
     $accessResponse->assertSessionHasErrors('role');
     expect($targetUser->fresh()->role)->toBe('personal');
 
-    $editResponse = $this->actingAs($this->admin)->put(route('admin.manage.users.update', $targetUser), [
+    $editResponse = $this->actingAs($bsm)->put(route('admin.manage.users.update', $targetUser), [
         'first_name' => $targetUser->first_name,
         'middle_name' => $targetUser->middle_name,
         'last_name' => $targetUser->last_name,
@@ -155,60 +157,91 @@ test('admin cannot assign super_admin via access update or user edit', function 
     expect($targetUser->fresh()->role)->toBe('personal');
 });
 
-test('existing super_admin role cannot be modified via access update', function () {
+test('super_admin can change another super_admin role via access update', function () {
     $otherAdmin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
 
     $response = $this->actingAs($this->admin)->put(route('admin.manage.access.update', $otherAdmin), [
         'role' => 'support',
     ]);
 
-    $response->assertSessionHas('error');
-    expect($otherAdmin->fresh()->role)->toBe('super_admin');
+    $response->assertSessionHas('success');
+    expect($otherAdmin->fresh()->role)->toBe('support');
 });
 
-test('make:admin command promotes a user to super_admin by email', function () {
+test('super_admin can create an internal admin account from the web', function () {
+    $this->actingAs($this->admin)
+        ->get(route('admin.manage.admins.create'))
+        ->assertOk()
+        ->assertSee('Create Admin Account');
+
+    $response = $this->actingAs($this->admin)->post(route('admin.manage.admins.store'), [
+        'first_name' => 'New',
+        'last_name' => 'Operator',
+        'email' => 'new.operator@example.com',
+        'phone' => '08012345678',
+        'role' => 'super_admin',
+        'password' => 'a-strong-password-123',
+        'password_confirmation' => 'a-strong-password-123',
+    ]);
+
+    $response->assertRedirect(route('admin.manage.users'));
+    $created = User::where('email', 'new.operator@example.com')->firstOrFail();
+    expect($created->role)->toBe('super_admin')
+        ->and($created->status)->toBe('active')
+        ->and($created->email_verified_at)->not->toBeNull()
+        ->and(Hash::check('a-strong-password-123', $created->password))->toBeTrue();
+});
+
+test('business sales manager cannot create admin accounts', function () {
+    $bsm = User::factory()->create(['role' => 'business_sales_manager', 'status' => 'active']);
+
+    $this->actingAs($bsm)->get(route('admin.manage.admins.create'))->assertForbidden();
+});
+
+test('super_admin can demote and delete another super_admin but cannot delete self', function () {
+    $otherAdmin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
+
+    $this->actingAs($this->admin)->put(route('admin.manage.users.update', $otherAdmin), [
+        'first_name' => $otherAdmin->first_name,
+        'middle_name' => $otherAdmin->middle_name,
+        'last_name' => $otherAdmin->last_name,
+        'email' => $otherAdmin->email,
+        'phone' => '08012345678',
+        'status' => 'active',
+        'role' => 'business_sales_manager',
+    ])->assertRedirect(route('admin.manage.users'));
+
+    expect($otherAdmin->fresh()->role)->toBe('business_sales_manager');
+
+    $otherAdmin->forceFill(['role' => 'super_admin'])->save();
+    $this->actingAs($this->admin)->delete(route('admin.manage.users.destroy', $otherAdmin))
+        ->assertRedirect(route('admin.manage.users'));
+    $this->assertDatabaseMissing('users', ['id' => $otherAdmin->id]);
+
+    $this->delete(route('admin.manage.users.destroy', $this->admin))
+        ->assertRedirect();
+    $this->assertDatabaseHas('users', ['id' => $this->admin->id]);
+});
+
+test('make:admin CLI promotion is temporarily disabled', function () {
     $user = User::factory()->create([
         'role' => 'personal',
         'status' => 'active',
     ]);
 
     $this->artisan('make:admin', ['email' => $user->email])
-        ->expectsOutputToContain("Successfully promoted {$user->first_name} {$user->last_name}")
-        ->assertSuccessful();
-
-    expect($user->fresh()->role)->toBe('super_admin');
-});
-
-test('make:admin alias admin:make also works', function () {
-    $user = User::factory()->create([
-        'role' => 'agent',
-        'status' => 'active',
-    ]);
+        ->expectsOutputToContain('Temporarily disabled')
+        ->assertFailed();
 
     $this->artisan('admin:make', ['email' => $user->email])
-        ->expectsOutputToContain("Successfully promoted {$user->first_name} {$user->last_name}")
-        ->assertSuccessful();
-
-    expect($user->fresh()->role)->toBe('super_admin');
-});
-
-test('make:admin fails when user is not found', function () {
-    $this->artisan('make:admin', ['email' => 'nonexistent@example.com'])
-        ->expectsOutputToContain("No user found with email 'nonexistent@example.com'")
+        ->expectsOutputToContain('Temporarily disabled')
         ->assertFailed();
-});
 
-test('make:admin can revoke super_admin via --revoke flag', function () {
-    $adminUser = User::factory()->create([
-        'role' => 'super_admin',
-        'status' => 'active',
-    ]);
+    $this->artisan('user:make-admin', ['email' => $user->email])
+        ->expectsOutputToContain('Temporarily disabled')
+        ->assertFailed();
 
-    $this->artisan('make:admin', ['email' => $adminUser->email, '--revoke' => true])
-        ->expectsOutputToContain("Successfully revoked Super Admin")
-        ->assertSuccessful();
-
-    expect($adminUser->fresh()->role)->toBe('personal');
+    expect($user->fresh()->role)->toBe('personal');
 });
 
 test('StaffAccess::isInternal reflects only active internal roles', function () {

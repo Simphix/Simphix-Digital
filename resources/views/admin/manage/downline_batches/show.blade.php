@@ -148,7 +148,7 @@
                         <div class="text-xs">
                             <span class="font-bold text-slate-700">Eligible Destination Role:</span>
                             <span class="inline-block font-extrabold uppercase px-2 py-0.5 ml-1 rounded bg-white text-indigo-700 border border-indigo-300 shadow-xs">
-                                {{ $eligibleRolesLabel }}
+                                <span x-text="destinationRoleSummary()">{{ $eligibleRolesLabel }}</span>
                             </span>
                             <span class="text-slate-500 ml-1.5 hidden md:inline">
                                 Only managers with this role can receive these downlines to preserve hierarchy integrity.
@@ -162,6 +162,17 @@
 
                 <form id="bulk-transfer-form" method="POST" action="{{ route('admin.manage.downline-batches.transfer', $batch) }}" @submit.prevent="confirmTransfer" class="space-y-4">
                     @csrf
+
+                    <div class="max-w-md space-y-1.5">
+                        <label for="transfer-new-role" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Role for transferred users</label>
+                        <x-select-input id="transfer-new-role" name="new_role" x-model="selectedTransferRole" @change="changeTransferRole" class="w-full rounded-xl !text-xs font-semibold">
+                            <option value="">Keep current roles</option>
+                            @foreach ($transferRoles as $role)
+                                <option value="{{ $role }}">{{ ucwords(str_replace('_', ' ', $role)) }}</option>
+                            @endforeach
+                        </x-select-input>
+                        <p class="text-[11px] text-slate-500">Eligible non-personal downlines stay attached, personal downlines are detached, and other ineligible downlines move to the Platform Master Manager.</p>
+                    </div>
                     
                     <input type="hidden" name="destination_user_id" id="destination_user_id" :value="selectedManagerId" required>
 
@@ -187,7 +198,7 @@
                             <input type="text"
                                    x-model="searchQuery"
                                    @input="onSearchInput()"
-                                   placeholder="Search eligible {{ $eligibleRolesLabel }} by name, email, or phone number..."
+                                :placeholder="'Search eligible ' + destinationRoleSummary() + ' by name, email, or phone number...'"
                                    class="w-full pl-10 pr-24 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition shadow-xs">
                             <div class="absolute left-3.5 top-3 text-slate-400 pointer-events-none">
                                 <i data-lucide="search" class="w-4 h-4"></i>
@@ -211,9 +222,7 @@
                                 <div class="text-center py-8 text-slate-400 text-xs flex flex-col items-center justify-center p-4">
                                     <i data-lucide="user-x" class="w-8 h-8 text-slate-300 mb-2"></i>
                                     <span class="font-bold text-slate-700">No eligible destination managers found</span>
-                                    <span class="text-[11px] mt-0.5 text-slate-400">
-                                        No active {{ $eligibleRolesLabel }} matches your search criteria. Try a different query.
-                                    </span>
+                                    <span class="text-[11px] mt-0.5 text-slate-400" x-text="'No active ' + destinationRoleSummary() + ' matches your search criteria. Try a different query.'"></span>
                                 </div>
                             </template>
 
@@ -474,6 +483,7 @@
             return {
                 selectedUserIds: [],
                 visibleHeldIds: @json($batchUsers->where('status', 'held')->pluck('user_id')->all()),
+                selectedTransferRole: @js($transferRole ?? ''),
                 
                 // Destination manager search & picker state
                 selectedManagerId: '{{ old("destination_user_id", "") }}',
@@ -503,6 +513,27 @@
                     this.selectedManagerRole = manager.role_label;
                 },
 
+                changeTransferRole() {
+                    this.selectedManagerId = '';
+                    this.selectedManagerName = '';
+                    this.selectedManagerRole = '';
+                    this.fetchManagers();
+                },
+
+                destinationRoleSummary() {
+                    const roleMap = {
+                        regional_manager: ['regional_manager'],
+                        coordinator: ['regional_manager'],
+                        partner: ['coordinator'],
+                        business: ['regional_manager', 'coordinator', 'partner'],
+                        business_agent: ['business'],
+                    };
+                    const roles = this.selectedTransferRole
+                        ? (roleMap[this.selectedTransferRole] || [])
+                        : @js($eligibleRoles);
+                    return roles.map(role => role.replaceAll('_', ' ')).join(', ');
+                },
+
                 onSearchInput() {
                     clearTimeout(this.searchTimeout);
                     this.searchTimeout = setTimeout(() => {
@@ -514,7 +545,9 @@
                     const query = this.searchQuery.trim();
                     this.isLoadingManagers = true;
                     try {
-                        const url = '{{ route("admin.manage.downline-batches.search-destinations", $batch) }}?q=' + encodeURIComponent(query);
+                        const params = new URLSearchParams({ q: query });
+                        if (this.selectedTransferRole) params.set('new_role', this.selectedTransferRole);
+                        const url = '{{ route("admin.manage.downline-batches.search-destinations", $batch) }}?' + params.toString();
                         const res = await fetch(url, {
                             credentials: 'same-origin',
                             headers: {
@@ -580,12 +613,15 @@
 
                     const count = this.selectedUserIds.length > 0 ? this.selectedUserIds.length : {{ $batch->current_count }};
                     const managerText = `${this.selectedManagerName} (${this.selectedManagerRole})`;
-                    const message = `Are you sure you want to bulk transfer ${count} downline user(s) to:\n\n${managerText}\n\nTheir upline manager will be updated immediately.`;
+                    const roleText = this.selectedTransferRole
+                        ? `Their role will change to ${this.selectedTransferRole.replaceAll('_', ' ')}. Ineligible downlines will be realigned.`
+                        : 'Their current roles will be kept.';
+                    const message = `Are you sure you want to bulk transfer ${count} downline user(s) to:\n\n${managerText}\n\n${roleText}`;
 
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             title: 'Confirm Bulk Downline Transfer',
-                            html: `<p class="text-sm text-slate-600 mb-2">You are about to transfer <strong>${count}</strong> downline user(s) to eligible upline:</p><p class="text-sm font-bold text-slate-800 bg-slate-100 p-2.5 rounded-xl border border-slate-200">${managerText}</p><p class="text-xs text-amber-600 mt-2">Their upline manager will be updated immediately.</p>`,
+                            html: `<p class="text-sm text-slate-600 mb-2">You are about to transfer <strong>${count}</strong> downline user(s) to eligible upline:</p><p class="text-sm font-bold text-slate-800 bg-slate-100 p-2.5 rounded-xl border border-slate-200">${managerText}</p><p class="text-xs text-amber-600 mt-2">${roleText}</p>`,
                             icon: 'question',
                             showCancelButton: true,
                             confirmButtonColor: '#4f46e5',

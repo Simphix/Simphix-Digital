@@ -25,19 +25,11 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
 
 ### Super Admin Role Management
 
-The `super_admin` role cannot be assigned or granted via the web interface. All Super Admin role promotions and revocations are performed strictly via Artisan CLI commands:
+Super Admins can create and manage internal admin accounts from **Manage Users**. The account form supports `super_admin`, `business_sales_manager`, and `support` roles. Super Admins can update or remove other Super Admin accounts, but cannot delete their own account. Non-super-admin staff cannot grant or modify the `super_admin` role.
 
-```bash
-# Promote a user to Super Admin
-php artisan make:admin user@example.com
-# or
-php artisan admin:make user@example.com
+The `make:admin`, `admin:make`, and `user:make-admin` Artisan commands are temporarily disabled. They return a failure and do not change accounts.
 
-# Revoke Super Admin and revert to personal user
-php artisan make:admin user@example.com --revoke
-```
-
-See [Super Admin Management Documentation](docs/super-admin-management.md) for full details, options, and security architecture.
+See [Super Admin Management Documentation](docs/super-admin-management.md) for account-management details and current CLI status.
 
 ### Administrative Maintenance, Export & Reset Commands
 

@@ -62,10 +62,10 @@
                     </div>
                     <div>
                         <x-input-label value="System Role" />
-                        @if ($user->role === 'super_admin')
+                        @if ($user->role === 'super_admin' && auth()->user()->role !== 'super_admin')
                             <div class="mt-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-between">
                                 <span class="uppercase tracking-wider">Super Admin</span>
-                                <span class="text-[11px] font-normal text-slate-400 italic">Managed via CLI only</span>
+                                <span class="text-[11px] font-normal text-slate-400 italic">Protected Role</span>
                             </div>
                             <input type="hidden" name="role" value="super_admin">
                         @elseif (auth()->user()->role === 'business_sales_manager' && $user->role === 'business_sales_manager')
@@ -87,6 +87,9 @@
                                     <option value="business_sales_manager" {{ old('role', $user->role) == 'business_sales_manager' ? 'selected' : '' }}>Business Sales Manager</option>
                                 @endif
                                 <option value="support" {{ old('role', $user->role) == 'support' ? 'selected' : '' }}>Support</option>
+                                @if (auth()->user()->role === 'super_admin')
+                                    <option value="super_admin" {{ old('role', $user->role) == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
+                                @endif
                             </x-select-input>
                         @endif
                     </div>

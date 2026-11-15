@@ -12,6 +12,7 @@ use App\Support\DownlineMetrics;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -56,6 +57,41 @@ class ManageController extends Controller
         })->count();
 
         return view('admin.manage.users', compact('users', 'totalUsers', 'activeUsers', 'inactiveUsers', 'transactingUsers'));
+    }
+
+    public function createAdmin(): View
+    {
+        return view('admin.manage.create_admin');
+    }
+
+    public function storeAdmin(Request $request): RedirectResponse
+    {
+        \App\Support\PhoneNumber::normalizeRequestInput($request);
+
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'middle_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), 'unique:users,phone'],
+            'role' => ['required', 'string', Rule::in(['super_admin', 'business_sales_manager', 'support'])],
+            'password' => ['required', 'string', 'min:12', 'confirmed'],
+        ]);
+
+        $admin = new User();
+        $admin->forceFill([
+            'first_name' => $validated['first_name'],
+            'middle_name' => $validated['middle_name'] ?? null,
+            'last_name' => $validated['last_name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'role' => $validated['role'],
+            'status' => 'active',
+            'email_verified_at' => now(),
+            'password' => Hash::make($validated['password']),
+        ])->save();
+
+        return redirect()->route('admin.manage.users')->with('success', 'Admin account created successfully.');
     }
 
     /**
@@ -139,13 +175,13 @@ class ManageController extends Controller
             $assignableRoles = array_values(array_diff($assignableRoles, ['business_sales_manager']));
         }
 
-        $roleRules = $user->role === 'super_admin'
-            ? ['required', 'string', 'in:super_admin']
-            : ['required', 'string', Rule::in($assignableRoles)];
+        if ($actor && $actor->role === 'super_admin') {
+            $assignableRoles[] = 'super_admin';
+        }
 
         $roleErrorMsg = ($actor && $actor->role === 'business_sales_manager' && $request->role === 'business_sales_manager')
             ? 'Business Sales Managers cannot assign or upgrade users to the Business Sales Manager role.'
-            : 'Super Admin role cannot be assigned through the interface.';
+            : 'Super Admin role can only be assigned by a Super Admin.';
 
         $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
@@ -154,7 +190,7 @@ class ManageController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
             'phone' => ['required', 'string', 'max:20', \App\Support\PhoneNumber::validationRule(), Rule::unique(User::class)->ignore($user->id)],
             'status' => ['required', 'string', 'in:active,suspended,inactive,banned'],
-            'role' => $roleRules,
+            'role' => ['required', 'string', Rule::in($assignableRoles)],
             'referred_by' => ['sometimes', 'nullable', 'integer', 'exists:users,id'],
         ], [
             'role.in' => $roleErrorMsg,
@@ -262,8 +298,8 @@ class ManageController extends Controller
             return redirect()->back()->with('error', 'You cannot delete your own account.');
         }
 
-        if ($user->role === 'super_admin') {
-            return redirect()->back()->with('error', 'Super Admin accounts cannot be deleted.');
+        if ($user->role === 'super_admin' && (!$actor || $actor->role !== 'super_admin')) {
+            return redirect()->back()->with('error', 'Only a Super Admin can delete another Super Admin account.');
         }
 
         if ($actor && $actor->role === 'business_sales_manager' && $user->role === 'business_sales_manager') {
@@ -381,8 +417,8 @@ class ManageController extends Controller
     {
         $actor = $request->user();
 
-        if ($user->role === 'super_admin') {
-            return redirect()->back()->with('error', 'Super Admin roles cannot be modified from the interface.');
+        if ($user->role === 'super_admin' && (!$actor || $actor->role !== 'super_admin')) {
+            return redirect()->back()->with('error', 'Only a Super Admin can modify another Super Admin role.');
         }
 
         if ($actor && $actor->role === 'business_sales_manager' && $user->role === 'business_sales_manager') {
@@ -391,13 +427,17 @@ class ManageController extends Controller
 
         $assignableRoles = ['personal', 'agent', 'partner', 'business', 'business_agent', 'regional_manager', 'coordinator', 'business_sales_manager', 'support'];
 
+        if ($actor && $actor->role === 'super_admin') {
+            $assignableRoles[] = 'super_admin';
+        }
+
         if ($actor && $actor->role === 'business_sales_manager') {
             $assignableRoles = array_values(array_diff($assignableRoles, ['business_sales_manager']));
         }
 
         $roleErrorMsg = ($actor && $actor->role === 'business_sales_manager' && $request->role === 'business_sales_manager')
             ? 'Business Sales Managers cannot assign or upgrade users to the Business Sales Manager role.'
-            : 'Super Admin role cannot be assigned through the interface.';
+            : 'Super Admin role can only be assigned by a Super Admin.';
 
         $request->validate([
             'role' => ['required', 'string', Rule::in($assignableRoles)],

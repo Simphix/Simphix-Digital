@@ -6,6 +6,12 @@
                 <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">Manage Users</h1>
                 <p class="text-xs text-slate-400 mt-1">View, search, and update accounts registered on SimPhix.</p>
             </div>
+            @if (auth()->user()->role === 'super_admin')
+                <a href="{{ route('admin.manage.admins.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0056D2] hover:bg-[#0049b8] text-white text-xs font-bold rounded-xl transition-colors">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    Create Admin
+                </a>
+            @endif
         </div>
 
         <!-- Success Alert -->
