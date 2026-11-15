@@ -99,6 +99,13 @@ The batch show interface (`resources/views/admin/manage/downline_batches/show.bl
 3. **Manager Picker Cards**: Shows candidate name, verified eligible upline badge, email, phone, and current active downline count.
 4. **Safety Confirmation Modal**: SweetAlert2 dialog requires explicit confirmation before executing reassignments.
 5. **Partial or Complete Transfer**: Admins can select specific users via checkboxes or transfer all held users in bulk.
+6. **Optional Role Change**: Before transferring, an admin may choose one role to apply to the selected users (or all held users when none are selected). Destination manager search and server-side validation use the chosen role's eligible upline roles.
+
+When a transfer changes a user's role, existing direct referrals are reconciled in the same database transaction:
+- Eligible non-personal child roles remain attached to that user.
+- Personal children are detached with `referred_by = null`; personal accounts are not assigned an upline manager by this cleanup.
+- Other ineligible child roles are reassigned to the Platform Level Master Manager.
+- If no new role is selected, user roles and their existing referrals are left unchanged.
 
 ---
 

@@ -344,6 +344,129 @@ class ManagerReplacementDownlineBatchTest extends TestCase
         $showResponse->assertSee($batch->batch_reference);
     }
 
+    public function test_role_change_batch_detail_page_qualifies_joined_status_column(): void
+    {
+        $masterManager = User::platformMasterManager();
+        $member = User::factory()->create([
+            'role' => 'partner',
+            'referred_by' => $masterManager->id,
+            'status' => 'active',
+        ]);
+        $batch = DownlineBatch::create([
+            'batch_reference' => 'BATCH-ROLE-CHANGE-STATUS-001',
+            'source_user_id' => $this->admin->id,
+            'source_role' => 'partner',
+            'source_type' => 'role_change',
+            'master_manager_id' => $masterManager->id,
+            'title' => 'Role Change Status Check',
+            'initial_count' => 1,
+            'current_count' => 1,
+            'transferred_count' => 0,
+            'status' => DownlineBatch::STATUS_HELD,
+            'created_by' => $this->admin->id,
+        ]);
+        DownlineBatchUser::create([
+            'batch_id' => $batch->id,
+            'user_id' => $member->id,
+            'original_referred_by' => $this->admin->id,
+            'current_referred_by' => $masterManager->id,
+            'status' => DownlineBatchUser::STATUS_HELD,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.manage.downline-batches.show', $batch))
+            ->assertOk()
+            ->assertSee($batch->batch_reference)
+            ->assertSee('Role for transferred users');
+    }
+
+    public function test_bulk_transfer_can_change_role_and_reconcile_existing_downlines(): void
+    {
+        $masterManager = User::platformMasterManager();
+        $member = User::factory()->create([
+            'role' => 'partner',
+            'referred_by' => $masterManager->id,
+            'status' => 'active',
+        ]);
+        $eligibleDownline = User::factory()->create([
+            'role' => 'partner',
+            'referred_by' => $member->id,
+            'status' => 'active',
+        ]);
+        $personalDownline = User::factory()->create([
+            'role' => 'personal',
+            'referred_by' => $member->id,
+            'status' => 'active',
+        ]);
+        $ineligibleDownline = User::factory()->create([
+            'role' => 'coordinator',
+            'referred_by' => $member->id,
+            'status' => 'active',
+        ]);
+        $destination = User::factory()->create([
+            'role' => 'regional_manager',
+            'status' => 'active',
+        ]);
+        $wrongDestination = User::factory()->create([
+            'role' => 'coordinator',
+            'status' => 'active',
+        ]);
+        $batch = DownlineBatch::create([
+            'batch_reference' => 'BATCH-ROLE-CHANGE-TRANSFER-001',
+            'source_user_id' => $this->admin->id,
+            'source_role' => 'partner',
+            'source_type' => 'role_change',
+            'master_manager_id' => $masterManager->id,
+            'title' => 'Role Change Transfer',
+            'initial_count' => 1,
+            'current_count' => 1,
+            'transferred_count' => 0,
+            'status' => DownlineBatch::STATUS_HELD,
+            'created_by' => $this->admin->id,
+        ]);
+        $batchUser = DownlineBatchUser::create([
+            'batch_id' => $batch->id,
+            'user_id' => $member->id,
+            'original_referred_by' => $this->admin->id,
+            'current_referred_by' => $masterManager->id,
+            'status' => DownlineBatchUser::STATUS_HELD,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->getJson(route('admin.manage.downline-batches.search-destinations', [
+                'batch' => $batch,
+                'new_role' => 'coordinator',
+            ]))
+            ->assertOk()
+            ->assertJsonFragment(['id' => $destination->id]);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.manage.downline-batches.transfer', $batch), [
+                'destination_user_id' => $wrongDestination->id,
+                'new_role' => 'coordinator',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSame('partner', $member->fresh()->role);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.manage.downline-batches.transfer', $batch), [
+                'destination_user_id' => $destination->id,
+                'new_role' => 'coordinator',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame('coordinator', $member->fresh()->role);
+        $this->assertSame($destination->id, $member->fresh()->referred_by);
+        $this->assertSame($member->id, $eligibleDownline->fresh()->referred_by);
+        $this->assertNull($personalDownline->fresh()->referred_by);
+        $this->assertSame($masterManager->id, $ineligibleDownline->fresh()->referred_by);
+        $this->assertSame(DownlineBatchUser::STATUS_TRANSFERRED, $batchUser->fresh()->status);
+        $this->assertSame($destination->id, $batchUser->fresh()->current_referred_by);
+    }
+
     public function test_cannot_transfer_downline_batch_to_super_admin_or_inactive_user(): void
     {
         $masterManager = User::platformMasterManager();
