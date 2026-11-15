@@ -95,4 +95,25 @@ test('landing page displays coming soon when a category is disabled on the platf
     $response->assertSee('Coming Soon');
 });
 
+test('landing page uses services pricing availability for the entire SIM catalog', function () {
+    $service = Service::firstOrCreate(['name' => 'simcard'], ['is_active' => true]);
+    $service->update(['is_active' => false]);
+
+    $response = $this->get('/');
+
+    $response->assertOk()
+        ->assertSee('SIM pricing, by device')
+        ->assertSee('Coming Soon');
+
+    $html = $response->getContent();
+    $pricingStart = strpos($html, 'id="pricing"');
+    $pricingEnd = strpos($html, '</section>', $pricingStart);
+    $pricingSection = substr($html, $pricingStart, $pricingEnd - $pricingStart);
+
+    $this->assertStringNotContainsString('1,000', $pricingSection);
+    $this->assertStringNotContainsString('2,000', $pricingSection);
+    $this->assertStringNotContainsString('2,500', $pricingSection);
+    $this->assertStringNotContainsString('3,000', $pricingSection);
+});
+
 

@@ -14,6 +14,16 @@ class EnsureCanVerify
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (! \App\Models\Service::isAvailable('verification')) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Identity Verification services are currently disabled by platform administration.',
+                ], 403);
+            }
+            return redirect()->route('dashboard')->with('error', 'Identity Verification services are currently disabled by platform administration.');
+        }
+
         if ($request->user() && UtilityAccess::canVerify($request->user())) {
             return $next($request);
         }

@@ -58,6 +58,7 @@
     <!-- ========================================== -->
     <!-- 1. MONIEPOINT POS TERMINAL REQUEST BANNER  -->
     <!-- ========================================== -->
+    @if (\App\Models\Service::isAvailable('moniepoint_pos'))
     <div class="slide-banner-card relative w-full rounded-2xl shadow-md border border-slate-200 overflow-hidden p-4 sm:p-5 lg:p-6 min-h-[160px] flex items-center"
          style="background: linear-gradient(135deg, #001233 0%, #002875 50%, #0056D2 100%); color: #ffffff;">
 
@@ -133,10 +134,12 @@
 
         </div>
     </div>
+    @endif
 
     <!-- ========================================== -->
     <!-- 2. BUSINESS LOAN REQUEST BANNER (BELOW POS)-->
     <!-- ========================================== -->
+    @if (\App\Models\Service::isAvailable('loans'))
     <div class="slide-banner-card relative w-full rounded-2xl shadow-md border border-slate-200 overflow-hidden p-4 sm:p-5 lg:p-6 min-h-[160px] flex items-center"
          style="background: linear-gradient(135deg, #063d2e 0%, #0b4a3a 50%, #0d2f5a 100%); color: #ffffff;">
 
@@ -214,5 +217,6 @@
 
         </div>
     </div>
+    @endif
 
 </div>

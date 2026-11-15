@@ -75,7 +75,9 @@
         </div>
 
         <!-- Landscape Travel & Tours Banner (Mobile Responsive) -->
-        @include('travel.partials.landscape-banner')
+        @if (\App\Models\Service::isAvailable('travel'))
+            @include('travel.partials.landscape-banner')
+        @endif
 
         {{-- Flash Messages --}}
         @if (session('success'))
@@ -203,113 +205,54 @@
 
         </div>
 
-        <!-- QUICK SERVICES PANEL (4 items per row on desktop) -->
-        <div class="dash-card p-4 mb-4">
-            <h3 class="text-sm font-semibold text-slate-800 font-display mb-3 flex items-center gap-2">
-                <i data-lucide="grid" class="text-primary w-5 h-5"></i>
-                Quick Transaction Services
-            </h3>
+        @php
+            $quickServices = collect([
+                ['title' => 'SIM Plan', 'description' => 'Activations & SIMs', 'route' => route('sims.index'), 'icon' => 'cpu', 'icon_classes' => 'bg-primary/10 text-primary', 'available' => auth()->user()->role !== 'agent' && \App\Models\Service::isAvailable('simcard')],
+                ['title' => 'Cash Out', 'description' => 'Pay out to bank', 'route' => route('withdraw'), 'icon' => 'banknote', 'icon_classes' => 'bg-primary/10 text-primary', 'available' => auth()->user()->role !== 'agent' && auth()->user()->role !== 'personal' && \App\Models\CashoutSettings::enabled()],
+                ['title' => 'NIN Verification', 'description' => 'Verify your identity', 'route' => route('nin.verification.index'), 'icon' => 'id-card', 'icon_classes' => 'bg-vibrant/10 text-vibrant', 'available' => \App\Support\UtilityAccess::canVerify(auth()->user()) && \App\Models\Service::isAvailable('verification')],
+                ['title' => 'BVN Verification', 'description' => 'BVN verification service', 'route' => route('bvn.verification.index'), 'icon' => 'id-card', 'icon_classes' => 'bg-vibrant/10 text-vibrant', 'available' => \App\Support\UtilityAccess::canVerify(auth()->user()) && \App\Models\Service::isAvailable('verification')],
+                ['title' => 'NIN by Phone', 'description' => 'NIN retrieval by phone', 'route' => route('nin.phone.index'), 'icon' => 'id-card', 'icon_classes' => 'bg-vibrant/10 text-vibrant', 'available' => \App\Support\UtilityAccess::canVerify(auth()->user()) && \App\Models\Service::isAvailable('verification')],
+                ['title' => 'NIN by Demo', 'description' => 'NIN retrieval by demo', 'route' => route('nin.demo.index'), 'icon' => 'id-card', 'icon_classes' => 'bg-vibrant/10 text-vibrant', 'available' => \App\Support\UtilityAccess::canVerify(auth()->user()) && \App\Models\Service::isAvailable('verification')],
+                ['title' => 'CAC Registration', 'description' => 'Register your business', 'route' => route('cac.overview'), 'icon' => 'briefcase', 'icon_classes' => 'bg-primary/10 text-primary', 'available' => \App\Models\Service::isAvailable('cac')],
+                ['title' => 'Travel & Tours', 'description' => 'Umrah, Hajj & Flights', 'route' => route('travel.index'), 'icon' => 'plane', 'icon_classes' => 'bg-primary/10 text-primary', 'available' => \App\Models\Service::isAvailable('travel')],
+                ['title' => 'POS Request', 'description' => 'Terminals & Hardware', 'route' => route('moniepoint.pos.index'), 'icon' => 'smartphone', 'icon_classes' => 'bg-primary/10 text-primary', 'available' => \App\Models\Service::isAvailable('moniepoint_pos')],
+                ['title' => 'Business Loans', 'description' => 'Working capital', 'route' => route('loans.index'), 'icon' => 'banknote', 'icon_classes' => 'bg-primary/10 text-primary', 'available' => \App\Models\Service::isAvailable('loans')],
+            ])->filter(fn ($service) => $service['available'])->values();
+        @endphp
 
-            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-2 g-md-4">
-
-                @if (auth()->user()->role !== 'agent')
-                    <!-- Service 3: SIM Services -->
-                    <div class="col">
-                        <a href="{{ route('sims.index') }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
-                            <div class="p-2 rounded-lg bg-primary/10 text-primary flex items-center justify-center w-10 h-10">
-                                <i data-lucide="cpu" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800 mb-0 font-display text-sm">SIM Plan</h4>
-                                <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">Activations & SIMs</p>
-                            </div>
-                        </a>
-                    </div>
-
-                    @if (auth()->user()->role !== 'personal' && \App\Models\CashoutSettings::enabled())
-                    <!-- Service 4: Cash Out -->
-                    <div class="col">
-                        <a href="{{ route('withdraw') }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
-                            <div class="p-2 rounded-lg bg-primary/10 text-primary flex items-center justify-center w-10 h-10">
-                                <i data-lucide="banknote" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800 mb-0 font-display text-sm">Cash Out</h4>
-                                <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">Pay out to bank</p>
-                            </div>
-                        </a>
-                    </div>
-
-                    @endif
+        <!-- QUICK SERVICES PANEL -->
+        <div class="dash-card p-4 mb-4" x-data="{ showAllQuickServices: false }">
+            <div class="mb-3 flex items-center justify-between gap-3">
+                <h3 class="text-sm font-semibold text-slate-800 font-display flex items-center gap-2">
+                    <i data-lucide="grid" class="text-primary w-5 h-5"></i>
+                    Quick Transaction Services
+                </h3>
+                @if ($quickServices->count() > 8)
+                    <button type="button"
+                            @click="showAllQuickServices = !showAllQuickServices"
+                            :aria-expanded="showAllQuickServices.toString()"
+                            aria-controls="quick-transaction-services"
+                            class="inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-primary hover:bg-primary/5 rounded-md transition-colors">
+                        <span x-text="showAllQuickServices ? 'Show less' : 'View all'">View all</span>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform" :class="showAllQuickServices ? 'rotate-180' : ''"></i>
+                    </button>
                 @endif
+            </div>
 
-                @if (\App\Support\UtilityAccess::canVerify(auth()->user()))
-                    <!-- Service 6: NIN -->
-                    <div class="col">
-                        <a href="{{ route('nin.verification.index') }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
-                            <div class="p-2 rounded-lg bg-vibrant/10 text-vibrant flex items-center justify-center w-10 h-10">
-                                <i data-lucide="id-card" class="w-5 h-5"></i>
+            <div id="quick-transaction-services" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-2 g-md-4">
+                @foreach ($quickServices as $service)
+                    <div class="col" @if ($loop->index >= 8) x-show="showAllQuickServices" x-cloak @endif>
+                        <a href="{{ $service['route'] }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
+                            <div class="p-2 rounded-lg {{ $service['icon_classes'] }} flex items-center justify-center w-10 h-10">
+                                <i data-lucide="{{ $service['icon'] }}" class="w-5 h-5"></i>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-slate-800 mb-0 font-display text-sm">NIN Verification</h4>
-                                <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">Verify your identity</p>
+                                <h4 class="font-semibold text-slate-800 mb-0 font-display text-sm">{{ $service['title'] }}</h4>
+                                <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">{{ $service['description'] }}</p>
                             </div>
                         </a>
                     </div>
-
-                    <!-- Service 7: BVN -->
-                    <div class="col">
-                        <a href="{{ route('bvn.verification.index') }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
-                            <div class="p-2 rounded-lg bg-vibrant/10 text-vibrant flex items-center justify-center w-10 h-10">
-                                <i data-lucide="id-card" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800 mb-0 font-display text-sm">BVN Verification</h4>
-                                <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">BVN verification service</p>
-                            </div>
-                        </a>
-                    </div>
-
-                    <!-- Service 8: NIN by Phone -->
-                    <div class="col">
-                        <a href="{{ route('nin.phone.index') }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
-                            <div class="p-2 rounded-lg bg-vibrant/10 text-vibrant flex items-center justify-center w-10 h-10">
-                                <i data-lucide="id-card" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800 mb-0 font-display text-sm">NIN by Phone</h4>
-                                <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">NIN retrieval by phone</p>
-                            </div>
-                        </a>
-                    </div>
-
-                    <!-- Service 9: NIN by Demo -->
-                    <div class="col">
-                        <a href="{{ route('nin.phone.index') }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
-                            <div class="p-2 rounded-lg bg-vibrant/10 text-vibrant flex items-center justify-center w-10 h-10">
-                                <i data-lucide="id-card" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-slate-800 mb-0 font-display text-sm">NIN by Demo</h4>
-                                <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">NIN retrieval by demo</p>
-                            </div>
-                        </a>
-                    </div>
-                @endif
-
-                <!-- Service 11: CAC Registration -->
-                <div class="col">
-                    <a href="{{ route('cac.overview') }}" class="service-btn p-3 p-md-4 text-center flex flex-col items-center justify-center gap-2">
-                        <div class="p-2 rounded-lg bg-primary/10 text-primary flex items-center justify-center w-10 h-10">
-                            <i data-lucide="briefcase" class="w-5 h-5"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-slate-800 mb-0 font-display text-sm">CAC Registration</h4>
-                            <p class="text-slate-400 hidden md:block mb-0 mt-1 text-xs">Register your business</p>
-                        </div>
-                    </a>
-                </div>
-
+                @endforeach
             </div>
         </div>
 

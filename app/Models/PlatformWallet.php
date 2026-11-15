@@ -11,6 +11,7 @@ class PlatformWallet extends Model
     public const TYPE_SIM_ACTIVATION = 'sim_activation';
     public const TYPE_CASHOUT_CHARGES = 'cashout_charges';
     public const TYPE_BSM_COMMISSION = 'bsm_commission';
+    public const TYPE_CHARGES = 'charges';
 
     protected $fillable = [
         'type',
@@ -52,6 +53,14 @@ class PlatformWallet extends Model
         } catch (\Illuminate\Database\QueryException $e) {
             return static::where('type', $type)->firstOrFail();
         }
+    }
+
+    /**
+     * Get or create the central Charges Wallet.
+     */
+    public static function chargesWallet(): self
+    {
+        return static::forType(self::TYPE_CHARGES, 'Charges Wallet');
     }
 
     public function transactions(): HasMany

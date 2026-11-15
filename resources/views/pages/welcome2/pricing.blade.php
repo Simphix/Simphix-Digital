@@ -1,5 +1,6 @@
 @php
-    $simService = \App\Models\Service::where('name', 'simcard')->with(['fields.prices'])->first();
+    $simServiceAvailable = \App\Models\Service::isAvailable('simcard');
+    $simService = \App\Models\Service::whereRaw('LOWER(name) = ?', ['simcard'])->with(['fields.prices'])->first();
     $fields = $simService ? $simService->fields : collect();
     $currentUser = auth()->user();
 
@@ -9,28 +10,24 @@
             'desc' => 'For payment terminals',
             'illustration' => 'pages.welcome2.illustrations.pos-sim',
             'match' => ['pos_sim', 'pos sim', 'pos'],
-            'fallback_price' => '1,000',
         ],
         [
             'name' => 'CCTV Camera SIM',
             'desc' => 'For surveillance systems',
             'illustration' => 'pages.welcome2.illustrations.cctv-sim',
             'match' => ['cctv_sim', 'cctv', 'camera_sim', 'camera sim'],
-            'fallback_price' => '2,000',
         ],
         [
             'name' => 'Router SIM',
             'desc' => 'For mobile routers',
             'illustration' => 'pages.welcome2.illustrations.router-sim',
             'match' => ['router_sim', 'router sim', 'router'],
-            'fallback_price' => '2,500',
         ],
         [
             'name' => 'GPS Tracking SIM',
             'desc' => 'For tracking devices',
             'illustration' => 'pages.welcome2.illustrations.gps-sim',
             'match' => ['gps_sim', 'gps sim', 'gps'],
-            'fallback_price' => '3,000',
         ],
     ];
 
@@ -49,10 +46,10 @@
             }
         }
 
-        $isComingSoon = false;
+        $isComingSoon = ! $simServiceAvailable;
         $price = null;
 
-        if ($field) {
+        if ($field && ! $isComingSoon) {
             if (!$field->is_active || (bool) $field->activation_disabled) {
                 $isComingSoon = true;
             } else {
@@ -63,8 +60,8 @@
                     $isComingSoon = true;
                 }
             }
-        } else {
-            $price = $card['fallback_price'];
+        } elseif (! $field) {
+            $isComingSoon = true;
         }
 
         $simTypes[] = [
