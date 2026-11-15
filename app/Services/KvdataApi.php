@@ -113,10 +113,14 @@ class KvdataApi implements SmeDataProviderInterface
             'raw_body' => $response->body(),
         ]);
 
+        $rawStatus = $data['Status'] ?? $data['status'] ?? null;
+        $statusStr = is_string($rawStatus) ? strtolower(trim($rawStatus)) : (is_numeric($rawStatus) ? (string) $rawStatus : null);
+
         $isSuccess = $response->successful() && (
-            (isset($data['status']) && in_array(strtolower((string) $data['status']), ['success', 'successful', 'true', '1'], true)) ||
+            ($statusStr !== null && in_array($statusStr, ['success', 'successful', 'true', '1'], true)) ||
             (isset($data['success']) && $data['success'] === true) ||
-            (isset($data['code']) && in_array((string) $data['code'], ['200', '201', '0', '00', '000'], true))
+            (isset($data['code']) && in_array((string) $data['code'], ['200', '201', '0', '00', '000'], true)) ||
+            (in_array($response->status(), [200, 201], true) && !empty($data['ident']) && ($statusStr === null || !in_array($statusStr, ['fail', 'failed', 'false', '0', 'error'], true)))
         );
 
         $isSuccess ? $breaker->recordSuccess() : $breaker->recordFailure();
@@ -132,12 +136,37 @@ class KvdataApi implements SmeDataProviderInterface
             ?? $apiData['id']
             ?? $requestId;
 
+        // Resolve user-friendly message from API response
+        $message = null;
+        if (!empty($data['message']) && is_string($data['message'])) {
+            $message = $data['message'];
+        } elseif (!empty($data['msg']) && is_string($data['msg'])) {
+            $message = $data['msg'];
+        } elseif (!empty($data['api_response']) && is_string($data['api_response'])) {
+            $message = $data['api_response'];
+        } elseif (!empty($data['detail']) && is_string($data['detail'])) {
+            $message = $data['detail'];
+        } elseif (!empty($data['error']) && is_string($data['error'])) {
+            $message = $data['error'];
+        } elseif (is_array($data)) {
+            foreach ($data as $key => $val) {
+                if (is_array($val) && isset($val[0]) && is_string($val[0])) {
+                    $message = "{$key}: {$val[0]}";
+                    break;
+                }
+            }
+        }
+
+        if (empty($message)) {
+            $message = $isSuccess ? 'Transaction successful' : 'Purchase failed';
+        }
+
         return [
             'success'         => $isSuccess,
             'data'            => $data ?? [],
             'api_data'        => $apiData,
             'transaction_ref' => (string) $transactionRef,
-            'message'         => $data['message'] ?? $data['msg'] ?? ($isSuccess ? 'Transaction successful' : 'Purchase failed'),
+            'message'         => $message,
         ];
     }
 }

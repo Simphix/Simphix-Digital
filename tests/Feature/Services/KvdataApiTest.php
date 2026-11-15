@@ -100,6 +100,32 @@ it('accepts various success status flags from vendor', function () {
         ->and($r4['message'])->toBe('Insufficient vendor balance');
 });
 
+it('handles uppercase Status key and HTTP 201 with api_response correctly', function () {
+    Http::fake([
+        '*' => Http::response([
+            'id'            => 5943726,
+            'ident'         => 'DATA6ca7fc22d-129d-4916-b0d2-6e368d3f5b0c',
+            'customer_ref'  => '',
+            'network'       => 1,
+            'api_response'  => "Y'ello! You have gifted 1GB to 2349069714373.",
+            'balance_after' => '38520.0',
+            'mobile_number' => '09069714373',
+            'plan'          => 442,
+            'Status'        => 'successful',
+            'plan_network'  => 'MTN',
+            'plan_name'     => '1.0GB',
+            'plan_amount'   => '480.0',
+        ], 201),
+    ]);
+
+    $api = new KvdataApi(fakeKvdataSettings());
+    $result = $api->purchase('09069714373', 'MTN', '442', 'REQ_TEST_1');
+
+    expect($result['success'])->toBeTrue()
+        ->and($result['transaction_ref'])->toBe('DATA6ca7fc22d-129d-4916-b0d2-6e368d3f5b0c')
+        ->and($result['message'])->toBe("Y'ello! You have gifted 1GB to 2349069714373.");
+});
+
 it('recovers on retry after one connection failure', function () {
     $attempts = 0;
     Http::fake(function () use (&$attempts) {
