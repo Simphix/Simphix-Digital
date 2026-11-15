@@ -344,6 +344,59 @@ class ManagerReplacementDownlineBatchTest extends TestCase
         $showResponse->assertSee($batch->batch_reference);
     }
 
+    public function test_downline_batch_status_tabs_filter_batches_separately(): void
+    {
+        $masterManager = User::platformMasterManager();
+        $makeBatch = function (string $reference, string $status) use ($masterManager): DownlineBatch {
+            return DownlineBatch::create([
+                'batch_reference' => $reference,
+                'source_user_id' => $this->admin->id,
+                'source_role' => 'regional_manager',
+                'source_type' => 'outgoing_manager',
+                'master_manager_id' => $masterManager->id,
+                'title' => $reference,
+                'initial_count' => 1,
+                'current_count' => $status === DownlineBatch::STATUS_TRANSFERRED ? 0 : 1,
+                'transferred_count' => $status === DownlineBatch::STATUS_HELD ? 0 : 1,
+                'status' => $status,
+                'created_by' => $this->admin->id,
+            ]);
+        };
+
+        $held = $makeBatch('BATCH-TAB-HELD-001', DownlineBatch::STATUS_HELD);
+        $partial = $makeBatch('BATCH-TAB-PARTIAL-001', DownlineBatch::STATUS_PARTIALLY_TRANSFERRED);
+        $transferred = $makeBatch('BATCH-TAB-TRANSFERRED-001', DownlineBatch::STATUS_TRANSFERRED);
+        $indexUrl = route('admin.manage.downline-batches.index');
+
+        $this->actingAs($this->admin)->get($indexUrl . '?search=BATCH-TAB')
+            ->assertOk()
+            ->assertSee($held->batch_reference)
+            ->assertSee($partial->batch_reference)
+            ->assertSee($transferred->batch_reference)
+            ->assertSee(htmlspecialchars(route('admin.manage.downline-batches.index', [
+                'status' => DownlineBatch::STATUS_HELD,
+                'search' => 'BATCH-TAB',
+            ]), ENT_QUOTES), false);
+
+        $this->get($indexUrl . '?status=' . DownlineBatch::STATUS_HELD)
+            ->assertOk()
+            ->assertSee($held->batch_reference)
+            ->assertDontSee($partial->batch_reference)
+            ->assertDontSee($transferred->batch_reference);
+
+        $this->get($indexUrl . '?status=' . DownlineBatch::STATUS_PARTIALLY_TRANSFERRED)
+            ->assertOk()
+            ->assertSee($partial->batch_reference)
+            ->assertDontSee($held->batch_reference)
+            ->assertDontSee($transferred->batch_reference);
+
+        $this->get($indexUrl . '?status=' . DownlineBatch::STATUS_TRANSFERRED)
+            ->assertOk()
+            ->assertSee($transferred->batch_reference)
+            ->assertDontSee($held->batch_reference)
+            ->assertDontSee($partial->batch_reference);
+    }
+
     public function test_role_change_batch_detail_page_qualifies_joined_status_column(): void
     {
         $masterManager = User::platformMasterManager();

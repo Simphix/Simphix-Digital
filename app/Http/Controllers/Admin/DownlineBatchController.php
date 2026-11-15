@@ -25,9 +25,18 @@ class DownlineBatchController extends Controller
     public function index(Request $request): View
     {
         $query = DownlineBatch::with(['sourceUser', 'masterManager', 'creator'])->latest();
+        $validStatuses = [
+            DownlineBatch::STATUS_HELD,
+            DownlineBatch::STATUS_PARTIALLY_TRANSFERRED,
+            DownlineBatch::STATUS_TRANSFERRED,
+        ];
+        $activeStatus = $request->query('status');
+        if (!in_array($activeStatus, $validStatuses, true)) {
+            $activeStatus = null;
+        }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        if ($activeStatus !== null) {
+            $query->where('status', $activeStatus);
         }
 
         if ($request->filled('search')) {
@@ -45,6 +54,16 @@ class DownlineBatchController extends Controller
         }
 
         $batches = $query->paginate(15)->withQueryString();
+        $statusCounts = DownlineBatch::query()
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+        $batchTabs = [
+            ['label' => 'All', 'status' => null, 'count' => (int) $statusCounts->sum()],
+            ['label' => 'Held', 'status' => DownlineBatch::STATUS_HELD, 'count' => (int) ($statusCounts[DownlineBatch::STATUS_HELD] ?? 0)],
+            ['label' => 'Partially Transferred', 'status' => DownlineBatch::STATUS_PARTIALLY_TRANSFERRED, 'count' => (int) ($statusCounts[DownlineBatch::STATUS_PARTIALLY_TRANSFERRED] ?? 0)],
+            ['label' => 'Transferred', 'status' => DownlineBatch::STATUS_TRANSFERRED, 'count' => (int) ($statusCounts[DownlineBatch::STATUS_TRANSFERRED] ?? 0)],
+        ];
 
         $stats = [
             'total_batches'     => DownlineBatch::count(),
@@ -53,7 +72,7 @@ class DownlineBatchController extends Controller
             'transferred_users' => DownlineBatch::sum('transferred_count'),
         ];
 
-        return view('admin.manage.downline_batches.index', compact('batches', 'stats'));
+        return view('admin.manage.downline_batches.index', compact('batches', 'stats', 'batchTabs', 'activeStatus'));
     }
 
     /**

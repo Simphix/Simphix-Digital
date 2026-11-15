@@ -78,6 +78,25 @@
             </div>
         </div>
 
+        <!-- Batch Status Tabs -->
+        <nav class="flex gap-2 overflow-x-auto border-b border-slate-200" aria-label="Filter batches by status">
+            @foreach ($batchTabs as $tab)
+                @php
+                    $isActive = $activeStatus === $tab['status'];
+                    $tabParams = array_filter([
+                        'status' => $tab['status'],
+                        'search' => request('search'),
+                    ], fn ($value) => $value !== null && $value !== '');
+                @endphp
+                <a href="{{ route('admin.manage.downline-batches.index', $tabParams) }}"
+                         aria-current="{{ $isActive ? 'page' : 'false' }}"
+                   class="inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-xs font-bold transition {{ $isActive ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800' }}">
+                    {{ $tab['label'] }}
+                    <span class="rounded-full px-2 py-0.5 text-[10px] {{ $isActive ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500' }}">{{ number_format($tab['count']) }}</span>
+                </a>
+            @endforeach
+        </nav>
+
         <!-- Filter & Batches Table Card -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <!-- Filter Bar -->
@@ -91,15 +110,9 @@
                             <i data-lucide="search" class="w-4 h-4"></i>
                         </div>
                     </div>
-
-                    <div class="w-full md:w-56">
-                        <x-select-input name="status" class="rounded-xl !text-xs font-bold text-slate-600 shadow-sm w-full">
-                            <option value="">All Statuses</option>
-                            <option value="held" {{ request('status') === 'held' ? 'selected' : '' }}>Held (Pending Transfer)</option>
-                            <option value="partially_transferred" {{ request('status') === 'partially_transferred' ? 'selected' : '' }}>Partially Transferred</option>
-                            <option value="transferred" {{ request('status') === 'transferred' ? 'selected' : '' }}>Fully Transferred</option>
-                        </x-select-input>
-                    </div>
+                    @if ($activeStatus)
+                        <input type="hidden" name="status" value="{{ $activeStatus }}">
+                    @endif
 
                     <div class="flex items-center gap-2">
                         <x-primary-button type="submit" class="flex-1 md:flex-none !text-xs !py-2.5">
