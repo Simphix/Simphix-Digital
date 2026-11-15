@@ -86,7 +86,7 @@
             </div>
         @endif
 
-        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true) && auth()->user()->role !== 'agent')
+        @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true) && auth()->user()->role !== 'agent' && \App\Models\Service::isAvailable('simcard'))
             @php
                 $simsActive = request()->routeIs('sims.*');
             @endphp
@@ -134,7 +134,7 @@
             </div>
         @endif
 
-        @if (\App\Support\UtilityAccess::canVerify(auth()->user()))
+        @if (\App\Support\UtilityAccess::canVerify(auth()->user()) && \App\Models\Service::isAvailable('verification'))
             @php
                 $verificationActive = request()->routeIs('bvn.verification.index', 'nin.verification.index', 'nin.demo.index', 'nin.phone.index');
             @endphp
@@ -186,10 +186,18 @@
             @include('layouts.partials.sidebar-link', ['href' => route('leaderboard'), 'icon' => 'trophy', 'label' => __('Leaderboard'), 'active' => request()->routeIs('leaderboard')])
         @endif
         @if (auth()->user() && !\App\Support\StaffAccess::isInternal(auth()->user()))
-            @include('layouts.partials.sidebar-link', ['href' => route('cac.overview'), 'icon' => 'file-badge', 'label' => __('CAC Registration'), 'active' => request()->routeIs('cac.*')])
-            @include('layouts.partials.sidebar-link', ['href' => route('travel.index'), 'icon' => 'plane', 'label' => __('Travel & Tours'), 'active' => request()->routeIs('travel.*')])
-            @include('layouts.partials.sidebar-link', ['href' => route('moniepoint.pos.index'), 'icon' => 'smartphone', 'label' => __('POS Request'), 'active' => request()->routeIs('moniepoint.pos.*')])
-            @include('layouts.partials.sidebar-link', ['href' => route('loans.index'), 'icon' => 'banknote', 'label' => __('Business Loans'), 'active' => request()->routeIs('loans.*')])
+            @if (\App\Models\Service::isAvailable('cac'))
+                @include('layouts.partials.sidebar-link', ['href' => route('cac.overview'), 'icon' => 'file-badge', 'label' => __('CAC Registration'), 'active' => request()->routeIs('cac.*')])
+            @endif
+            @if (\App\Models\Service::isAvailable('travel'))
+                @include('layouts.partials.sidebar-link', ['href' => route('travel.index'), 'icon' => 'plane', 'label' => __('Travel & Tours'), 'active' => request()->routeIs('travel.*')])
+            @endif
+            @if (\App\Models\Service::isAvailable('moniepoint_pos'))
+                @include('layouts.partials.sidebar-link', ['href' => route('moniepoint.pos.index'), 'icon' => 'smartphone', 'label' => __('POS Request'), 'active' => request()->routeIs('moniepoint.pos.*')])
+            @endif
+            @if (\App\Models\Service::isAvailable('loans'))
+                @include('layouts.partials.sidebar-link', ['href' => route('loans.index'), 'icon' => 'banknote', 'label' => __('Business Loans'), 'active' => request()->routeIs('loans.*')])
+            @endif
         @endif
         @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('support'), 'icon' => 'help-circle', 'label' => __('Support'), 'active' => request()->routeIs('support')])
@@ -207,7 +215,9 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.customers'), 'icon' => 'user-check', 'label' => 'Customer Desk', 'active' => request()->routeIs('bsm.customers')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.acceleration'), 'icon' => 'zap', 'label' => 'Sales Acceleration', 'active' => request()->routeIs('bsm.acceleration')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.commission-wallet'), 'icon' => 'wallet', 'label' => 'Commission Wallet', 'active' => request()->routeIs('bsm.commission-wallet')])
-                @include('layouts.partials.sidebar-link', ['href' => route('sims.inventory'), 'icon' => 'database', 'label' => 'All SIMs Inventory', 'active' => request()->routeIs('sims.inventory*')])
+                @if (\App\Models\Service::isAvailable('simcard'))
+                    @include('layouts.partials.sidebar-link', ['href' => route('sims.inventory'), 'icon' => 'database', 'label' => 'All SIMs Inventory', 'active' => request()->routeIs('sims.inventory*')])
+                @endif
 
                 @php
                     $bsmDownlineBatchesActive = request()->routeIs('admin.manage.downline-batches*');

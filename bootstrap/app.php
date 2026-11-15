@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'utility_access' => \App\Http\Middleware\EnsureCanUseUtilities::class,
             'cashout_enabled' => \App\Http\Middleware\EnsureCashoutEnabled::class,
             'verification_access' => \App\Http\Middleware\EnsureCanVerify::class,
+            'service_enabled' => \App\Http\Middleware\EnsureServiceEnabled::class,
         ]);
 
         // Run the cashout kill-switch before route-model binding so a disabled

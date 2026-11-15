@@ -16,10 +16,17 @@ class ServiceManager
      */
     public static function getServiceWithFields(string $serviceName, array $fields): ?Service
     {
-        $service = Service::firstOrCreate(
-            ['name' => $serviceName],
-            ['description' => $serviceName . ' Services']
-        );
+        $service = Service::query()
+            ->whereRaw('LOWER(name) = ?', [strtolower(trim($serviceName))])
+            ->first();
+
+        if (! $service) {
+            $service = Service::create([
+                'name' => $serviceName,
+                'description' => $serviceName . ' Services',
+                'is_active' => true,
+            ]);
+        }
 
         foreach ($fields as $fieldData) {
             ServiceField::firstOrCreate(

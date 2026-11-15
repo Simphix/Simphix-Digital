@@ -107,15 +107,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // themselves through this storefront flow.
     Route::middleware('utility_access')->group(function () {
         // Airtime Routes
-        Route::get('/airtime', [\App\Http\Controllers\Action\AirtimeController::class, 'airtime'])->name('airtime');
-        Route::post('/airtime', [\App\Http\Controllers\Action\AirtimeController::class, 'buyAirtime'])->name('buyairtime');
+        Route::middleware('service_enabled:airtime')->group(function () {
+            Route::get('/airtime', [\App\Http\Controllers\Action\AirtimeController::class, 'airtime'])->name('airtime');
+            Route::post('/airtime', [\App\Http\Controllers\Action\AirtimeController::class, 'buyAirtime'])->name('buyairtime');
+        });
 
         // SME Data Routes
-        Route::get('/buy-sme-data', [\App\Http\Controllers\Action\SmeDataController::class, 'index'])->name('buy-sme-data');
-        Route::post('/buy-sme-data', [\App\Http\Controllers\Action\SmeDataController::class, 'buySMEdata'])->name('buy-sme-data.submit');
-        Route::get('/sme/fetch-type', [\App\Http\Controllers\Action\SmeDataController::class, 'fetchDataType'])->name('sme.fetch.type');
-        Route::get('/sme/fetch-plan', [\App\Http\Controllers\Action\SmeDataController::class, 'fetchDataPlan'])->name('sme.fetch.plan');
-        Route::get('/sme/fetch-price', [\App\Http\Controllers\Action\SmeDataController::class, 'fetchSmeBundlePrice'])->name('sme.fetch.price');
+        Route::middleware('service_enabled:smedata')->group(function () {
+            Route::get('/buy-sme-data', [\App\Http\Controllers\Action\SmeDataController::class, 'index'])->name('buy-sme-data');
+            Route::post('/buy-sme-data', [\App\Http\Controllers\Action\SmeDataController::class, 'buySMEdata'])->name('buy-sme-data.submit');
+            Route::get('/sme/fetch-type', [\App\Http\Controllers\Action\SmeDataController::class, 'fetchDataType'])->name('sme.fetch.type');
+            Route::get('/sme/fetch-plan', [\App\Http\Controllers\Action\SmeDataController::class, 'fetchDataPlan'])->name('sme.fetch.plan');
+            Route::get('/sme/fetch-price', [\App\Http\Controllers\Action\SmeDataController::class, 'fetchSmeBundlePrice'])->name('sme.fetch.price');
+        });
     });
 
     // Profile PIN update requires verified email (financial action)
@@ -127,7 +131,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/phone/verify-otp', [ProfileController::class, 'verifyPhoneOtp'])->name('profile.phone.verify-otp')->middleware('throttle:5,1');
 
     // CAC registration (customer accounts only — enforced in the controller)
-    Route::prefix('cac')->name('cac.')->group(function () {
+    Route::prefix('cac')->name('cac.')->middleware('service_enabled:cac')->group(function () {
         Route::get('/', [\App\Http\Controllers\CacRegistrationController::class, 'overview'])->name('overview');
         Route::get('/history', [\App\Http\Controllers\CacRegistrationController::class, 'history'])->name('history');
         Route::get('/history/{registration}', [\App\Http\Controllers\CacRegistrationController::class, 'show'])->name('show');
@@ -138,7 +142,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Travel & Tours (Umrah, Hajj, & International Travels)
-    Route::prefix('travel')->name('travel.')->group(function () {
+    Route::prefix('travel')->name('travel.')->middleware('service_enabled:travel')->group(function () {
         Route::get('/', [\App\Http\Controllers\TravelTourController::class, 'index'])->name('index');
         Route::post('/request', [\App\Http\Controllers\TravelTourController::class, 'store'])->name('store');
         Route::get('/tracking', [\App\Http\Controllers\TravelTourController::class, 'tracking'])->name('tracking');
@@ -146,7 +150,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Moniepoint POS Terminal Requests
-    Route::prefix('moniepoint/pos')->name('moniepoint.pos.')->group(function () {
+    Route::prefix('moniepoint/pos')->name('moniepoint.pos.')->middleware('service_enabled:moniepoint_pos')->group(function () {
         Route::get('/', [\App\Http\Controllers\MoniepointPosController::class, 'index'])->name('index');
         Route::get('/apply', [\App\Http\Controllers\MoniepointPosController::class, 'create'])->name('create');
         Route::get('/request', [\App\Http\Controllers\MoniepointPosController::class, 'create']);
@@ -155,7 +159,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Business Loans (Exclusive for Moniepoint Business Owners)
-    Route::prefix('loans')->name('loans.')->group(function () {
+    Route::prefix('loans')->name('loans.')->middleware('service_enabled:loans')->group(function () {
         Route::get('/', [\App\Http\Controllers\LoanRequestController::class, 'index'])->name('index');
         Route::get('/apply', [\App\Http\Controllers\LoanRequestController::class, 'create'])->name('create');
         Route::post('/request', [\App\Http\Controllers\LoanRequestController::class, 'store'])->name('store');
@@ -169,43 +173,45 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/support/{ticket}/reply', [\App\Http\Controllers\SupportController::class, 'reply'])->name('support.reply');
 
     // SIM Services Routes
-    Route::get('/sims', [\App\Http\Controllers\smartsim\SimsController::class, 'overview'])->name('sims.index');
-    Route::get('/sims/pos', [\App\Http\Controllers\smartsim\SimsController::class, 'pos'])->name('sims.pos');
-    Route::get('/sims/pos/request', [\App\Http\Controllers\smartsim\SimsController::class, 'posRequestForm'])->name('sims.pos.request');
-    Route::get('/sims/cctv', [\App\Http\Controllers\smartsim\SimsController::class, 'cctv'])->name('sims.cctv');
-    Route::get('/sims/cctv/request', [\App\Http\Controllers\smartsim\SimsController::class, 'cctvRequestForm'])->name('sims.cctv.request');
-    Route::get('/sims/router', [\App\Http\Controllers\smartsim\SimsController::class, 'router'])->name('sims.router');
-    Route::get('/sims/router/request', [\App\Http\Controllers\smartsim\SimsController::class, 'routerRequestForm'])->name('sims.router.request');
-    Route::get('/sims/inventory', [\App\Http\Controllers\smartsim\SimsController::class, 'inventory'])->name('sims.inventory');
-    Route::get('/sims/mine', [\App\Http\Controllers\smartsim\SimsController::class, 'mine'])->name('sims.mine');
-    Route::get('/sims/available-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'getAvailableNumbers'])->name('sims.available');
-    Route::post('/sims/request', [\App\Http\Controllers\smartsim\SimsController::class, 'requestSim'])->name('sims.request');
-    Route::get('/sims/activate', [\App\Http\Controllers\smartsim\SimsController::class, 'activationPage'])->name('sims.activate.page');
-    Route::post('/sims/activate', [\App\Http\Controllers\smartsim\SimsController::class, 'activateSim'])->name('sims.activate');
-    Route::post('/sims/activate-for-user', [\App\Http\Controllers\smartsim\SimsController::class, 'activateForDownlineUser'])->name('sims.activate-for-user');
-    Route::post('/sims/activated/{sim}/update-customer', [\App\Http\Controllers\smartsim\SimsController::class, 'updateCustomerDetails'])->name('sims.activated.update-customer');
-    Route::post('/sims/activated/{sim}/push-email', [\App\Http\Controllers\smartsim\SimsController::class, 'pushActivationDetailsEmail'])->name('sims.activated.push-email');
-    Route::post('/partner/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('partner.sims.assign');
-    Route::post('/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('sims.assign');
-    Route::post('/sims/bulk-assign', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignSim'])->name('sims.bulk-assign');
-    Route::get('/sims/bulk-assign/new', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignPage'])->name('sims.bulk-assign.page');
-    Route::post('/sims/bulk-assign/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveBulkAssignNumbers'])->name('sims.bulk-assign.resolve-numbers');
-    Route::get('/sims/bulk-collect', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkCollectPage'])->name('sims.bulk-collect');
-    Route::post('/sims/bulk-collect/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveBulkCollectNumbers'])->name('sims.bulk-collect.resolve-numbers');
-    Route::post('/sims/bulk-collect', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkCollect'])->name('sims.bulk-collect.execute');
-    Route::get('/sims/downline-users/search', [\App\Http\Controllers\smartsim\SimsController::class, 'searchUsers'])->name('sims.downline-users.search');
-    Route::post('/sims/request-swap', [\App\Http\Controllers\smartsim\SimsController::class, 'requestSwap'])->name('sims.request-swap');
-    Route::get('/sims/downline-requests', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequests'])->name('sims.downline-requests');
-    Route::get('/sims/requests', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequests'])->name('sims.requests');
-    Route::get('/sims/downline-requests/available-sims', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequestAvailableSims'])->name('sims.downline-requests.available-sims');
-    Route::post('/sims/downline-requests/{simRequest}/fulfill', [\App\Http\Controllers\smartsim\SimsController::class, 'fulfillDownlineRequest'])->name('sims.downline-requests.fulfill');
-    Route::post('/sims/downline-requests/{simRequest}/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveDownlineRequestNumbers'])->name('sims.downline-requests.resolve-numbers');
-    Route::get('/sims/business/commission-rates', [\App\Http\Controllers\smartsim\BusinessCommissionRateController::class, 'index'])->name('sims.business.commission-rates.index');
-    Route::post('/sims/business/commission-rates', [\App\Http\Controllers\smartsim\BusinessCommissionRateController::class, 'store'])->name('sims.business.commission-rates.store');
+    Route::middleware('service_enabled:simcard')->group(function () {
+        Route::get('/sims', [\App\Http\Controllers\smartsim\SimsController::class, 'overview'])->name('sims.index');
+        Route::get('/sims/pos', [\App\Http\Controllers\smartsim\SimsController::class, 'pos'])->name('sims.pos');
+        Route::get('/sims/pos/request', [\App\Http\Controllers\smartsim\SimsController::class, 'posRequestForm'])->name('sims.pos.request');
+        Route::get('/sims/cctv', [\App\Http\Controllers\smartsim\SimsController::class, 'cctv'])->name('sims.cctv');
+        Route::get('/sims/cctv/request', [\App\Http\Controllers\smartsim\SimsController::class, 'cctvRequestForm'])->name('sims.cctv.request');
+        Route::get('/sims/router', [\App\Http\Controllers\smartsim\SimsController::class, 'router'])->name('sims.router');
+        Route::get('/sims/router/request', [\App\Http\Controllers\smartsim\SimsController::class, 'routerRequestForm'])->name('sims.router.request');
+        Route::get('/sims/inventory', [\App\Http\Controllers\smartsim\SimsController::class, 'inventory'])->name('sims.inventory');
+        Route::get('/sims/mine', [\App\Http\Controllers\smartsim\SimsController::class, 'mine'])->name('sims.mine');
+        Route::get('/sims/available-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'getAvailableNumbers'])->name('sims.available');
+        Route::post('/sims/request', [\App\Http\Controllers\smartsim\SimsController::class, 'requestSim'])->name('sims.request');
+        Route::get('/sims/activate', [\App\Http\Controllers\smartsim\SimsController::class, 'activationPage'])->name('sims.activate.page');
+        Route::post('/sims/activate', [\App\Http\Controllers\smartsim\SimsController::class, 'activateSim'])->name('sims.activate');
+        Route::post('/sims/activate-for-user', [\App\Http\Controllers\smartsim\SimsController::class, 'activateForDownlineUser'])->name('sims.activate-for-user');
+        Route::post('/sims/activated/{sim}/update-customer', [\App\Http\Controllers\smartsim\SimsController::class, 'updateCustomerDetails'])->name('sims.activated.update-customer');
+        Route::post('/sims/activated/{sim}/push-email', [\App\Http\Controllers\smartsim\SimsController::class, 'pushActivationDetailsEmail'])->name('sims.activated.push-email');
+        Route::post('/partner/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('partner.sims.assign');
+        Route::post('/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('sims.assign');
+        Route::post('/sims/bulk-assign', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignSim'])->name('sims.bulk-assign');
+        Route::get('/sims/bulk-assign/new', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignPage'])->name('sims.bulk-assign.page');
+        Route::post('/sims/bulk-assign/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveBulkAssignNumbers'])->name('sims.bulk-assign.resolve-numbers');
+        Route::get('/sims/bulk-collect', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkCollectPage'])->name('sims.bulk-collect');
+        Route::post('/sims/bulk-collect/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveBulkCollectNumbers'])->name('sims.bulk-collect.resolve-numbers');
+        Route::post('/sims/bulk-collect', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkCollect'])->name('sims.bulk-collect.execute');
+        Route::get('/sims/downline-users/search', [\App\Http\Controllers\smartsim\SimsController::class, 'searchUsers'])->name('sims.downline-users.search');
+        Route::post('/sims/request-swap', [\App\Http\Controllers\smartsim\SimsController::class, 'requestSwap'])->name('sims.request-swap');
+        Route::get('/sims/downline-requests', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequests'])->name('sims.downline-requests');
+        Route::get('/sims/requests', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequests'])->name('sims.requests');
+        Route::get('/sims/downline-requests/available-sims', [\App\Http\Controllers\smartsim\SimsController::class, 'downlineRequestAvailableSims'])->name('sims.downline-requests.available-sims');
+        Route::post('/sims/downline-requests/{simRequest}/fulfill', [\App\Http\Controllers\smartsim\SimsController::class, 'fulfillDownlineRequest'])->name('sims.downline-requests.fulfill');
+        Route::post('/sims/downline-requests/{simRequest}/resolve-numbers', [\App\Http\Controllers\smartsim\SimsController::class, 'resolveDownlineRequestNumbers'])->name('sims.downline-requests.resolve-numbers');
+        Route::get('/sims/business/commission-rates', [\App\Http\Controllers\smartsim\BusinessCommissionRateController::class, 'index'])->name('sims.business.commission-rates.index');
+        Route::post('/sims/business/commission-rates', [\App\Http\Controllers\smartsim\BusinessCommissionRateController::class, 'store'])->name('sims.business.commission-rates.store');
+    });
 
     // Identity Verification Routes — personal/business/agent plus partner
     // (a narrower carve-out than Airtime/SME Data above).
-    Route::prefix('verification')->middleware('verification_access')->group(function () {
+    Route::prefix('verification')->middleware(['verification_access', 'service_enabled:verification'])->group(function () {
         // BVN Verification
         Route::get('/bvn', [\App\Http\Controllers\Verification\BvnverificationController::class, 'index'])->name('bvn.verification.index');
         Route::post('/bvn', [\App\Http\Controllers\Verification\BvnverificationController::class, 'store'])->name('bvn.verification.store');
