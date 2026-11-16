@@ -525,8 +525,10 @@ class SimsController extends Controller
                 : collect(),
         };
 
+        $wallet = $user->wallet ?? \App\Models\Wallet::firstOrCreateForUser($user->id);
+
         return view('smartsimcard.inventory', compact(
-            'user', 'categories', 'providers', 'stockCounts', 'downlineUsers',
+            'user', 'wallet', 'categories', 'providers', 'stockCounts', 'downlineUsers',
             'activatedSims', 'assignedToMeSims', 'assignedToOthersSims',
             'assignedToMeCounts', 'downlineCounts', 'activatedCounts',
             'totalAssignedToMe', 'totalInDownline', 'totalActivated', 'totalPortfolio',
@@ -998,6 +1000,42 @@ class SimsController extends Controller
                 'sim_id'     => $validated['sim_id'] ?? null,
                 'partner_id' => $partner->id,
                 'exception'  => $e->getMessage(),
+            ]);
+
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Reactivate an expired 365-day SIM subscription for a partner.
+     */
+    public function reactivateSim(Request $request, Sim $sim)
+    {
+        $user = Auth::user();
+        if (! $user) {
+            abort(403);
+        }
+
+        // Ensure user is authorized to manage this SIM
+        $isOwnerOrHolder = ($sim->partner_id === $user->id || $sim->user_id === $user->id || $sim->business_agent_id === $user->id || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()));
+        if (! $isOwnerOrHolder) {
+            abort(403, 'You do not have permission to reactivate this SIM.');
+        }
+
+        $validated = $request->validate([
+            'wallet_source' => 'required|in:main,bonus',
+        ]);
+
+        try {
+            $subscriptionService = app(\App\Services\SimSubscriptionService::class);
+            $subscription = $subscriptionService->reactivateViaWallet($sim, $user, $validated['wallet_source'], $user);
+
+            return back()->with('success', "SIM {$sim->number} subscription successfully reactivated for 365 days until " . $subscription->expires_at->format('M d, Y') . '.');
+        } catch (\Exception $e) {
+            Log::error('Partner SIM reactivation failed.', [
+                'sim_id'    => $sim->id,
+                'user_id'   => $user->id,
+                'exception' => $e->getMessage(),
             ]);
 
             return back()->with('error', $e->getMessage());

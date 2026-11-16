@@ -159,6 +159,10 @@
         <div x-data="{
             currentTab: '{{ $assignedToMeSims->total() > 0 ? 'mine' : 'activated' }}',
             detailsModalOpen: false,
+            reactivateModalOpen: false,
+            reactivateSimData: null,
+            walletSource: 'main',
+            isReactivating: false,
             selectedSim: null,
             copiedKey: null,
             isEditingCustomer: false,
@@ -171,6 +175,15 @@
             isSavingCustomer: false,
             isPushingEmail: false,
             editError: '',
+
+            openReactivateModal(data) {
+                this.reactivateSimData = data;
+                this.walletSource = 'main';
+                this.reactivateModalOpen = true;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons();
+                });
+            },
 
             copy(text, key) {
                 if (!text || text === 'N/A') return;
@@ -450,6 +463,7 @@
                                 <th class="py-2.5">Customer</th>
                                 <th class="py-2.5">Category</th>
                                 <th class="py-2.5">Network</th>
+                                <th class="py-2.5">Days Left</th>
                                 <th class="py-2.5">Status</th>
                                 <th class="py-2.5 text-right">Action</th>
                             </tr>
@@ -461,7 +475,12 @@
                                     $customerPhone = $sim->customer?->phone_number ?? ($sim->user && $sim->user_id !== $sim->partner_id ? $sim->user->phone : null);
                                     $customerEmail = $sim->customer?->email ?? ($sim->user && $sim->user_id !== $sim->partner_id ? $sim->user->email : null);
                                     $customerAddress = $sim->customer?->address ?? null;
-                                    $activatedAt = $sim->customer?->created_at?->format('M d, Y · h:i A') ?? $sim->updated_at?->format('M d, Y · h:i A');
+                                    $activatedAt = $sim->activated_at?->format('M d, Y · h:i A') ?? $sim->customer?->created_at?->format('M d, Y · h:i A') ?? $sim->updated_at?->format('M d, Y · h:i A');
+                                    $expiresAt = $sim->subscription_expires_at?->format('M d, Y · h:i A') ?? 'N/A';
+                                    $daysRemaining = $sim->daysRemaining();
+                                    $isExpired = $sim->isSubscriptionExpired();
+                                    $subStatus = $sim->subscriptionStatus();
+                                    $reactivationFee = app(\App\Services\SimSubscriptionService::class)->getReactivationFee($sim, auth()->user());
                                     $simPayload = [
                                         'id' => $sim->id,
                                         'number' => $sim->number,
@@ -470,12 +489,19 @@
                                         'status' => \App\Support\SimStatus::label($sim->status),
                                         'statusClass' => \App\Support\SimStatus::badgeClasses($sim->status),
                                         'activatedAt' => $activatedAt,
+                                        'expiresAt' => $expiresAt,
+                                        'daysRemaining' => $daysRemaining,
+                                        'isExpired' => $isExpired,
+                                        'subStatus' => $subStatus,
+                                        'fee' => $reactivationFee,
+                                        'formattedFee' => number_format($reactivationFee, 2),
                                         'customerName' => $customerName,
                                         'customerPhone' => $customerPhone,
                                         'customerEmail' => $customerEmail,
                                         'customerAddress' => $customerAddress,
                                         'updateUrl' => route('sims.activated.update-customer', $sim),
                                         'pushUrl' => route('sims.activated.push-email', $sim),
+                                        'reactivateUrl' => route('sims.activated.reactivate', $sim),
                                     ];
                                 @endphp
                                 <tr class="border-b border-slate-50 hover:bg-slate-50/80 cursor-pointer transition-colors group"
@@ -488,7 +514,7 @@
                                     </td>
                                     <td class="py-3 text-slate-700">
                                         @if ($customerName)
-                                            <span class="font-semibold text-slate-800 block" id="cust_name_row_{{ $sim->id }}">{{ $customerName }}</span>
+                                             <span class="font-semibold text-slate-800 block" id="cust_name_row_{{ $sim->id }}">{{ $customerName }}</span>
                                             @if ($customerPhone)
                                                 <span class="text-[11px] text-slate-400 font-mono" id="cust_phone_row_{{ $sim->id }}">{{ $customerPhone }}</span>
                                             @endif
@@ -499,12 +525,47 @@
                                     <td class="py-3 font-semibold text-slate-700">{{ $sim->category }}</td>
                                     <td class="py-3 text-slate-500 uppercase">{{ $sim->provider }}</td>
                                     <td class="py-3">
+                                        @if ($daysRemaining !== null)
+                                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all
+                                                {{ $isExpired ? 'bg-rose-50 text-rose-700 border-rose-200' : ($subStatus === 'expiring_soon' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200') }}">
+                                                <span class="relative flex h-2 w-2">
+                                                    @if (! $isExpired)
+                                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 {{ $subStatus === 'expiring_soon' ? 'bg-amber-400' : 'bg-emerald-400' }}"></span>
+                                                    @endif
+                                                    <span class="relative inline-flex rounded-full h-2 w-2 {{ $isExpired ? 'bg-rose-500' : ($subStatus === 'expiring_soon' ? 'bg-amber-500' : 'bg-emerald-500') }}"></span>
+                                                </span>
+                                                <span class="whitespace-nowrap">
+                                                    @if ($isExpired)
+                                                        Expired (0d)
+                                                    @elseif ($daysRemaining === 0)
+                                                        Expires Today
+                                                    @elseif ($daysRemaining === 1)
+                                                        1 day left
+                                                    @else
+                                                        {{ $daysRemaining }} days left
+                                                    @endif
+                                                </span>
+                                            </div>
+                                        @else
+                                            <span class="text-slate-400 text-xs">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-3">
                                         <span class="px-2 py-0.5 rounded-full text-[11px] font-bold border {{ \App\Support\SimStatus::badgeClasses($sim->status) }}">
                                             {{ \App\Support\SimStatus::label($sim->status) }}
                                         </span>
                                     </td>
                                     <td class="py-3 text-right">
                                         <div class="flex items-center justify-end gap-1.5">
+                                            @if ($isExpired)
+                                                <button type="button"
+                                                        @click.stop="openReactivateModal(@js($simPayload))"
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-bold transition-all shadow-sm animate-pulse"
+                                                        title="Reactivate SIM subscription (365 Days)">
+                                                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                                                    Reactivate
+                                                </button>
+                                            @endif
                                             @if ($customerEmail)
                                                 <button type="button"
                                                         @click.stop="pushEmail(@js($simPayload))"
@@ -533,7 +594,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="py-8 text-center text-slate-400 font-semibold">No activated SIMs yet.</td>
+                                    <td colspan="7" class="py-8 text-center text-slate-400 font-semibold">No activated SIMs yet.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -1032,6 +1093,115 @@
                             </div>
                         </template>
                     </div>
+                </div>
+            </div>
+
+            <!-- Reactivate Modal -->
+            <div x-show="reactivateModalOpen"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+                 style="display: none;"
+                 x-cloak>
+                <div @click.away="reactivateModalOpen = false"
+                     class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <template x-if="reactivateSimData">
+                        <form :action="reactivateSimData.reactivateUrl" method="POST" @submit="isReactivating = true" class="space-y-0">
+                            @csrf
+                            <!-- Header -->
+                            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0">
+                                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-800 font-display text-sm">Reactivate SIM Subscription</h3>
+                                        <p class="text-xs text-slate-500">Renew 365-day lifetime for this SIM</p>
+                                    </div>
+                                </div>
+                                <button type="button" @click="reactivateModalOpen = false" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                                    <i data-lucide="x" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+
+                            <!-- Body -->
+                            <div class="p-6 space-y-4">
+                                <!-- SIM Card Summary Box -->
+                                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-slate-500 font-medium">SIM Number</span>
+                                        <span class="font-mono font-bold text-sm text-slate-800" x-text="reactivateSimData.number"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-slate-500 font-medium">Network & Category</span>
+                                        <span class="text-xs font-semibold text-slate-700" x-text="reactivateSimData.provider + ' · ' + reactivateSimData.category"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                                        <span class="text-xs text-slate-600 font-bold uppercase tracking-wider">Reactivation Fee</span>
+                                        <span class="font-bold text-base text-[#0056D2]" x-text="'₦' + reactivateSimData.formattedFee"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Wallet Choice -->
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Select Wallet to Charge</label>
+                                    @php
+                                        $mainBal = max(0, (float)($wallet->balance ?? 0) - (float)($wallet->lien_amount ?? 0));
+                                        $bonusBal = (float)($wallet->bonus ?? 0);
+                                    @endphp
+                                    <div class="grid grid-cols-1 gap-2.5">
+                                        <!-- Main Balance Option -->
+                                        <label class="relative flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all"
+                                               :class="walletSource === 'main' ? 'border-[#0056D2] bg-blue-50/50 ring-1 ring-[#0056D2]' : 'border-slate-200 hover:bg-slate-50'">
+                                            <div class="flex items-center gap-3">
+                                                <input type="radio" name="wallet_source" value="main" x-model="walletSource" class="text-primary focus:ring-primary h-4 w-4">
+                                                <div>
+                                                    <span class="block text-xs font-bold text-slate-800">Main Balance</span>
+                                                    <span class="text-[11px] text-slate-500">Available: ₦{{ number_format($mainBal, 2) }}</span>
+                                                </div>
+                                            </div>
+                                            <span class="text-xs font-bold text-slate-700">₦{{ number_format($mainBal, 2) }}</span>
+                                        </label>
+
+                                        <!-- Commission Balance Option -->
+                                        <label class="relative flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all"
+                                               :class="walletSource === 'bonus' ? 'border-[#0056D2] bg-blue-50/50 ring-1 ring-[#0056D2]' : 'border-slate-200 hover:bg-slate-50'">
+                                            <div class="flex items-center gap-3">
+                                                <input type="radio" name="wallet_source" value="bonus" x-model="walletSource" class="text-primary focus:ring-primary h-4 w-4">
+                                                <div>
+                                                    <span class="block text-xs font-bold text-slate-800">Commission Balance</span>
+                                                    <span class="text-[11px] text-slate-500">Available: ₦{{ number_format($bonusBal, 2) }}</span>
+                                                </div>
+                                            </div>
+                                            <span class="text-xs font-bold text-slate-700">₦{{ number_format($bonusBal, 2) }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="p-3 rounded-xl bg-blue-50/60 border border-blue-100 flex items-start gap-2.5 text-xs text-blue-800">
+                                    <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+                                    <span>Reactivating this SIM resets the lifetime countdown to <strong>365 days</strong> from today.</span>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                                <button type="button" @click="reactivateModalOpen = false" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-100 transition-colors">
+                                    Cancel
+                                </button>
+                                <button type="submit"
+                                        :disabled="isReactivating"
+                                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/20 transition-all disabled:opacity-50">
+                                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5" :class="isReactivating ? 'animate-spin' : ''"></i>
+                                    <span x-text="isReactivating ? 'Reactivating...' : 'Confirm & Reactivate'"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </template>
                 </div>
             </div>
         </div>

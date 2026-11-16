@@ -60,6 +60,15 @@
                     <i data-lucide="wallet" class="w-4 h-4 text-slate-500"></i>
                     <span>Commission Wallet</span>
                 </a>
+                <a href="{{ route('bsm.subscriptions') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold shadow-sm hover:bg-slate-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                    <i data-lucide="clock" class="w-4 h-4 text-slate-500"></i>
+                    <span>SIM Subscriptions</span>
+                    @if (($subscriptionExpiredCount ?? 0) > 0)
+                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
+                            {{ $subscriptionExpiredCount }}
+                        </span>
+                    @endif
+                </a>
                 <a href="{{ route('bsm.reports.jurisdictions.export', request()->query()) }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold shadow-sm hover:bg-slate-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                     <i data-lucide="download" class="w-4 h-4 text-slate-500"></i>
                     <span>Export Territory Report</span>
@@ -189,6 +198,40 @@
             </div>
         </div>
     </div>
+
+    <!-- SIM Subscriptions Health & Alert Bar -->
+    @if (($subscriptionExpiredCount ?? 0) > 0 || ($subscriptionExpiringSoonCount ?? 0) > 0)
+        <div class="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-transparent border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center shrink-0">
+                    <i data-lucide="clock" class="w-5 h-5 text-amber-700"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-sm font-bold text-slate-900">SIM Subscriptions Requiring Action</h3>
+                        @if (($subscriptionExpiredCount ?? 0) > 0)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">
+                                {{ $subscriptionExpiredCount }} Expired
+                            </span>
+                        @endif
+                        @if (($subscriptionExpiringSoonCount ?? 0) > 0)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+                                {{ $subscriptionExpiringSoonCount }} Expiring Soon
+                            </span>
+                        @endif
+                    </div>
+                    <p class="text-xs text-slate-600 mt-0.5">
+                        {{ number_format(($subscriptionExpiredCount ?? 0) + ($subscriptionExpiringSoonCount ?? 0)) }} activated SIM subscriptions have reached or are nearing their 365-day lifetime. Reactivate via partner wallet or one-time funding account.
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('bsm.subscriptions', ['status' => ($subscriptionExpiredCount ?? 0) > 0 ? 'expired' : 'expiring_soon']) }}"
+               class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0056D2] hover:bg-[#0047B3] text-white text-xs font-bold shadow-sm transition whitespace-nowrap">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Review &amp; Reactivate</span>
+            </a>
+        </div>
+    @endif
 
     <!-- Failed Activation SIM Section -->
     <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
@@ -518,6 +561,40 @@
             </div>
             <a href="{{ route('admin.manage.users') }}" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition">
                 <span>Manage Users &amp; Upgrades</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+
+        <!-- 7. SIM Subscriptions Desk -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between hover:border-primary/40 transition">
+            <div>
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="p-2.5 rounded-xl bg-blue-50 text-[#0056D2]">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 font-display">SIM Subscriptions Desk</h3>
+                        <p class="text-xs text-slate-500">365-day lifecycles &amp; renewals</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                    Monitor 365-day subscription countdowns, track days remaining with animated status blips, and execute one-click reactivations via partner wallet or one-time funding accounts.
+                </p>
+                <div class="p-3 bg-slate-50 rounded-xl space-y-2 mb-4 text-xs">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Active Subscriptions</span>
+                        <span class="font-bold text-emerald-600">{{ number_format($subscriptionActiveCount ?? 0) }}</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Expiring / Expired</span>
+                        <span class="font-bold {{ (($subscriptionExpiredCount ?? 0) + ($subscriptionExpiringSoonCount ?? 0)) > 0 ? 'text-rose-600' : 'text-slate-900' }}">
+                            {{ number_format(($subscriptionExpiredCount ?? 0) + ($subscriptionExpiringSoonCount ?? 0)) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <a href="{{ route('bsm.subscriptions') }}" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0056D2] hover:bg-[#0047B3] text-white text-xs font-semibold transition">
+                <span>Open Subscriptions Desk</span>
                 <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
         </div>

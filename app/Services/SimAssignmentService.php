@@ -300,7 +300,29 @@ class SimAssignmentService
 
         DB::transaction(function () use ($sim, $actor, $awardCommission, $note) {
             $from = $sim->status;
-            $sim->update(['status' => SimStatus::ACTIVATED]);
+            $now = now();
+            $activatedAt = $sim->activated_at ?? $now;
+            $expiresAt = $now->copy()->addDays(365);
+
+            $sim->update([
+                'status'                  => SimStatus::ACTIVATED,
+                'activated_at'            => $activatedAt,
+                'subscription_expires_at' => $expiresAt,
+            ]);
+
+            \App\Models\SimSubscription::create([
+                'sim_id'            => $sim->id,
+                'partner_id'        => $sim->partner_id,
+                'starts_at'         => $now,
+                'expires_at'        => $expiresAt,
+                'fee'               => 0.00,
+                'payment_method'    => 'initial_activation',
+                'status'            => 'active',
+                'paid_at'           => $now,
+                'payment_reference' => 'ACT-' . time() . '-' . rand(1000, 9999),
+                'notes'             => $note ?? 'Initial 365-day SIM activation',
+            ]);
+
             $this->logHistory($sim, $from, SimStatus::ACTIVATED, $actor, $note ?? 'SIM activated.');
 
             DB::afterCommit(function () use ($sim, $actor, $awardCommission) {
