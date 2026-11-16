@@ -95,26 +95,28 @@
             </a>
 
             <!-- Call Card -->
-            <a href="tel:+2347048932365"
-               class="channel-card rounded-xl border border-slate-200/80 p-6 flex items-center gap-4 hover:border-indigo-200 group">
-                <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-[#0056D2] flex items-center justify-center border border-indigo-100/50 group-hover:scale-110 transition-transform">
+            <div class="channel-card rounded-xl border border-slate-200/80 p-6 flex items-center gap-4 cursor-default">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-[#0056D2] flex items-center justify-center border border-indigo-100/50">
                     <i data-lucide="phone-call" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h3 class="text-sm font-semibold text-slate-800 font-display">Phone Call Support</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Speak with a customer representative.</p>
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-sm font-semibold text-slate-800 font-display">Phone Call Support</h3>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">Coming Soon</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-0.5">Phone Number: Coming Soon</p>
                 </div>
-            </a>
+            </div>
 
             <!-- Email Card -->
-            <a href="mailto:Support@smartsimsub.com"
+            <a href="mailto:support@simphiix.com"
                class="channel-card rounded-xl border border-slate-200/80 p-6 flex items-center gap-4 hover:border-blue-200 group">
                 <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center border border-blue-100/50 group-hover:scale-110 transition-transform">
                     <i data-lucide="mail" class="w-6 h-6"></i>
                 </div>
                 <div>
                     <h3 class="text-sm font-semibold text-slate-800 font-display">Email Support</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Drop a mail to Support@smartsimsub.com</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Drop a mail to support@simphiix.com</p>
                 </div>
             </a>
         </div>

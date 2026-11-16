@@ -45,10 +45,10 @@
         "name": "SimPhix",
         "url": "{{ url('/') }}",
         "logo": "{{ asset('assets/images/logo/logo1.png') }}",
-        "email": "Support@smartsimsub.com",
+        "email": "support@simphiix.com",
         "contactPoint": {
             "@@type": "ContactPoint",
-            "email": "Support@smartsimsub.com",
+            "email": "support@simphiix.com",
             "contactType": "customer support"
         },
         "address": {

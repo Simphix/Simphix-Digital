@@ -118,7 +118,7 @@
                     <label class="block text-xs font-semibold text-slate-400 mb-1">Recipient Email</label>
                     <input type="email" name="recipient_email" required
                            value="{{ old('recipient_email', $exportSettings->recipient_email) }}"
-                           placeholder="ops@smartsimsub.com"
+                           placeholder="ops@simphiix.com"
                            class="w-full text-xs rounded-lg border border-slate-200 px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
                     @error('recipient_email')
                         <span class="text-[11px] text-rose-600 font-semibold">{{ $message }}</span>

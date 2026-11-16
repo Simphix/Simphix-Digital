@@ -56,7 +56,7 @@ class SupportController extends Controller
             DB::commit();
 
             try {
-                \Illuminate\Support\Facades\Mail::to('Support@smartsimsub.com')->send(new \App\Mail\AdminNotificationMail($ticket, $ticketMessage, 'created'));
+                \Illuminate\Support\Facades\Mail::to('support@simphiix.com')->send(new \App\Mail\AdminNotificationMail($ticket, $ticketMessage, 'created'));
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Failed to send admin ticket created notification: ' . $e->getMessage());
             }
@@ -110,7 +110,7 @@ class SupportController extends Controller
             DB::commit();
 
             try {
-                \Illuminate\Support\Facades\Mail::to('Support@smartsimsub.com')->send(new \App\Mail\AdminNotificationMail($ticket, $ticketMessage, 'replied'));
+                \Illuminate\Support\Facades\Mail::to('support@simphiix.com')->send(new \App\Mail\AdminNotificationMail($ticket, $ticketMessage, 'replied'));
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Failed to send admin ticket reply notification: ' . $e->getMessage());
             }
