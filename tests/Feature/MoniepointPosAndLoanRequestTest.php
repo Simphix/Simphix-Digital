@@ -57,7 +57,7 @@ class MoniepointPosAndLoanRequestTest extends TestCase
         $response->assertSee('Request Your POS Terminal Today', false);
         $response->assertSee('POS Terminal Hardware Desk', false);
         $response->assertSee('Instant Working Capital &amp; Business Loans', false);
-        $response->assertSee('Disclaimer: Moniepoint Business Owners Only', false);
+        $response->assertSee('Business Working Capital Desk', false);
     }
 
     public function test_user_can_view_pos_index_and_tracking_pages(): void
