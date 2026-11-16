@@ -324,6 +324,7 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.services.index'), 'icon' => 'server', 'label' => 'Services Pricing', 'active' => request()->routeIs('admin.services*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sme-plans.index'), 'icon' => 'wifi', 'label' => 'SME Data Plans', 'active' => request()->routeIs('admin.sme-plans*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-plan.index'), 'icon' => 'settings', 'label' => 'SIM Plans', 'active' => request()->routeIs('admin.sim-plan*')])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-subscriptions.index'), 'icon' => 'clock', 'label' => 'SIM Subscriptions', 'active' => request()->routeIs('admin.sim-subscriptions*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.sim-data-topup.index'), 'icon' => 'battery-charging', 'label' => 'SIM Data Top-Up', 'active' => request()->routeIs('admin.sim-data-topup*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.fulfillment.index'), 'icon' => 'package-check', 'label' => 'EB Fulfillment', 'active' => request()->routeIs('admin.enterprise-partners.fulfillment*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.enterprise-partners.referral-settings.edit'), 'icon' => 'handshake', 'label' => 'EB Referral Settings', 'active' => request()->routeIs('admin.enterprise-partners.referral-settings*')])

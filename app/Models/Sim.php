@@ -24,6 +24,13 @@ class Sim extends Model
         'business_id',
         'business_agent_id',
         'status',
+        'activated_at',
+        'subscription_expires_at',
+    ];
+
+    protected $casts = [
+        'activated_at'            => 'datetime',
+        'subscription_expires_at' => 'datetime',
     ];
 
     /**
@@ -163,10 +170,116 @@ class Sim extends Model
     }
 
     /**
+     * Get the subscription periods for this SIM.
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(SimSubscription::class, 'sim_id')->latest();
+    }
+
+    /**
+     * Get the latest subscription record for this SIM.
+     */
+    public function latestSubscription(): HasOne
+    {
+        return $this->hasOne(SimSubscription::class, 'sim_id')->latestOfMany();
+    }
+
+    /**
      * Get whole rounded days since creation/holding with no floating number.
      */
     public function daysHeld(): int
     {
         return (int) round($this->created_at ? $this->created_at->diffInDays(now()) : 0);
+    }
+
+    /**
+     * Get remaining days until the 365-day subscription expires.
+     * Returns null if the SIM was never activated.
+     * Returns 0 if expired.
+     */
+    public function daysRemaining(): ?int
+    {
+        if (! $this->subscription_expires_at) {
+            return null;
+        }
+
+        if (now()->greaterThanOrEqualTo($this->subscription_expires_at)) {
+            return 0;
+        }
+
+        return (int) max(0, ceil(now()->diffInHours($this->subscription_expires_at) / 24));
+    }
+
+    /**
+     * Determine whether the 365-day subscription has completed / expired.
+     */
+    public function isSubscriptionExpired(): bool
+    {
+        if (! $this->subscription_expires_at) {
+            return false;
+        }
+
+        return now()->greaterThanOrEqualTo($this->subscription_expires_at);
+    }
+
+    /**
+     * Return subscription lifecycle tier: 'unactivated', 'expired', 'expiring_soon', 'active'.
+     */
+    public function subscriptionStatus(): string
+    {
+        if (! $this->subscription_expires_at) {
+            return 'unactivated';
+        }
+
+        if ($this->isSubscriptionExpired()) {
+            return 'expired';
+        }
+
+        $days = $this->daysRemaining();
+        if ($days !== null && $days <= 30) {
+            return 'expiring_soon';
+        }
+
+        return 'active';
+    }
+
+    /**
+     * Human-friendly label for subscription status.
+     */
+    public function subscriptionStatusLabel(): string
+    {
+        return match ($this->subscriptionStatus()) {
+            'expired'       => 'Expired',
+            'expiring_soon' => 'Expiring Soon',
+            'active'        => 'Active',
+            default         => 'Not Activated',
+        };
+    }
+
+    /**
+     * Badge classes for subscription status.
+     */
+    public function subscriptionBadgeClasses(): string
+    {
+        return match ($this->subscriptionStatus()) {
+            'expired'       => 'bg-rose-50 text-rose-700 border-rose-200',
+            'expiring_soon' => 'bg-amber-50 text-amber-700 border-amber-200',
+            'active'        => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            default         => 'bg-slate-50 text-slate-600 border-slate-200',
+        };
+    }
+
+    /**
+     * Color for the status blip dot.
+     */
+    public function subscriptionBlipColor(): string
+    {
+        return match ($this->subscriptionStatus()) {
+            'expired'       => 'rose',
+            'expiring_soon' => 'amber',
+            'active'        => 'emerald',
+            default         => 'slate',
+        };
     }
 }

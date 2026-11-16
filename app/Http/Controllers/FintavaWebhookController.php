@@ -218,6 +218,19 @@ class FintavaWebhookController extends Controller
                     return;
                 }
 
+                // Check if this deposit belongs to a SIM Subscription reactivation payment
+                $subPayment = $beneficiaryNo
+                    ? \App\Models\SimSubscription::where('account_number', $beneficiaryNo)->where('status', 'pending')->first()
+                    : null;
+
+                if ($subPayment) {
+                    if (strtolower((string) $status) === 'success' && $amountPaid >= (float) $subPayment->fee) {
+                        app(\App\Services\SimSubscriptionService::class)->confirmReactivationPayment($subPayment, $amountPaid, $reference);
+                    }
+
+                    return;
+                }
+
                 Log::error('Fintava deposit received but no funding account matches it — nobody was credited.', ['data' => $data]);
 
                 throw new UnmatchedFintavaWebhook(

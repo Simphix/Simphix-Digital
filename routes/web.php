@@ -190,6 +190,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/sims/activate-for-user', [\App\Http\Controllers\smartsim\SimsController::class, 'activateForDownlineUser'])->name('sims.activate-for-user');
         Route::post('/sims/activated/{sim}/update-customer', [\App\Http\Controllers\smartsim\SimsController::class, 'updateCustomerDetails'])->name('sims.activated.update-customer');
         Route::post('/sims/activated/{sim}/push-email', [\App\Http\Controllers\smartsim\SimsController::class, 'pushActivationDetailsEmail'])->name('sims.activated.push-email');
+        Route::post('/sims/activated/{sim}/reactivate', [\App\Http\Controllers\smartsim\SimsController::class, 'reactivateSim'])->name('sims.activated.reactivate');
         Route::post('/partner/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('partner.sims.assign');
         Route::post('/sims/assign', [\App\Http\Controllers\smartsim\SimsController::class, 'partnerAssignSim'])->name('sims.assign');
         Route::post('/sims/bulk-assign', [\App\Http\Controllers\smartsim\SimsController::class, 'bulkAssignSim'])->name('sims.bulk-assign');
@@ -563,6 +564,15 @@ Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/sim-plan')
 
     Route::post('/categories/{field}/toggle-activation', [\App\Http\Controllers\Admin\SimPlanController::class, 'toggleActivation'])->name('categories.toggle-activation');
     Route::post('/failed-activations/{report}/retry', [\App\Http\Controllers\Admin\SimPlanController::class, 'retryActivationBonus'])->name('failed-activations.retry');
+});
+
+// SIM Subscriptions & Lifetimes Management (Super Admin)
+Route::middleware(['auth', 'verified', 'super_admin'])->prefix('admin/sim-subscriptions')->name('admin.sim-subscriptions.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\SimSubscriptionController::class, 'index'])->name('index');
+    Route::get('/export', [\App\Http\Controllers\Admin\SimSubscriptionController::class, 'export'])->name('export');
+    Route::post('/{sim}/reactivate', [\App\Http\Controllers\Admin\SimSubscriptionController::class, 'reactivate'])->name('reactivate');
+    Route::post('/{sim}/generate-funding-account', [\App\Http\Controllers\Admin\SimSubscriptionController::class, 'generateFundingAccount'])->name('generate-funding-account');
+    Route::post('/confirm-funding/{subscription}', [\App\Http\Controllers\Admin\SimSubscriptionController::class, 'confirmFundingPayment'])->name('confirm-funding');
 });
 
 Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
