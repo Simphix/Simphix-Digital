@@ -376,4 +376,128 @@ class SimSubscriptionLifetimeTest extends TestCase
         $this->assertNotNull($subscription->paid_at);
         $this->assertFalse($expiredSim->isSubscriptionExpired());
     }
+
+    public function test_bsm_can_view_sim_subscriptions_on_dashboard_and_subscriptions_page(): void
+    {
+        $bsm = User::factory()->create([
+            'role'   => 'business_sales_manager',
+            'status' => 'active',
+        ]);
+
+        $activeSim = Sim::create([
+            'number'                  => '09022223333',
+            'category'                => 'POS SIM',
+            'provider'                => 'mtn',
+            'partner_id'              => $this->partner->id,
+            'status'                  => SimStatus::ACTIVATED,
+            'activated_at'            => now()->subDays(10),
+            'subscription_expires_at' => now()->addDays(355),
+        ]);
+
+        $expiredSim = Sim::create([
+            'number'                  => '09033334444',
+            'category'                => 'POS SIM',
+            'provider'                => 'airtel',
+            'partner_id'              => $this->partner->id,
+            'status'                  => SimStatus::ACTIVATED,
+            'activated_at'            => now()->subDays(370),
+            'subscription_expires_at' => now()->subDays(5),
+        ]);
+
+        // Check BSM dashboard renders subscription metrics and alert
+        $dashResponse = $this->actingAs($bsm)->get(route('bsm.dashboard'));
+        $dashResponse->assertOk();
+        $dashResponse->assertViewHas('totalSubscriptions');
+        $dashResponse->assertViewHas('subscriptionExpiredCount', 1);
+        $dashResponse->assertSee('SIM Subscriptions Desk');
+        $dashResponse->assertSee('SIM Subscriptions Requiring Action');
+
+        // Check BSM subscriptions desk page
+        $subsResponse = $this->actingAs($bsm)->get(route('bsm.subscriptions'));
+        $subsResponse->assertOk();
+        $subsResponse->assertSeeText('SIM Subscriptions & Lifetimes');
+        $subsResponse->assertSee('09022223333');
+        $subsResponse->assertSee('09033334444');
+        $subsResponse->assertSee('Expired (0d)');
+    }
+
+    public function test_bsm_can_reactivate_sim_subscription_via_partner_wallet(): void
+    {
+        $bsm = User::factory()->create([
+            'role'   => 'business_sales_manager',
+            'status' => 'active',
+        ]);
+
+        $expiredSim = Sim::create([
+            'number'                  => '09044445555',
+            'category'                => 'POS SIM',
+            'provider'                => 'glo',
+            'partner_id'              => $this->partner->id,
+            'status'                  => SimStatus::ACTIVATED,
+            'activated_at'            => now()->subDays(370),
+            'subscription_expires_at' => now()->subDays(5),
+        ]);
+
+        $partnerWallet = $this->partner->wallet;
+        $initialBalance = (float) $partnerWallet->balance;
+
+        $response = $this->actingAs($bsm)->post(route('bsm.subscriptions.reactivate', $expiredSim), [
+            'payment_option' => 'partner_wallet',
+            'wallet_source'  => 'main',
+            'notes'          => 'BSM reactivation test',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $expiredSim->refresh();
+        $partnerWallet->refresh();
+
+        $this->assertFalse($expiredSim->isSubscriptionExpired());
+        $this->assertEquals($initialBalance - 1000.00, (float) $partnerWallet->balance);
+        $this->assertDatabaseHas('sim_subscriptions', [
+            'sim_id'         => $expiredSim->id,
+            'partner_id'     => $this->partner->id,
+            'payment_method' => 'partner_wallet',
+            'wallet_type'    => 'main',
+            'status'         => 'active',
+        ]);
+    }
+
+    public function test_bsm_can_generate_funding_account_for_reactivation(): void
+    {
+        $bsm = User::factory()->create([
+            'role'   => 'business_sales_manager',
+            'status' => 'active',
+        ]);
+
+        $expiredSim = Sim::create([
+            'number'                  => '09055556666',
+            'category'                => 'POS SIM',
+            'provider'                => 'mtn',
+            'partner_id'              => $this->partner->id,
+            'status'                  => SimStatus::ACTIVATED,
+            'activated_at'            => now()->subDays(370),
+            'subscription_expires_at' => now()->subDays(5),
+        ]);
+
+        $response = $this->actingAs($bsm)->postJson(route('bsm.subscriptions.generate-funding-account', $expiredSim));
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+        ]);
+
+        $data = $response->json();
+        $this->assertNotEmpty($data['account_number']);
+        $this->assertNotEmpty($data['bank_name']);
+        $this->assertEquals(1000.00, $data['amount']);
+
+        $this->assertDatabaseHas('sim_subscriptions', [
+            'sim_id'         => $expiredSim->id,
+            'payment_method' => 'funding_account',
+            'status'         => 'pending',
+            'account_number' => $data['account_number'],
+        ]);
+    }
 }

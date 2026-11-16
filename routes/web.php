@@ -258,6 +258,11 @@ Route::middleware(['auth', 'verified', 'business_sales_manager'])->prefix('bsm')
     Route::get('/territories', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'territories'])->name('territories');
     Route::get('/territories/drilldown', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'territoryDrilldown'])->name('territories.drilldown');
     Route::get('/lifecycle', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'lifecycle'])->name('lifecycle');
+    Route::get('/subscriptions', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'subscriptions'])->name('subscriptions');
+    Route::post('/subscriptions/{sim}/reactivate', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'reactivateSubscription'])->name('subscriptions.reactivate');
+    Route::post('/subscriptions/{sim}/generate-funding-account', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'generateFundingAccount'])->name('subscriptions.generate-funding-account');
+    Route::post('/subscriptions/{subscription}/confirm-payment', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'confirmFundingPayment'])->name('subscriptions.confirm-payment');
+    Route::get('/subscriptions/export', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'exportSubscriptions'])->name('subscriptions.export');
     Route::get('/customers', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'customers'])->name('customers');
     Route::get('/acceleration', [\App\Http\Controllers\Bsm\BsmDashboardController::class, 'acceleration'])->name('acceleration');
     Route::get('/commission-wallet', [\App\Http\Controllers\Bsm\BsmCommissionWalletController::class, 'index'])->name('commission-wallet');

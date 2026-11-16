@@ -212,6 +212,7 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.dashboard'), 'icon' => 'layout-dashboard', 'label' => 'BSM Dashboard', 'active' => request()->routeIs('bsm.dashboard')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.territories'), 'icon' => 'map-pin', 'label' => 'Territories Report', 'active' => request()->routeIs('bsm.territories')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.lifecycle'), 'icon' => 'cpu', 'label' => 'SIM Lifecycle', 'active' => request()->routeIs('bsm.lifecycle')])
+                @include('layouts.partials.sidebar-link', ['href' => route('bsm.subscriptions'), 'icon' => 'clock', 'label' => 'SIM Subscriptions', 'active' => request()->routeIs('bsm.subscriptions*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.customers'), 'icon' => 'user-check', 'label' => 'Customer Desk', 'active' => request()->routeIs('bsm.customers')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.acceleration'), 'icon' => 'zap', 'label' => 'Sales Acceleration', 'active' => request()->routeIs('bsm.acceleration')])
                 @include('layouts.partials.sidebar-link', ['href' => route('bsm.commission-wallet'), 'icon' => 'wallet', 'label' => 'Commission Wallet', 'active' => request()->routeIs('bsm.commission-wallet')])

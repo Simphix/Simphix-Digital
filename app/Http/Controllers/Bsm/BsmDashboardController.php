@@ -10,20 +10,26 @@ use App\Models\Service;
 use App\Models\ServiceField;
 use App\Models\Sim;
 use App\Models\SimCustomer;
+use App\Models\SimHistory;
 use App\Models\SimRequest;
+use App\Models\SimSubscription;
 use App\Models\State;
 use App\Models\User;
 use App\Services\ActivationBonusRetryService;
 use App\Services\BsmAccelerationReportService;
 use App\Services\SimAssignmentService;
+use App\Services\SimSubscriptionService;
 use App\Support\SimStatus;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BsmDashboardController extends Controller
 {
@@ -43,6 +49,9 @@ class BsmDashboardController extends Controller
         }
         if ($request->input('tab') === 'acceleration') {
             return redirect()->route('bsm.acceleration', $request->except('tab'));
+        }
+        if ($request->input('tab') === 'subscriptions') {
+            return redirect()->route('bsm.subscriptions', $request->except('tab'));
         }
 
         $actor = $request->user();
@@ -113,6 +122,28 @@ class BsmDashboardController extends Controller
         $jurisdictionData = $this->buildJurisdictionData($priceMap, $rangeStart, $rangeEnd, $selectedCategory, $selectedProvider);
         $topRegions = collect($jurisdictionData['regions'])->sortByDesc('activated')->take(5)->values()->all();
 
+        // 365-Day SIM Subscriptions Metrics
+        $now = now();
+        $subscriptionBaseQuery = Sim::query()
+            ->when($selectedCategory, fn ($q) => $q->where('category', $selectedCategory))
+            ->when($selectedProvider, fn ($q) => $q->where('provider', $selectedProvider))
+            ->where(function ($q) {
+                $q->where('status', SimStatus::ACTIVATED)
+                    ->orWhereNotNull('subscription_expires_at')
+                    ->orWhereHas('subscriptions');
+            });
+
+        $totalSubscriptions = (clone $subscriptionBaseQuery)->count();
+        $subscriptionActiveCount = (clone $subscriptionBaseQuery)
+            ->where('subscription_expires_at', '>', $now->copy()->addDays(30))
+            ->count();
+        $subscriptionExpiringSoonCount = (clone $subscriptionBaseQuery)
+            ->whereBetween('subscription_expires_at', [$now, $now->copy()->addDays(30)])
+            ->count();
+        $subscriptionExpiredCount = (clone $subscriptionBaseQuery)
+            ->where('subscription_expires_at', '<=', $now)
+            ->count();
+
         return view('bsm.dashboard', [
             'actor'                   => $actor,
             'range'                   => $rangeKey,
@@ -141,6 +172,10 @@ class BsmDashboardController extends Controller
             'jurisdictionTotals'          => $jurisdictionData['totals'],
             'totalUsersCount'             => User::count(),
             'pendingUpgradesCount'        => User::where('upgrade_status', 'pending')->count(),
+            'totalSubscriptions'          => $totalSubscriptions,
+            'subscriptionActiveCount'     => $subscriptionActiveCount,
+            'subscriptionExpiringSoonCount' => $subscriptionExpiringSoonCount,
+            'subscriptionExpiredCount'    => $subscriptionExpiredCount,
         ]);
     }
 
@@ -246,6 +281,313 @@ class BsmDashboardController extends Controller
             'availableUnassignedSims' => $availableUnassignedSims,
             'totalCustomers'          => SimCustomer::count(),
         ]);
+    }
+
+    /**
+     * Display BSM SIM Subscriptions management desk.
+     */
+    public function subscriptions(Request $request, SimSubscriptionService $subscriptionService): View
+    {
+        $actor = $request->user();
+        $selectedCategory = $request->input('category');
+        $selectedProvider = $request->input('provider');
+        $selectedStatus = $request->input('status');
+        $search = trim($request->input('search', ''));
+
+        $priceMap = $this->resolvePriceMap();
+
+        $baseQuery = Sim::query()
+            ->with(['partner.wallet', 'user.wallet', 'customer', 'latestSubscription'])
+            ->where(function ($q) {
+                $q->where('status', SimStatus::ACTIVATED)
+                    ->orWhereNotNull('subscription_expires_at')
+                    ->orWhereHas('subscriptions');
+            });
+
+        $now = now();
+        $totalSubscriptions = (clone $baseQuery)->count();
+        $activeCount = (clone $baseQuery)
+            ->where('subscription_expires_at', '>', $now->copy()->addDays(30))
+            ->count();
+        $expiringSoonCount = (clone $baseQuery)
+            ->whereBetween('subscription_expires_at', [$now, $now->copy()->addDays(30)])
+            ->count();
+        $expiredCount = (clone $baseQuery)
+            ->where('subscription_expires_at', '<=', $now)
+            ->count();
+
+        $query = clone $baseQuery;
+
+        if ($selectedStatus) {
+            match ($selectedStatus) {
+                'active'        => $query->where('subscription_expires_at', '>', $now->copy()->addDays(30)),
+                'expiring_soon' => $query->whereBetween('subscription_expires_at', [$now, $now->copy()->addDays(30)]),
+                'expired'       => $query->where('subscription_expires_at', '<=', $now),
+                default         => null,
+            };
+        }
+
+        if ($selectedProvider) {
+            $query->where('provider', strtolower($selectedProvider));
+        }
+
+        if ($selectedCategory) {
+            $query->where('category', $selectedCategory);
+        }
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('number', 'like', "%{$search}%")
+                    ->orWhere('iccid', 'like', "%{$search}%")
+                    ->orWhereHas('partner', function ($pq) use ($search) {
+                        $pq->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('customer', function ($cq) use ($search) {
+                        $cq->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('phone_number', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $sims = $query->orderByRaw('CASE WHEN subscription_expires_at IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('subscription_expires_at', 'asc')
+            ->paginate(20, ['*'], 'page')
+            ->withQueryString();
+
+        $categories = ServiceField::whereHas('service', fn ($q) => $q->where('name', 'simcard'))
+            ->pluck('field_name');
+
+        return view('bsm.subscriptions', [
+            'actor'                   => $actor,
+            'sims'                    => $sims,
+            'totalSubscriptions'      => $totalSubscriptions,
+            'activeCount'             => $activeCount,
+            'expiringSoonCount'       => $expiringSoonCount,
+            'expiredCount'            => $expiredCount,
+            'categories'              => $categories,
+            'providers'               => ['mtn', 'airtel', 'glo', '9mobile'],
+            'selectedCategory'        => $selectedCategory,
+            'selectedProvider'        => $selectedProvider,
+            'selectedStatus'          => $selectedStatus,
+            'search'                  => $search,
+            'priceMap'                => $priceMap,
+        ]);
+    }
+
+    /**
+     * BSM Reactivation Handler:
+     * - Option 1: Charge partner wallet (main or commission balance)
+     * - Option 2: BSM Manual reactivation
+     */
+    public function reactivateSubscription(Request $request, Sim $sim, SimSubscriptionService $subscriptionService): RedirectResponse
+    {
+        $validated = $request->validate([
+            'payment_option' => 'required|in:partner_wallet,bsm_manual,admin_manual',
+            'wallet_source'  => 'nullable|required_if:payment_option,partner_wallet|in:main,bonus',
+            'notes'          => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $actor = Auth::user();
+
+            if ($validated['payment_option'] === 'partner_wallet') {
+                $partner = $sim->partner ?? $sim->user;
+                if (! $partner) {
+                    return back()->with('error', 'No partner or user is associated with this SIM to charge.');
+                }
+
+                $subscriptionService->reactivateViaWallet($sim, $partner, $validated['wallet_source'], $actor);
+
+                return back()->with('success', "SIM {$sim->number} subscription reactivated successfully for 365 days by charging {$partner->name}'s " . ($validated['wallet_source'] === 'bonus' ? 'Commission' : 'Main') . " balance.");
+            }
+
+            // Manual reactivation
+            $now = now();
+            $newExpiresAt = ($sim->subscription_expires_at && $sim->subscription_expires_at->isFuture())
+                ? $sim->subscription_expires_at->copy()->addDays(365)
+                : $now->copy()->addDays(365);
+
+            $sim->update([
+                'status'                  => SimStatus::ACTIVATED,
+                'subscription_expires_at' => $newExpiresAt,
+            ]);
+
+            SimSubscription::create([
+                'sim_id'            => $sim->id,
+                'partner_id'        => $sim->partner_id,
+                'starts_at'         => $now,
+                'expires_at'        => $newExpiresAt,
+                'fee'               => 0.00,
+                'payment_method'    => 'bsm_manual',
+                'status'            => 'active',
+                'paid_at'           => $now,
+                'payment_reference' => 'BSM-MANUAL-' . time(),
+                'notes'             => $validated['notes'] ?: "Reactivated manually by BSM {$actor->name}",
+            ]);
+
+            SimHistory::create([
+                'sim_id'      => $sim->id,
+                'from_status' => $sim->status,
+                'to_status'   => SimStatus::ACTIVATED,
+                'user_id'     => $actor->id,
+                'notes'       => "BSM manual reactivation for 365 days until " . $newExpiresAt->format('M d, Y') . ($validated['notes'] ? " ({$validated['notes']})" : ''),
+            ]);
+
+            return back()->with('success', "SIM {$sim->number} subscription reactivated manually for 365 days until " . $newExpiresAt->format('M d, Y') . '.');
+        } catch (\Exception $e) {
+            Log::error('BSM SIM reactivation failed.', [
+                'sim_id'    => $sim->id,
+                'actor_id'  => Auth::id(),
+                'exception' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Generate a dedicated one-time funding account for reactivation via Loma Bank (Fintava).
+     */
+    public function generateFundingAccount(Request $request, Sim $sim, SimSubscriptionService $subscriptionService): JsonResponse|RedirectResponse
+    {
+        try {
+            $partner = $sim->partner ?? $sim->user;
+            $subscription = $subscriptionService->generateFundingAccount($sim, $partner, Auth::user());
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success'        => true,
+                    'account_number' => $subscription->account_number,
+                    'account_name'   => $subscription->account_name,
+                    'bank_name'      => $subscription->bank_name,
+                    'amount'         => (float) $subscription->fee,
+                    'formatted_fee'  => number_format((float) $subscription->fee, 2),
+                    'reference'      => $subscription->payment_reference,
+                    'subscription_id'=> $subscription->id,
+                    'message'        => 'One-time funding account generated successfully.',
+                ]);
+            }
+
+            return back()->with('generated_funding_account', [
+                'sim_number'     => $sim->number,
+                'account_number' => $subscription->account_number,
+                'account_name'   => $subscription->account_name,
+                'bank_name'      => $subscription->bank_name,
+                'amount'         => (float) $subscription->fee,
+                'formatted_fee'  => number_format((float) $subscription->fee, 2),
+                'reference'      => $subscription->payment_reference,
+                'subscription_id'=> $subscription->id,
+            ])->with('success', "One-time reactivation account {$subscription->account_number} ({$subscription->bank_name}) generated for SIM {$sim->number}.");
+        } catch (\Exception $e) {
+            Log::error('BSM failed to generate reactivation funding account.', [
+                'sim_id'    => $sim->id,
+                'exception' => $e->getMessage(),
+            ]);
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
+
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Confirm payment manually for a generated one-time account.
+     */
+    public function confirmFundingPayment(Request $request, SimSubscription $subscription, SimSubscriptionService $subscriptionService): RedirectResponse
+    {
+        try {
+            $subscriptionService->confirmReactivationPayment($subscription, null, null, Auth::user());
+
+            return back()->with('success', "Payment confirmed! SIM {$subscription->sim->number} subscription reactivated for 365 days.");
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Export SIM subscriptions to CSV.
+     */
+    public function exportSubscriptions(Request $request): StreamedResponse
+    {
+        $now = now();
+        $query = Sim::query()
+            ->with(['partner', 'user', 'customer'])
+            ->where(function ($q) {
+                $q->where('status', SimStatus::ACTIVATED)
+                    ->orWhereNotNull('subscription_expires_at');
+            });
+
+        if ($request->filled('status')) {
+            match ($request->status) {
+                'active'        => $query->where('subscription_expires_at', '>', $now->copy()->addDays(30)),
+                'expiring_soon' => $query->whereBetween('subscription_expires_at', [$now, $now->copy()->addDays(30)]),
+                'expired'       => $query->where('subscription_expires_at', '<=', $now),
+                default         => null,
+            };
+        }
+
+        if ($request->filled('provider')) {
+            $query->where('provider', strtolower($request->provider));
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="bsm_sim_subscriptions_' . date('Y-m-d_His') . '.csv"',
+        ];
+
+        return response()->stream(function () use ($query) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'SIM Number',
+                'ICCID',
+                'Network',
+                'Category',
+                'Status',
+                'Partner Name',
+                'Partner Phone',
+                'Partner Email',
+                'Customer Name',
+                'Customer Phone',
+                'Activated At',
+                'Subscription Expires At',
+                'Days Remaining',
+                'Subscription State',
+            ]);
+
+            $query->chunk(500, function ($sims) use ($handle) {
+                foreach ($sims as $sim) {
+                    $partner = $sim->partner ?? $sim->user;
+                    fputcsv($handle, [
+                        $sim->number,
+                        $sim->iccid ?? '',
+                        strtoupper($sim->provider),
+                        $sim->category,
+                        $sim->status,
+                        $partner ? trim($partner->first_name . ' ' . $partner->last_name) : '',
+                        $partner?->phone ?? '',
+                        $partner?->email ?? '',
+                        $sim->customer?->full_name ?? '',
+                        $sim->customer?->phone_number ?? '',
+                        $sim->activated_at ? $sim->activated_at->format('Y-m-d H:i:s') : '',
+                        $sim->subscription_expires_at ? $sim->subscription_expires_at->format('Y-m-d H:i:s') : '',
+                        $sim->daysRemaining() ?? '',
+                        $sim->subscriptionStatus(),
+                    ]);
+                }
+            });
+
+            fclose($handle);
+        }, 200, $headers);
     }
 
     public function acceleration(Request $request): View
