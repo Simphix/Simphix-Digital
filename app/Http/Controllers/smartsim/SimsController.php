@@ -1113,18 +1113,18 @@ class SimsController extends Controller
             return response()->json(['success' => false, 'message' => 'Please log in.'], 401);
         }
 
-        if (!in_array($user->role, ['super_admin', 'business_sales_manager'], true)) {
+        if (!in_array($user->role, ['super_admin', 'business_sales_manager', 'support'], true)) {
             $allowed = $this->scopeToUserPortfolio(Sim::where('id', $sim->id), $user)->exists();
             if (!$allowed) {
                 return response()->json(['success' => false, 'message' => 'You are not authorized to update this customer.'], 403);
             }
         }
 
-        PhoneNumber::normalizeRequestInput($request);
+        PhoneNumber::normalizeRequestInput($request, 'phone_number');
 
         $validated = $request->validate([
-            'full_name'    => 'required|string|max:255',
-            'address'      => 'required|string|max:1000',
+            'full_name'    => 'nullable|string|max:255',
+            'address'      => 'nullable|string|max:1000',
             'phone_number' => ['nullable', 'string', 'max:20', PhoneNumber::validationRule()],
             'email'        => 'nullable|email|max:255',
         ]);
@@ -1132,8 +1132,8 @@ class SimsController extends Controller
         $customer = $sim->customer;
         if ($customer) {
             $customer->update([
-                'full_name'    => $validated['full_name'],
-                'address'      => $validated['address'],
+                'full_name'    => $validated['full_name'] ?? null,
+                'address'      => $validated['address'] ?? null,
                 'phone_number' => $validated['phone_number'] ?? null,
                 'email'        => $validated['email'] ?? null,
             ]);
@@ -1141,8 +1141,8 @@ class SimsController extends Controller
             $customer = SimCustomer::create([
                 'sim_id'       => $sim->id,
                 'partner_id'   => $sim->partner_id ?? $user->id,
-                'full_name'    => $validated['full_name'],
-                'address'      => $validated['address'],
+                'full_name'    => $validated['full_name'] ?? null,
+                'address'      => $validated['address'] ?? null,
                 'phone_number' => $validated['phone_number'] ?? null,
                 'email'        => $validated['email'] ?? null,
             ]);
@@ -1174,7 +1174,7 @@ class SimsController extends Controller
             return response()->json(['success' => false, 'message' => 'Please log in.'], 401);
         }
 
-        if (!in_array($user->role, ['super_admin', 'business_sales_manager'], true)) {
+        if (!in_array($user->role, ['super_admin', 'business_sales_manager', 'support'], true)) {
             $allowed = $this->scopeToUserPortfolio(Sim::where('id', $sim->id), $user)->exists();
             if (!$allowed) {
                 return response()->json(['success' => false, 'message' => 'You are not authorized for this SIM.'], 403);
@@ -1182,7 +1182,14 @@ class SimsController extends Controller
         }
 
         $customer = $sim->customer;
-        $email = $customer?->email ?? ($sim->user && $sim->user_id !== $sim->partner_id ? $sim->user->email : null);
+        $requestEmail = $request->input('email');
+        if ($requestEmail && filter_var($requestEmail, FILTER_VALIDATE_EMAIL)) {
+            if ($customer && $customer->email !== $requestEmail) {
+                $customer->update(['email' => $requestEmail]);
+            }
+        }
+
+        $email = $requestEmail ?: ($customer?->email ?? ($sim->user && $sim->user_id !== $sim->partner_id ? $sim->user->email : null));
 
         if (empty($email)) {
             $msg = 'This customer does not have an email address on file. Please update customer details with an email address first.';
@@ -1201,17 +1208,32 @@ class SimsController extends Controller
             }
             return back()->with('success', $msg);
         } catch (\Throwable $e) {
-            Log::error('Failed to push SIM activation email', [
-                'sim_id'    => $sim->id,
-                'email'     => $email,
-                'exception' => $e->getMessage(),
+            Log::warning('Direct SIM activation email delivery failed, attempting queued delivery: ' . $e->getMessage(), [
+                'sim_id' => $sim->id,
+                'email'  => $email,
             ]);
 
-            $msg = 'Failed to deliver activation email: ' . $e->getMessage();
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => $msg], 500);
+            try {
+                Mail::to($email)->queue(new SimActivationDetailsMail($sim, $customer, $user));
+
+                $msg = "SIM activation details queued for delivery to {$email}.";
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json(['success' => true, 'message' => $msg]);
+                }
+                return back()->with('success', $msg);
+            } catch (\Throwable $queueError) {
+                Log::error('Failed to deliver or queue SIM activation email', [
+                    'sim_id'    => $sim->id,
+                    'email'     => $email,
+                    'exception' => $queueError->getMessage(),
+                ]);
+
+                $msg = 'Failed to deliver activation email: ' . $queueError->getMessage();
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json(['success' => false, 'message' => $msg], 500);
+                }
+                return back()->with('error', $msg);
             }
-            return back()->with('error', $msg);
         }
     }
 

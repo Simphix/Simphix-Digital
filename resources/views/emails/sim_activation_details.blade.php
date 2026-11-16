@@ -216,7 +216,7 @@
                     @if ($sender)
                     <tr>
                         <td class="details-label">Fulfilled By</td>
-                        <td class="details-value">{{ $sender->first_name }} {{ $sender->last_name }} ({{ ucwords(str_replace('_', ' ', $sender->role)) }})</td>
+                        <td class="details-value">{{ trim(($sender->first_name ?? '') . ' ' . ($sender->last_name ?? '')) ?: ($sender->name ?? 'Partner') }} ({{ ucwords(str_replace('_', ' ', $sender->role ?? 'User')) }})</td>
                     </tr>
                     @endif
                 </table>

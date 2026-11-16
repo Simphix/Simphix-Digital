@@ -35,7 +35,7 @@
                         <div>
                             <h3 class="support-info-title">Wholesale & Support Email</h3>
                             <p class="support-info-desc">Send us formal distribution proposals, bulk requests, and general questions.</p>
-                            <a href="mailto:Support@smartsimsub.com" class="support-info-link">Support@smartsimsub.com</a>
+                            <a href="mailto:support@simphiix.com" class="support-info-link">support@simphiix.com</a>
                         </div>
                     </div>
     

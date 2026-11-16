@@ -426,3 +426,91 @@ test('push fails with validation error if customer has no email', function () {
 
     \Illuminate\Support\Facades\Mail::assertNothingSent();
 });
+
+test('partner can update customer details with optional address and name left blank', function () {
+    $this->sim->update(['status' => SimStatus::ACTIVATED]);
+    $customer = SimCustomer::create([
+        'sim_id'       => $this->sim->id,
+        'partner_id'   => $this->partner->id,
+        'full_name'    => null,
+        'phone_number' => null,
+        'email'        => null,
+        'address'      => null,
+    ]);
+
+    $response = $this->actingAs($this->partner)
+        ->postJson(route('sims.activated.update-customer', $this->sim), [
+            'full_name'    => '',
+            'phone_number' => '08098765432',
+            'email'        => 'customer@example.com',
+            'address'      => '',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => true,
+            'customer' => [
+                'email' => 'customer@example.com',
+            ],
+        ]);
+
+    $customer->refresh();
+    expect($customer->email)->toBe('customer@example.com');
+    expect($customer->phone_number)->toBe('08098765432');
+});
+
+test('partner can push email by providing email in request payload even if customer record was empty', function () {
+    \Illuminate\Support\Facades\Mail::fake();
+
+    $this->sim->update(['status' => SimStatus::ACTIVATED]);
+    $customer = SimCustomer::create([
+        'sim_id'       => $this->sim->id,
+        'partner_id'   => $this->partner->id,
+        'full_name'    => null,
+        'phone_number' => null,
+        'email'        => null,
+        'address'      => null,
+    ]);
+
+    $response = $this->actingAs($this->partner)
+        ->postJson(route('sims.activated.push-email', $this->sim), [
+            'email' => 'provided-in-push@example.com',
+        ]);
+
+    $response->assertOk()
+        ->assertJson(['success' => true]);
+
+    \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\SimActivationDetailsMail::class, function ($mail) {
+        return $mail->hasTo('provided-in-push@example.com');
+    });
+
+    $customer->refresh();
+    expect($customer->email)->toBe('provided-in-push@example.com');
+});
+
+test('support staff is authorized to update customer details and push activation email', function () {
+    \Illuminate\Support\Facades\Mail::fake();
+
+    $supportUser = User::factory()->create(['role' => 'support', 'status' => 'active']);
+    $this->sim->update(['status' => SimStatus::ACTIVATED]);
+    SimCustomer::create([
+        'sim_id'       => $this->sim->id,
+        'partner_id'   => $this->partner->id,
+        'full_name'    => 'Customer Under Partner',
+        'email'        => 'supportpush@example.com',
+    ]);
+
+    $updateResponse = $this->actingAs($supportUser)
+        ->postJson(route('sims.activated.update-customer', $this->sim), [
+            'full_name' => 'Updated by Support',
+            'email'     => 'supportpush@example.com',
+        ]);
+
+    $updateResponse->assertOk()->assertJson(['success' => true]);
+
+    $pushResponse = $this->actingAs($supportUser)
+        ->postJson(route('sims.activated.push-email', $this->sim));
+
+    $pushResponse->assertOk()->assertJson(['success' => true]);
+    \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\SimActivationDetailsMail::class);
+});

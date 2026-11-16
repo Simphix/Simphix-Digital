@@ -217,15 +217,8 @@
             },
             async pushFromEdit() {
                 this.editError = '';
-                if (!this.editForm.full_name.trim()) {
-                    this.editError = 'Customer full name is required.';
-                    return;
-                }
-                if (!this.editForm.address.trim()) {
-                    this.editError = 'Full address is required.';
-                    return;
-                }
-                if (!this.editForm.email || !this.editForm.email.trim()) {
+                const email = (this.editForm.email || '').trim();
+                if (!email) {
                     this.editError = 'Customer email address is required to push activation details.';
                     return;
                 }
@@ -251,16 +244,16 @@
                     }
 
                     // Update selectedSim state
-                    this.selectedSim.customerName = saveData.customer.full_name;
-                    this.selectedSim.customerPhone = saveData.customer.phone_number;
-                    this.selectedSim.customerEmail = saveData.customer.email;
-                    this.selectedSim.customerAddress = saveData.customer.address;
+                    this.selectedSim.customerName = saveData.customer ? saveData.customer.full_name : (this.editForm.full_name || '');
+                    this.selectedSim.customerPhone = saveData.customer ? saveData.customer.phone_number : (this.editForm.phone_number || '');
+                    this.selectedSim.customerEmail = saveData.customer ? saveData.customer.email : email;
+                    this.selectedSim.customerAddress = saveData.customer ? saveData.customer.address : (this.editForm.address || '');
 
                     // Update table row DOM
                     const rowNameEl = document.getElementById('cust_name_row_' + this.selectedSim.id);
-                    if (rowNameEl) rowNameEl.textContent = saveData.customer.full_name;
+                    if (rowNameEl && this.selectedSim.customerName) rowNameEl.textContent = this.selectedSim.customerName;
                     const rowPhoneEl = document.getElementById('cust_phone_row_' + this.selectedSim.id);
-                    if (rowPhoneEl) rowPhoneEl.textContent = saveData.customer.phone_number || '';
+                    if (rowPhoneEl && this.selectedSim.customerPhone) rowPhoneEl.textContent = this.selectedSim.customerPhone;
 
                     this.isSavingCustomer = false;
 
@@ -271,7 +264,8 @@
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        }
+                        },
+                        body: JSON.stringify({ email: email })
                     });
                     const pushData = await pushRes.json();
                     if (!pushRes.ok || !pushData.success) {
@@ -305,14 +299,6 @@
                 }
             },
             async saveCustomer() {
-                if (!this.editForm.full_name.trim()) {
-                    this.editError = 'Customer full name is required.';
-                    return;
-                }
-                if (!this.editForm.address.trim()) {
-                    this.editError = 'Full address is required.';
-                    return;
-                }
                 this.isSavingCustomer = true;
                 this.editError = '';
 
@@ -334,17 +320,17 @@
                     }
 
                     // Update selectedSim state
-                    this.selectedSim.customerName = data.customer.full_name;
-                    this.selectedSim.customerPhone = data.customer.phone_number;
-                    this.selectedSim.customerEmail = data.customer.email;
-                    this.selectedSim.customerAddress = data.customer.address;
+                    this.selectedSim.customerName = data.customer ? data.customer.full_name : (this.editForm.full_name || '');
+                    this.selectedSim.customerPhone = data.customer ? data.customer.phone_number : (this.editForm.phone_number || '');
+                    this.selectedSim.customerEmail = data.customer ? data.customer.email : (this.editForm.email || '');
+                    this.selectedSim.customerAddress = data.customer ? data.customer.address : (this.editForm.address || '');
                     this.isEditingCustomer = false;
 
                     // Update table row DOM if present
                     const rowNameEl = document.getElementById('cust_name_row_' + this.selectedSim.id);
-                    if (rowNameEl) rowNameEl.textContent = data.customer.full_name;
+                    if (rowNameEl && this.selectedSim.customerName) rowNameEl.textContent = this.selectedSim.customerName;
                     const rowPhoneEl = document.getElementById('cust_phone_row_' + this.selectedSim.id);
-                    if (rowPhoneEl) rowPhoneEl.textContent = data.customer.phone_number || '';
+                    if (rowPhoneEl && this.selectedSim.customerPhone) rowPhoneEl.textContent = this.selectedSim.customerPhone;
 
                     if (window.Swal) {
                         Swal.fire({
@@ -399,7 +385,8 @@
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        }
+                        },
+                        body: JSON.stringify({ email: targetSim.customerEmail })
                     });
                     const data = await res.json();
                     if (!res.ok || !data.success) {
@@ -518,6 +505,16 @@
                                     </td>
                                     <td class="py-3 text-right">
                                         <div class="flex items-center justify-end gap-1.5">
+                                            @if ($customerEmail)
+                                                <button type="button"
+                                                        @click.stop="pushEmail(@js($simPayload))"
+                                                        :disabled="isPushingEmail"
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold transition-colors shadow-sm disabled:opacity-50"
+                                                        title="Push activation details email to {{ $customerEmail }}">
+                                                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                                                    Push
+                                                </button>
+                                            @endif
                                             <button type="button"
                                                     @click.stop="openEditModal(@js($simPayload))"
                                                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors shadow-sm"
@@ -868,6 +865,15 @@
                                         <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Customer Information</span>
                                         <div class="flex items-center gap-1.5" x-show="!isEditingCustomer">
                                             <button type="button"
+                                                    x-show="selectedSim && selectedSim.customerEmail"
+                                                    @click="pushEmail(selectedSim)"
+                                                    :disabled="isPushingEmail"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
+                                                    title="Push activation details email to customer">
+                                                <i data-lucide="send" class="w-3 h-3"></i>
+                                                <span x-text="isPushingEmail ? 'Pushing...' : 'Push'"></span>
+                                            </button>
+                                            <button type="button"
                                                     @click="startEditCustomer()"
                                                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors shadow-sm">
                                                 <i data-lucide="edit-3" class="w-3 h-3 text-slate-400"></i>
@@ -879,7 +885,7 @@
                                     <!-- VIEW MODE -->
                                     <template x-if="!isEditingCustomer">
                                         <div>
-                                            <template x-if="selectedSim.customerName || selectedSim.customerPhone || selectedSim.customerAddress">
+                                            <template x-if="selectedSim.customerName || selectedSim.customerPhone || selectedSim.customerAddress || selectedSim.customerEmail">
                                                 <div class="space-y-2.5 text-xs">
                                                     <div class="flex items-start gap-2.5">
                                                         <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
@@ -929,14 +935,28 @@
                                                             <span class="text-[11px] text-slate-400 block">Email Address</span>
                                                             <div class="flex items-center gap-2">
                                                                 <span class="font-medium text-slate-700 break-all" x-text="selectedSim.customerEmail || 'Not provided'"></span>
-                                                                <span x-show="!selectedSim.customerEmail" class="text-[10px] text-amber-600 font-semibold">(Add email to enable push)</span>
+                                                                <button type="button"
+                                                                        x-show="selectedSim.customerEmail"
+                                                                        @click="pushEmail(selectedSim)"
+                                                                        :disabled="isPushingEmail"
+                                                                        class="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
+                                                                        title="Send activation email">
+                                                                    <i data-lucide="send" class="w-3 h-3"></i>
+                                                                    <span x-text="isPushingEmail ? 'Pushing...' : 'Push'"></span>
+                                                                </button>
+                                                                <button type="button"
+                                                                        x-show="!selectedSim.customerEmail"
+                                                                        @click="startEditCustomer()"
+                                                                        class="text-[10px] text-amber-600 font-semibold hover:underline cursor-pointer">
+                                                                    (Add email to enable push)
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </template>
 
-                                            <template x-if="!selectedSim.customerName && !selectedSim.customerPhone && !selectedSim.customerAddress">
+                                            <template x-if="!selectedSim.customerName && !selectedSim.customerPhone && !selectedSim.customerAddress && !selectedSim.customerEmail">
                                                 <div class="py-3 px-3 bg-white rounded-lg border border-slate-200 text-slate-400 text-center text-xs space-y-2">
                                                     <div>No customer profile was recorded for this SIM.</div>
                                                     <button type="button" @click="startEditCustomer()" class="text-primary font-bold hover:underline">Add Customer Details</button>
@@ -951,12 +971,12 @@
                                             <div x-show="editError" x-text="editError" class="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold"></div>
 
                                             <div class="space-y-1">
-                                                <label class="block text-[11px] font-bold text-slate-600 uppercase">Customer Full Name <span class="text-rose-500">*</span></label>
+                                                <label class="block text-[11px] font-bold text-slate-600 uppercase">Customer Full Name <span class="text-slate-400 font-normal lowercase">(optional)</span></label>
                                                 <input type="text" x-model="editForm.full_name" placeholder="e.g. Adebayo Ogunlesi" autocomplete="off" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
                                             </div>
 
                                             <div class="space-y-1">
-                                                <label class="block text-[11px] font-bold text-slate-600 uppercase">Full Address <span class="text-rose-500">*</span></label>
+                                                <label class="block text-[11px] font-bold text-slate-600 uppercase">Full Address <span class="text-slate-400 font-normal lowercase">(optional)</span></label>
                                                 <textarea rows="2" x-model="editForm.address" placeholder="Physical Address" autocomplete="off" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary"></textarea>
                                             </div>
 
@@ -966,7 +986,7 @@
                                                     <input type="tel" x-model="editForm.phone_number" placeholder="e.g. 08012345678" autocomplete="off" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
                                                 </div>
                                                 <div class="space-y-1">
-                                                    <label class="block text-[11px] font-bold text-slate-600 uppercase">Email Address <span class="text-slate-400 font-normal lowercase">(optional)</span></label>
+                                                    <label class="block text-[11px] font-bold text-slate-600 uppercase">Email Address <span class="text-slate-400 font-normal lowercase">(required for push)</span></label>
                                                     <input type="email" x-model="editForm.email" placeholder="customer@example.com" autocomplete="off" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-primary focus:ring-primary">
                                                 </div>
                                             </div>
