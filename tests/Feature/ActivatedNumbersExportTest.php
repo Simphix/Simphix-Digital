@@ -234,3 +234,75 @@ test('nightly sims:export-activated command with --all exports all activated num
             && $mail->since === null;
     });
 });
+
+test('nightly sims:export-activated command supports multiple comma-separated recipients', function () {
+    Mail::fake();
+
+    $settings = SimExportSettings::current();
+    $settings->update([
+        'is_active'       => true,
+        'recipient_email' => 'ops@simphix.com, management@simphix.com, backup@simphix.com',
+    ]);
+
+    $this->artisan('sims:export-activated')
+        ->assertSuccessful();
+
+    Mail::assertSent(ActivatedSimsExportMail::class, function (ActivatedSimsExportMail $mail) {
+        return $mail->hasTo('ops@simphix.com')
+            && $mail->hasTo('management@simphix.com')
+            && $mail->hasTo('backup@simphix.com');
+    });
+});
+
+test('nightly sims:export-activated command respects --to and --force CLI overrides', function () {
+    Mail::fake();
+
+    $settings = SimExportSettings::current();
+    $settings->update([
+        'is_active'       => false,
+        'recipient_email' => null,
+    ]);
+
+    $this->artisan('sims:export-activated', [
+        '--to'    => 'override@simphix.com',
+        '--force' => true,
+    ])->assertSuccessful();
+
+    Mail::assertSent(ActivatedSimsExportMail::class, function (ActivatedSimsExportMail $mail) {
+        return $mail->hasTo('override@simphix.com');
+    });
+});
+
+test('admin can trigger on-demand activated SIMs export from web interface', function () {
+    Mail::fake();
+
+    $admin = User::factory()->create(['role' => 'super_admin']);
+    $settings = SimExportSettings::current();
+    $settings->update([
+        'is_active'       => true,
+        'recipient_email' => 'admin-test@simphix.com',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('admin.sims-operations.export-settings.send-now'), [
+            'period' => 'yesterday',
+        ]);
+
+    $response->assertRedirect()->assertSessionHas('success');
+
+    Mail::assertSent(ActivatedSimsExportMail::class, function (ActivatedSimsExportMail $mail) {
+        return $mail->hasTo('admin-test@simphix.com');
+    });
+});
+
+test('nightly sims:export-activated is registered in laravel schedule', function () {
+    $schedule = app(\Illuminate\Console\Scheduling\Schedule::class);
+
+    $events = collect($schedule->events());
+    $exportEvent = $events->first(function ($event) {
+        return str_contains($event->command, 'sims:export-activated');
+    });
+
+    expect($exportEvent)->not->toBeNull();
+    expect($exportEvent->expression)->toBe('5 0 * * *');
+});

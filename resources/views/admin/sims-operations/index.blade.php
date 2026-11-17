@@ -100,8 +100,31 @@
             </form>
         </div>
 
-        <!-- Nightly Activated-SIMs Export Email -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-4">
+        <!-- Nightly Activated-SIMs Export Email & On-Demand Dispatch -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
+                        <i data-lucide="mail-check" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800 font-display">Nightly Activated-SIMs Automated Export</h2>
+                        <span class="text-xs text-slate-500">Automatically scheduled for <strong>12:05 AM WAT</strong> every night via <code class="text-[11px] bg-slate-100 px-1 py-0.5 rounded font-mono">sims:export-activated</code>.</span>
+                    </div>
+                </div>
+                @if ($exportSettings->is_active && $exportSettings->recipient_email)
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Active &amp; Scheduled
+                    </span>
+                @else
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                        Export Suspended / Inactive
+                    </span>
+                @endif
+            </div>
+
             <form method="POST" action="{{ route('admin.sims-operations.export-settings.update') }}" class="flex flex-col md:flex-row md:items-end gap-4">
                 @csrf
                 @method('PUT')
@@ -109,24 +132,49 @@
                 <div class="flex items-center gap-3 shrink-0">
                     <x-toggle-switch name="is_active" :checked="old('is_active', $exportSettings->is_active)" />
                     <div>
-                        <span class="block text-xs font-bold text-slate-700">Nightly Export Email</span>
-                        <span class="block text-[11px] text-slate-400">Emails SIM numbers activated in the past 24 hours each night (<code class="text-[10px]">sims:export-activated</code>).</span>
+                        <span class="block text-xs font-bold text-slate-700">Nightly Automation</span>
+                        <span class="block text-[11px] text-slate-400">Toggle automatic daily dispatch</span>
                     </div>
                 </div>
 
                 <div class="flex-grow">
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Recipient Email</label>
-                    <input type="email" name="recipient_email" required
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Recipient Email(s) <span class="text-[10px] text-slate-400 font-normal">(Separate multiple addresses with commas)</span></label>
+                    <input type="text" name="recipient_email" required
                            value="{{ old('recipient_email', $exportSettings->recipient_email) }}"
-                           placeholder="ops@simphiix.com"
+                           placeholder="ops@simphix.com, management@simphix.com"
                            class="w-full text-xs rounded-lg border border-slate-200 px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
                     @error('recipient_email')
-                        <span class="text-[11px] text-rose-600 font-semibold">{{ $message }}</span>
+                        <span class="text-[11px] text-rose-600 font-semibold block mt-1">{{ $message }}</span>
                     @enderror
                 </div>
 
-                <button type="submit" class="text-xs font-bold px-4 py-2 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors shrink-0">Save</button>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="submit" class="text-xs font-bold px-4 py-2 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors shrink-0 shadow-xs">
+                        Save Settings
+                    </button>
+                </div>
             </form>
+
+            <!-- On-Demand Dispatch / Test Delivery -->
+            <div class="border-t border-slate-100 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70 p-3 rounded-xl">
+                <div>
+                    <span class="block text-xs font-bold text-slate-700">Test Delivery or Resend Missed Export</span>
+                    <span class="block text-[11px] text-slate-400">Trigger immediate delivery of the export CSV to verify SMTP or recover missing days.</span>
+                </div>
+                <form method="POST" action="{{ route('admin.sims-operations.export-settings.send-now') }}" class="flex items-center gap-2 shrink-0">
+                    @csrf
+                    <select name="period" class="text-xs rounded-lg border border-slate-200 py-1.5 px-2.5 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary">
+                        <option value="yesterday">Yesterday (Standard Full Day)</option>
+                        <option value="today">Today so far</option>
+                        <option value="24h">Past 24 Hours (Rolling)</option>
+                        <option value="all">All Activated SIMs (Full)</option>
+                    </select>
+                    <button type="submit" onclick="return confirm('Send export email now?')" class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition shadow-2xs">
+                        <i data-lucide="send" class="w-3.5 h-3.5 text-primary"></i>
+                        <span>Send Export Now</span>
+                    </button>
+                </form>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

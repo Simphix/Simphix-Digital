@@ -12,18 +12,22 @@ use Illuminate\Support\Facades\Mail;
 
 /**
  * Emails a CSV of SIM numbers activated during the previous day to whichever inbox
- * is configured in Admin > SIMs Operations — nothing happens if that
- * export is turned off or no recipient is set, so this is always safe to
- * run on a schedule regardless of the toggle's state. Intended to be
- * triggered by an external cron entry (e.g. nightly):
- *   0 0 * * * cd /path/to/app && php artisan sims:export-activated
+ * is configured in Admin > SIMs Operations (SimExportSettings).
+ *
+ * Runs automatically every night at 00:05 WAT via Laravel's scheduler (routes/console.php)
+ * or can be invoked on-demand via CLI or Admin Operations panel:
+ *   php artisan sims:export-activated
+ *   php artisan sims:export-activated --to=ops@simphix.com --force
  */
 class ExportActivatedSims extends Command
 {
     protected $signature = 'sims:export-activated 
         {--all : Export all currently activated SIMs instead of the previous day}
         {--date= : Specific date to export (Y-m-d in Africa/Lagos timezone, defaults to yesterday)}
-        {--hours= : Export activations in the past N hours instead of the previous full day}';
+        {--today : Export activations for today so far instead of yesterday}
+        {--hours= : Export activations in the past N hours instead of the previous full day}
+        {--to= : Override recipient email address(es), comma-separated}
+        {--force : Force execution even if the export toggle is turned off in settings}';
 
     protected $description = 'Emails a CSV of activated SIM numbers to the recipient configured in Admin > SIMs Operations.';
 
@@ -31,20 +35,37 @@ class ExportActivatedSims extends Command
     {
         $settings = SimExportSettings::current();
 
-        if (!$settings->is_active) {
-            $this->info('Nightly activated-SIMs export is turned off (Admin > SIMs Operations) — skipping.');
+        if (!$settings->is_active && !$this->option('force')) {
+            $this->info('Nightly activated-SIMs export is turned off (Admin > SIMs Operations) — skipping. Use --force to override.');
 
             return self::SUCCESS;
         }
 
-        if (!$settings->recipient_email) {
+        $rawRecipient = $this->option('to')
+            ?: ($settings->recipient_email ?: config('mail.from.address'));
+
+        if (!$rawRecipient) {
             $this->warn('Nightly activated-SIMs export is on but no recipient email is set — skipping.');
             Log::warning('sims:export-activated skipped: no recipient email configured.');
 
             return self::SUCCESS;
         }
 
+        // Split comma, semicolon, space, or newline-delimited recipient emails
+        $recipients = array_values(array_filter(
+            array_map('trim', preg_split('/[,;\s]+/', (string) $rawRecipient)),
+            fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL)
+        ));
+
+        if (empty($recipients)) {
+            $this->error('No valid recipient email address found: ' . $rawRecipient);
+            Log::error('sims:export-activated failed: invalid recipient email address format: ' . $rawRecipient);
+
+            return self::FAILURE;
+        }
+
         $exportAll = (bool) $this->option('all');
+        $exportToday = (bool) $this->option('today');
         $specificDate = $this->option('date');
         $hours = $this->option('hours') ? (int) $this->option('hours') : null;
 
@@ -60,6 +81,12 @@ class ExportActivatedSims extends Command
             $since = now()->subHours($hours);
             $periodLabel = "past {$hours} hours";
             $reportDate = now($timezone);
+        } elseif ($exportToday) {
+            $targetDate = now($timezone);
+            $since = $targetDate->copy()->startOfDay()->setTimezone('UTC');
+            $until = now()->setTimezone('UTC');
+            $periodLabel = $targetDate->format('M d, Y') . ' (Today)';
+            $reportDate = $targetDate;
         } else {
             // Default: strict activation events for the previous full calendar day (00:00:00 to 23:59:59 WAT / Africa/Lagos)
             $targetDate = $specificDate
@@ -75,18 +102,36 @@ class ExportActivatedSims extends Command
         $count = $exporter->count($since, $until);
         $csv = $exporter->toCsvString($since, $until);
 
-        try {
-            Mail::to($settings->recipient_email)->send(
-                new ActivatedSimsExportMail($csv, $count, now($timezone), $since, $until, $periodLabel, $reportDate)
-            );
-        } catch (\Exception $e) {
-            $this->error('Failed to send the export email: ' . $e->getMessage());
-            Log::error('sims:export-activated failed to send: ' . $e->getMessage());
+        $maxAttempts = 3;
+        $attempt = 0;
+        $sent = false;
+        $lastError = null;
+
+        while ($attempt < $maxAttempts && !$sent) {
+            $attempt++;
+            try {
+                Mail::to($recipients)->send(
+                    new ActivatedSimsExportMail($csv, $count, now($timezone), $since, $until, $periodLabel, $reportDate)
+                );
+                $sent = true;
+            } catch (\Throwable $e) {
+                $lastError = $e->getMessage();
+                Log::warning("sims:export-activated attempt {$attempt}/{$maxAttempts} failed: {$lastError}");
+                if ($attempt < $maxAttempts) {
+                    sleep(2);
+                }
+            }
+        }
+
+        if (!$sent) {
+            $this->error('Failed to send the export email after ' . $maxAttempts . ' attempt(s): ' . $lastError);
+            Log::error('sims:export-activated failed to send after retries: ' . $lastError);
 
             return self::FAILURE;
         }
 
-        $this->info("Sent {$count} activated SIM number(s) ({$periodLabel}) to {$settings->recipient_email}.");
+        $recipientList = implode(', ', $recipients);
+        $this->info("Sent {$count} activated SIM number(s) ({$periodLabel}) to {$recipientList}.");
 
         return self::SUCCESS;
     }

@@ -474,6 +474,7 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::get('/activated-numbers/export', [\App\Http\Controllers\Admin\SimsOperationsDashboardController::class, 'exportActivatedNumbersCsv'])->name('activated-numbers.export');
         Route::get('/activation-bonus/export', [\App\Http\Controllers\Admin\SimsOperationsDashboardController::class, 'exportActivationBonusCsv'])->name('activation-bonus.export');
         Route::put('/export-settings', [\App\Http\Controllers\Admin\ActivatedSimsExportSettingsController::class, 'update'])->name('export-settings.update');
+        Route::post('/export-settings/send-now', [\App\Http\Controllers\Admin\ActivatedSimsExportSettingsController::class, 'sendNow'])->name('export-settings.send-now');
     });
 
     // Services Management
