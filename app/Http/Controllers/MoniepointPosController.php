@@ -141,4 +141,19 @@ class MoniepointPosController extends Controller
             'myRequests'     => $myRequests,
         ]);
     }
+
+    /**
+     * Download A4 printable PDF for customer POS request.
+     */
+    public function downloadPdf(MoniepointPosRequest $posRequest, \App\Services\RequestPdfService $pdfService)
+    {
+        $user = Auth::user();
+        if (!$user || (!$user->isStaff() && $posRequest->user_id !== $user->id)) {
+            abort(403, 'Unauthorized access to POS request PDF.');
+        }
+
+        $posRequest->load('user');
+
+        return $pdfService->generatePosPdf($posRequest);
+    }
 }

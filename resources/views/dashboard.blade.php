@@ -217,6 +217,7 @@
                 ['title' => 'Travel & Tours', 'description' => 'Umrah, Hajj & Flights', 'route' => route('travel.index'), 'icon' => 'plane', 'icon_classes' => 'bg-primary/10 text-primary', 'available' => \App\Models\Service::isAvailable('travel')],
                 ['title' => 'POS Request', 'description' => 'Terminals & Hardware', 'route' => route('moniepoint.pos.index'), 'icon' => 'smartphone', 'icon_classes' => 'bg-primary/10 text-primary', 'available' => \App\Models\Service::isAvailable('moniepoint_pos')],
                 ['title' => 'Business Loans', 'description' => 'Working capital', 'route' => route('loans.index'), 'icon' => 'banknote', 'icon_classes' => 'bg-primary/10 text-primary', 'available' => \App\Models\Service::isAvailable('loans')],
+                ['title' => 'Passport Services', 'description' => 'New & Renewal', 'route' => route('passport.index'), 'icon' => 'book-open', 'icon_classes' => 'bg-emerald-500/10 text-emerald-600', 'available' => \App\Models\Service::isAvailable('passport')],
             ])->filter(fn ($service) => $service['available'])->values();
         @endphp
 
@@ -476,6 +477,13 @@
             </div>
 
         </div>
+
+        <!-- International Passport Registration Banner (Landscape, at the bottom of dashboard) -->
+        @if (\App\Models\Service::isAvailable('passport'))
+            <div class="mt-4">
+                @include('passport.partials.landscape-banner')
+            </div>
+        @endif
 
     </div>
 </x-app-layout>

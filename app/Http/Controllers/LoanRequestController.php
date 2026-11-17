@@ -105,4 +105,19 @@ class LoanRequestController extends Controller
             'myRequests'     => $myRequests,
         ]);
     }
+
+    /**
+     * Download A4 printable PDF for customer Loan request.
+     */
+    public function downloadPdf(LoanRequest $loanRequest, \App\Services\RequestPdfService $pdfService)
+    {
+        $user = Auth::user();
+        if (!$user || (!$user->isStaff() && $loanRequest->user_id !== $user->id)) {
+            abort(403, 'Unauthorized access to Loan request PDF.');
+        }
+
+        $loanRequest->load('user');
+
+        return $pdfService->generateLoanPdf($loanRequest);
+    }
 }

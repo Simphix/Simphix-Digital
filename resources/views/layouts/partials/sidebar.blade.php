@@ -198,6 +198,9 @@
             @if (\App\Models\Service::isAvailable('loans'))
                 @include('layouts.partials.sidebar-link', ['href' => route('loans.index'), 'icon' => 'banknote', 'label' => __('Business Loans'), 'active' => request()->routeIs('loans.*')])
             @endif
+            @if (\App\Models\Service::isAvailable('passport'))
+                @include('layouts.partials.sidebar-link', ['href' => route('passport.index'), 'icon' => 'book-open', 'label' => __('International Passport'), 'active' => request()->routeIs('passport.*')])
+            @endif
         @endif
         @if (auth()->user() && !in_array(auth()->user()->role, ['super_admin', 'support', 'business_sales_manager'], true))
             @include('layouts.partials.sidebar-link', ['href' => route('support'), 'icon' => 'help-circle', 'label' => __('Support'), 'active' => request()->routeIs('support')])
@@ -219,6 +222,13 @@
                 @if (\App\Models\Service::isAvailable('simcard'))
                     @include('layouts.partials.sidebar-link', ['href' => route('sims.inventory'), 'icon' => 'database', 'label' => 'All SIMs Inventory', 'active' => request()->routeIs('sims.inventory*')])
                 @endif
+
+                <span :class="sidebarCollapsed ? 'lg:hidden' : 'block'" class="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2 mt-4">Service Desks</span>
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.passport-requests.index'), 'icon' => 'book-open', 'label' => 'Passport Requests', 'active' => request()->routeIs('admin.passport-requests*'), 'badge' => $pendingPassportBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.cac.index'), 'icon' => 'file-badge', 'label' => 'CAC Registrations', 'active' => request()->routeIs('admin.cac*'), 'badge' => $newCacBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.travel-requests.index'), 'icon' => 'plane', 'label' => 'Travel Requests', 'active' => request()->routeIs('admin.travel-requests*'), 'badge' => $pendingTravelBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.moniepoint-pos.index'), 'icon' => 'smartphone', 'label' => 'POS Requests', 'active' => request()->routeIs('admin.moniepoint-pos*'), 'badge' => $pendingPosBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.loan-requests.index'), 'icon' => 'banknote', 'label' => 'Business Loans', 'active' => request()->routeIs('admin.loan-requests*'), 'badge' => $pendingLoansBadge ?? 0])
 
                 @php
                     $bsmDownlineBatchesActive = request()->routeIs('admin.manage.downline-batches*');
@@ -274,6 +284,13 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.users.index'), 'icon' => 'users', 'label' => 'User Lookup', 'active' => request()->routeIs('support-desk.users*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.webhooks.index'), 'icon' => 'webhook', 'label' => 'Webhook Logs', 'active' => request()->routeIs('support-desk.webhooks*'), 'badge' => $failedWebhooksBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('support-desk.failed-activations.index'), 'icon' => 'alert-octagon', 'label' => 'Failed Activations', 'active' => request()->routeIs('support-desk.failed-activations*'), 'badge' => $failedActivationsBadge ?? 0])
+
+                <span :class="sidebarCollapsed ? 'lg:hidden' : 'block'" class="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2 mt-4">Service Desks</span>
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.passport-requests.index'), 'icon' => 'book-open', 'label' => 'Passport Requests', 'active' => request()->routeIs('admin.passport-requests*'), 'badge' => $pendingPassportBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.cac.index'), 'icon' => 'file-badge', 'label' => 'CAC Registrations', 'active' => request()->routeIs('admin.cac*'), 'badge' => $newCacBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.travel-requests.index'), 'icon' => 'plane', 'label' => 'Travel Requests', 'active' => request()->routeIs('admin.travel-requests*'), 'badge' => $pendingTravelBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.moniepoint-pos.index'), 'icon' => 'smartphone', 'label' => 'POS Requests', 'active' => request()->routeIs('admin.moniepoint-pos*'), 'badge' => $pendingPosBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.loan-requests.index'), 'icon' => 'banknote', 'label' => 'Business Loans', 'active' => request()->routeIs('admin.loan-requests*'), 'badge' => $pendingLoansBadge ?? 0])
             </div>
         @endif
 
@@ -338,6 +355,7 @@
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.platform-wallets.welfare-settings.edit'), 'icon' => 'shield-plus', 'label' => 'Welfare Settings', 'active' => request()->routeIs('admin.platform-wallets.welfare-settings*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.notifications.index'), 'icon' => 'send', 'label' => 'Push Notifications', 'active' => request()->routeIs('admin.notifications*')])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.manage.support.index'), 'icon' => 'message-square', 'label' => 'Admin Support', 'active' => request()->routeIs('admin.manage.support*'), 'badge' => $openTicketsBadge ?? 0])
+                @include('layouts.partials.sidebar-link', ['href' => route('admin.passport-requests.index'), 'icon' => 'book-open', 'label' => 'Passport Requests', 'active' => request()->routeIs('admin.passport-requests*'), 'badge' => $pendingPassportBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.cac.index'), 'icon' => 'file-badge', 'label' => 'CAC Registrations', 'active' => request()->routeIs('admin.cac*'), 'badge' => $newCacBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.travel-requests.index'), 'icon' => 'plane', 'label' => 'Travel Requests', 'active' => request()->routeIs('admin.travel-requests*'), 'badge' => $pendingTravelBadge ?? 0])
                 @include('layouts.partials.sidebar-link', ['href' => route('admin.moniepoint-pos.index'), 'icon' => 'smartphone', 'label' => 'POS Requests', 'active' => request()->routeIs('admin.moniepoint-pos*'), 'badge' => $pendingPosBadge ?? 0])

@@ -330,4 +330,17 @@ class CacRegistrationController extends Controller
 
         return Storage::disk('local')->download($document->path, $document->original_name);
     }
+
+    /**
+     * Download A4 printable PDF dossier for customer CAC registration.
+     */
+    public function downloadPdf(CacRegistration $registration, \App\Services\RequestPdfService $pdfService)
+    {
+        $user = $this->authorizeCustomer();
+        abort_unless($registration->user_id === $user->id, 403);
+
+        $registration->load(['user', 'documents', 'events.user']);
+
+        return $pdfService->generateCacPdf($registration);
+    }
 }
