@@ -85,7 +85,11 @@ class LoanRequestController extends Controller
 
         $matchedRequest = null;
         if ($queryRef !== '') {
-            $matchedRequest = LoanRequest::where('reference', $queryRef)->first();
+            $matchedRequest = LoanRequest::where('reference', $queryRef)
+                ->orWhere('phone', $queryRef)
+                ->orWhere('phone', 'like', "%{$queryRef}%")
+                ->latest()
+                ->first();
         } elseif ($searchPhone !== '') {
             $matchedRequest = LoanRequest::where('phone', 'like', "%{$searchPhone}%")->latest()->first();
         }

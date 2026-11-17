@@ -218,8 +218,8 @@
             <!-- STEP 3: Personal Information -->
             <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm"
                  x-data="{
-                     state: '{{ old('state', $user->state ?? '') }}',
-                     lga: '{{ old('lga', $user->lga ?? '') }}',
+                     state: '{{ old('state', '') }}',
+                     lga: '{{ old('lga', '') }}',
                      lgas: [],
                      init() {
                          if (this.state && stateLgaData[this.state]) {
@@ -243,7 +243,8 @@
                             Full Name <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" name="name" required autocomplete="off"
-                               value="{{ old('name', $user->name ?: trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''))) }}"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
+                               value="{{ old('name') }}"
                                placeholder="e.g. Adebayo Ibrahim Chukwuma"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                     </div>
@@ -254,7 +255,8 @@
                             Phone Number <span class="text-rose-500">*</span>
                         </label>
                         <input type="tel" name="phone" required autocomplete="off"
-                               value="{{ old('phone', $user->phone ?? '') }}"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
+                               value="{{ old('phone') }}"
                                placeholder="e.g. 08012345678"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                     </div>
@@ -265,7 +267,8 @@
                             Valid Email Address <span class="text-rose-500">*</span>
                         </label>
                         <input type="email" name="email" required autocomplete="off"
-                               value="{{ old('email', $user->email ?? '') }}"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
+                               value="{{ old('email') }}"
                                placeholder="e.g. merchant@example.com"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                     </div>
@@ -276,7 +279,8 @@
                             BVN (Bank Verification Number) <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" name="bvn" required maxlength="11" pattern="\d{11}" autocomplete="off"
-                               value="{{ old('bvn', $user->bvn ?? '') }}"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
+                               value="{{ old('bvn') }}"
                                placeholder="11-digit BVN"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                         <p class="text-[10px] text-slate-400 mt-0.5">Used strictly for regulatory identity verification.</p>
@@ -288,7 +292,8 @@
                             NIN (National Identity Number) <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" name="nin" required maxlength="11" pattern="\d{11}" autocomplete="off"
-                               value="{{ old('nin', $user->nin ?? '') }}"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
+                               value="{{ old('nin') }}"
                                placeholder="11-digit NIN"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                         <p class="text-[10px] text-slate-400 mt-0.5">Used strictly for statutory merchant registration.</p>
@@ -299,7 +304,7 @@
                         <label class="block text-xs font-bold text-slate-700 mb-1">
                             State <span class="text-rose-500">*</span>
                         </label>
-                        <select name="state" x-model="state" @change="onStateChange" required
+                        <select name="state" x-model="state" @change="onStateChange" required autocomplete="off"
                                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B] bg-white">
                             <option value="">Select State</option>
                             @foreach ([
@@ -309,7 +314,7 @@
                                 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba',
                                 'Yobe', 'Zamfara'
                             ] as $st)
-                                <option value="{{ $st }}" {{ old('state', $user->state ?? '') === $st ? 'selected' : '' }}>{{ $st }}</option>
+                                <option value="{{ $st }}" {{ old('state') === $st ? 'selected' : '' }}>{{ $st }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -319,14 +324,14 @@
                         <label class="block text-xs font-bold text-slate-700 mb-1">
                             Local Govt (LGA) <span class="text-rose-500">*</span>
                         </label>
-                        <select name="lga" x-model="lga" required
+                        <select name="lga" x-model="lga" required autocomplete="off"
                                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B] bg-white">
                             <option value="">Select LGA</option>
                             <template x-for="item in lgas" :key="item">
                                 <option :value="item" x-text="item" :selected="lga === item"></option>
                             </template>
-                            @if (!empty(old('lga', $user->lga ?? '')))
-                                <option value="{{ old('lga', $user->lga ?? '') }}" selected>{{ old('lga', $user->lga ?? '') }}</option>
+                            @if (!empty(old('lga')))
+                                <option value="{{ old('lga') }}" selected>{{ old('lga') }}</option>
                             @endif
                         </select>
                     </div>
@@ -337,8 +342,9 @@
                             Shop Address <span class="text-rose-500">*</span>
                         </label>
                         <textarea name="shop_address" rows="2" required autocomplete="off"
+                                  autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                   placeholder="e.g. Shop 4B, Plaza 2, Main Market Road, Commercial Area"
-                                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">{{ old('shop_address', $user->address ?? '') }}</textarea>
+                                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">{{ old('shop_address') }}</textarea>
                         <p class="text-[10px] text-slate-400 mt-0.5">Physical location where the POS terminal will be actively deployed.</p>
                     </div>
 
@@ -348,8 +354,9 @@
                             Home Address <span class="text-rose-500">*</span>
                         </label>
                         <textarea name="home_address" rows="2" required autocomplete="off"
+                                  autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                   placeholder="e.g. No 15 Crescent Estate, Off Ring Road"
-                                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">{{ old('home_address', $user->address ?? '') }}</textarea>
+                                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">{{ old('home_address') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -371,6 +378,7 @@
                             Next of Kin Full Name <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" name="next_of_kin_name" required autocomplete="off"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                value="{{ old('next_of_kin_name') }}"
                                placeholder="e.g. Halima Ibrahim Adebayo"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
@@ -382,6 +390,7 @@
                             Next of Kin Phone Number <span class="text-rose-500">*</span>
                         </label>
                         <input type="tel" name="next_of_kin_phone" required autocomplete="off"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                value="{{ old('next_of_kin_phone') }}"
                                placeholder="e.g. 08087654321"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
@@ -393,6 +402,7 @@
                             Next of Kin Home Address <span class="text-rose-500">*</span>
                         </label>
                         <textarea name="next_of_kin_address" rows="2" required autocomplete="off"
+                                  autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                   placeholder="e.g. Block C, Flat 12, Sunnyvale Estate"
                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">{{ old('next_of_kin_address') }}</textarea>
                     </div>
@@ -416,6 +426,7 @@
                             Referral Full Name <span class="text-slate-400 font-normal">(Optional)</span>
                         </label>
                         <input type="text" name="referral_name" autocomplete="off"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                value="{{ old('referral_name') }}"
                                placeholder="e.g. Emmanuel Chukwu"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
@@ -427,6 +438,7 @@
                             Referral Phone Number <span class="text-slate-400 font-normal">(Optional)</span>
                         </label>
                         <input type="tel" name="referral_phone" autocomplete="off"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                value="{{ old('referral_phone') }}"
                                placeholder="e.g. 08123456789"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">

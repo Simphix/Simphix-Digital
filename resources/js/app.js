@@ -126,3 +126,25 @@ if (document.querySelector('meta[name="vapid-public-key"]')) {
     subscribeToPush();
     setInterval(subscribeToPush, PUSH_RETRY_INTERVAL_MS);
 }
+
+// Suppress browser autocomplete and autofill on forms marked autocomplete="off"
+const suppressAutofill = () => {
+    document.querySelectorAll('form[autocomplete="off"]').forEach((form) => {
+        form.setAttribute('autocomplete', 'off');
+        form.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea').forEach((el) => {
+            el.setAttribute('autocomplete', 'off');
+            el.setAttribute('autocorrect', 'off');
+            el.setAttribute('autocapitalize', 'none');
+            el.setAttribute('spellcheck', 'false');
+            el.setAttribute('data-lpignore', 'true');
+            el.setAttribute('data-1p-ignore', 'true');
+            el.setAttribute('data-form-type', 'other');
+        });
+    });
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', suppressAutofill);
+} else {
+    suppressAutofill();
+}

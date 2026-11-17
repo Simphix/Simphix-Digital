@@ -121,7 +121,11 @@ class MoniepointPosController extends Controller
 
         $matchedRequest = null;
         if ($queryRef !== '') {
-            $matchedRequest = MoniepointPosRequest::where('reference', $queryRef)->first();
+            $matchedRequest = MoniepointPosRequest::where('reference', $queryRef)
+                ->orWhere('phone', $queryRef)
+                ->orWhere('phone', 'like', "%{$queryRef}%")
+                ->latest()
+                ->first();
         } elseif ($searchPhone !== '') {
             $matchedRequest = MoniepointPosRequest::where('phone', 'like', "%{$searchPhone}%")->latest()->first();
         }

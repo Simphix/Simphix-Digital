@@ -122,12 +122,17 @@
                         </label>
                         <input type="text"
                                name="nin"
-                               value="{{ old('nin', auth()->user()->nin ?? '') }}"
+                               value="{{ old('nin') }}"
                                maxlength="11"
                                pattern="\d{11}"
                                placeholder="e.g. 12345678901"
                                required
                                autocomplete="off"
+                               autocorrect="off"
+                               autocapitalize="none"
+                               spellcheck="false"
+                               data-lpignore="true"
+                               data-1p-ignore="true"
                                class="w-full text-xs font-mono font-bold tracking-wider bg-white text-slate-900 rounded-xl border border-slate-300 placeholder:text-slate-400 placeholder:font-normal focus:border-emerald-600 focus:ring-emerald-600 shadow-2xs">
                         <span class="text-[11px] font-semibold text-slate-600 block mt-1">National Identification Number (11 digits)</span>
                     </div>
@@ -139,10 +144,15 @@
                         </label>
                         <input type="text"
                                name="surname"
-                               value="{{ old('surname', auth()->user()->last_name ?? '') }}"
+                               value="{{ old('surname') }}"
                                placeholder="e.g. ADEYEMI"
                                required
                                autocomplete="off"
+                               autocorrect="off"
+                               autocapitalize="characters"
+                               spellcheck="false"
+                               data-lpignore="true"
+                               data-1p-ignore="true"
                                class="w-full text-xs font-bold uppercase bg-white text-slate-900 rounded-xl border border-slate-300 placeholder:text-slate-400 placeholder:font-normal focus:border-emerald-600 focus:ring-emerald-600 shadow-2xs">
                     </div>
 
@@ -153,10 +163,15 @@
                         </label>
                         <input type="text"
                                name="first_name"
-                               value="{{ old('first_name', auth()->user()->first_name ?? '') }}"
+                               value="{{ old('first_name') }}"
                                placeholder="e.g. BABATUNDE"
                                required
                                autocomplete="off"
+                               autocorrect="off"
+                               autocapitalize="characters"
+                               spellcheck="false"
+                               data-lpignore="true"
+                               data-1p-ignore="true"
                                class="w-full text-xs font-bold uppercase bg-white text-slate-900 rounded-xl border border-slate-300 placeholder:text-slate-400 placeholder:font-normal focus:border-emerald-600 focus:ring-emerald-600 shadow-2xs">
                     </div>
 
@@ -261,10 +276,15 @@
                         </label>
                         <input type="text"
                                name="mobile_number"
-                               value="{{ old('mobile_number', auth()->user()->phone ?? '') }}"
+                               value="{{ old('mobile_number') }}"
                                placeholder="e.g. 08012345678"
                                required
                                autocomplete="off"
+                               autocorrect="off"
+                               autocapitalize="none"
+                               spellcheck="false"
+                               data-lpignore="true"
+                               data-1p-ignore="true"
                                class="w-full text-xs font-bold bg-white text-slate-900 rounded-xl border border-slate-300 placeholder:text-slate-400 placeholder:font-normal focus:border-emerald-600 focus:ring-emerald-600 shadow-2xs">
                     </div>
 
@@ -275,10 +295,15 @@
                         </label>
                         <input type="email"
                                name="email"
-                               value="{{ old('email', auth()->user()->email ?? '') }}"
+                               value="{{ old('email') }}"
                                placeholder="e.g. applicant@example.com"
                                required
                                autocomplete="off"
+                               autocorrect="off"
+                               autocapitalize="none"
+                               spellcheck="false"
+                               data-lpignore="true"
+                               data-1p-ignore="true"
                                class="w-full text-xs font-bold bg-white text-slate-900 rounded-xl border border-slate-300 placeholder:text-slate-400 placeholder:font-normal focus:border-emerald-600 focus:ring-emerald-600 shadow-2xs">
                     </div>
 

@@ -104,6 +104,9 @@ class TravelTourController extends Controller
         if ($queryRef !== '') {
             $matchedRequest = TravelRequest::with('travelPackage')
                 ->where('reference', $queryRef)
+                ->orWhere('phone', $queryRef)
+                ->orWhere('phone', 'like', "%{$queryRef}%")
+                ->latest()
                 ->first();
         } elseif ($searchPhone !== '') {
             $matchedRequest = TravelRequest::with('travelPackage')

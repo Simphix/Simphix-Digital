@@ -286,4 +286,60 @@ class PassportRequestTest extends TestCase
             $resLoanPdf->assertStatus(200)->assertHeader('content-type', 'application/pdf');
         }
     }
+
+    public function test_passport_tracking_page_looks_up_by_ref_nin_and_phone(): void
+    {
+        $user = User::factory()->create(['role' => 'partner']);
+
+        $passport = PassportRequest::create([
+            'reference'        => 'PASS-TRACK12345',
+            'user_id'          => $user->id,
+            'application_type' => 'new',
+            'nin'              => '98765432109',
+            'surname'          => 'OGUNLEWE',
+            'first_name'       => 'TOLU',
+            'date_of_birth'    => '1990-08-15',
+            'sex'              => 'Female',
+            'state_of_origin'  => 'Lagos',
+            'lga'              => 'Ikeja',
+            'hometown'         => 'Ikeja',
+            'place_of_birth'   => 'Lagos',
+            'phone'            => '08099887766',
+            'email'            => 'tolu.ogunlewe@example.com',
+            'address'          => '5 Allen Avenue, Ikeja, Lagos',
+            'occupation'       => 'Architect',
+            'next_of_kin_name' => 'Femi Ogunlewe',
+            'next_of_kin_relationship' => 'Brother',
+            'next_of_kin_phone'=> '08011223344',
+            'next_of_kin_address' => '5 Allen Avenue, Ikeja, Lagos',
+            'status'           => PassportRequest::STATUS_UNDER_REVIEW,
+        ]);
+
+        // 1. Authenticated user can view tracking page
+        $resAuth = $this->actingAs($user)->get(route('passport.tracking'));
+        $resAuth->assertStatus(200);
+        $resAuth->assertSee('Track International Passport Application');
+
+        // 2. Track by reference
+        $resRef = $this->actingAs($user)->get(route('passport.tracking', ['ref' => 'PASS-TRACK12345']));
+        $resRef->assertStatus(200);
+        $resRef->assertSee('PASS-TRACK12345');
+        $resRef->assertSee('OGUNLEWE');
+        $resRef->assertSee('Under Review');
+
+        // 3. Track by NIN
+        $resNin = $this->actingAs($user)->get(route('passport.tracking', ['ref' => '98765432109']));
+        $resNin->assertStatus(200);
+        $resNin->assertSee('PASS-TRACK12345');
+
+        // 4. Track by phone
+        $resPhone = $this->actingAs($user)->get(route('passport.tracking', ['ref' => '08099887766']));
+        $resPhone->assertStatus(200);
+        $resPhone->assertSee('PASS-TRACK12345');
+
+        // 5. Track non-existent reference shows friendly notice
+        $resNotFound = $this->actingAs($user)->get(route('passport.tracking', ['ref' => 'NONEXISTENT999']));
+        $resNotFound->assertStatus(200);
+        $resNotFound->assertSee('No Passport Application Found');
+    }
 }

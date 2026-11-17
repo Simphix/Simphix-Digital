@@ -165,30 +165,35 @@ class PassportRequestController extends Controller
     /**
      * Application tracker lookup.
      */
-    public function tracking(Request $request): View|RedirectResponse
+    public function tracking(Request $request): View
     {
-        $search = trim($request->input('search', ''));
-        $foundRequest = null;
+        $user = Auth::user();
+        $queryRef = trim((string) ($request->query('ref') ?? $request->query('search') ?? $request->input('search') ?? ''));
+        $searchPhone = trim((string) $request->query('phone', ''));
 
-        if ($search !== '') {
-            $foundRequest = PassportRequest::where('reference', $search)
-                ->orWhere('nin', $search)
-                ->orWhere('phone', $search)
+        $matchedRequest = null;
+        if ($queryRef !== '') {
+            $matchedRequest = PassportRequest::where('reference', $queryRef)
+                ->orWhere('nin', $queryRef)
+                ->orWhere('phone', $queryRef)
                 ->first();
-
-            if ($foundRequest && $foundRequest->reference === $search) {
-                return redirect()->route('passport.show', $foundRequest);
-            }
+        } elseif ($searchPhone !== '') {
+            $matchedRequest = PassportRequest::where('phone', 'like', "%{$searchPhone}%")
+                ->latest()
+                ->first();
         }
 
-        $myRequests = Auth::check()
-            ? PassportRequest::where('user_id', Auth::id())->latest()->paginate(10)
-            : null;
+        $myRequests = $user
+            ? PassportRequest::where('user_id', $user->id)->latest()->paginate(10)->withQueryString()
+            : collect();
 
         return view('passport.tracking', [
-            'search'       => $search,
-            'foundRequest' => $foundRequest,
-            'myRequests'   => $myRequests,
+            'user'           => $user,
+            'queryRef'       => $queryRef,
+            'search'         => $queryRef,
+            'matchedRequest' => $matchedRequest,
+            'foundRequest'   => $matchedRequest,
+            'myRequests'     => $myRequests,
         ]);
     }
 

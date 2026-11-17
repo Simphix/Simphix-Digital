@@ -37,13 +37,15 @@
         </div>
 
         <!-- Header Dossier Banner -->
-        <div class="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-800 text-white shadow-md relative overflow-hidden">
-            <div class="pointer-events-none absolute -top-12 -right-12 w-48 h-48 rounded-full bg-emerald-500/20 blur-2xl"></div>
+        <div class="rounded-3xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden"
+             style="background: linear-gradient(135deg, #022c22 0%, #064e3b 50%, #047857 100%) !important; color: #ffffff !important;">
+            <div class="pointer-events-none absolute -top-12 -right-12 w-48 h-48 rounded-full bg-emerald-400/20 blur-2xl"></div>
 
             <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div class="space-y-1">
                     <div class="flex items-center gap-2">
-                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-800/80 border border-emerald-400/40 text-emerald-200">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                              style="background-color: rgba(6, 78, 59, 0.9); color: #a7f3d0; border: 1px solid rgba(52, 211, 153, 0.45);">
                             {{ $passportRequest->application_type === 'new' ? 'New Passport Application' : 'Passport Renewal' }}
                         </span>
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold {{ $passportRequest->status_badge_class }}">
@@ -51,12 +53,14 @@
                         </span>
                     </div>
 
-                    <h1 class="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white mt-2">
+                    <h1 class="text-2xl sm:text-3xl font-black font-mono tracking-tight mt-2"
+                        style="color: #ffffff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);">
                         {{ $passportRequest->reference }}
                     </h1>
 
-                    <p class="text-xs sm:text-sm text-emerald-200/90 mb-0">
-                        Applicant: <strong class="text-white">{{ $passportRequest->full_name }}</strong> &bull; Submitted on {{ $passportRequest->created_at->format('M d, Y - h:i A') }}
+                    <p class="text-xs sm:text-sm mb-0"
+                       style="color: #ecfdf5 !important;">
+                        Applicant: <strong class="text-white" style="color: #ffffff !important;">{{ $passportRequest->full_name }}</strong> &bull; Submitted on {{ $passportRequest->created_at->format('M d, Y - h:i A') }}
                     </p>
                 </div>
 
