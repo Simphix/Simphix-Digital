@@ -104,6 +104,9 @@ class TravelTourController extends Controller
         if ($queryRef !== '') {
             $matchedRequest = TravelRequest::with('travelPackage')
                 ->where('reference', $queryRef)
+                ->orWhere('phone', $queryRef)
+                ->orWhere('phone', 'like', "%{$queryRef}%")
+                ->latest()
                 ->first();
         } elseif ($searchPhone !== '') {
             $matchedRequest = TravelRequest::with('travelPackage')
@@ -141,5 +144,20 @@ class TravelTourController extends Controller
         return view('travel.tracking_detail', [
             'travelRequest' => $travelRequest,
         ]);
+    }
+
+    /**
+     * Download A4 printable PDF for customer travel request.
+     */
+    public function downloadPdf(TravelRequest $travelRequest, \App\Services\RequestPdfService $pdfService)
+    {
+        $user = Auth::user();
+        if (!$user || (!$user->isStaff() && $travelRequest->user_id !== $user->id)) {
+            abort(403, 'Unauthorized access to travel request PDF.');
+        }
+
+        $travelRequest->load(['travelPackage', 'user']);
+
+        return $pdfService->generateTravelPdf($travelRequest);
     }
 }

@@ -14,7 +14,7 @@ class AdminTravelRequestController extends Controller
     private function authorizeAdmin(): void
     {
         $user = Auth::user();
-        abort_unless($user && $user->role === 'super_admin', 403, 'Unauthorized access to Travel & Tours administrative requests.');
+        abort_unless($user && $user->isStaff(), 403, 'Unauthorized access to Travel & Tours administrative requests.');
     }
 
     /**
@@ -121,5 +121,17 @@ class AdminTravelRequestController extends Controller
         $travelRequest->update($updateData);
 
         return back()->with('success', "Travel request {$travelRequest->reference} status updated to \"{$travelRequest->status_label}\".");
+    }
+
+    /**
+     * Download A4 printable PDF dossier for travel request.
+     */
+    public function downloadPdf(TravelRequest $travelRequest, \App\Services\RequestPdfService $pdfService)
+    {
+        $this->authorizeAdmin();
+
+        $travelRequest->load(['travelPackage', 'user']);
+
+        return $pdfService->generateTravelPdf($travelRequest);
     }
 }

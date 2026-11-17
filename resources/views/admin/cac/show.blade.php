@@ -17,7 +17,14 @@
                     · {{ $registration->user->email }} · {{ $registration->user->phone }} · fee ₦{{ number_format($registration->amount, 2) }} ({{ $registration->transaction_ref }})
                 </p>
             </div>
-            <span class="inline-flex items-center px-3 py-1.5 text-xs font-extrabold border rounded-full {{ $registration->status_badge }}">{{ $registration->status_label }}</span>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('admin.cac.pdf', $registration) }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white hover:bg-primary-hover text-xs font-bold shadow-xs transition">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Download A4 PDF</span>
+                </a>
+                <span class="inline-flex items-center px-3 py-1.5 text-xs font-extrabold border rounded-full {{ $registration->status_badge }}">{{ $registration->status_label }}</span>
+            </div>
         </div>
 
         @if (session('success'))

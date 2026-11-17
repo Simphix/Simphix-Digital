@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'super_admin' => \App\Http\Middleware\EnsureIsSuperAdmin::class,
             'support_staff' => \App\Http\Middleware\EnsureIsSupportStaff::class,
             'business_sales_manager' => \App\Http\Middleware\EnsureIsBusinessSalesManager::class,
+            'staff' => \App\Http\Middleware\EnsureIsStaff::class,
             'utility_access' => \App\Http\Middleware\EnsureCanUseUtilities::class,
             'cashout_enabled' => \App\Http\Middleware\EnsureCashoutEnabled::class,
             'verification_access' => \App\Http\Middleware\EnsureCanVerify::class,

@@ -14,7 +14,7 @@ class AdminMoniepointPosController extends Controller
     private function authorizeAdmin(): void
     {
         $user = Auth::user();
-        abort_unless($user && $user->role === 'super_admin', 403, 'Unauthorized access to POS administrative desk.');
+        abort_unless($user && $user->isStaff(), 403, 'Unauthorized access to POS administrative desk.');
     }
 
     /**
@@ -119,5 +119,17 @@ class AdminMoniepointPosController extends Controller
 
         return redirect()->route('admin.moniepoint-pos.show', $posRequest)
             ->with('success', "POS request {$posRequest->reference} status updated to \"{$posRequest->status_label}\".");
+    }
+
+    /**
+     * Download A4 printable PDF dossier for POS request.
+     */
+    public function downloadPdf(MoniepointPosRequest $posRequest, \App\Services\RequestPdfService $pdfService)
+    {
+        $this->authorizeAdmin();
+
+        $posRequest->load('user');
+
+        return $pdfService->generatePosPdf($posRequest);
     }
 }

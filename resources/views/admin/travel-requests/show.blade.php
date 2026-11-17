@@ -48,6 +48,11 @@
                 </div>
 
                 <div class="flex items-center gap-3">
+                    <a href="{{ route('admin.travel-requests.pdf', $travelRequest) }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white hover:bg-primary-hover text-xs font-bold shadow-xs transition">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span>Download A4 PDF</span>
+                    </a>
                     <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border {{ $travelRequest->status_badge_class }}">
                         <span class="w-2 h-2 rounded-full bg-current"></span>
                         <span>{{ $travelRequest->status_label }}</span>

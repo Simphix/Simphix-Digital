@@ -14,7 +14,7 @@ class AdminLoanRequestController extends Controller
     private function authorizeAdmin(): void
     {
         $user = Auth::user();
-        abort_unless($user && $user->role === 'super_admin', 403, 'Unauthorized access to Business Loans administrative desk.');
+        abort_unless($user && $user->isStaff(), 403, 'Unauthorized access to Business Loans administrative desk.');
     }
 
     /**
@@ -117,5 +117,17 @@ class AdminLoanRequestController extends Controller
 
         return redirect()->route('admin.loan-requests.show', $loanRequest)
             ->with('success', "Loan request {$loanRequest->reference} status updated to \"{$loanRequest->status_label}\".");
+    }
+
+    /**
+     * Download A4 printable PDF dossier for Loan request.
+     */
+    public function downloadPdf(LoanRequest $loanRequest, \App\Services\RequestPdfService $pdfService)
+    {
+        $this->authorizeAdmin();
+
+        $loanRequest->load('user');
+
+        return $pdfService->generateLoanPdf($loanRequest);
     }
 }

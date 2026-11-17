@@ -135,6 +135,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [\App\Http\Controllers\CacRegistrationController::class, 'overview'])->name('overview');
         Route::get('/history', [\App\Http\Controllers\CacRegistrationController::class, 'history'])->name('history');
         Route::get('/history/{registration}', [\App\Http\Controllers\CacRegistrationController::class, 'show'])->name('show');
+        Route::get('/history/{registration}/pdf', [\App\Http\Controllers\CacRegistrationController::class, 'downloadPdf'])->name('pdf');
         Route::post('/history/{registration}/reply', [\App\Http\Controllers\CacRegistrationController::class, 'reply'])->name('reply');
         Route::get('/history/{registration}/documents/{document}', [\App\Http\Controllers\CacRegistrationController::class, 'download'])->name('download');
         Route::get('/{slug}/register', [\App\Http\Controllers\CacRegistrationController::class, 'create'])->name('create');
@@ -147,6 +148,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/request', [\App\Http\Controllers\TravelTourController::class, 'store'])->name('store');
         Route::get('/tracking', [\App\Http\Controllers\TravelTourController::class, 'tracking'])->name('tracking');
         Route::get('/tracking/{reference}', [\App\Http\Controllers\TravelTourController::class, 'showTracking'])->name('track-reference');
+        Route::get('/tracking/{travelRequest}/pdf', [\App\Http\Controllers\TravelTourController::class, 'downloadPdf'])->name('pdf');
     });
 
     // Moniepoint POS Terminal Requests
@@ -156,6 +158,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/request', [\App\Http\Controllers\MoniepointPosController::class, 'create']);
         Route::post('/request', [\App\Http\Controllers\MoniepointPosController::class, 'store'])->name('store');
         Route::get('/tracking', [\App\Http\Controllers\MoniepointPosController::class, 'tracking'])->name('tracking');
+        Route::get('/tracking/{posRequest}/pdf', [\App\Http\Controllers\MoniepointPosController::class, 'downloadPdf'])->name('pdf');
     });
 
     // Business Loans (Exclusive for Moniepoint Business Owners)
@@ -164,6 +167,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/apply', [\App\Http\Controllers\LoanRequestController::class, 'create'])->name('create');
         Route::post('/request', [\App\Http\Controllers\LoanRequestController::class, 'store'])->name('store');
         Route::get('/tracking', [\App\Http\Controllers\LoanRequestController::class, 'tracking'])->name('tracking');
+        Route::get('/tracking/{loanRequest}/pdf', [\App\Http\Controllers\LoanRequestController::class, 'downloadPdf'])->name('pdf');
+    });
+
+    // International Passport Registration (New & Renewal)
+    Route::prefix('passport')->name('passport.')->middleware('service_enabled:passport')->group(function () {
+        Route::get('/', [\App\Http\Controllers\PassportRequestController::class, 'index'])->name('index');
+        Route::get('/apply', [\App\Http\Controllers\PassportRequestController::class, 'create'])->name('create');
+        Route::post('/apply', [\App\Http\Controllers\PassportRequestController::class, 'store'])->name('store');
+        Route::get('/tracking', [\App\Http\Controllers\PassportRequestController::class, 'tracking'])->name('tracking');
+        Route::get('/tracking/{passportRequest}', [\App\Http\Controllers\PassportRequestController::class, 'show'])->name('show');
+        Route::get('/tracking/{passportRequest}/document/{type}', [\App\Http\Controllers\PassportRequestController::class, 'downloadDocument'])->name('document');
+        Route::get('/tracking/{passportRequest}/pdf', [\App\Http\Controllers\PassportRequestController::class, 'downloadPdf'])->name('pdf');
     });
 
     // Support Tickets Routes
@@ -452,48 +467,6 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::get('/{tab?}', [\App\Http\Controllers\Admin\ReconciliationController::class, 'index'])->name('index');
     });
 
-    // CAC registrations (admin)
-    Route::prefix('admin/cac')->name('admin.cac.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'index'])->name('index');
-        Route::get('/{registration}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'show'])->name('show');
-        Route::post('/{registration}/status', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'updateStatus'])->name('status');
-        Route::post('/{registration}/notes', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'addNote'])->name('notes');
-        Route::post('/{registration}/upload', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'upload'])->name('upload');
-        Route::get('/{registration}/documents/{document}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'download'])->name('download');
-        Route::delete('/{registration}/documents/{document}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'destroyDocument'])->name('documents.destroy');
-    });
-
-    // Travel & Tours Requests & Packages (Super Admin)
-    Route::prefix('admin/travel-requests')->name('admin.travel-requests.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'index'])->name('index');
-
-        // Configurable Traveling Packages
-        Route::get('/packages', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'index'])->name('packages.index');
-        Route::get('/packages/create', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'create'])->name('packages.create');
-        Route::post('/packages', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'store'])->name('packages.store');
-        Route::get('/packages/{travelPackage}/edit', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'edit'])->name('packages.edit');
-        Route::put('/packages/{travelPackage}', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'update'])->name('packages.update');
-        Route::patch('/packages/{travelPackage}/toggle-status', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'toggleStatus'])->name('packages.toggle-status');
-        Route::delete('/packages/{travelPackage}', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'destroy'])->name('packages.destroy');
-
-        Route::get('/{travelRequest}', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'show'])->name('show');
-        Route::patch('/{travelRequest}/status', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'updateStatus'])->name('update-status');
-    });
-
-    // Moniepoint POS Terminal Requests (Super Admin)
-    Route::prefix('admin/moniepoint-pos')->name('admin.moniepoint-pos.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AdminMoniepointPosController::class, 'index'])->name('index');
-        Route::get('/{posRequest}', [\App\Http\Controllers\Admin\AdminMoniepointPosController::class, 'show'])->name('show');
-        Route::patch('/{posRequest}/status', [\App\Http\Controllers\Admin\AdminMoniepointPosController::class, 'updateStatus'])->name('update-status');
-    });
-
-    // Business Loan Requests (Super Admin)
-    Route::prefix('admin/loan-requests')->name('admin.loan-requests.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AdminLoanRequestController::class, 'index'])->name('index');
-        Route::get('/{loanRequest}', [\App\Http\Controllers\Admin\AdminLoanRequestController::class, 'show'])->name('show');
-        Route::patch('/{loanRequest}/status', [\App\Http\Controllers\Admin\AdminLoanRequestController::class, 'updateStatus'])->name('update-status');
-    });
-
     // Advanced SIM Operations dashboard
     Route::prefix('admin/sims-operations')->name('admin.sims-operations.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\SimsOperationsDashboardController::class, 'index'])->name('index');
@@ -501,6 +474,7 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::get('/activated-numbers/export', [\App\Http\Controllers\Admin\SimsOperationsDashboardController::class, 'exportActivatedNumbersCsv'])->name('activated-numbers.export');
         Route::get('/activation-bonus/export', [\App\Http\Controllers\Admin\SimsOperationsDashboardController::class, 'exportActivationBonusCsv'])->name('activation-bonus.export');
         Route::put('/export-settings', [\App\Http\Controllers\Admin\ActivatedSimsExportSettingsController::class, 'update'])->name('export-settings.update');
+        Route::post('/export-settings/send-now', [\App\Http\Controllers\Admin\ActivatedSimsExportSettingsController::class, 'sendNow'])->name('export-settings.send-now');
     });
 
     // Services Management
@@ -535,6 +509,65 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::put('/provider-settings/activate', [\App\Http\Controllers\Admin\SmePlanController::class, 'activateProvider'])->name('provider-settings.activate');
         Route::put('/{plan}', [\App\Http\Controllers\Admin\SmePlanController::class, 'update'])->name('update');
         Route::delete('/{plan}', [\App\Http\Controllers\Admin\SmePlanController::class, 'destroy'])->name('destroy');
+    });
+});
+
+// Staff request desks: International Passports, CAC, Travel & Tours, POS, Business Loans
+// Accessible by Super Admin, Business Sales Managers (BSM), and Support Staff
+Route::middleware(['auth', 'verified', 'staff'])->group(function () {
+    // International Passport Requests
+    Route::prefix('admin/passport-requests')->name('admin.passport-requests.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminPassportRequestController::class, 'index'])->name('index');
+        Route::get('/{passportRequest}', [\App\Http\Controllers\Admin\AdminPassportRequestController::class, 'show'])->name('show');
+        Route::patch('/{passportRequest}/status', [\App\Http\Controllers\Admin\AdminPassportRequestController::class, 'updateStatus'])->name('update-status');
+        Route::get('/{passportRequest}/documents/{type}', [\App\Http\Controllers\Admin\AdminPassportRequestController::class, 'downloadDocument'])->name('documents.download');
+        Route::get('/{passportRequest}/pdf', [\App\Http\Controllers\Admin\AdminPassportRequestController::class, 'exportPdf'])->name('pdf');
+    });
+
+    // CAC registrations (Staff)
+    Route::prefix('admin/cac')->name('admin.cac.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'index'])->name('index');
+        Route::get('/{registration}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'show'])->name('show');
+        Route::post('/{registration}/status', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'updateStatus'])->name('status');
+        Route::post('/{registration}/notes', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'addNote'])->name('notes');
+        Route::post('/{registration}/upload', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'upload'])->name('upload');
+        Route::get('/{registration}/documents/{document}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'download'])->name('download');
+        Route::delete('/{registration}/documents/{document}', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'destroyDocument'])->name('documents.destroy');
+        Route::get('/{registration}/pdf', [\App\Http\Controllers\Admin\CacRegistrationController::class, 'downloadPdf'])->name('pdf');
+    });
+
+    // Travel & Tours Requests & Packages (Staff)
+    Route::prefix('admin/travel-requests')->name('admin.travel-requests.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'index'])->name('index');
+
+        // Configurable Traveling Packages
+        Route::get('/packages', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'index'])->name('packages.index');
+        Route::get('/packages/create', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'create'])->name('packages.create');
+        Route::post('/packages', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'store'])->name('packages.store');
+        Route::get('/packages/{travelPackage}/edit', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'edit'])->name('packages.edit');
+        Route::put('/packages/{travelPackage}', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'update'])->name('packages.update');
+        Route::patch('/packages/{travelPackage}/toggle-status', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'toggleStatus'])->name('packages.toggle-status');
+        Route::delete('/packages/{travelPackage}', [\App\Http\Controllers\Admin\AdminTravelPackageController::class, 'destroy'])->name('packages.destroy');
+
+        Route::get('/{travelRequest}', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'show'])->name('show');
+        Route::patch('/{travelRequest}/status', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'updateStatus'])->name('update-status');
+        Route::get('/{travelRequest}/pdf', [\App\Http\Controllers\Admin\AdminTravelRequestController::class, 'downloadPdf'])->name('pdf');
+    });
+
+    // Moniepoint POS Terminal Requests (Staff)
+    Route::prefix('admin/moniepoint-pos')->name('admin.moniepoint-pos.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminMoniepointPosController::class, 'index'])->name('index');
+        Route::get('/{posRequest}', [\App\Http\Controllers\Admin\AdminMoniepointPosController::class, 'show'])->name('show');
+        Route::patch('/{posRequest}/status', [\App\Http\Controllers\Admin\AdminMoniepointPosController::class, 'updateStatus'])->name('update-status');
+        Route::get('/{posRequest}/pdf', [\App\Http\Controllers\Admin\AdminMoniepointPosController::class, 'downloadPdf'])->name('pdf');
+    });
+
+    // Business Loan Requests (Staff)
+    Route::prefix('admin/loan-requests')->name('admin.loan-requests.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminLoanRequestController::class, 'index'])->name('index');
+        Route::get('/{loanRequest}', [\App\Http\Controllers\Admin\AdminLoanRequestController::class, 'show'])->name('show');
+        Route::patch('/{loanRequest}/status', [\App\Http\Controllers\Admin\AdminLoanRequestController::class, 'updateStatus'])->name('update-status');
+        Route::get('/{loanRequest}/pdf', [\App\Http\Controllers\Admin\AdminLoanRequestController::class, 'downloadPdf'])->name('pdf');
     });
 });
 

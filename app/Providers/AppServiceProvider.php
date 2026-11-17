@@ -118,22 +118,24 @@ class AppServiceProvider extends ServiceProvider
             $pendingTravelBadge = 0;
             $pendingPosBadge = 0;
             $pendingLoansBadge = 0;
+            $pendingPassportBadge = 0;
             $sidebarUpline = null;
 
             if (auth()->check()) {
                 $user = auth()->user();
 
-                if ($user->role === 'super_admin') {
+                if ($user->isStaff()) {
                     $openTicketsBadge = \App\Models\Ticket::where('status', 'open')->count();
                     $failedWebhooksBadge = \App\Models\WebhookLog::where('status', 'failed')->count();
                     $newCacBadge = \App\Models\CacRegistration::where('status', 'submitted')->count();
                     $pendingTravelBadge = \App\Models\TravelRequest::where('status', 'pending')->count();
                     $pendingPosBadge = \App\Models\MoniepointPosRequest::where('status', 'pending')->count();
                     $pendingLoansBadge = \App\Models\LoanRequest::where('status', 'pending')->count();
-                } elseif ($user->role === 'support') {
-                    $openTicketsBadge = \App\Models\Ticket::where('status', 'open')->count();
-                    $failedWebhooksBadge = \App\Models\WebhookLog::where('status', 'failed')->count();
-                    $failedActivationsBadge = \App\Models\Report::where('type', 'activation_bonus_data')->where('status', 'failed')->count();
+                    $pendingPassportBadge = \App\Models\PassportRequest::where('status', 'pending')->count();
+
+                    if ($user->role === 'support') {
+                        $failedActivationsBadge = \App\Models\Report::where('type', 'activation_bonus_data')->where('status', 'failed')->count();
+                    }
                 } elseif (in_array($user->role, ['partner', 'coordinator', 'regional_manager', 'business', 'business_agent'], true)) {
                     $pendingDownlineRequestsBadge = \App\Models\SimRequest::where('upline_id', $user->id)
                         ->where('status', 'pending')
@@ -151,6 +153,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('pendingTravelBadge', $pendingTravelBadge);
             $view->with('pendingPosBadge', $pendingPosBadge);
             $view->with('pendingLoansBadge', $pendingLoansBadge);
+            $view->with('pendingPassportBadge', $pendingPassportBadge);
             $view->with('sidebarUpline', $sidebarUpline);
         });
     }

@@ -37,17 +37,20 @@ class ActivatedSimsExportService
 
         if ($since && $until) {
             $query->where(function (Builder $q) use ($since, $until) {
-                $q->whereHas('history', fn ($h) => $h->where('to_status', SimStatus::ACTIVATED)->whereBetween('created_at', [$since, $until]))
+                $q->whereBetween('activated_at', [$since, $until])
+                  ->orWhereHas('history', fn ($h) => $h->where('to_status', SimStatus::ACTIVATED)->whereBetween('created_at', [$since, $until]))
                   ->orWhere(fn ($q2) => $q2->whereDoesntHave('history')->whereBetween('created_at', [$since, $until]));
             });
         } elseif ($since) {
             $query->where(function (Builder $q) use ($since) {
-                $q->whereHas('history', fn ($h) => $h->where('to_status', SimStatus::ACTIVATED)->where('created_at', '>=', $since))
+                $q->where('activated_at', '>=', $since)
+                  ->orWhereHas('history', fn ($h) => $h->where('to_status', SimStatus::ACTIVATED)->where('created_at', '>=', $since))
                   ->orWhere(fn ($q2) => $q2->whereDoesntHave('history')->where('created_at', '>=', $since));
             });
         } elseif ($until) {
             $query->where(function (Builder $q) use ($until) {
-                $q->whereHas('history', fn ($h) => $h->where('to_status', SimStatus::ACTIVATED)->where('created_at', '<=', $until))
+                $q->where('activated_at', '<=', $until)
+                  ->orWhereHas('history', fn ($h) => $h->where('to_status', SimStatus::ACTIVATED)->where('created_at', '<=', $until))
                   ->orWhere(fn ($q2) => $q2->whereDoesntHave('history')->where('created_at', '<=', $until));
             });
         }

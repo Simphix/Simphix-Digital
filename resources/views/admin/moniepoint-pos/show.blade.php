@@ -48,7 +48,12 @@
                             </p>
                         </div>
 
-                        <div>
+                        <div class="flex items-center gap-2">
+                            <a href="{{ route('admin.moniepoint-pos.pdf', $posRequest) }}"
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white hover:bg-primary-hover text-xs font-bold shadow-xs transition">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                <span>Download A4 PDF</span>
+                            </a>
                             <span class="inline-block px-3 py-1.5 rounded-full text-xs font-bold border {{ $posRequest->status_badge_class }}">
                                 {{ $posRequest->status_label }}
                             </span>

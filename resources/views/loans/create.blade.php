@@ -86,7 +86,8 @@
                             Full Name (as on Account) <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" name="name" required autocomplete="off"
-                               value="{{ old('name', $user?->name) }}"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
+                               value="{{ old('name') }}"
                                placeholder="e.g. Adebayo Ibrahim"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                     </div>
@@ -97,7 +98,8 @@
                             Phone Number <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" name="phone" required autocomplete="off"
-                               value="{{ old('phone', $user?->phone) }}"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
+                               value="{{ old('phone') }}"
                                placeholder="e.g. 08012345678"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                     </div>
@@ -110,6 +112,7 @@
                             Moniepoint Account Number <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" name="moniepoint_account_number" required autocomplete="off"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                value="{{ old('moniepoint_account_number') }}"
                                placeholder="10-digit Moniepoint account"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
@@ -121,8 +124,9 @@
                         <label class="block text-xs font-bold text-slate-700 mb-1">
                             Amount Requested (&#8358;) <span class="text-rose-500">*</span>
                         </label>
-                        <input type="number" name="amount_requested" required min="1000" max="50000000" step="1000"
-                               value="{{ old('amount_requested', '500000') }}"
+                        <input type="number" name="amount_requested" required min="1000" max="50000000" step="1000" autocomplete="off"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
+                               value="{{ old('amount_requested') }}"
                                placeholder="e.g. 500000"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
                         <p class="text-[10px] text-slate-400 mt-1">Min: &#8358;1,000 &bull; Max: &#8358;50,000,000</p>
@@ -142,7 +146,8 @@
                             <label class="block text-xs font-bold text-slate-700 mb-1">
                                 Referral Full Name <span class="text-slate-400 font-normal">(Optional)</span>
                             </label>
-                            <input type="text" name="referral_name"
+                            <input type="text" name="referral_name" autocomplete="off"
+                                   autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                    value="{{ old('referral_name') }}"
                                    placeholder="e.g. Emmanuel Chukwu"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
@@ -153,7 +158,8 @@
                             <label class="block text-xs font-bold text-slate-700 mb-1">
                                 Referral Phone Number <span class="text-slate-400 font-normal">(Optional)</span>
                             </label>
-                            <input type="tel" name="referral_phone"
+                            <input type="tel" name="referral_phone" autocomplete="off"
+                                   autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                    value="{{ old('referral_phone') }}"
                                    placeholder="e.g. 08123456789"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">

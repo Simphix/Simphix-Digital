@@ -43,12 +43,13 @@
             </div>
 
             <!-- Lookup Search Bar -->
-            <form method="GET" action="{{ route('loans.tracking') }}" class="mt-6 pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
+            <form method="GET" action="{{ route('loans.tracking') }}" autocomplete="off" class="mt-6 pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
                 <div class="relative flex-1">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                     <input type="text" name="ref" value="{{ $queryRef }}"
-                           placeholder="Enter Tracking Reference (e.g. MPLOAN-202610-XYZ12)..."
-                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20 focus:border-[#0056D2]">
+                           autocomplete="off"
+                           placeholder="Enter Tracking Reference (e.g. MPLOAN-...) or Phone Number..."
+                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 font-semibold placeholder:text-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20 focus:border-[#0056D2] shadow-2xs">
                 </div>
                 <button type="submit"
                         class="px-5 py-2.5 rounded-xl bg-[#0056D2] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition shrink-0">

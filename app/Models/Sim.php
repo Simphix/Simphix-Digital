@@ -194,7 +194,9 @@ class Sim extends Model
     }
 
     /**
-     * Get remaining days until the 365-day subscription expires.
+     * Get remaining calendar days until the 365-day subscription expires.
+     * Calculated on a calendar-day basis in the application timezone (Africa/Lagos),
+     * so that the countdown decrements by 1 day every 24 hours at 12:00 AM midnight.
      * Returns null if the SIM was never activated.
      * Returns 0 if expired.
      */
@@ -204,11 +206,17 @@ class Sim extends Model
             return null;
         }
 
-        if (now()->greaterThanOrEqualTo($this->subscription_expires_at)) {
+        if ($this->isSubscriptionExpired()) {
             return 0;
         }
 
-        return (int) max(0, ceil(now()->diffInHours($this->subscription_expires_at) / 24));
+        $tz = config('app.timezone', 'Africa/Lagos');
+        $todayStart = now($tz)->startOfDay();
+        $expiryStart = $this->subscription_expires_at->copy()->timezone($tz)->startOfDay();
+
+        $diffDays = (int) $todayStart->diffInDays($expiryStart, false);
+
+        return max(0, $diffDays);
     }
 
     /**

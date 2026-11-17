@@ -226,6 +226,7 @@
                             Full Name <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" id="req_name" name="name" required autocomplete="off"
+                               autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                value="{{ old('name') }}"
                                placeholder="e.g. Ibrahim Abubakar"
                                class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
@@ -239,6 +240,7 @@
                                 Phone Number <span class="text-rose-500">*</span>
                             </label>
                             <input type="text" id="req_phone" name="phone" required autocomplete="off"
+                                   autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                    value="{{ old('phone') }}"
                                    placeholder="e.g. 08012345678"
                                    class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
@@ -253,6 +255,7 @@
                                 <span class="text-[10px] text-slate-400 font-medium">Optional</span>
                             </div>
                             <input type="email" id="req_email" name="email" autocomplete="off"
+                                   autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true"
                                    value="{{ old('email') }}"
                                    placeholder="e.g. ibrahim@example.com"
                                    class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">

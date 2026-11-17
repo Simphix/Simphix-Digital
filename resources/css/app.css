@@ -67,6 +67,25 @@
         --color-bg-glow-rose: rgba(244, 63, 94, 0.25);
         --color-bg-glow-sky: rgba(14, 165, 233, 0.25);
     }
+
+    /* Prevent browser autofill from corrupting background and text contrast */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active,
+    textarea:-webkit-autofill,
+    textarea:-webkit-autofill:hover,
+    textarea:-webkit-autofill:focus,
+    textarea:-webkit-autofill:active,
+    select:-webkit-autofill,
+    select:-webkit-autofill:hover,
+    select:-webkit-autofill:focus,
+    select:-webkit-autofill:active {
+        -webkit-text-fill-color: #0f172a !important;
+        -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+        box-shadow: 0 0 0px 1000px #ffffff inset !important;
+        transition: background-color 5000s ease-in-out 0s;
+    }
 }
 
 @layer utilities {

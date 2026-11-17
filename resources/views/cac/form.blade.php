@@ -65,8 +65,8 @@
                     <h3 class="text-sm font-bold text-slate-800 font-display pb-3 border-b border-slate-100">1. {{ $isTrustee ? 'Proposed names' : 'Name choices' }}</h3>
                     <p class="text-xs text-slate-400">In order of preference; CAC approves one.{{ $isTrustee ? ' The name must not include “Limited” or “Ltd”.' : '' }}</p>
                     <div class="grid sm:grid-cols-2 gap-4">
-                        <div>{!! $label('1st choice') !!}<input type="text" name="names[0]" value="{{ old('names.0') }}" required class="{{ $inputCls }}"></div>
-                        <div>{!! $label('2nd choice') !!}<input type="text" name="names[1]" value="{{ old('names.1') }}" required class="{{ $inputCls }}"></div>
+                        <div>{!! $label('1st choice') !!}<input type="text" name="names[0]" value="{{ old('names.0') }}" required autocomplete="off" class="{{ $inputCls }}"></div>
+                        <div>{!! $label('2nd choice') !!}<input type="text" name="names[1]" value="{{ old('names.1') }}" required autocomplete="off" class="{{ $inputCls }}"></div>
                     </div>
                 </div>
 
@@ -108,14 +108,14 @@
 
                             @if ($isTrustee)
                                 <div class="grid sm:grid-cols-2 gap-4">
-                                    <div class="sm:col-span-2">{!! $label('Full name') !!}<input type="text" :name="`people[${i}][full_name]`" x-model="p.full_name" required class="{{ $inputCls }}"></div>
-                                    <div>{!! $label('Phone number') !!}<input type="text" :name="`people[${i}][phone]`" x-model="p.phone" required class="{{ $inputCls }}"></div>
-                                    <div>{!! $label('Email address') !!}<input type="email" :name="`people[${i}][email]`" x-model="p.email" required class="{{ $inputCls }}"></div>
-                                    <div>{!! $label('Occupation') !!}<input type="text" :name="`people[${i}][occupation]`" x-model="p.occupation" required class="{{ $inputCls }}"></div>
-                                    <div>{!! $label('Date of birth (18+)') !!}<input type="date" :name="`people[${i}][dob]`" x-model="p.dob" required max="{{ now()->subYears(18)->format('Y-m-d') }}" class="{{ $inputCls }}"></div>
-                                    <div class="sm:col-span-2">{!! $label('Residential address') !!}<textarea rows="2" :name="`people[${i}][address]`" x-model="p.address" required class="{{ $inputCls }}"></textarea></div>
+                                    <div class="sm:col-span-2">{!! $label('Full name') !!}<input type="text" :name="`people[${i}][full_name]`" x-model="p.full_name" required autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div>{!! $label('Phone number') !!}<input type="text" :name="`people[${i}][phone]`" x-model="p.phone" required autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div>{!! $label('Email address') !!}<input type="email" :name="`people[${i}][email]`" x-model="p.email" required autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div>{!! $label('Occupation') !!}<input type="text" :name="`people[${i}][occupation]`" x-model="p.occupation" required autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div>{!! $label('Date of birth (18+)') !!}<input type="date" :name="`people[${i}][dob]`" x-model="p.dob" required autocomplete="off" max="{{ now()->subYears(18)->format('Y-m-d') }}" class="{{ $inputCls }}"></div>
+                                    <div class="sm:col-span-2">{!! $label('Residential address') !!}<textarea rows="2" :name="`people[${i}][address]`" x-model="p.address" required autocomplete="off" class="{{ $inputCls }}"></textarea></div>
                                     <div class="sm:col-span-2">{!! $label('Means of ID') !!}
-                                        <select :name="`people[${i}][id_type]`" x-model="p.id_type" required class="{{ $inputCls }}">
+                                        <select :name="`people[${i}][id_type]`" x-model="p.id_type" required autocomplete="off" class="{{ $inputCls }}">
                                             <option value="">Select…</option>
                                             @foreach (\App\Support\CacRequirements::ID_TYPES as $v => $l)
                                                 <option value="{{ $v }}">{{ $l }}</option>
@@ -127,18 +127,18 @@
                                 </div>
                             @else
                                 <div class="grid sm:grid-cols-3 gap-4">
-                                    <div>{!! $label('First name') !!}<input type="text" :name="`people[${i}][first_name]`" x-model="p.first_name" required class="{{ $inputCls }}"></div>
-                                    <div>{!! $label('Surname') !!}<input type="text" :name="`people[${i}][surname]`" x-model="p.surname" required class="{{ $inputCls }}"></div>
-                                    <div>{!! $label('Other names') !!}<input type="text" :name="`people[${i}][other_names]`" x-model="p.other_names" class="{{ $inputCls }}"></div>
-                                    <div>{!! $label('Phone number') !!}<input type="text" :name="`people[${i}][phone]`" x-model="p.phone" required class="{{ $inputCls }}"></div>
-                                    <div class="sm:col-span-2">{!! $label('Email address') !!}<input type="email" :name="`people[${i}][email]`" x-model="p.email" required class="{{ $inputCls }}"></div>
-                                    <div class="sm:col-span-3">{!! $label('Residential address' . ($isLtd ? ' (house number, street name & Local Government)' : '')) !!}<textarea rows="2" :name="`people[${i}][address]`" x-model="p.address" required class="{{ $inputCls }}"></textarea></div>
-                                    <div>{!! $label('NIN (11 digits)') !!}<input type="text" inputmode="numeric" maxlength="11" :name="`people[${i}][nin]`" x-model="p.nin" required class="{{ $inputCls }}"></div>
-                                    <div>{!! $label('State of origin') !!}<input type="text" :name="`people[${i}][state_of_origin]`" x-model="p.state_of_origin" required class="{{ $inputCls }}"></div>
-                                    <div>{!! $label('LGA') !!}<input type="text" :name="`people[${i}][lga]`" x-model="p.lga" required class="{{ $inputCls }}"></div>
-                                    <div>{!! $label('Date of birth') !!}<input type="date" :name="`people[${i}][dob]`" x-model="p.dob" required max="{{ now()->subYears(18)->format('Y-m-d') }}" class="{{ $inputCls }}"></div>
+                                    <div>{!! $label('First name') !!}<input type="text" :name="`people[${i}][first_name]`" x-model="p.first_name" required autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div>{!! $label('Surname') !!}<input type="text" :name="`people[${i}][surname]`" x-model="p.surname" required autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div>{!! $label('Other names') !!}<input type="text" :name="`people[${i}][other_names]`" x-model="p.other_names" autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div>{!! $label('Phone number') !!}<input type="text" :name="`people[${i}][phone]`" x-model="p.phone" required autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div class="sm:col-span-2">{!! $label('Email address') !!}<input type="email" :name="`people[${i}][email]`" x-model="p.email" required autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div class="sm:col-span-3">{!! $label('Residential address' . ($isLtd ? ' (house number, street name & Local Government)' : '')) !!}<textarea rows="2" :name="`people[${i}][address]`" x-model="p.address" required autocomplete="off" class="{{ $inputCls }}"></textarea></div>
+                                    <div>{!! $label('NIN (11 digits)') !!}<input type="text" inputmode="numeric" maxlength="11" :name="`people[${i}][nin]`" x-model="p.nin" required autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div>{!! $label('State of origin') !!}<input type="text" :name="`people[${i}][state_of_origin]`" x-model="p.state_of_origin" required autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div>{!! $label('LGA') !!}<input type="text" :name="`people[${i}][lga]`" x-model="p.lga" required autocomplete="off" class="{{ $inputCls }}"></div>
+                                    <div>{!! $label('Date of birth') !!}<input type="date" :name="`people[${i}][dob]`" x-model="p.dob" required autocomplete="off" max="{{ now()->subYears(18)->format('Y-m-d') }}" class="{{ $inputCls }}"></div>
                                     @if ($isLtd)
-                                        <div x-show="people.length > 1">{!! $label('Shareholding %') !!}<input type="number" step="0.01" min="0.01" max="100" :name="`people[${i}][percent]`" x-model="p.percent" :required="people.length > 1" class="{{ $inputCls }}"></div>
+                                        <div x-show="people.length > 1">{!! $label('Shareholding %') !!}<input type="number" step="0.01" min="0.01" max="100" :name="`people[${i}][percent]`" x-model="p.percent" :required="people.length > 1" autocomplete="off" class="{{ $inputCls }}"></div>
                                     @endif
                                 </div>
                                 <div class="grid sm:grid-cols-2 gap-4">
@@ -178,10 +178,10 @@
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
                     <h3 class="text-sm font-bold text-slate-800 font-display pb-3 border-b border-slate-100">{{ $isTrustee ? '5. Registered address' : '3. Business details' }}</h3>
                     @if ($isTrustee)
-                        <div>{!! $label('Physical address in Nigeria (no P.O. Box)') !!}<textarea name="registered_address" rows="2" required class="{{ $inputCls }}">{{ old('registered_address') }}</textarea></div>
+                        <div>{!! $label('Physical address in Nigeria (no P.O. Box)') !!}<textarea name="registered_address" rows="2" required autocomplete="off" class="{{ $inputCls }}">{{ old('registered_address') }}</textarea></div>
                     @else
-                        <div>{!! $label('Business address' . ($isLtd ? ' (shop/house number, street name & Local Government)' : '')) !!}<textarea name="business_address" rows="2" required class="{{ $inputCls }}">{{ old('business_address') }}</textarea></div>
-                        <div>{!! $label($isLtd ? 'Nature of business(es)' : 'Type of business') !!}<input type="text" name="business_type" value="{{ old('business_type') }}" required class="{{ $inputCls }}"></div>
+                        <div>{!! $label('Business address' . ($isLtd ? ' (shop/house number, street name & Local Government)' : '')) !!}<textarea name="business_address" rows="2" required autocomplete="off" class="{{ $inputCls }}">{{ old('business_address') }}</textarea></div>
+                        <div>{!! $label($isLtd ? 'Nature of business(es)' : 'Type of business') !!}<input type="text" name="business_type" value="{{ old('business_type') }}" required autocomplete="off" class="{{ $inputCls }}"></div>
                     @endif
                 </div>
 
@@ -190,20 +190,20 @@
                     <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
                         <h3 class="text-sm font-bold text-slate-800 font-display pb-3 border-b border-slate-100">4. Witness</h3>
                         <div class="grid sm:grid-cols-2 gap-4">
-                            <div>{!! $label('Name') !!}<input type="text" name="witness[name]" value="{{ old('witness.name') }}" required class="{{ $inputCls }}"></div>
-                            <div>{!! $label('Phone number') !!}<input type="text" name="witness[phone]" value="{{ old('witness.phone') }}" required class="{{ $inputCls }}"></div>
-                            <div>{!! $label('Email address') !!}<input type="email" name="witness[email]" value="{{ old('witness.email') }}" required class="{{ $inputCls }}"></div>
+                            <div>{!! $label('Name') !!}<input type="text" name="witness[name]" value="{{ old('witness.name') }}" required autocomplete="off" class="{{ $inputCls }}"></div>
+                            <div>{!! $label('Phone number') !!}<input type="text" name="witness[phone]" value="{{ old('witness.phone') }}" required autocomplete="off" class="{{ $inputCls }}"></div>
+                            <div>{!! $label('Email address') !!}<input type="email" name="witness[email]" value="{{ old('witness.email') }}" required autocomplete="off" class="{{ $inputCls }}"></div>
                             <div>{!! $label('Signature (image)') !!}<input type="file" name="files[witness_signature]" accept=".jpg,.jpeg,.png,.pdf" required class="{{ $fileCls }}"></div>
-                            <div class="sm:col-span-2">{!! $label('Home address') !!}<textarea name="witness[address]" rows="2" required class="{{ $inputCls }}">{{ old('witness.address') }}</textarea></div>
+                            <div class="sm:col-span-2">{!! $label('Home address') !!}<textarea name="witness[address]" rows="2" required autocomplete="off" class="{{ $inputCls }}">{{ old('witness.address') }}</textarea></div>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
                         <h3 class="text-sm font-bold text-slate-800 font-display pb-3 border-b border-slate-100">5. Company secretary <span class="text-slate-400 font-medium">(optional)</span></h3>
                         <div class="grid sm:grid-cols-2 gap-4">
-                            <div>{!! $label('Name') !!}<input type="text" name="secretary_details[name]" value="{{ old('secretary_details.name') }}" class="{{ $inputCls }}"></div>
-                            <div>{!! $label('Phone number') !!}<input type="text" name="secretary_details[phone]" value="{{ old('secretary_details.phone') }}" class="{{ $inputCls }}"></div>
-                            <div class="sm:col-span-2">{!! $label('Email address') !!}<input type="email" name="secretary_details[email]" value="{{ old('secretary_details.email') }}" class="{{ $inputCls }}"></div>
-                            <div class="sm:col-span-2">{!! $label('Address') !!}<textarea name="secretary_details[address]" rows="2" class="{{ $inputCls }}">{{ old('secretary_details.address') }}</textarea></div>
+                            <div>{!! $label('Name') !!}<input type="text" name="secretary_details[name]" value="{{ old('secretary_details.name') }}" autocomplete="off" class="{{ $inputCls }}"></div>
+                            <div>{!! $label('Phone number') !!}<input type="text" name="secretary_details[phone]" value="{{ old('secretary_details.phone') }}" autocomplete="off" class="{{ $inputCls }}"></div>
+                            <div class="sm:col-span-2">{!! $label('Email address') !!}<input type="email" name="secretary_details[email]" value="{{ old('secretary_details.email') }}" autocomplete="off" class="{{ $inputCls }}"></div>
+                            <div class="sm:col-span-2">{!! $label('Address') !!}<textarea name="secretary_details[address]" rows="2" autocomplete="off" class="{{ $inputCls }}">{{ old('secretary_details.address') }}</textarea></div>
                         </div>
                     </div>
                 @endif
