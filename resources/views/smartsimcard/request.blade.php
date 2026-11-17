@@ -74,7 +74,7 @@
 
                 <div class="space-y-1.5">
                     <x-input-label for="req_quantity" value="Quantity" />
-                    <x-text-input type="number" id="req_quantity" name="quantity" min="1" max="{{ $maxQuantity }}" value="1" required class="rounded-xl font-medium" x-model.number="quantity" />
+                    <x-text-input type="number" id="req_quantity" name="quantity" min="1" max="{{ $maxQuantity }}" value="1" required autocomplete="off" class="rounded-xl font-medium" x-model.number="quantity" />
                     @if (!isset($uplinePartner) || !$uplinePartner)
                         <p class="text-xs text-slate-500 font-semibold">Total to pay: ₦<span x-text="(quantity * unitPrice).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })"></span></p>
                     @else

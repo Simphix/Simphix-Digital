@@ -94,7 +94,7 @@
                     </div>
                     <div>
                         <h3 class="text-base font-bold text-slate-900 font-display">Required Personal Details</h3>
-                        <p class="text-xs text-slate-500">Demographic biodata for immigration profiling</p>
+                        <p class="text-xs font-semibold text-slate-600">Demographic biodata for immigration profiling</p>
                     </div>
                 </div>
 
@@ -150,56 +150,56 @@
                     </div>
                     <div>
                         <h3 class="text-base font-bold text-slate-900 font-display">Additional Documents (E-Copy Only)</h3>
-                        <p class="text-xs text-slate-500">Required scanned files (Max 5MB each)</p>
+                        <p class="text-xs font-semibold text-slate-600">Required scanned files (Max 5MB each)</p>
                     </div>
                 </div>
 
                 <div class="space-y-2.5 text-xs text-slate-700">
-                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
                         <i data-lucide="camera" class="w-4 h-4 text-emerald-600 mt-0.5 shrink-0"></i>
                         <div>
                             <span class="font-bold text-slate-900 block">1. Passport Photograph</span>
-                            <span class="text-slate-500 text-[11px]">Clear white background portrait, neutral expression, no eyeglasses or headwear (except religious headcover).</span>
+                            <span class="text-slate-700 font-medium text-xs">Clear white background portrait, neutral expression, no eyeglasses or headwear (except religious headcover).</span>
                         </div>
                     </div>
 
-                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
                         <i data-lucide="award" class="w-4 h-4 text-emerald-600 mt-0.5 shrink-0"></i>
                         <div>
                             <span class="font-bold text-slate-900 block">2. State of Origin Certificate</span>
-                            <span class="text-slate-500 text-[11px]">Official certificate of identification issued by your Local Government Council or State Liaison office.</span>
+                            <span class="text-slate-700 font-medium text-xs">Official certificate of identification issued by your Local Government Council or State Liaison office.</span>
                         </div>
                     </div>
 
-                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
                         <i data-lucide="file-badge-2" class="w-4 h-4 text-emerald-600 mt-0.5 shrink-0"></i>
                         <div>
                             <span class="font-bold text-slate-900 block">3. Birth Certificate / Declaration of Age</span>
-                            <span class="text-slate-500 text-[11px]">National Population Commission (NPC) birth certificate or statutory age declaration sworn in a competent court.</span>
+                            <span class="text-slate-700 font-medium text-xs">National Population Commission (NPC) birth certificate or statutory age declaration sworn in a competent court.</span>
                         </div>
                     </div>
 
-                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
                         <i data-lucide="id-card" class="w-4 h-4 text-emerald-600 mt-0.5 shrink-0"></i>
                         <div>
                             <span class="font-bold text-slate-900 block">4. National Identification Number (NIN) Slip</span>
-                            <span class="text-slate-500 text-[11px]">Digital standard NIN slip or e-ID card printout displaying verified 11-digit number.</span>
+                            <span class="text-slate-700 font-medium text-xs">Digital standard NIN slip or e-ID card printout displaying verified 11-digit number.</span>
                         </div>
                     </div>
 
-                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
                         <i data-lucide="pen-tool" class="w-4 h-4 text-emerald-600 mt-0.5 shrink-0"></i>
                         <div>
                             <span class="font-bold text-slate-900 block">5. Signature on White Paper</span>
-                            <span class="text-slate-500 text-[11px]">Clean handwritten applicant signature signed in blue or black ink on plain white paper.</span>
+                            <span class="text-slate-700 font-medium text-xs">Clean handwritten applicant signature signed in blue or black ink on plain white paper.</span>
                         </div>
                     </div>
 
-                    <div class="p-3 rounded-xl bg-amber-50/60 border border-amber-200/70 flex items-start gap-3">
+                    <div class="p-3 rounded-xl bg-amber-50/70 border border-amber-200 flex items-start gap-3">
                         <i data-lucide="book" class="w-4 h-4 text-amber-700 mt-0.5 shrink-0"></i>
                         <div>
-                            <span class="font-bold text-amber-900 block">6. Previous Passport Data Page (For Renewal Only)</span>
-                            <span class="text-amber-800 text-[11px]">Scanned biodata page of your expired or expiring international passport.</span>
+                            <span class="font-bold text-amber-950 block">6. Previous Passport Data Page (For Renewal Only)</span>
+                            <span class="text-amber-900 font-medium text-xs">Scanned biodata page of your expired or expiring international passport.</span>
                         </div>
                     </div>
                 </div>
@@ -212,7 +212,7 @@
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                 <div>
                     <h3 class="text-base font-bold text-slate-900 font-display">My Passport Applications</h3>
-                    <p class="text-xs text-slate-500">Track and download dossiers of your submitted requests</p>
+                    <p class="text-xs font-semibold text-slate-600">Track and download dossiers of your submitted requests</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <a href="{{ route('passport.create', ['type' => 'new']) }}"

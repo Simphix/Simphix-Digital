@@ -37,10 +37,11 @@
             </div>
 
             <!-- Lookup Search Bar -->
-            <form method="GET" action="{{ route('moniepoint.pos.tracking') }}" class="mt-6 pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
+            <form method="GET" action="{{ route('moniepoint.pos.tracking') }}" autocomplete="off" class="mt-6 pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
                 <div class="relative flex-1">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                     <input type="text" name="ref" value="{{ $queryRef }}"
+                           autocomplete="off"
                            placeholder="Enter Tracking Reference (e.g. MPOS-202610-ABC12)..."
                            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                 </div>

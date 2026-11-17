@@ -121,7 +121,7 @@
                         <label class="block text-xs font-bold text-slate-700 mb-1">
                             Amount Requested (&#8358;) <span class="text-rose-500">*</span>
                         </label>
-                        <input type="number" name="amount_requested" required min="1000" max="50000000" step="1000"
+                        <input type="number" name="amount_requested" required min="1000" max="50000000" step="1000" autocomplete="off"
                                value="{{ old('amount_requested', '500000') }}"
                                placeholder="e.g. 500000"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
@@ -142,7 +142,7 @@
                             <label class="block text-xs font-bold text-slate-700 mb-1">
                                 Referral Full Name <span class="text-slate-400 font-normal">(Optional)</span>
                             </label>
-                            <input type="text" name="referral_name"
+                            <input type="text" name="referral_name" autocomplete="off"
                                    value="{{ old('referral_name') }}"
                                    placeholder="e.g. Emmanuel Chukwu"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">
@@ -153,7 +153,7 @@
                             <label class="block text-xs font-bold text-slate-700 mb-1">
                                 Referral Phone Number <span class="text-slate-400 font-normal">(Optional)</span>
                             </label>
-                            <input type="tel" name="referral_phone"
+                            <input type="tel" name="referral_phone" autocomplete="off"
                                    value="{{ old('referral_phone') }}"
                                    placeholder="e.g. 08123456789"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#00266B]/20 focus:border-[#00266B]">

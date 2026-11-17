@@ -35,19 +35,20 @@
                 <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 font-display">
                     Track International Passport Application
                 </h1>
-                <p class="text-xs sm:text-sm text-slate-500">
+                <p class="text-xs sm:text-sm text-slate-600 font-medium">
                     Enter your application reference code (e.g. <span class="font-mono text-emerald-700 font-bold">PASS-XXXXXXXX</span>) or applicant phone number.
                 </p>
             </div>
 
-            <form action="{{ route('passport.tracking') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
+            <form action="{{ route('passport.tracking') }}" method="GET" autocomplete="off" class="flex flex-col sm:flex-row gap-3">
                 <div class="relative flex-1">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                     <input type="text"
                            name="ref"
                            value="{{ $queryRef }}"
+                           autocomplete="off"
                            placeholder="Enter Reference (e.g. PASS-ABC12345) or Phone Number"
-                           class="w-full pl-10 text-xs sm:text-sm rounded-xl border-slate-300 focus:border-emerald-500 focus:ring-emerald-500">
+                           class="w-full pl-10 text-xs sm:text-sm font-semibold bg-white text-slate-900 rounded-xl border border-slate-300 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-emerald-600 shadow-2xs">
                 </div>
                 <button type="submit"
                         class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-2">
@@ -63,7 +64,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="text-xs uppercase font-bold text-slate-400">Application Reference</span>
+                            <span class="text-xs uppercase font-extrabold text-slate-700">Application Reference</span>
                             <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase {{ $matchedRequest->application_type === 'new' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-amber-50 text-amber-700 border border-amber-200' }}">
                                 {{ $matchedRequest->application_type }}
                             </span>
@@ -87,54 +88,54 @@
 
                 <!-- Status Progress Pipeline -->
                 <div class="space-y-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Processing Timeline</h3>
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Processing Timeline</h3>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                        <div class="p-3 rounded-xl border {{ in_array($matchedRequest->status, ['pending', 'under_review', 'capturing_scheduled', 'completed']) ? 'border-emerald-500 bg-emerald-50/70 text-emerald-800' : 'border-slate-200 text-slate-400' }}">
+                        <div class="p-3 rounded-xl border {{ in_array($matchedRequest->status, ['pending', 'under_review', 'capturing_scheduled', 'completed']) ? 'border-emerald-500 bg-emerald-50/70 text-emerald-800' : 'border-slate-200 text-slate-500' }}">
                             <div class="w-7 h-7 mx-auto rounded-full {{ in_array($matchedRequest->status, ['pending', 'under_review', 'capturing_scheduled', 'completed']) ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500' }} flex items-center justify-center text-xs font-bold mb-1">
                                 1
                             </div>
                             <span class="text-xs font-bold block">Submitted</span>
-                            <span class="text-[10px] text-slate-500">{{ $matchedRequest->created_at->format('M d, Y') }}</span>
+                            <span class="text-[10px] text-slate-600 font-medium">{{ $matchedRequest->created_at->format('M d, Y') }}</span>
                         </div>
 
-                        <div class="p-3 rounded-xl border {{ in_array($matchedRequest->status, ['under_review', 'capturing_scheduled', 'completed']) ? 'border-emerald-500 bg-emerald-50/70 text-emerald-800' : 'border-slate-200 text-slate-400' }}">
+                        <div class="p-3 rounded-xl border {{ in_array($matchedRequest->status, ['under_review', 'capturing_scheduled', 'completed']) ? 'border-emerald-500 bg-emerald-50/70 text-emerald-800' : 'border-slate-200 text-slate-500' }}">
                             <div class="w-7 h-7 mx-auto rounded-full {{ in_array($matchedRequest->status, ['under_review', 'capturing_scheduled', 'completed']) ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500' }} flex items-center justify-center text-xs font-bold mb-1">
                                 2
                             </div>
                             <span class="text-xs font-bold block">Under Review</span>
-                            <span class="text-[10px] text-slate-500">{{ $matchedRequest->reviewed_at ? $matchedRequest->reviewed_at->format('M d, Y') : 'Processing' }}</span>
+                            <span class="text-[10px] text-slate-600 font-medium">{{ $matchedRequest->reviewed_at ? $matchedRequest->reviewed_at->format('M d, Y') : 'Processing' }}</span>
                         </div>
 
-                        <div class="p-3 rounded-xl border {{ in_array($matchedRequest->status, ['capturing_scheduled', 'completed']) ? 'border-emerald-500 bg-emerald-50/70 text-emerald-800' : 'border-slate-200 text-slate-400' }}">
+                        <div class="p-3 rounded-xl border {{ in_array($matchedRequest->status, ['capturing_scheduled', 'completed']) ? 'border-emerald-500 bg-emerald-50/70 text-emerald-800' : 'border-slate-200 text-slate-500' }}">
                             <div class="w-7 h-7 mx-auto rounded-full {{ in_array($matchedRequest->status, ['capturing_scheduled', 'completed']) ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500' }} flex items-center justify-center text-xs font-bold mb-1">
                                 3
                             </div>
                             <span class="text-xs font-bold block">Capturing</span>
-                            <span class="text-[10px] text-slate-500">{{ $matchedRequest->capturing_date ? $matchedRequest->capturing_date->format('M d, Y') : 'Pending Schedule' }}</span>
+                            <span class="text-[10px] text-slate-600 font-medium">{{ $matchedRequest->capturing_date ? $matchedRequest->capturing_date->format('M d, Y') : 'Pending Schedule' }}</span>
                         </div>
 
-                        <div class="p-3 rounded-xl border {{ $matchedRequest->status === 'completed' ? 'border-emerald-500 bg-emerald-50/70 text-emerald-800' : 'border-slate-200 text-slate-400' }}">
+                        <div class="p-3 rounded-xl border {{ $matchedRequest->status === 'completed' ? 'border-emerald-500 bg-emerald-50/70 text-emerald-800' : 'border-slate-200 text-slate-500' }}">
                             <div class="w-7 h-7 mx-auto rounded-full {{ $matchedRequest->status === 'completed' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500' }} flex items-center justify-center text-xs font-bold mb-1">
                                 4
                             </div>
                             <span class="text-xs font-bold block">Completed</span>
-                            <span class="text-[10px] text-slate-500">{{ $matchedRequest->resolved_at ? $matchedRequest->resolved_at->format('M d, Y') : 'Awaiting Completion' }}</span>
+                            <span class="text-[10px] text-slate-600 font-medium">{{ $matchedRequest->resolved_at ? $matchedRequest->resolved_at->format('M d, Y') : 'Awaiting Completion' }}</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Applicant Summary Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-700">
-                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Applicant Biodata</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-800">
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <span class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block">Applicant Biodata</span>
                         <div><strong>Name:</strong> {{ $matchedRequest->full_name }}</div>
-                        <div><strong>NIN:</strong> <span class="font-mono">{{ $matchedRequest->nin }}</span></div>
+                        <div><strong>NIN:</strong> <span class="font-mono font-bold">{{ $matchedRequest->nin }}</span></div>
                         <div><strong>Date of Birth:</strong> {{ $matchedRequest->date_of_birth ? $matchedRequest->date_of_birth->format('d/m/Y') : 'N/A' }} ({{ $matchedRequest->sex }})</div>
                         <div><strong>Origin:</strong> {{ $matchedRequest->state_of_origin }}, {{ $matchedRequest->lga }} LGA</div>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Contact &amp; Capturing</span>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <span class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block">Contact &amp; Capturing</span>
                         <div><strong>Mobile:</strong> {{ $matchedRequest->mobile_number }}</div>
                         <div><strong>Email:</strong> {{ $matchedRequest->email }}</div>
                         <div><strong>Capturing Center:</strong> {{ $matchedRequest->capturing_center ?? 'To be communicated' }}</div>
