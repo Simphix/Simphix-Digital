@@ -3,56 +3,57 @@
      * International Passport Balanced Landscape Banner
      * Matches exact size and responsive layout of the Travel & Tours banner.
      */
+    $passportCoverImage = asset('assets/images/nigerian-passport-cover.webp');
 @endphp
 
 <!-- Balanced Landscape Ad Banner for International Passport -->
 <div class="mb-4 w-full">
     <style>
-        .passport-banner-graphic-wrapper {
+        .passport-banner-booklet-wrapper {
             position: relative;
             display: flex;
             align-items: center;
             justify-content: flex-end;
             flex-shrink: 0;
-            width: 220px;
+            width: 190px;
             height: 120px;
             pointer-events: none;
         }
-        .passport-banner-badge-box {
+        .passport-banner-booklet-img {
             position: absolute;
-            right: 12px;
+            right: 14px;
             top: 50%;
-            transform: translateY(-50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 140px;
-            height: 110px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.4) 100%);
-            border: 1px solid rgba(52, 211, 153, 0.5);
-            backdrop-filter: blur(8px);
-            box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+            height: 125px;
+            width: auto;
+            object-fit: contain;
+            border-radius: 6px;
+            transform: translateY(-50%) rotate(3deg);
+            transform-origin: center center;
+            box-shadow: -6px 12px 24px rgba(0, 0, 0, 0.55), 0 0 16px rgba(52, 211, 153, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            pointer-events: none;
+            transition: transform 0.3s ease;
         }
         @media (min-width: 1024px) {
-            .passport-banner-graphic-wrapper {
-                width: 260px;
+            .passport-banner-booklet-wrapper {
+                width: 220px;
                 height: 130px;
             }
-            .passport-banner-badge-box {
-                width: 160px;
-                height: 118px;
+            .passport-banner-booklet-img {
+                height: 136px;
+                right: 20px;
+                transform: translateY(-50%) rotate(4deg);
             }
         }
         @media (min-width: 1280px) {
-            .passport-banner-graphic-wrapper {
-                width: 300px;
+            .passport-banner-booklet-wrapper {
+                width: 250px;
                 height: 140px;
             }
-            .passport-banner-badge-box {
-                width: 180px;
-                height: 122px;
+            .passport-banner-booklet-img {
+                height: 146px;
+                right: 24px;
+                transform: translateY(-50%) rotate(4deg);
             }
         }
         @media (max-width: 767.98px) {
@@ -96,14 +97,14 @@
                 width: 14px !important;
                 height: 14px !important;
             }
-            .passport-banner-graphic-wrapper {
+            .passport-banner-booklet-wrapper {
                 display: none !important;
             }
         }
     </style>
 
     <div class="relative overflow-hidden rounded-2xl shadow-md"
-         style="background-color: #06281e; background-image: linear-gradient(90deg, rgba(6, 40, 30, 0.96) 0%, rgba(9, 64, 48, 0.92) 55%, rgba(13, 110, 82, 0.85) 100%); background-size: cover; background-position: center; border: 1px solid rgba(16, 185, 129, 0.55);">
+         style="background-color: #042517; background-image: linear-gradient(90deg, rgba(3, 31, 20, 0.98) 0%, rgba(5, 55, 38, 0.94) 55%, rgba(6, 95, 70, 0.90) 100%); background-size: cover; background-position: center; border: 1px solid rgba(16, 185, 129, 0.55);">
         
         <!-- Subtle Emerald/Gold Glow Element -->
         <div class="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full"
@@ -118,19 +119,19 @@
                 <div class="passport-banner-pill"
                      style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; background: rgba(16, 185, 129, 0.22); border: 1px solid rgba(52, 211, 153, 0.5); margin-bottom: 8px;">
                     <span style="width: 7px; height: 7px; border-radius: 9999px; background-color: #34d399; display: inline-block;"></span>
-                    <span style="font-size: 11px; font-weight: 700; color: #a7f3d0; letter-spacing: 0.3px;">Immigration Services Desk &bull; Standard &amp; Fast-Track</span>
+                    <span style="font-size: 11px; font-weight: 700; color: #a7f3d0; letter-spacing: 0.3px;">Passport Desk &bull; New Application &amp; Renewal</span>
                 </div>
 
                 <!-- Main Headline -->
                 <h2 class="passport-banner-title"
                     style="font-size: 1.25rem; font-weight: 800; color: #ffffff !important; line-height: 1.3; margin: 0 0 6px 0; letter-spacing: -0.02em;">
-                    International Passport Registration (New &amp; Renewal)
+                    Apply for Nigerian International Passport (New &amp; Renewal)
                 </h2>
 
-                <!-- Balanced Subtitle -->
+                <!-- Improved Clear & Authoritative Subtitle -->
                 <p class="passport-banner-desc"
-                   style="font-size: 0.8125rem; color: #e2e8f0 !important; line-height: 1.5; margin: 0 0 14px 0; max-width: 580px; font-weight: 400;">
-                    Complete hassle-free application for fresh passports and renewal endorsements. Upload required e-copies, get verified, track progress, and download official A4 dossiers.
+                   style="font-size: 0.8125rem; color: #e2e8f0 !important; line-height: 1.5; margin: 0 0 14px 0; max-width: 600px; font-weight: 400;">
+                    Hassle-free electronic processing for fresh passport booklets and renewals. Submit required biodata, attach digital e-copies (passport photo, birth certificate, state of origin &amp; NIN), schedule biometric capturing, and download official A4 application dockets.
                 </p>
 
                 <!-- Action Buttons -->
@@ -154,15 +155,11 @@
                 </div>
             </div>
 
-            <!-- Far Right Graphic: Passport Emblem Box -->
-            <div class="passport-banner-graphic-wrapper hidden md:flex">
-                <div class="passport-banner-badge-box">
-                    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(52, 211, 153, 0.25); display: flex; align-items: center; justify-content: center; margin-bottom: 6px;">
-                        <i data-lucide="globe-2" style="width: 26px; height: 26px; stroke: #34d399; stroke-width: 2;"></i>
-                    </div>
-                    <span style="font-size: 11px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px;">E-PASSPORT</span>
-                    <span style="font-size: 9px; font-weight: 600; color: #a7f3d0; text-transform: uppercase;">Standard / Express</span>
-                </div>
+            <!-- Far Right Graphic: Real Nigerian International Passport Booklet -->
+            <div class="passport-banner-booklet-wrapper hidden md:flex">
+                <img src="{{ $passportCoverImage }}"
+                     alt="Nigerian International Passport Booklet"
+                     class="passport-banner-booklet-img">
             </div>
 
         </div>

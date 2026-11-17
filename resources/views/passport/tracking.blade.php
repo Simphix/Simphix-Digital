@@ -146,7 +146,7 @@
 
                 @if ($matchedRequest->customer_notes)
                     <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs">
-                        <strong class="block mb-1 font-bold">Immigration Desk Update:</strong>
+                        <strong class="block mb-1 font-bold">Passport Desk Update:</strong>
                         {{ $matchedRequest->customer_notes }}
                     </div>
                 @endif

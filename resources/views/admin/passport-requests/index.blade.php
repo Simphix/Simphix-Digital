@@ -19,7 +19,7 @@
             <div>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 mb-2">
                     <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-                    Staff Immigration Processing Desk
+                    Staff Passport Processing Desk
                 </span>
                 <h1 class="text-2xl font-black text-slate-900 font-display">
                     International Passport Requests

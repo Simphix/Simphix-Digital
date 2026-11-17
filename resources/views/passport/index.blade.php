@@ -34,7 +34,7 @@
             <div class="relative z-10 max-w-2xl space-y-4">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-900/60 border border-emerald-400/40 text-emerald-200">
                     <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-                    Immigration &amp; Passport Services
+                    Passport Services Desk
                 </div>
 
                 <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight font-display leading-tight text-white">
