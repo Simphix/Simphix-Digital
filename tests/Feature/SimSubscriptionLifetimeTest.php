@@ -500,4 +500,48 @@ class SimSubscriptionLifetimeTest extends TestCase
             'account_number' => $data['account_number'],
         ]);
     }
+
+    public function test_sim_lifecycle_countdown_decrements_at_midnight_every_day(): void
+    {
+        $tz = 'Africa/Lagos';
+
+        // 1. Activate at 11:30:00 AM on Nov 17, 2026
+        \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-11-17 11:30:00', $tz));
+
+        $sim = Sim::create([
+            'number'                  => '09088889999',
+            'category'                => 'POS SIM',
+            'provider'                => 'mtn',
+            'partner_id'              => $this->partner->id,
+            'status'                  => SimStatus::ACTIVATED,
+            'activated_at'            => now(),
+            'subscription_expires_at' => now()->copy()->addDays(365),
+        ]);
+
+        // Day of activation: 365 days
+        $this->assertEquals(365, $sim->daysRemaining());
+
+        // Later that day (6:00 PM): remains 365 days
+        \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-11-17 18:00:00', $tz));
+        $this->assertEquals(365, $sim->daysRemaining());
+
+        // 1 second before midnight: remains 365 days
+        \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-11-17 23:59:59', $tz));
+        $this->assertEquals(365, $sim->daysRemaining());
+
+        // Exactly at 12:00:00 AM midnight (start of Nov 18): decrements by 1 day to 364 days
+        \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-11-18 00:00:00', $tz));
+        $this->assertEquals(364, $sim->daysRemaining());
+
+        // Noon on Nov 18: remains 364 days
+        \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-11-18 12:00:00', $tz));
+        $this->assertEquals(364, $sim->daysRemaining());
+
+        // Exactly at next 12:00:00 AM midnight (start of Nov 19): decrements by 1 day to 363 days
+        \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-11-19 00:00:00', $tz));
+        $this->assertEquals(363, $sim->daysRemaining());
+
+        // Clean up test clock
+        \Carbon\Carbon::setTestNow();
+    }
 }
