@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             AirtimeSeeder::class,
             VerificationSeeder::class,
             TravelPackageSeeder::class,
+            TwentyEightDayBonusSimsSeeder::class,
         ]);
     }
 }
