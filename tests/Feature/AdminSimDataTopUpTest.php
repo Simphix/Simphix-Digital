@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ActivationBonusSettings;
 use App\Models\Report;
 use App\Models\Sim;
 use App\Models\SimActivationBonusGrant;
@@ -163,4 +164,161 @@ test('a plan whose network does not match the sim provider is rejected server-si
     $response->assertSessionHas('error');
     expect(Report::where('phone_number', $sim->number)->where('type', 'admin_data_topup')->count())->toBe(0);
     Http::assertNothingSent();
+});
+
+test('sim activation bonus progress shows 1/12 immediately after initial activation grant', function () {
+    [$sim] = activatedSimWithHolder('mtn');
+
+    // Simulate the initial activation bonus grant (period 0)
+    SimActivationBonusGrant::create([
+        'sim_id' => $sim->id,
+        'period_index' => 0,
+        'period_start' => now(),
+        'period_end' => now()->addDays(28),
+        'granted_at' => now(),
+        'status' => SimActivationBonusGrant::STATUS_COMPLETED,
+    ]);
+
+    expect($sim->activationBonusCount())->toBe(1);
+    expect($sim->activationBonusProgress())->toBe('1/12');
+});
+
+test('bulk activation bonus command triggers sims reaching 28 days without dispatching data', function () {
+    [$sim] = activatedSimWithHolder('mtn');
+    $plan = enabledTopUpPlan('MTN', 'kvdata');
+    $settings = ActivationBonusSettings::forProvider('mtn');
+    $settings->update(['is_active' => true, 'sme_data_id' => $plan->id]);
+
+    // Initial grant 28 days ago
+    $initialGrant = SimActivationBonusGrant::create([
+        'sim_id' => $sim->id,
+        'period_index' => 0,
+        'period_start' => now()->subDays(28),
+        'period_end' => now(),
+        'granted_at' => now()->subDays(28),
+        'status' => SimActivationBonusGrant::STATUS_COMPLETED,
+    ]);
+
+    Http::fake();
+
+    // Run command
+    $this->artisan('sim:grant-bulk-activation-bonus')->assertSuccessful();
+
+    // Verify vendor was NOT called (no automatic dispatch)
+    Http::assertNothingSent();
+
+    // Verify pending trigger was created for cycle 2/12
+    $pending = SimActivationBonusGrant::where('sim_id', $sim->id)
+        ->where('status', SimActivationBonusGrant::STATUS_PENDING)
+        ->first();
+
+    expect($pending)->not->toBeNull();
+    expect($pending->period_index)->toBe(1);
+    expect($pending->cycleLabel())->toBe('2/12');
+});
+
+test('admin can complete action on triggered sim so the sim receives data', function () {
+    Http::fake(['*' => Http::response(['status' => 'success', 'transid' => 'VEND-BONUS-1'], 200)]);
+    $admin = topUpAdmin();
+    [$sim, $holder] = activatedSimWithHolder('mtn');
+    $plan = enabledTopUpPlan('MTN', 'kvdata');
+    $settings = ActivationBonusSettings::forProvider('mtn');
+    $settings->update(['is_active' => true, 'sme_data_id' => $plan->id]);
+
+    // Initial grant (1/12)
+    SimActivationBonusGrant::create([
+        'sim_id' => $sim->id,
+        'period_index' => 0,
+        'period_start' => now()->subDays(28),
+        'period_end' => now(),
+        'granted_at' => now()->subDays(28),
+        'status' => SimActivationBonusGrant::STATUS_COMPLETED,
+    ]);
+
+    // Pending trigger for cycle 2/12
+    $trigger = SimActivationBonusGrant::create([
+        'sim_id' => $sim->id,
+        'period_index' => 1,
+        'period_start' => now()->subDays(28),
+        'period_end' => now(),
+        'triggered_at' => now(),
+        'status' => SimActivationBonusGrant::STATUS_PENDING,
+    ]);
+
+    $response = $this->actingAs($admin)->post(route('admin.sim-data-topup.triggered.complete', $trigger));
+    $response->assertSessionHas('success');
+
+    $trigger->refresh();
+    expect($trigger->status)->toBe(SimActivationBonusGrant::STATUS_COMPLETED);
+    expect($trigger->resolution_type)->toBe('vendor_topup');
+    expect($trigger->admin_id)->toBe($admin->id);
+    expect($sim->activationBonusProgress())->toBe('2/12');
+
+    Http::assertSentCount(1);
+});
+
+test('admin can resolve triggered sim silently without dispatching data', function () {
+    Http::fake();
+    $admin = topUpAdmin();
+    [$sim, $holder] = activatedSimWithHolder('mtn');
+
+    // Initial grant (1/12)
+    SimActivationBonusGrant::create([
+        'sim_id' => $sim->id,
+        'period_index' => 0,
+        'period_start' => now()->subDays(28),
+        'period_end' => now(),
+        'granted_at' => now()->subDays(28),
+        'status' => SimActivationBonusGrant::STATUS_COMPLETED,
+    ]);
+
+    // Pending trigger for cycle 2/12
+    $trigger = SimActivationBonusGrant::create([
+        'sim_id' => $sim->id,
+        'period_index' => 1,
+        'period_start' => now()->subDays(28),
+        'period_end' => now(),
+        'triggered_at' => now(),
+        'status' => SimActivationBonusGrant::STATUS_PENDING,
+    ]);
+
+    $response = $this->actingAs($admin)->post(route('admin.sim-data-topup.triggered.resolve-silently', $trigger), [
+        'notes' => 'Topped up manually through USSD',
+    ]);
+    $response->assertSessionHas('success');
+
+    // Vendor was NOT called!
+    Http::assertNothingSent();
+
+    $trigger->refresh();
+    expect($trigger->status)->toBe(SimActivationBonusGrant::STATUS_RESOLVED_SILENTLY);
+    expect($trigger->resolution_type)->toBe('silent');
+    expect($trigger->admin_id)->toBe($admin->id);
+    expect($trigger->admin_notes)->toContain('Topped up manually');
+    // Count is now 2/12
+    expect($sim->activationBonusProgress())->toBe('2/12');
+});
+
+test('admin can execute bulk actions on triggered grants', function () {
+    $admin = topUpAdmin();
+    [$sim1] = activatedSimWithHolder('mtn');
+    [$sim2] = activatedSimWithHolder('airtel');
+
+    $t1 = SimActivationBonusGrant::create([
+        'sim_id' => $sim1->id, 'period_index' => 1, 'period_start' => now(), 'period_end' => now()->addDays(28),
+        'status' => SimActivationBonusGrant::STATUS_PENDING,
+    ]);
+    $t2 = SimActivationBonusGrant::create([
+        'sim_id' => $sim2->id, 'period_index' => 1, 'period_start' => now(), 'period_end' => now()->addDays(28),
+        'status' => SimActivationBonusGrant::STATUS_PENDING,
+    ]);
+
+    $response = $this->actingAs($admin)->post(route('admin.sim-data-topup.triggered.bulk-action'), [
+        'action' => 'resolve_silent',
+        'grant_ids' => [$t1->id, $t2->id],
+    ]);
+
+    $response->assertSessionHas('success');
+    expect($t1->fresh()->status)->toBe(SimActivationBonusGrant::STATUS_RESOLVED_SILENTLY);
+    expect($t2->fresh()->status)->toBe(SimActivationBonusGrant::STATUS_RESOLVED_SILENTLY);
 });

@@ -30,7 +30,89 @@ class SimBonusPeriod
             ->oldest('created_at')
             ->value('created_at');
 
-        return $timestamp ? Carbon::parse($timestamp) : null;
+        return $timestamp ? Carbon::parse($timestamp) : ($sim->activated_at ?? $sim->created_at);
+    }
+
+    /**
+     * Date of the most recent completed or resolved data top-up for this SIM.
+     * Falls back to the activation anchor if no prior grant row exists.
+     */
+    public static function lastTopUpDate(Sim $sim): ?Carbon
+    {
+        $lastGrant = SimActivationBonusGrant::where('sim_id', $sim->id)
+            ->whereIn('status', [SimActivationBonusGrant::STATUS_COMPLETED, SimActivationBonusGrant::STATUS_RESOLVED_SILENTLY])
+            ->latest('granted_at')
+            ->first();
+
+        if ($lastGrant && $lastGrant->granted_at) {
+            return $lastGrant->granted_at;
+        }
+
+        return self::anchor($sim);
+    }
+
+    /**
+     * Number of full calendar days elapsed since the SIM's last data top-up (or activation).
+     */
+    public static function daysSinceLastTopUp(Sim $sim, ?Carbon $at = null): int
+    {
+        $last = self::lastTopUpDate($sim);
+
+        return $last ? (int) $last->diffInDays($at ?? now()) : 0;
+    }
+
+    /**
+     * Number of fulfilled bonus cycles (completed or resolved silently), out of 12.
+     */
+    public static function completedCount(Sim $sim): int
+    {
+        return SimActivationBonusGrant::where('sim_id', $sim->id)
+            ->whereIn('status', [SimActivationBonusGrant::STATUS_COMPLETED, SimActivationBonusGrant::STATUS_RESOLVED_SILENTLY])
+            ->count();
+    }
+
+    /**
+     * The next target 1-based cycle number (e.g. 1 for initial, 2 after 28 days, up to 12).
+     */
+    public static function nextCycleNumber(Sim $sim): int
+    {
+        return min(12, self::completedCount($sim) + 1);
+    }
+
+    /**
+     * Checks if this SIM has reached at least 28 days since its last top-up,
+     * has not exceeded the 12-month lifetime cap, and does not already have
+     * a pending trigger.
+     */
+    public static function isDueFor28DayTrigger(Sim $sim, ?Carbon $at = null): bool
+    {
+        if ($sim->status !== SimStatus::ACTIVATED) {
+            return false;
+        }
+
+        $now = $at ?? now();
+
+        $completed = self::completedCount($sim);
+        if ($completed >= 12) {
+            return false;
+        }
+
+        $hasPending = SimActivationBonusGrant::where('sim_id', $sim->id)
+            ->where('status', SimActivationBonusGrant::STATUS_PENDING)
+            ->exists();
+
+        if ($hasPending) {
+            return false;
+        }
+
+        $lastTopUp = self::lastTopUpDate($sim);
+        if (!$lastTopUp) {
+            return false;
+        }
+
+        $days = (int) $lastTopUp->diffInDays($now);
+
+        return $days >= 28;
     }
 
     /**
@@ -78,7 +160,7 @@ class SimBonusPeriod
 
         return !SimActivationBonusGrant::where('sim_id', $sim->id)
             ->where('period_index', $periodIndex)
-            ->where('status', 'completed')
+            ->whereIn('status', [SimActivationBonusGrant::STATUS_COMPLETED, SimActivationBonusGrant::STATUS_RESOLVED_SILENTLY])
             ->exists();
     }
 }

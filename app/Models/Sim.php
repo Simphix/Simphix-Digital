@@ -278,6 +278,41 @@ class Sim extends Model
         };
     }
 
+    public function activationBonusGrants(): HasMany
+    {
+        return $this->hasMany(SimActivationBonusGrant::class, 'sim_id');
+    }
+
+    public function latestActivationBonusGrant(): HasOne
+    {
+        return $this->hasOne(SimActivationBonusGrant::class, 'sim_id')->latestOfMany();
+    }
+
+    public function pendingActivationBonusGrant(): HasOne
+    {
+        return $this->hasOne(SimActivationBonusGrant::class, 'sim_id')->where('status', SimActivationBonusGrant::STATUS_PENDING);
+    }
+
+    /**
+     * How many bonus cycles this SIM has fulfilled (completed or resolved silently), out of 12.
+     */
+    public function activationBonusCount(): int
+    {
+        return $this->activationBonusGrants()
+            ->whereIn('status', [SimActivationBonusGrant::STATUS_COMPLETED, SimActivationBonusGrant::STATUS_RESOLVED_SILENTLY])
+            ->count();
+    }
+
+    /**
+     * Human-readable bonus cycle progress (e.g. "1/12", "2/12").
+     */
+    public function activationBonusProgress(): string
+    {
+        $count = min(12, $this->activationBonusCount());
+
+        return "{$count}/12";
+    }
+
     /**
      * Color for the status blip dot.
      */

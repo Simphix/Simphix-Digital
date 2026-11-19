@@ -169,15 +169,22 @@ test('a retry of a failed grant is still allowed', function () {
     expect(SimActivationBonusGrant::where('sim_id', $sim->id)->where('status', 'completed')->count())->toBe(1);
 });
 
-test('the bulk command only grants once per sim across two back-to-back runs', function () {
+test('the bulk command triggers once per sim across two back-to-back runs after 28 days', function () {
     $sim = activateBonusSim(bonusSim('mtn'), $this->admin);
     enableBonusPlan('mtn');
-    fakeSuccessfulVendorCall();
+
+    // Before 28 days, not due for trigger
+    $this->artisan('sim:grant-bulk-activation-bonus')->assertExitCode(0);
+    expect(SimActivationBonusGrant::where('sim_id', $sim->id)->count())->toBe(0);
+
+    // Advance 28 days
+    $this->travel(28)->days();
 
     $this->artisan('sim:grant-bulk-activation-bonus')->assertExitCode(0);
     $this->artisan('sim:grant-bulk-activation-bonus')->assertExitCode(0);
 
     expect(SimActivationBonusGrant::where('sim_id', $sim->id)->count())->toBe(1);
+    expect(SimActivationBonusGrant::where('sim_id', $sim->id)->first()->status)->toBe('pending');
 });
 
 test('the bulk command does not even dispatch a job for a sim whose current period was already granted', function () {

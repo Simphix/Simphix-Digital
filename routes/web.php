@@ -314,6 +314,10 @@ Route::middleware(['auth', 'verified', 'support_staff'])->prefix('support-desk')
     Route::get('/sim-data-topup/sims/{sim}/usage-review', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'usageReview'])->name('sim-data-topup.usage-review');
     Route::get('/sim-data-topup/sims/{sim}/plans', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'plans'])->name('sim-data-topup.plans');
     Route::post('/sim-data-topup/sims/{sim}/topup', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'topup'])->name('sim-data-topup.topup');
+    Route::post('/sim-data-topup/triggered/{grant}/complete', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'completeTriggeredBonus'])->name('sim-data-topup.triggered.complete');
+    Route::post('/sim-data-topup/triggered/{grant}/resolve-silently', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'resolveSilently'])->name('sim-data-topup.triggered.resolve-silently');
+    Route::post('/sim-data-topup/triggered/run-check', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'run28DayCheck'])->name('sim-data-topup.triggered.run-check');
+    Route::post('/sim-data-topup/triggered/bulk-action', [\App\Http\Controllers\Support\SimDataTopUpController::class, 'bulkActionTriggered'])->name('sim-data-topup.triggered.bulk-action');
 
     Route::prefix('sim-inventory')->name('sim-inventory.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Support\SimInventoryController::class, 'index'])->name('index');
@@ -625,6 +629,10 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
         Route::get('/sims/{sim}/usage-review', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'usageReview'])->name('usage-review');
         Route::get('/sims/{sim}/plans', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'plans'])->name('plans');
         Route::post('/sims/{sim}/topup', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'topup'])->name('topup');
+        Route::post('/triggered/{grant}/complete', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'completeTriggeredBonus'])->name('triggered.complete');
+        Route::post('/triggered/{grant}/resolve-silently', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'resolveSilently'])->name('triggered.resolve-silently');
+        Route::post('/triggered/run-check', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'run28DayCheck'])->name('triggered.run-check');
+        Route::post('/triggered/bulk-action', [\App\Http\Controllers\Admin\SimDataTopUpController::class, 'bulkActionTriggered'])->name('triggered.bulk-action');
     });
 
     // Admin Cash Out Approvals

@@ -21,6 +21,12 @@ Schedule::command('sims:export-activated')
     ->timezone('Africa/Lagos')
     ->withoutOverlapping();
 
+// Daily check for activated SIMs reaching 28 days for activation bonus review (1:00 AM WAT)
+Schedule::command('sim:grant-bulk-activation-bonus')
+    ->dailyAt('01:00')
+    ->timezone('Africa/Lagos')
+    ->withoutOverlapping();
+
 // Dispatch due push notifications
 Schedule::command('notifications:dispatch-due')
     ->everyMinute()
