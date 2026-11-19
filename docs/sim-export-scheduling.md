@@ -40,17 +40,31 @@ php artisan sims:export-activated --hours=24
 php artisan sims:export-activated --all
 ```
 
-This follows the same **direct cron entry per command** convention already
-established in `docs/cron-jobs.md` and `docs/push-notification-scheduling.md`,
-not Laravel's `schedule:run`/scheduler mechanism — that mechanism isn't used
-anywhere else in this app (`bootstrap/app.php` has no `->withSchedule()`
-call, and `routes/console.php` only defines the `inspire` command), so a
-second, different scheduling mechanism isn't introduced here.
+### Scheduling Options
+
+The export is registered in Laravel's Task Scheduler (`routes/console.php`) to run **every midnight at 12:00 AM WAT** (`00:00 Africa/Lagos`). It can run either via Laravel's master scheduler:
+
+```bash
+* * * * * cd /path/to/smartsim && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Or as a direct, dedicated cron entry (recommended on cPanel/shared hosting):
+
+```bash
+0 0 * * * cd /path/to/smartsim && php artisan sims:export-activated >> storage/logs/sim-export.log 2>&1
+```
 
 Because the on/off check happens inside the command itself, it is always
 safe to have this cron entry running every night regardless of whether the
-export is currently turned on — a run while it's off just logs one line and
-exits.
+export is currently turned on — a run while it's off records a skipped status
+in `sim_export_settings` and exits cleanly.
+
+### Environment Variable Fallbacks (.env)
+
+If not configured via the Admin UI, the command automatically falls back to:
+- `SIM_EXPORT_RECIPIENT_EMAIL` or `NIGHTLY_SIMS_EXPORT_RECIPIENT` for recipient address(es).
+- `SIM_EXPORT_ENABLED=true` or `NIGHTLY_SIMS_EXPORT_ENABLED=true` to enable execution.
+- Valid `from` address in mail envelope using `MAIL_FROM_ADDRESS` or `MAIL_USERNAME`.
 
 ---
 

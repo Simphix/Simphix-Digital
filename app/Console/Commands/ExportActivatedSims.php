@@ -34,19 +34,26 @@ class ExportActivatedSims extends Command
     public function handle(ActivatedSimsExportService $exporter): int
     {
         $settings = SimExportSettings::current();
+        $isActive = $settings->isEffectivelyActive();
 
-        if (!$settings->is_active && !$this->option('force')) {
+        if (!$isActive && !$this->option('force')) {
             $this->info('Nightly activated-SIMs export is turned off (Admin > SIMs Operations) — skipping. Use --force to override.');
+            $settings->recordExportResult('skipped', null, null, 'Skipped: export is toggled off in settings.');
 
             return self::SUCCESS;
         }
 
         $rawRecipient = $this->option('to')
-            ?: ($settings->recipient_email ?: config('mail.from.address'));
+            ?: ($settings->getEffectiveRecipientEmail() ?: config('mail.from.address'));
+
+        if ($rawRecipient === 'hello@example.com') {
+            $rawRecipient = env('MAIL_USERNAME') ?: env('ADMIN_NOTIFICATION_EMAIL');
+        }
 
         if (!$rawRecipient) {
             $this->warn('Nightly activated-SIMs export is on but no recipient email is set — skipping.');
             Log::warning('sims:export-activated skipped: no recipient email configured.');
+            $settings->recordExportResult('skipped', null, null, 'Skipped: no recipient email configured.');
 
             return self::SUCCESS;
         }
@@ -60,6 +67,7 @@ class ExportActivatedSims extends Command
         if (empty($recipients)) {
             $this->error('No valid recipient email address found: ' . $rawRecipient);
             Log::error('sims:export-activated failed: invalid recipient email address format: ' . $rawRecipient);
+            $settings->recordExportResult('failed', null, (string) $rawRecipient, 'Failed: invalid recipient email address format.');
 
             return self::FAILURE;
         }
@@ -123,14 +131,17 @@ class ExportActivatedSims extends Command
             }
         }
 
+        $recipientList = implode(', ', $recipients);
+
         if (!$sent) {
             $this->error('Failed to send the export email after ' . $maxAttempts . ' attempt(s): ' . $lastError);
             Log::error('sims:export-activated failed to send after retries: ' . $lastError);
+            $settings->recordExportResult('failed', $count, $recipientList, 'Delivery failed: ' . $lastError);
 
             return self::FAILURE;
         }
 
-        $recipientList = implode(', ', $recipients);
+        $settings->recordExportResult('success', $count, $recipientList, "Successfully exported {$count} number(s) ({$periodLabel}) to {$recipientList}");
         $this->info("Sent {$count} activated SIM number(s) ({$periodLabel}) to {$recipientList}.");
 
         return self::SUCCESS;

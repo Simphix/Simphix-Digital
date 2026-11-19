@@ -304,5 +304,49 @@ test('nightly sims:export-activated is registered in laravel schedule', function
     });
 
     expect($exportEvent)->not->toBeNull();
-    expect($exportEvent->expression)->toBe('5 0 * * *');
+    expect($exportEvent->expression)->toBe('0 0 * * *');
+});
+
+test('nightly export records execution tracking in SimExportSettings', function () {
+    Mail::fake();
+
+    $settings = SimExportSettings::current();
+    $settings->update([
+        'is_active' => true,
+        'recipient_email' => 'tracking-test@simphix.com',
+    ]);
+
+    $this->artisan('sims:export-activated')
+        ->assertSuccessful();
+
+    $settings->refresh();
+    expect($settings->last_export_status)->toBe('success');
+    expect($settings->last_exported_at)->not->toBeNull();
+    expect($settings->last_attempted_at)->not->toBeNull();
+    expect($settings->last_export_recipient)->toBe('tracking-test@simphix.com');
+    expect($settings->last_export_message)->toContain('tracking-test@simphix.com');
+});
+
+test('nightly export records skipped status when inactive', function () {
+    $settings = SimExportSettings::current();
+    $settings->update([
+        'is_active' => false,
+        'recipient_email' => 'inactive@simphix.com',
+    ]);
+
+    $this->artisan('sims:export-activated')
+        ->assertSuccessful();
+
+    $settings->refresh();
+    expect($settings->last_export_status)->toBe('skipped');
+    expect($settings->last_export_message)->toContain('toggled off');
+});
+
+test('mail envelope resolves non-empty valid from address and subject', function () {
+    $mail = new ActivatedSimsExportMail('Sim Number\n08012345678', 1, now('Africa/Lagos'));
+    $envelope = $mail->envelope();
+
+    expect($envelope->from)->not->toBeNull();
+    expect($envelope->from->address)->not->toBeEmpty();
+    expect($envelope->subject)->toContain('SimPhix');
 });

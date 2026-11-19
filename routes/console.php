@@ -15,12 +15,11 @@ Artisan::command('inspire', function () {
 | Runs via standard cron: * * * * * php artisan schedule:run >> /dev/null 2>&1
 */
 
-// Nightly export of activated SIM numbers to the configured operations inbox
+// Nightly export of activated SIM numbers to the configured operations inbox (12:00 AM Midnight WAT)
 Schedule::command('sims:export-activated')
-    ->dailyAt('00:05')
+    ->dailyAt('00:00')
     ->timezone('Africa/Lagos')
-    ->withoutOverlapping()
-    ->runInBackground();
+    ->withoutOverlapping();
 
 // Dispatch due push notifications
 Schedule::command('notifications:dispatch-due')

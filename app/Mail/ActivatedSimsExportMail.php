@@ -5,6 +5,7 @@ namespace App\Mail;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -39,7 +40,14 @@ class ActivatedSimsExportMail extends Mailable
             default => 'SimPhix - Activated SIMs Export (' . $this->generatedAt->format('M d, Y') . ')',
         };
 
+        $fromAddress = config('mail.from.address');
+        if (empty($fromAddress) || str_ends_with((string) $fromAddress, '@example.com')) {
+            $fromAddress = env('MAIL_USERNAME') ?: env('MAIL_FROM_ADDRESS') ?: 'support@simphix.com';
+        }
+        $fromName = config('mail.from.name') ?: config('app.name', 'SimPhix');
+
         return new Envelope(
+            from: new Address($fromAddress, $fromName),
             subject: $subject,
         );
     }

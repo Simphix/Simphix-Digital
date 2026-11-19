@@ -109,7 +109,7 @@
                     </div>
                     <div>
                         <h2 class="text-sm font-bold text-slate-800 font-display">Nightly Activated-SIMs Automated Export</h2>
-                        <span class="text-xs text-slate-500">Automatically scheduled for <strong>12:05 AM WAT</strong> every night via <code class="text-[11px] bg-slate-100 px-1 py-0.5 rounded font-mono">sims:export-activated</code>.</span>
+                        <span class="text-xs text-slate-500">Automatically scheduled for <strong>12:00 AM WAT (Midnight)</strong> every night via <code class="text-[11px] bg-slate-100 px-1 py-0.5 rounded font-mono">sims:export-activated</code>.</span>
                     </div>
                 </div>
                 @if ($exportSettings->is_active && $exportSettings->recipient_email)
@@ -154,6 +154,48 @@
                     </button>
                 </div>
             </form>
+
+            <!-- Execution Status & Delivery Health -->
+            <div class="border-t border-slate-100 pt-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl {{ $exportSettings->last_export_status === 'failed' ? 'bg-rose-50/70 border border-rose-100' : ($exportSettings->last_export_status === 'success' ? 'bg-emerald-50/50 border border-emerald-100' : 'bg-slate-50/70 border border-slate-100') }}">
+                    <div class="flex items-start gap-2.5">
+                        <div class="mt-0.5">
+                            @if ($exportSettings->last_export_status === 'success')
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                            @elseif ($exportSettings->last_export_status === 'failed')
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block animate-ping"></span>
+                            @else
+                                <span class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block"></span>
+                            @endif
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-xs font-bold text-slate-800">Latest Export Run:</span>
+                                @if ($exportSettings->last_attempted_at)
+                                    <span class="text-xs font-semibold text-slate-600">{{ $exportSettings->last_attempted_at->timezone('Africa/Lagos')->format('M d, Y h:i A') }} WAT</span>
+                                    @if ($exportSettings->last_export_status === 'success')
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Delivered ({{ $exportSettings->last_export_count }} SIMs)</span>
+                                    @elseif ($exportSettings->last_export_status === 'failed')
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">Delivery Failed</span>
+                                    @elseif ($exportSettings->last_export_status === 'skipped')
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Skipped</span>
+                                    @endif
+                                @else
+                                    <span class="text-xs text-slate-500 italic">No runs recorded yet (will execute at 12:00 AM WAT or upon manual test).</span>
+                                @endif
+                            </div>
+                            @if ($exportSettings->last_export_message)
+                                <p class="text-[11px] text-slate-600 mt-1 font-mono break-all">{{ $exportSettings->last_export_message }}</p>
+                            @endif
+                        </div>
+                    </div>
+                    @if ($exportSettings->last_export_recipient)
+                        <div class="text-right sm:text-right text-[11px] text-slate-500 shrink-0">
+                            Sent to: <span class="font-semibold text-slate-700">{{ $exportSettings->last_export_recipient }}</span>
+                        </div>
+                    @endif
+                </div>
+            </div>
 
             <!-- On-Demand Dispatch / Test Delivery -->
             <div class="border-t border-slate-100 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70 p-3 rounded-xl">

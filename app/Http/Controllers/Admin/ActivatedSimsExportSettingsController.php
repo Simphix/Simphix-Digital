@@ -94,17 +94,21 @@ class ActivatedSimsExportSettingsController extends Controller
         $count = $exporter->count($since, $until);
         $csv = $exporter->toCsvString($since, $until);
 
+        $recipientList = implode(', ', $recipients);
+
         try {
             Mail::to($recipients)->send(
                 new ActivatedSimsExportMail($csv, $count, now($timezone), $since, $until, $periodLabel, $reportDate)
             );
         } catch (\Throwable $e) {
             Log::error('Manual activated-SIMs export failed: ' . $e->getMessage());
+            $settings->recordExportResult('failed', $count, $recipientList, 'Manual dispatch failed: ' . $e->getMessage());
 
             return back()->with('error', 'Failed to deliver export email: ' . $e->getMessage());
         }
 
-        $recipientList = implode(', ', $recipients);
+        $settings->recordExportResult('success', $count, $recipientList, "Manual dispatch delivered {$count} number(s) ({$periodLabel}) to {$recipientList}");
+
         return back()->with('success', "Activated SIMs export email ({$periodLabel}) successfully delivered to {$recipientList} ({$count} numbers).");
     }
 }
