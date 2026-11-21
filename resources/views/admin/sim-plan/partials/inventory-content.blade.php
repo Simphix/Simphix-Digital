@@ -118,6 +118,10 @@
                                 <i data-lucide="search-x" class="w-5 h-5"></i>
                             </div>
                             <span class="font-semibold text-xs">No SIM records found matching the current filters.</span>
+                            <button type="button" @click="resetFilters()" class="text-xs font-bold text-primary hover:underline mt-0.5 inline-flex items-center gap-1">
+                                <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                                Reset Filters
+                            </button>
                         </div>
                     </td>
                 </tr>

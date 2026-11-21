@@ -173,9 +173,15 @@ class SimsOperationsDashboardController extends Controller
      */
     private function resolveActivationBonusFilters(Request $request): array
     {
+        $start = $request->filled('bonus_date_start') ? Carbon::parse($request->bonus_date_start)->startOfDay() : null;
+        $end = $request->filled('bonus_date_end') ? Carbon::parse($request->bonus_date_end)->endOfDay() : null;
+        if ($start && $end && $start->isAfter($end)) {
+            [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+        }
+
         return [
-            'date_start' => $request->filled('bonus_date_start') ? Carbon::parse($request->bonus_date_start)->startOfDay() : null,
-            'date_end' => $request->filled('bonus_date_end') ? Carbon::parse($request->bonus_date_end)->endOfDay() : null,
+            'date_start' => $start,
+            'date_end' => $end,
             'number' => $request->filled('bonus_number') ? trim($request->bonus_number) : null,
             'status' => $request->filled('bonus_status') ? $request->bonus_status : null,
         ];
@@ -202,10 +208,14 @@ class SimsOperationsDashboardController extends Controller
         [$rangeStart, $rangeEnd] = match ($range) {
             'today' => [now()->startOfDay(), now()->endOfDay()],
             '3days' => [now()->subDays(2)->startOfDay(), now()->endOfDay()],
-            'custom' => [
-                $request->filled('period_start') ? Carbon::parse($request->period_start)->startOfDay() : now()->subDays(6)->startOfDay(),
-                $request->filled('period_end') ? Carbon::parse($request->period_end)->endOfDay() : now()->endOfDay(),
-            ],
+            'custom' => (function () use ($request) {
+                $start = $request->filled('period_start') ? Carbon::parse($request->period_start)->startOfDay() : now()->subDays(6)->startOfDay();
+                $end = $request->filled('period_end') ? Carbon::parse($request->period_end)->endOfDay() : now()->endOfDay();
+                if ($start->isAfter($end)) {
+                    [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+                }
+                return [$start, $end];
+            })(),
             default => [now()->subDays(6)->startOfDay(), now()->endOfDay()],
         };
 

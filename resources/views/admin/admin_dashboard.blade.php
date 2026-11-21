@@ -57,27 +57,39 @@
         <!-- Time-Range Filter -->
         <div class="dash-card p-3.5 mb-4" x-data="{ showCustom: {{ $range === 'custom' ? 'true' : 'false' }} }">
             <form method="GET" action="{{ route('dashboard') }}" class="flex flex-wrap items-center gap-2">
-                <span class="text-xs font-semibold text-slate-400 mr-1">Showing:</span>
+                <span class="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                    Showing:
+                </span>
                 <button type="submit" name="range" value="today"
-                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === 'today' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'today' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
                         @click="showCustom = false">Today</button>
                 <button type="submit" name="range" value="3days"
-                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === '3days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '3days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
                         @click="showCustom = false">3 Days</button>
                 <button type="submit" name="range" value="7days"
-                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === '7days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '7days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
                         @click="showCustom = false">7 Days</button>
                 <button type="button" @click="showCustom = !showCustom"
-                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === 'custom' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">Custom</button>
+                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'custom' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">Custom Range</button>
 
                 <div x-show="showCustom" x-cloak class="flex flex-wrap items-center gap-2 ml-1">
                     <input type="date" name="period_start" value="{{ $periodStart }}" max="{{ now()->format('Y-m-d') }}"
-                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    <span class="text-xs text-slate-400">to</span>
+                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
+                    <span class="text-xs text-slate-400 font-medium">to</span>
                     <input type="date" name="period_end" value="{{ $periodEnd }}" max="{{ now()->format('Y-m-d') }}"
-                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    <button type="submit" name="range" value="custom" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors">Apply</button>
+                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
+                    <button type="submit" name="range" value="custom" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors shadow-xs">Apply</button>
                 </div>
+
+                @if ($range !== '7days')
+                    <a href="{{ route('dashboard') }}"
+                       class="text-xs font-semibold text-slate-500 hover:text-slate-800 ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+                       title="Reset to default 7 days view">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span>Reset (7 Days)</span>
+                    </a>
+                @endif
             </form>
         </div>
 

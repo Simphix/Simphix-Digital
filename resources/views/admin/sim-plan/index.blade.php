@@ -322,7 +322,7 @@
             </div>
 
             <!-- Right Side: Requests & Inventory Tabs -->
-            <div class="lg:col-span-8 space-y-6" x-data="{ currentTab: '{{ request()->hasAny(['search', 'category', 'provider', 'status', 'sims_page']) ? 'inventory' : 'requests' }}' }">
+            <div class="lg:col-span-8 space-y-6" x-data="{ currentTab: '{{ request('tab', request()->hasAny(['search', 'name', 'email', 'phone', 'category', 'provider', 'status', 'sims_page']) ? 'inventory' : (request()->has('requests_page') ? 'resolved' : (request()->has('swaps_page') ? 'swaps' : (request()->has('failed_page') ? 'failed' : 'requests')))) }}' }">
                 <!-- Navigation Tabs (horizontally scrollable so they stay relaxed on small screens) -->
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-2 overflow-x-auto">
                     <div class="flex gap-1 w-max min-w-full">

@@ -104,10 +104,11 @@
                 </div>
             @endif
 
-            <!-- KPI Metric Cards -->
+            <!-- KPI Metric Cards (Clickable Quick Filters) -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- Total Subscriptions -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <a href="{{ route('admin.sim-subscriptions.index') }}"
+                   class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm transition hover:shadow-md hover:border-slate-300 block {{ !request('status') ? 'ring-2 ring-[#0056D2]/30' : '' }}">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Subscriptions</span>
                         <div class="w-8 h-8 rounded-lg bg-blue-50 text-[#0056D2] flex items-center justify-center">
@@ -118,10 +119,11 @@
                         <span class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display">{{ number_format($totalSubscriptions) }}</span>
                     </div>
                     <p class="mt-1 text-xs text-slate-500">All registered activated SIMs</p>
-                </div>
+                </a>
 
                 <!-- Active Subscriptions -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <a href="{{ route('admin.sim-subscriptions.index', array_merge(request()->except(['status', 'page']), ['status' => 'active'])) }}"
+                   class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm transition hover:shadow-md hover:border-emerald-300 block {{ request('status') === 'active' ? 'ring-2 ring-emerald-500/50 bg-emerald-50/20' : '' }}">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Active</span>
                         <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -132,10 +134,11 @@
                         <span class="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-display">{{ number_format($activeCount) }}</span>
                     </div>
                     <p class="mt-1 text-xs text-slate-500">> 30 days remaining</p>
-                </div>
+                </a>
 
                 <!-- Expiring Soon -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <a href="{{ route('admin.sim-subscriptions.index', array_merge(request()->except(['status', 'page']), ['status' => 'expiring_soon'])) }}"
+                   class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm transition hover:shadow-md hover:border-amber-300 block {{ request('status') === 'expiring_soon' ? 'ring-2 ring-amber-500/50 bg-amber-50/20' : '' }}">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Expiring Soon</span>
                         <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -146,10 +149,11 @@
                         <span class="text-2xl sm:text-3xl font-extrabold text-amber-600 font-display">{{ number_format($expiringSoonCount) }}</span>
                     </div>
                     <p class="mt-1 text-xs text-slate-500">Expires within 30 days</p>
-                </div>
+                </a>
 
                 <!-- Expired Subscriptions -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <a href="{{ route('admin.sim-subscriptions.index', array_merge(request()->except(['status', 'page']), ['status' => 'expired'])) }}"
+                   class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm transition hover:shadow-md hover:border-rose-300 block {{ request('status') === 'expired' ? 'ring-2 ring-rose-500/50 bg-rose-50/20' : '' }}">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Expired</span>
                         <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
@@ -160,7 +164,7 @@
                         <span class="text-2xl sm:text-3xl font-extrabold text-rose-600 font-display">{{ number_format($expiredCount) }}</span>
                     </div>
                     <p class="mt-1 text-xs text-slate-500">Requires reactivation</p>
-                </div>
+                </a>
             </div>
 
             <!-- Filters Bar -->
@@ -211,11 +215,18 @@
                         </select>
                     </div>
 
-                    <!-- Filter Button -->
-                    <div class="lg:col-span-1 flex gap-2">
-                        <button type="submit" class="w-full py-2.5 px-3 rounded-xl bg-[#0056D2] hover:bg-[#0047B3] text-white text-xs font-bold transition flex items-center justify-center">
+                    <!-- Actions -->
+                    <div class="lg:col-span-1 flex items-center gap-1.5">
+                        <button type="submit" class="flex-1 py-2.5 px-3 rounded-xl bg-[#0056D2] hover:bg-[#0047B3] text-white text-xs font-bold transition flex items-center justify-center shadow-xs">
                             Filter
                         </button>
+                        @if (request()->hasAny(['search', 'status', 'provider', 'category']))
+                            <a href="{{ route('admin.sim-subscriptions.index') }}"
+                               class="py-2.5 px-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold transition flex items-center justify-center shrink-0"
+                               title="Reset all filters">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+                            </a>
+                        @endif
                     </div>
                 </form>
             </div>

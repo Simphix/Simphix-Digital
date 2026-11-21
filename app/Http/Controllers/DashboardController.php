@@ -199,10 +199,14 @@ class DashboardController extends Controller
         [$rangeStart, $rangeEnd] = match ($range) {
             'today' => [now()->startOfDay(), now()->endOfDay()],
             '3days' => [now()->subDays(2)->startOfDay(), now()->endOfDay()],
-            'custom' => [
-                $request->filled('period_start') ? Carbon::parse($request->period_start)->startOfDay() : now()->subDays(6)->startOfDay(),
-                $request->filled('period_end') ? Carbon::parse($request->period_end)->endOfDay() : now()->endOfDay(),
-            ],
+            'custom' => (function () use ($request) {
+                $start = $request->filled('period_start') ? Carbon::parse($request->period_start)->startOfDay() : now()->subDays(6)->startOfDay();
+                $end = $request->filled('period_end') ? Carbon::parse($request->period_end)->endOfDay() : now()->endOfDay();
+                if ($start->isAfter($end)) {
+                    [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+                }
+                return [$start, $end];
+            })(),
             default => [now()->subDays(6)->startOfDay(), now()->endOfDay()], // 7days
         };
         $periodStart = $rangeStart->format('Y-m-d');

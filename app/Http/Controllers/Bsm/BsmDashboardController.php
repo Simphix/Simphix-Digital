@@ -1284,12 +1284,19 @@ class BsmDashboardController extends Controller
                 'All Time',
                 'all',
             ],
-            'custom' => [
-                $request->filled('period_start') ? Carbon::parse($request->period_start)->startOfDay() : now()->subDays(6)->startOfDay(),
-                $request->filled('period_end') ? Carbon::parse($request->period_end)->endOfDay() : now()->endOfDay(),
-                'Custom (' . ($request->period_start ?? now()->subDays(6)->toDateString()) . ' to ' . ($request->period_end ?? now()->toDateString()) . ')',
-                'custom',
-            ],
+            'custom' => (function () use ($request) {
+                $start = $request->filled('period_start') ? Carbon::parse($request->period_start)->startOfDay() : now()->subDays(6)->startOfDay();
+                $end = $request->filled('period_end') ? Carbon::parse($request->period_end)->endOfDay() : now()->endOfDay();
+                if ($start->isAfter($end)) {
+                    [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+                }
+                return [
+                    $start,
+                    $end,
+                    'Custom (' . $start->toDateString() . ' to ' . $end->toDateString() . ')',
+                    'custom',
+                ];
+            })(),
             default => [
                 now()->subDays(6)->startOfDay(),
                 now()->endOfDay(),

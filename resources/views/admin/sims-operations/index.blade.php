@@ -1,5 +1,10 @@
 <x-app-layout>
-    <div class="space-y-6 max-w-7xl mx-auto" x-data="{ showCustom: {{ $range === 'custom' ? 'true' : 'false' }}, activeSection: 'activations' }">
+    <div class="space-y-6 max-w-7xl mx-auto" x-data="{
+        showCustom: {{ $range === 'custom' ? 'true' : 'false' }},
+        activeSection: '{{ request('section') === 'activation-bonus' || request()->hasAny(['bonus_date_start', 'bonus_date_end', 'bonus_number', 'bonus_status', 'bonus_page']) ? 'activation-bonus' : 'activations' }}',
+        selectedRegion: '{{ $filters['region_id'] ?? '' }}',
+        selectedState: '{{ $filters['state_id'] ?? '' }}'
+    }">
 
         <div>
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">SIMs Operations</h1>
@@ -15,10 +20,10 @@
 
         <!-- Section Tabs -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-2 flex gap-1">
-            <button type="button" @click="activeSection = 'activations'" :class="activeSection === 'activations' ? 'bg-[#0056D2] text-white' : 'text-slate-500 hover:bg-slate-50'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5">
+            <button type="button" @click="activeSection = 'activations'; const u = new URL(window.location); u.searchParams.set('section', 'activations'); window.history.replaceState({}, '', u);" :class="activeSection === 'activations' ? 'bg-[#0056D2] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5">
                 <i data-lucide="activity" class="w-4 h-4"></i> Activations
             </button>
-            <button type="button" @click="activeSection = 'activation-bonus'" :class="activeSection === 'activation-bonus' ? 'bg-[#0056D2] text-white' : 'text-slate-500 hover:bg-slate-50'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5">
+            <button type="button" @click="activeSection = 'activation-bonus'; const u = new URL(window.location); u.searchParams.set('section', 'activation-bonus'); window.history.replaceState({}, '', u);" :class="activeSection === 'activation-bonus' ? 'bg-[#0056D2] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5">
                 <i data-lucide="gift" class="w-4 h-4"></i> Activation Bonus
             </button>
         </div>
@@ -27,33 +32,37 @@
 
         <div class="bg-white border border-slate-200 rounded-2xl p-4">
             <form method="GET" action="{{ route('admin.sims-operations.index') }}" class="space-y-4">
+                <input type="hidden" name="section" value="activations">
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-xs font-semibold text-slate-400 mr-1">Showing:</span>
+                    <span class="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                        Showing:
+                    </span>
                     <button type="submit" name="range" value="today"
-                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === 'today' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'today' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
                             @click="showCustom = false">Today</button>
                     <button type="submit" name="range" value="3days"
-                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === '3days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '3days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
                             @click="showCustom = false">3 Days</button>
                     <button type="submit" name="range" value="7days"
-                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === '7days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '7days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
                             @click="showCustom = false">7 Days</button>
                     <button type="button" @click="showCustom = !showCustom"
-                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors {{ $range === 'custom' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">Custom</button>
+                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'custom' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">Custom Range</button>
 
                     <div x-show="showCustom" x-cloak class="flex flex-wrap items-center gap-2 ml-1">
                         <input type="date" name="period_start" value="{{ $periodStart }}" max="{{ now()->format('Y-m-d') }}"
-                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
-                        <span class="text-xs text-slate-400">to</span>
+                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
+                        <span class="text-xs text-slate-400 font-medium">to</span>
                         <input type="date" name="period_end" value="{{ $periodEnd }}" max="{{ now()->format('Y-m-d') }}"
-                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-end gap-3 pt-3 border-t border-slate-100">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Region</label>
-                        <select name="region_id" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[160px]">
+                        <select name="region_id" x-model="selectedRegion" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[160px] bg-white">
                             <option value="">All regions</option>
                             @foreach ($regions as $region)
                                 <option value="{{ $region->id }}" @selected($filters['region_id'] == $region->id)>{{ $region->name }}</option>
@@ -62,32 +71,49 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">State</label>
-                        <select name="state_id" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[160px]">
+                        <select name="state_id" x-model="selectedState" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[160px] bg-white">
                             <option value="">All states</option>
                             @foreach ($states as $state)
-                                <option value="{{ $state->id }}" @selected($filters['state_id'] == $state->id)>{{ $state->name }}</option>
+                                <option value="{{ $state->id }}" data-region="{{ $state->region_id }}"
+                                        x-show="!selectedRegion || selectedRegion == '{{ $state->region_id }}'"
+                                        @selected($filters['state_id'] == $state->id)>{{ $state->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Senatorial District</label>
-                        <select name="district_id" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[160px]">
+                        <select name="district_id" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[160px] bg-white">
                             <option value="">All districts</option>
                             @foreach ($districts as $district)
-                                <option value="{{ $district->id }}" @selected($filters['district_id'] == $district->id)>{{ $district->name }}</option>
+                                <option value="{{ $district->id }}" data-state="{{ $district->state_id }}"
+                                        x-show="!selectedState || selectedState == '{{ $district->state_id }}'"
+                                        @selected($filters['district_id'] == $district->id)>{{ $district->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">User</label>
-                        <select name="user_id" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[180px]">
+                        <select name="user_id" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[180px] bg-white">
                             <option value="">All users</option>
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}" @selected($filters['user_id'] == $user->id)>{{ trim($user->first_name . ' ' . $user->last_name) }} ({{ $user->role }})</option>
                             @endforeach
                         </select>
                     </div>
-                    <button type="submit" class="text-xs font-bold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors">Apply Filters</button>
+                    <button type="submit" class="text-xs font-bold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors shadow-xs">Apply Filters</button>
+
+                    @php
+                        $hasActiveFilters = $filters['region_id'] || $filters['state_id'] || $filters['district_id'] || $filters['user_id'] || $range !== '7days';
+                    @endphp
+                    @if ($hasActiveFilters)
+                        <a href="{{ route('admin.sims-operations.index', ['section' => 'activations']) }}"
+                           class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5"
+                           title="Reset all filters to default 7 days view">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+                            <span>Reset Filters</span>
+                        </a>
+                    @endif
+
                     <a href="{{ route('admin.sims-operations.export', request()->query()) }}" class="text-xs font-bold px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i>
                         Export Filtered Activations
@@ -315,31 +341,45 @@
         <div x-show="activeSection === 'activation-bonus'" x-cloak class="space-y-6">
             <div class="bg-white border border-slate-200 rounded-2xl p-4">
                 <form method="GET" action="{{ route('admin.sims-operations.index') }}" class="flex flex-wrap items-end gap-3">
+                    <input type="hidden" name="section" value="activation-bonus">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">From</label>
                         <input type="date" name="bonus_date_start" value="{{ $bonusFilters['date_start']?->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
-                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">To</label>
                         <input type="date" name="bonus_date_end" value="{{ $bonusFilters['date_end']?->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
-                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Phone Number</label>
                         <input type="text" name="bonus_number" value="{{ $bonusFilters['number'] }}" placeholder="Search phone number…"
-                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[180px] focus:outline-none focus:ring-2 focus:ring-primary/20">
+                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[180px] focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Status</label>
-                        <select name="bonus_status" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[140px]">
+                        <select name="bonus_status" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[140px] bg-white">
                             <option value="">All statuses</option>
                             <option value="completed" @selected($bonusFilters['status'] === 'completed')>Completed</option>
                             <option value="failed" @selected($bonusFilters['status'] === 'failed')>Failed</option>
                             <option value="retrying" @selected($bonusFilters['status'] === 'retrying')>Retrying</option>
                         </select>
                     </div>
-                    <button type="submit" class="text-xs font-bold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors">Apply Filters</button>
+                    <button type="submit" class="text-xs font-bold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors shadow-xs">Apply Filters</button>
+
+                    @php
+                        $hasBonusFilters = $bonusFilters['date_start'] || $bonusFilters['date_end'] || $bonusFilters['number'] || $bonusFilters['status'];
+                    @endphp
+                    @if ($hasBonusFilters)
+                        <a href="{{ route('admin.sims-operations.index', ['section' => 'activation-bonus']) }}"
+                           class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5"
+                           title="Clear activation bonus filters">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+                            <span>Clear Filters</span>
+                        </a>
+                    @endif
+
                     <a href="{{ route('admin.sims-operations.activation-bonus.export', request()->query()) }}" class="text-xs font-bold px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i>
                         Export CSV
