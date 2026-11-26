@@ -12,6 +12,8 @@ class Sim extends Model
 {
     use HasFactory;
 
+    public const SUBSCRIPTION_LIFETIME_DAYS = 360;
+
     protected $fillable = [
         'number',
         'category',
@@ -194,7 +196,7 @@ class Sim extends Model
     }
 
     /**
-     * Get remaining calendar days until the 365-day subscription expires.
+     * Get remaining calendar days until the 360-day subscription expires.
      * Calculated on a calendar-day basis in the application timezone (Africa/Lagos),
      * so that the countdown decrements by 1 day every 24 hours at 12:00 AM midnight.
      * Returns null if the SIM was never activated.
@@ -220,7 +222,7 @@ class Sim extends Model
     }
 
     /**
-     * Determine whether the 365-day subscription has completed / expired.
+     * Determine whether the 360-day subscription has completed / expired.
      */
     public function isSubscriptionExpired(): bool
     {

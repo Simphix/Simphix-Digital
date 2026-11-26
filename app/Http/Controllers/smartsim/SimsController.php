@@ -1007,7 +1007,7 @@ class SimsController extends Controller
     }
 
     /**
-     * Reactivate an expired 365-day SIM subscription for a partner.
+     * Reactivate an expired 360-day SIM subscription for a partner.
      */
     public function reactivateSim(Request $request, Sim $sim)
     {
@@ -1030,7 +1030,7 @@ class SimsController extends Controller
             $subscriptionService = app(\App\Services\SimSubscriptionService::class);
             $subscription = $subscriptionService->reactivateViaWallet($sim, $user, $validated['wallet_source'], $user);
 
-            return back()->with('success', "SIM {$sim->number} subscription successfully reactivated for 365 days until " . $subscription->expires_at->format('M d, Y') . '.');
+            return back()->with('success', "SIM {$sim->number} subscription successfully reactivated for 360 days until " . $subscription->expires_at->format('M d, Y') . '.');
         } catch (\Exception $e) {
             Log::error('Partner SIM reactivation failed.', [
                 'sim_id'    => $sim->id,

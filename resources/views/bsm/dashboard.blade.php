@@ -221,7 +221,7 @@
                         @endif
                     </div>
                     <p class="text-xs text-slate-600 mt-0.5">
-                        {{ number_format(($subscriptionExpiredCount ?? 0) + ($subscriptionExpiringSoonCount ?? 0)) }} activated SIM subscriptions have reached or are nearing their 365-day lifetime. Reactivate via partner wallet or one-time funding account.
+                        {{ number_format(($subscriptionExpiredCount ?? 0) + ($subscriptionExpiringSoonCount ?? 0)) }} activated SIM subscriptions have reached or are nearing their 360-day lifetime. Reactivate via partner wallet or one-time funding account.
                     </p>
                 </div>
             </div>
@@ -574,11 +574,11 @@
                     </span>
                     <div>
                         <h3 class="text-base font-bold text-slate-900 font-display">SIM Subscriptions Desk</h3>
-                        <p class="text-xs text-slate-500">365-day lifecycles &amp; renewals</p>
+                        <p class="text-xs text-slate-500">360-day lifecycles &amp; renewals</p>
                     </div>
                 </div>
                 <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                    Monitor 365-day subscription countdowns, track days remaining with animated status blips, and execute one-click reactivations via partner wallet or one-time funding accounts.
+                    Monitor 360-day subscription countdowns, track days remaining with animated status blips, and execute one-click reactivations via partner wallet or one-time funding accounts.
                 </p>
                 <div class="p-3 bg-slate-50 rounded-xl space-y-2 mb-4 text-xs">
                     <div class="flex justify-between text-slate-600">

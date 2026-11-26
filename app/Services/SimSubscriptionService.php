@@ -103,7 +103,7 @@ class SimSubscriptionService
                 'amount'          => $fee,
                 'fee'             => 0.00,
                 'net_amount'      => $fee,
-                'description'     => "SIM Subscription Reactivation (365 Days): {$sim->number} ({$sim->category}, " . strtoupper($sim->provider) . ") charged from {$sourceLabel} by {$actorDesc}",
+                'description'     => "SIM Subscription Reactivation (360 Days): {$sim->number} ({$sim->category}, " . strtoupper($sim->provider) . ") charged from {$sourceLabel} by {$actorDesc}",
                 'type'            => 'debit',
                 'status'          => 'completed',
                 'performed_by'    => $actor->first_name . ' ' . $actor->last_name,
@@ -118,18 +118,18 @@ class SimSubscriptionService
                 'amount'       => $fee,
                 'status'       => 'completed',
                 'type'         => 'sim_reactivation',
-                'description'  => "SIM Subscription Reactivation (365 Days): {$sim->number} ({$sim->category}) charged from {$sourceLabel}",
+                'description'  => "SIM Subscription Reactivation (360 Days): {$sim->number} ({$sim->category}) charged from {$sourceLabel}",
                 'old_balance'  => $oldBalance,
                 'new_balance'  => $newBalance,
                 'service_id'   => $simService?->id,
             ]);
 
-            // Calculate start and new expiry date (365 days from now, or extended if not yet expired)
+            // Calculate start and new expiry date (360 days from now, or extended if not yet expired)
             $now = now();
             $startsAt = $now;
             $newExpiresAt = ($sim->subscription_expires_at && $sim->subscription_expires_at->isFuture())
-                ? $sim->subscription_expires_at->copy()->addDays(365)
-                : $now->copy()->addDays(365);
+                ? $sim->subscription_expires_at->copy()->addDays(Sim::SUBSCRIPTION_LIFETIME_DAYS)
+                : $now->copy()->addDays(Sim::SUBSCRIPTION_LIFETIME_DAYS);
 
             $sim->update([
                 'status'                  => SimStatus::ACTIVATED,
@@ -157,7 +157,7 @@ class SimSubscriptionService
                 'from_status' => $sim->status,
                 'to_status'   => SimStatus::ACTIVATED,
                 'user_id'     => $actor->id,
-                'notes'       => "SIM subscription reactivated for 365 days until " . $newExpiresAt->format('M d, Y') . " via {$sourceLabel}",
+                'notes'       => "SIM subscription reactivated for 360 days until " . $newExpiresAt->format('M d, Y') . " via {$sourceLabel}",
             ]);
 
             return $subscription;
@@ -221,8 +221,8 @@ class SimSubscriptionService
 
         $now = now();
         $newExpiresAt = ($sim->subscription_expires_at && $sim->subscription_expires_at->isFuture())
-            ? $sim->subscription_expires_at->copy()->addDays(365)
-            : $now->copy()->addDays(365);
+            ? $sim->subscription_expires_at->copy()->addDays(Sim::SUBSCRIPTION_LIFETIME_DAYS)
+            : $now->copy()->addDays(Sim::SUBSCRIPTION_LIFETIME_DAYS);
 
         return SimSubscription::create([
             'sim_id'            => $sim->id,
@@ -260,8 +260,8 @@ class SimSubscriptionService
 
             $now = now();
             $newExpiresAt = ($sim->subscription_expires_at && $sim->subscription_expires_at->isFuture())
-                ? $sim->subscription_expires_at->copy()->addDays(365)
-                : $now->copy()->addDays(365);
+                ? $sim->subscription_expires_at->copy()->addDays(Sim::SUBSCRIPTION_LIFETIME_DAYS)
+                : $now->copy()->addDays(Sim::SUBSCRIPTION_LIFETIME_DAYS);
 
             $fee = $amountPaid ?? (float) $sub->fee;
 
@@ -279,7 +279,7 @@ class SimSubscriptionService
                     'amount'            => $fee,
                     'fee'               => 0.00,
                     'net_amount'        => $fee,
-                    'description'       => "SIM Subscription Reactivation (365 Days): {$sim->number} paid via one-time account {$sub->account_number} ({$actorDesc})",
+                    'description'       => "SIM Subscription Reactivation (360 Days): {$sim->number} paid via one-time account {$sub->account_number} ({$actorDesc})",
                     'type'              => 'credit',
                     'status'            => 'completed',
                     'performed_by'      => $actor ? ($actor->first_name . ' ' . $actor->last_name) : 'Loma Bank Webhook',
@@ -302,7 +302,7 @@ class SimSubscriptionService
                 'from_status' => $sim->status,
                 'to_status'   => SimStatus::ACTIVATED,
                 'user_id'     => $actor?->id ?? $sub->partner_id,
-                'notes'       => "SIM subscription reactivated for 365 days until " . $newExpiresAt->format('M d, Y') . " via one-time funding account ({$sub->account_number})",
+                'notes'       => "SIM subscription reactivated for 360 days until " . $newExpiresAt->format('M d, Y') . " via one-time funding account ({$sub->account_number})",
             ]);
         });
     }

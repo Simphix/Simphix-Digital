@@ -302,7 +302,7 @@ class SimAssignmentService
             $from = $sim->status;
             $now = now();
             $activatedAt = $sim->activated_at ?? $now;
-            $expiresAt = $now->copy()->addDays(365);
+            $expiresAt = $now->copy()->addDays(Sim::SUBSCRIPTION_LIFETIME_DAYS);
 
             $sim->update([
                 'status'                  => SimStatus::ACTIVATED,
@@ -320,7 +320,7 @@ class SimAssignmentService
                 'status'            => 'active',
                 'paid_at'           => $now,
                 'payment_reference' => 'ACT-' . time() . '-' . rand(1000, 9999),
-                'notes'             => $note ?? 'Initial 365-day SIM activation',
+                'notes'             => $note ?? 'Initial 360-day SIM activation',
             ]);
 
             $this->logHistory($sim, $from, SimStatus::ACTIVATED, $actor, $note ?? 'SIM activated.');

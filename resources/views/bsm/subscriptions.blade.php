@@ -91,7 +91,7 @@
                     </span>
                     <div>
                         <h1 class="text-2xl font-bold text-slate-900 font-display">SIM Subscriptions & Lifetimes</h1>
-                        <p class="text-sm text-slate-500">Track 365-day subscription lifecycles, monitor countdowns, and execute renewals via partner wallet or one-time funding accounts</p>
+                        <p class="text-sm text-slate-500">Track 360-day subscription lifecycles, monitor countdowns, and execute renewals via partner wallet or one-time funding accounts</p>
                     </div>
                 </div>
             </div>
@@ -441,7 +441,7 @@
                             </div>
                             <div>
                                 <h3 class="font-extrabold text-slate-900 font-display text-sm">Reactivate SIM Subscription</h3>
-                                <p class="text-xs text-slate-500">SIM <span class="font-mono font-bold text-slate-800" x-text="selectedSim.number"></span> (365-Day Renewal)</p>
+                                <p class="text-xs text-slate-500">SIM <span class="font-mono font-bold text-slate-800" x-text="selectedSim.number"></span> (360-Day Renewal)</p>
                             </div>
                         </div>
                         <button type="button" @click="reactivateModalOpen = false" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
@@ -604,7 +604,7 @@
 
                                 <div class="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-xs text-amber-900 flex items-start gap-2">
                                     <i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
-                                    <span>Once a bank transfer of the reactivation fee is received into this account, the SIM will be <strong>automatically reactivated</strong> for 365 days.</span>
+                                    <span>Once a bank transfer of the reactivation fee is received into this account, the SIM will be <strong>automatically reactivated</strong> for 360 days.</span>
                                 </div>
 
                                 <!-- Manual Confirmation Override -->

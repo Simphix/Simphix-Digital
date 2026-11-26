@@ -561,7 +561,7 @@
                                                 <button type="button"
                                                         @click.stop="openReactivateModal(@js($simPayload))"
                                                         class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-bold transition-all shadow-sm animate-pulse"
-                                                        title="Reactivate SIM subscription (365 Days)">
+                                                        title="Reactivate SIM subscription (360 Days)">
                                                     <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                                                     Reactivate
                                                 </button>
@@ -1120,7 +1120,7 @@
                                     </div>
                                     <div>
                                         <h3 class="font-bold text-slate-800 font-display text-sm">Reactivate SIM Subscription</h3>
-                                        <p class="text-xs text-slate-500">Renew 365-day lifetime for this SIM</p>
+                                        <p class="text-xs text-slate-500">Renew 360-day lifetime for this SIM</p>
                                     </div>
                                 </div>
                                 <button type="button" @click="reactivateModalOpen = false" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
@@ -1184,7 +1184,7 @@
 
                                 <div class="p-3 rounded-xl bg-blue-50/60 border border-blue-100 flex items-start gap-2.5 text-xs text-blue-800">
                                     <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
-                                    <span>Reactivating this SIM resets the lifetime countdown to <strong>365 days</strong> from today.</span>
+                                    <span>Reactivating this SIM resets the lifetime countdown to <strong>360 days</strong> from today.</span>
                                 </div>
                             </div>
 

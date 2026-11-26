@@ -11,6 +11,8 @@ class SimSubscription extends Model
 {
     use HasFactory;
 
+    public const LIFETIME_DAYS = 360;
+
     protected $fillable = [
         'sim_id',
         'partner_id',

@@ -62,7 +62,7 @@ class SimSubscriptionLifetimeTest extends TestCase
         );
     }
 
-    public function test_activated_sim_sets_365_days_subscription_lifetime(): void
+    public function test_activated_sim_sets_360_days_subscription_lifetime(): void
     {
         $sim = Sim::create([
             'number'     => '09012345678',
@@ -80,7 +80,7 @@ class SimSubscriptionLifetimeTest extends TestCase
         $this->assertEquals(SimStatus::ACTIVATED, $sim->status);
         $this->assertNotNull($sim->activated_at);
         $this->assertNotNull($sim->subscription_expires_at);
-        $this->assertGreaterThanOrEqual(364, $sim->daysRemaining());
+        $this->assertGreaterThanOrEqual(359, $sim->daysRemaining());
         $this->assertFalse($sim->isSubscriptionExpired());
         $this->assertEquals('active', $sim->subscriptionStatus());
 
@@ -123,7 +123,7 @@ class SimSubscriptionLifetimeTest extends TestCase
         $this->assertFalse($expiringSim->isSubscriptionExpired());
         $this->assertEquals('expiring_soon', $expiringSim->subscriptionStatus());
 
-        // 3. Expired SIM (365 days completed)
+        // 3. Expired SIM (360 days completed)
         $expiredSim = Sim::create([
             'number'                  => '09033333333',
             'category'                => 'POS SIM',
@@ -186,7 +186,7 @@ class SimSubscriptionLifetimeTest extends TestCase
 
         $this->assertEquals($balanceBefore - 1000.00, (float) $partnerWallet->balance);
         $this->assertFalse($expiredSim->isSubscriptionExpired());
-        $this->assertGreaterThanOrEqual(364, $expiredSim->daysRemaining());
+        $this->assertGreaterThanOrEqual(359, $expiredSim->daysRemaining());
         $this->assertEquals('active', $expiredSim->subscriptionStatus());
 
         $this->assertDatabaseHas('sim_subscriptions', [
@@ -272,7 +272,7 @@ class SimSubscriptionLifetimeTest extends TestCase
 
         $expiredSim->refresh();
         $this->assertFalse($expiredSim->isSubscriptionExpired());
-        $this->assertGreaterThanOrEqual(364, $expiredSim->daysRemaining());
+        $this->assertGreaterThanOrEqual(359, $expiredSim->daysRemaining());
     }
 
     public function test_admin_can_generate_one_time_funding_account_and_confirm_payment(): void
@@ -337,7 +337,7 @@ class SimSubscriptionLifetimeTest extends TestCase
             'sim_id'            => $expiredSim->id,
             'partner_id'        => $this->partner->id,
             'starts_at'         => now(),
-            'expires_at'        => now()->addDays(365),
+            'expires_at'        => now()->addDays(360),
             'fee'               => 1000.00,
             'payment_method'    => 'funding_account',
             'account_number'    => '9910001234',
@@ -515,31 +515,31 @@ class SimSubscriptionLifetimeTest extends TestCase
             'partner_id'              => $this->partner->id,
             'status'                  => SimStatus::ACTIVATED,
             'activated_at'            => now(),
-            'subscription_expires_at' => now()->copy()->addDays(365),
+            'subscription_expires_at' => now()->copy()->addDays(360),
         ]);
 
-        // Day of activation: 365 days
-        $this->assertEquals(365, $sim->daysRemaining());
+        // Day of activation: 360 days
+        $this->assertEquals(360, $sim->daysRemaining());
 
-        // Later that day (6:00 PM): remains 365 days
+        // Later that day (6:00 PM): remains 360 days
         \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-11-17 18:00:00', $tz));
-        $this->assertEquals(365, $sim->daysRemaining());
+        $this->assertEquals(360, $sim->daysRemaining());
 
-        // 1 second before midnight: remains 365 days
+        // 1 second before midnight: remains 360 days
         \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-11-17 23:59:59', $tz));
-        $this->assertEquals(365, $sim->daysRemaining());
+        $this->assertEquals(360, $sim->daysRemaining());
 
-        // Exactly at 12:00:00 AM midnight (start of Nov 18): decrements by 1 day to 364 days
+        // Exactly at 12:00:00 AM midnight (start of Nov 18): decrements by 1 day to 359 days
         \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-11-18 00:00:00', $tz));
-        $this->assertEquals(364, $sim->daysRemaining());
+        $this->assertEquals(359, $sim->daysRemaining());
 
-        // Noon on Nov 18: remains 364 days
+        // Noon on Nov 18: remains 359 days
         \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-11-18 12:00:00', $tz));
-        $this->assertEquals(364, $sim->daysRemaining());
+        $this->assertEquals(359, $sim->daysRemaining());
 
-        // Exactly at next 12:00:00 AM midnight (start of Nov 19): decrements by 1 day to 363 days
+        // Exactly at next 12:00:00 AM midnight (start of Nov 19): decrements by 1 day to 358 days
         \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse('2026-11-19 00:00:00', $tz));
-        $this->assertEquals(363, $sim->daysRemaining());
+        $this->assertEquals(358, $sim->daysRemaining());
 
         // Clean up test clock
         \Carbon\Carbon::setTestNow();

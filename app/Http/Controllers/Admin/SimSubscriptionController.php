@@ -129,14 +129,14 @@ class SimSubscriptionController extends Controller
 
                 $this->subscriptionService->reactivateViaWallet($sim, $partner, $validated['wallet_source'], $admin);
 
-                return back()->with('success', "SIM {$sim->number} subscription reactivated successfully for 365 days by charging {$partner->name}'s " . ($validated['wallet_source'] === 'bonus' ? 'Commission' : 'Main') . " balance.");
+                return back()->with('success', "SIM {$sim->number} subscription reactivated successfully for 360 days by charging {$partner->name}'s " . ($validated['wallet_source'] === 'bonus' ? 'Commission' : 'Main') . " balance.");
             }
 
             // Admin manual override
             $now = now();
             $newExpiresAt = ($sim->subscription_expires_at && $sim->subscription_expires_at->isFuture())
-                ? $sim->subscription_expires_at->copy()->addDays(365)
-                : $now->copy()->addDays(365);
+                ? $sim->subscription_expires_at->copy()->addDays(Sim::SUBSCRIPTION_LIFETIME_DAYS)
+                : $now->copy()->addDays(Sim::SUBSCRIPTION_LIFETIME_DAYS);
 
             $sim->update([
                 'status'                  => SimStatus::ACTIVATED,
@@ -161,10 +161,10 @@ class SimSubscriptionController extends Controller
                 'from_status' => $sim->status,
                 'to_status'   => SimStatus::ACTIVATED,
                 'user_id'     => $admin->id,
-                'notes'       => "Admin manual reactivation for 365 days until " . $newExpiresAt->format('M d, Y') . ($validated['notes'] ? " ({$validated['notes']})" : ''),
+                'notes'       => "Admin manual reactivation for 360 days until " . $newExpiresAt->format('M d, Y') . ($validated['notes'] ? " ({$validated['notes']})" : ''),
             ]);
 
-            return back()->with('success', "SIM {$sim->number} subscription reactivated manually for 365 days until " . $newExpiresAt->format('M d, Y') . '.');
+            return back()->with('success', "SIM {$sim->number} subscription reactivated manually for 360 days until " . $newExpiresAt->format('M d, Y') . '.');
         } catch (\Exception $e) {
             Log::error('Admin SIM reactivation failed.', [
                 'sim_id'    => $sim->id,
@@ -231,7 +231,7 @@ class SimSubscriptionController extends Controller
         try {
             $this->subscriptionService->confirmReactivationPayment($subscription, null, null, Auth::user());
 
-            return back()->with('success', "Payment confirmed! SIM {$subscription->sim->number} subscription reactivated for 365 days.");
+            return back()->with('success', "Payment confirmed! SIM {$subscription->sim->number} subscription reactivated for 360 days.");
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
