@@ -191,14 +191,21 @@ class DashboardController extends Controller
      */
     protected function adminDashboard(Request $request)
     {
-        // Time-range filter for the two ranged KPI cards (Transaction Volume,
-        // SIM Activations) below. Other cards are current-state snapshots
-        // (user counts, wallet balances, pending counts) and aren't
-        // meaningfully rangeable, so they stay all-time regardless of this.
-        $range = $request->input('range', '7days');
+        $txType = $request->input('tx_type');
+        $txStatus = $request->input('tx_status');
+        $userRole = $request->input('user_role');
+        $search = trim($request->input('search', ''));
+
+        $range = $request->input('range');
+        if (! $range) {
+            $range = ($request->filled('period_start') || $request->filled('period_end')) ? 'custom' : '7days';
+        }
+
         [$rangeStart, $rangeEnd] = match ($range) {
             'today' => [now()->startOfDay(), now()->endOfDay()],
             '3days' => [now()->subDays(2)->startOfDay(), now()->endOfDay()],
+            '30days' => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+            'all'   => [Carbon::parse('2020-01-01')->startOfDay(), now()->endOfDay()],
             'custom' => (function () use ($request) {
                 $start = $request->filled('period_start') ? Carbon::parse($request->period_start)->startOfDay() : now()->subDays(6)->startOfDay();
                 $end = $request->filled('period_end') ? Carbon::parse($request->period_end)->endOfDay() : now()->endOfDay();
@@ -219,36 +226,96 @@ class DashboardController extends Controller
         $totalWalletBalance = Wallet::sum('balance') ?? 0.00;
         $totalWalletBonus = Wallet::sum('bonus') ?? 0.00;
 
-        $totalTransactionsCount = Transaction::where('status', 'completed')->whereBetween('created_at', [$rangeStart, $rangeEnd])->count();
-        $totalTransactionVolume = Transaction::where('status', 'completed')->whereBetween('created_at', [$rangeStart, $rangeEnd])->sum('amount') ?? 0.00;
+        // Base Transactions Query reflecting filters
+        $txQuery = Transaction::with('user')
+            ->when($range !== 'all', fn ($q) => $q->whereBetween('created_at', [$rangeStart, $rangeEnd]))
+            ->when($txType && $txType !== 'all', fn ($q) => $q->where('type', $txType))
+            ->when($txStatus && $txStatus !== 'all', fn ($q) => $q->where('status', $txStatus))
+            ->when($userRole && $userRole !== 'all', fn ($q) => $q->whereHas('user', fn ($uq) => $uq->where('role', $userRole)))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('transaction_ref', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($uq) use ($search) {
+                            $uq->where('email', 'like', "%{$search}%")
+                               ->orWhere('phone', 'like', "%{$search}%")
+                               ->orWhere('first_name', 'like', "%{$search}%")
+                               ->orWhere('last_name', 'like', "%{$search}%");
+                        });
+                });
+            });
+
+        $totalTransactionsCount = (clone $txQuery)->where('status', 'completed')->count();
+        $totalTransactionVolume = (clone $txQuery)->where('status', 'completed')->sum('amount') ?? 0.00;
 
         $simActivationsCount = SimHistory::where('to_status', SimStatus::ACTIVATED)
-            ->whereBetween('created_at', [$rangeStart, $rangeEnd])
+            ->when($range !== 'all', fn ($q) => $q->whereBetween('created_at', [$rangeStart, $rangeEnd]))
+            ->when($userRole && $userRole !== 'all', function ($q) use ($userRole) {
+                $q->whereHas('sim', fn ($sq) => $sq->whereHas('user', fn ($uq) => $uq->where('role', $userRole)));
+            })
+            ->when($search !== '', function ($q) use ($search) {
+                $q->whereHas('sim', function ($sq) use ($search) {
+                    $sq->where('number', 'like', "%{$search}%")
+                       ->orWhere('category', 'like', "%{$search}%")
+                       ->orWhere('provider', 'like', "%{$search}%");
+                });
+            })
             ->count();
 
         $pendingUpgradesCount = User::where('upgrade_status', 'pending')->count();
         $pendingSimRequestsCount = SimRequest::where('status', 'pending')->count();
         $openTicketsCount = Ticket::where('status', 'open')->count();
 
-        // 2. Recent Lists for admin view
-        $recentTransactions = Transaction::with('user')
+        // 2. Recent Lists for admin view (strictly filtered by applied filters)
+        $recentTransactions = (clone $txQuery)
             ->orderBy('id', 'desc')
-            ->take(5)
+            ->take(10)
             ->get();
 
         $pendingUpgrades = User::where('upgrade_status', 'pending')
+            ->when($userRole && $userRole !== 'all', fn ($q) => $q->where('role', $userRole))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('email', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhere('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                });
+            })
             ->orderBy('upgrade_requested_at', 'asc')
             ->take(5)
             ->get();
 
         $openTickets = Ticket::with('user')
             ->where('status', 'open')
+            ->when($userRole && $userRole !== 'all', fn ($q) => $q->whereHas('user', fn ($uq) => $uq->where('role', $userRole)))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('subject', 'like', "%{$search}%")
+                        ->orWhere('category', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($uq) use ($search) {
+                            $uq->where('email', 'like', "%{$search}%")
+                               ->orWhere('phone', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
         $pendingSimRequests = SimRequest::with('user')
             ->where('status', 'pending')
+            ->when($userRole && $userRole !== 'all', fn ($q) => $q->whereHas('user', fn ($uq) => $uq->where('role', $userRole)))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('number', 'like', "%{$search}%")
+                        ->orWhere('provider', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($uq) use ($search) {
+                            $uq->where('email', 'like', "%{$search}%")
+                               ->orWhere('phone', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -273,6 +340,10 @@ class DashboardController extends Controller
             'range',
             'periodStart',
             'periodEnd',
+            'txType',
+            'txStatus',
+            'userRole',
+            'search',
             'pendingUpgradesCount',
             'pendingSimRequestsCount',
             'openTicketsCount',

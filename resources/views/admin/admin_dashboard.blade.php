@@ -54,41 +54,147 @@
             </div>
         </div>
 
-        <!-- Time-Range Filter -->
-        <div class="dash-card p-3.5 mb-4" x-data="{ showCustom: {{ $range === 'custom' ? 'true' : 'false' }} }">
-            <form method="GET" action="{{ route('dashboard') }}" class="flex flex-wrap items-center gap-2">
-                <span class="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
-                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                    Showing:
-                </span>
-                <button type="submit" name="range" value="today"
-                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'today' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-                        @click="showCustom = false">Today</button>
-                <button type="submit" name="range" value="3days"
-                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '3days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-                        @click="showCustom = false">3 Days</button>
-                <button type="submit" name="range" value="7days"
-                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '7days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-                        @click="showCustom = false">7 Days</button>
-                <button type="button" @click="showCustom = !showCustom"
-                        class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'custom' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">Custom Range</button>
+        <!-- Multi-criteria Filter Bar -->
+        <div class="dash-card p-4 mb-4" x-data="{
+            showCustom: {{ $range === 'custom' ? 'true' : 'false' }},
+            activeFiltersCount: {{ ($range !== '7days' ? 1 : 0) + ($txType ? 1 : 0) + ($txStatus ? 1 : 0) + ($userRole ? 1 : 0) + ($search !== '' ? 1 : 0) }}
+        }">
+            <form method="GET" action="{{ route('dashboard') }}" class="space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <!-- Quick Range Pills -->
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                            Period:
+                        </span>
+                        <button type="submit" name="range" value="today"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'today' ? 'bg-[#0056D2] text-white border-[#0056D2]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                                @click="showCustom = false">Today</button>
+                        <button type="submit" name="range" value="3days"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '3days' ? 'bg-[#0056D2] text-white border-[#0056D2]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                                @click="showCustom = false">3 Days</button>
+                        <button type="submit" name="range" value="7days"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '7days' ? 'bg-[#0056D2] text-white border-[#0056D2]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                                @click="showCustom = false">7 Days</button>
+                        <button type="submit" name="range" value="30days"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '30days' ? 'bg-[#0056D2] text-white border-[#0056D2]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+                                @click="showCustom = false">30 Days</button>
+                        <button type="button" @click="showCustom = !showCustom"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'custom' ? 'bg-[#0056D2] text-white border-[#0056D2]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+                            Custom Range
+                        </button>
+                    </div>
 
-                <div x-show="showCustom" x-cloak class="flex flex-wrap items-center gap-2 ml-1">
-                    <input type="date" name="period_start" value="{{ $periodStart }}" max="{{ now()->format('Y-m-d') }}"
-                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
-                    <span class="text-xs text-slate-400 font-medium">to</span>
-                    <input type="date" name="period_end" value="{{ $periodEnd }}" max="{{ now()->format('Y-m-d') }}"
-                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
-                    <button type="submit" name="range" value="custom" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors shadow-xs">Apply</button>
+                    @if ($range !== '7days' || $txType || $txStatus || $userRole || $search !== '')
+                        <a href="{{ route('dashboard') }}"
+                           class="text-xs font-semibold text-slate-500 hover:text-rose-600 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+                           title="Reset all filters">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+                            <span>Reset Filters</span>
+                        </a>
+                    @endif
                 </div>
 
-                @if ($range !== '7days')
-                    <a href="{{ route('dashboard') }}"
-                       class="text-xs font-semibold text-slate-500 hover:text-slate-800 ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-                       title="Reset to default 7 days view">
-                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
-                        <span>Reset (7 Days)</span>
-                    </a>
+                <!-- Custom Date Range Picker (collapsible) -->
+                <div x-show="showCustom" x-cloak class="p-3 bg-slate-50/70 border border-slate-100 rounded-xl flex flex-wrap items-center gap-2">
+                    <span class="text-xs text-slate-500 font-semibold">Custom Dates:</span>
+                    <input type="date" name="period_start" value="{{ $periodStart }}" max="{{ now()->format('Y-m-d') }}"
+                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20 bg-white">
+                    <span class="text-xs text-slate-400 font-medium">to</span>
+                    <input type="date" name="period_end" value="{{ $periodEnd }}" max="{{ now()->format('Y-m-d') }}"
+                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20 bg-white">
+                    <button type="submit" name="range" value="custom" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#0056D2] text-white hover:bg-[#0049b8] transition-colors shadow-xs">Apply Date Range</button>
+                </div>
+
+                <!-- Secondary Filters: Search, Type, Status, Role -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5 pt-2 border-t border-slate-100">
+                    <!-- Search Input -->
+                    <div class="md:col-span-2">
+                        <div class="relative">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" name="search" value="{{ $search }}" placeholder="Search ref, description, email, user…"
+                                   class="w-full text-xs rounded-lg border border-slate-200 pl-9 pr-3 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20 bg-white">
+                        </div>
+                    </div>
+
+                    <!-- Type Filter -->
+                    <div>
+                        <select name="tx_type" onchange="this.form.submit()" class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20">
+                            <option value="">All Types (Credit & Debit)</option>
+                            <option value="credit" @selected($txType === 'credit')>Credits Only</option>
+                            <option value="debit" @selected($txType === 'debit')>Debits Only</option>
+                        </select>
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div>
+                        <select name="tx_status" onchange="this.form.submit()" class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20">
+                            <option value="">All Statuses</option>
+                            <option value="completed" @selected($txStatus === 'completed')>Completed</option>
+                            <option value="pending" @selected($txStatus === 'pending')>Pending</option>
+                            <option value="failed" @selected($txStatus === 'failed')>Failed</option>
+                        </select>
+                    </div>
+
+                    <!-- User Role Filter -->
+                    <div class="flex items-center gap-1.5">
+                        <select name="user_role" onchange="this.form.submit()" class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20">
+                            <option value="">All Roles</option>
+                            <option value="partner" @selected($userRole === 'partner')>Partner</option>
+                            <option value="business" @selected($userRole === 'business')>Enterprise</option>
+                            <option value="agent" @selected($userRole === 'agent')>Agent</option>
+                            <option value="personal" @selected($userRole === 'personal')>Personal</option>
+                        </select>
+                        <button type="submit" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#0056D2] text-white hover:bg-[#0049b8] transition shrink-0 shadow-xs">
+                            Filter
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Filter Tags -->
+                @php
+                    $hasAnyFilter = ($range !== '7days') || $txType || $txStatus || $userRole || ($search !== '');
+                @endphp
+                @if ($hasAnyFilter)
+                    <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 text-xs">
+                        <span class="text-slate-400 font-semibold flex items-center gap-1 text-[11px]">
+                            <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-[#0056D2]"></i>
+                            Active Filters:
+                        </span>
+                        @if ($range !== '7days')
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                Range: {{ $range === 'custom' ? ($periodStart . ' to ' . $periodEnd) : ucfirst($range) }}
+                                <a href="{{ route('dashboard', request()->except(['range', 'period_start', 'period_end'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        @if ($txType)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                Type: {{ ucfirst($txType) }}
+                                <a href="{{ route('dashboard', request()->except('tx_type')) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        @if ($txStatus)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                Status: {{ ucfirst($txStatus) }}
+                                <a href="{{ route('dashboard', request()->except('tx_status')) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        @if ($userRole)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                Role: {{ ucfirst($userRole) }}
+                                <a href="{{ route('dashboard', request()->except('user_role')) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        @if ($search !== '')
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                Search: "{{ $search }}"
+                                <a href="{{ route('dashboard', request()->except('search')) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        <a href="{{ route('dashboard') }}" class="text-[11px] text-slate-500 hover:text-rose-600 font-semibold underline ml-1">
+                            Clear all
+                        </a>
+                    </div>
                 @endif
             </form>
         </div>
@@ -272,18 +378,23 @@
                 <!-- Recent System Transactions -->
                 <div class="dash-card p-4 mb-4">
                     <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-sm font-semibold text-slate-800 font-display mb-0 flex items-center gap-2">
-                            <i data-lucide="history" class="text-primary w-5 h-5"></i>
-                            Recent System Transactions
-                        </h3>
-                        <a href="{{ route('admin.transactions') }}" class="no-underline px-3 py-1.5 bg-primary/10 hover:bg-primary/15 text-primary text-xs font-semibold rounded-md transition">
-                            View All
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-semibold text-slate-800 font-display mb-0 flex items-center gap-2">
+                                <i data-lucide="history" class="text-primary w-5 h-5"></i>
+                                Recent System Transactions
+                            </h3>
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                {{ $recentTransactions->count() }} shown
+                            </span>
+                        </div>
+                        <a href="{{ route('admin.transactions', request()->query()) }}" class="no-underline px-3 py-1.5 bg-primary/10 hover:bg-primary/15 text-primary text-xs font-semibold rounded-md transition">
+                            View All In History
                         </a>
                     </div>
 
                     <div class="space-y-2">
                         @forelse($recentTransactions as $tx)
-                            <div class="p-3 bg-slate-50 border border-slate-200/60 rounded-lg flex items-center justify-between gap-3">
+                            <div class="p-3 bg-slate-50 border border-slate-200/60 rounded-lg flex items-center justify-between gap-3 hover:bg-slate-100/50 transition">
                                 <div class="flex items-center gap-3 min-w-0 flex-grow">
                                     <div class="p-2 rounded-md {{ $tx->type === 'credit' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600' }} flex items-center justify-center shrink-0 w-8 h-8">
                                         <i data-lucide="{{ $tx->type === 'credit' ? 'arrow-down-left' : 'arrow-up-right' }}" class="w-4 h-4"></i>
@@ -296,6 +407,9 @@
                                             <span class="text-slate-500 font-medium truncate max-w-[120px] sm:max-w-none">{{ $tx->user->email ?? 'N/A' }}</span>
                                             <span class="hidden xs:inline">•</span>
                                             <span class="text-nowrap">{{ $tx->created_at->format('M d, h:i A') }}</span>
+                                            @if ($tx->user?->role)
+                                                <span class="hidden sm:inline text-[10px] uppercase font-bold px-1.5 py-0.2 bg-slate-200/60 rounded text-slate-600">{{ $tx->user->role }}</span>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -304,13 +418,16 @@
                                     <span class="block font-display font-semibold text-slate-800 text-xs text-nowrap">
                                         ₦{{ number_format($tx->amount, 2) }}
                                     </span>
-                                    <span class="text-slate-500 text-xs font-medium capitalize">
+                                    <span class="text-xs font-semibold capitalize {{ $tx->status === 'completed' ? 'text-emerald-600' : ($tx->status === 'pending' ? 'text-amber-600' : 'text-rose-600') }}">
                                         {{ $tx->status }}
                                     </span>
                                 </div>
                             </div>
                         @empty
-                            <div class="text-center py-4 text-slate-400 text-xs">No transactions recorded in the system yet.</div>
+                            <div class="text-center py-6 text-slate-400 text-xs bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                                <i data-lucide="inbox" class="w-6 h-6 mx-auto mb-1.5 opacity-40 text-slate-400"></i>
+                                <span>No transactions match the applied filter or time range.</span>
+                            </div>
                         @endforelse
                     </div>
                 </div>

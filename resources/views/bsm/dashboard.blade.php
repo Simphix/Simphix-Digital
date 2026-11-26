@@ -77,48 +77,104 @@
         </div>
 
         <!-- Filter Controls Form -->
-        <form method="GET" action="{{ route('bsm.dashboard') }}" class="mt-6 pt-5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-            <!-- Range Filter -->
-            <div>
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Time Range</label>
-                <select name="range" onchange="this.form.submit()" class="w-full text-xs rounded-xl border-slate-200 focus:border-primary focus:ring-primary py-2 px-3 bg-slate-50">
-                    <option value="today" {{ $range === 'today' ? 'selected' : '' }}>Today</option>
-                    <option value="7days" {{ $range === '7days' ? 'selected' : '' }}>Last 7 Days</option>
-                    <option value="30days" {{ $range === '30days' ? 'selected' : '' }}>Last 30 Days</option>
-                    <option value="this_month" {{ $range === 'this_month' ? 'selected' : '' }}>This Month</option>
-                    <option value="all" {{ $range === 'all' ? 'selected' : '' }}>All Time</option>
-                </select>
+        <form method="GET" action="{{ route('bsm.dashboard') }}" class="mt-6 pt-5 border-t border-slate-100">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+                <!-- Search Input -->
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Search</label>
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" name="search" value="{{ $search }}" placeholder="SIM number, ICCID, partner, customer…"
+                               class="w-full text-xs rounded-xl border border-slate-200 focus:border-primary focus:ring-primary pl-9 pr-3 py-2 bg-slate-50 text-slate-800 placeholder:text-slate-400">
+                    </div>
+                </div>
+
+                <!-- Range Filter -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Time Range</label>
+                    <select name="range" onchange="this.form.submit()" class="w-full text-xs rounded-xl border border-slate-200 focus:border-primary focus:ring-primary py-2 px-3 bg-slate-50 text-slate-800">
+                        <option value="today" {{ $range === 'today' ? 'selected' : '' }}>Today</option>
+                        <option value="7days" {{ $range === '7days' ? 'selected' : '' }}>Last 7 Days</option>
+                        <option value="30days" {{ $range === '30days' ? 'selected' : '' }}>Last 30 Days</option>
+                        <option value="this_month" {{ $range === 'this_month' ? 'selected' : '' }}>This Month</option>
+                        <option value="all" {{ $range === 'all' ? 'selected' : '' }}>All Time</option>
+                    </select>
+                </div>
+
+                <!-- Category Filter -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">SIM Category</label>
+                    <select name="category" onchange="this.form.submit()" class="w-full text-xs rounded-xl border border-slate-200 focus:border-primary focus:ring-primary py-2 px-3 bg-slate-50 text-slate-800">
+                        <option value="">All Categories</option>
+                        @foreach ($categories as $cat)
+                            <option value="{{ $cat }}" {{ $selectedCategory === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Provider Filter -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Provider</label>
+                    <select name="provider" onchange="this.form.submit()" class="w-full text-xs rounded-xl border border-slate-200 focus:border-primary focus:ring-primary py-2 px-3 bg-slate-50 text-slate-800">
+                        <option value="">All Providers</option>
+                        @foreach ($providers as $prov)
+                            <option value="{{ $prov }}" {{ $selectedProvider === $prov ? 'selected' : '' }}>{{ strtoupper($prov) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Filter Actions -->
+                <div class="flex items-end gap-1.5">
+                    <button type="submit" class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#0056D2] hover:bg-[#0047B3] text-white text-xs font-bold transition shadow-xs">
+                        <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                        <span>Apply</span>
+                    </button>
+                    @if ($selectedCategory || $selectedProvider || $selectedStatus || $search !== '' || $range !== '7days')
+                        <a href="{{ route('bsm.dashboard') }}" class="px-2.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold transition" title="Reset all filters">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+                        </a>
+                    @endif
+                </div>
             </div>
 
-            <!-- Category Filter -->
-            <div>
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">SIM Category</label>
-                <select name="category" onchange="this.form.submit()" class="w-full text-xs rounded-xl border-slate-200 focus:border-primary focus:ring-primary py-2 px-3 bg-slate-50">
-                    <option value="">All Categories</option>
-                    @foreach ($categories as $cat)
-                        <option value="{{ $cat }}" {{ $selectedCategory === $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Provider Filter -->
-            <div>
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Network Provider</label>
-                <select name="provider" onchange="this.form.submit()" class="w-full text-xs rounded-xl border-slate-200 focus:border-primary focus:ring-primary py-2 px-3 bg-slate-50">
-                    <option value="">All Providers</option>
-                    @foreach ($providers as $prov)
-                        <option value="{{ $prov }}" {{ $selectedProvider === $prov ? 'selected' : '' }}>{{ strtoupper($prov) }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Reset Filter -->
-            <div class="flex items-end gap-2">
-                <a href="{{ route('bsm.dashboard') }}" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-600 transition">
-                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-                    <span>Reset Filters</span>
-                </a>
-            </div>
+            @php
+                $activeFilterCount = ($selectedCategory ? 1 : 0) + ($selectedProvider ? 1 : 0) + ($selectedStatus ? 1 : 0) + ($search !== '' ? 1 : 0) + ($range !== '7days' ? 1 : 0);
+            @endphp
+            @if ($activeFilterCount > 0)
+                <div class="mt-3 flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100 text-xs">
+                    <span class="text-slate-400 font-semibold flex items-center gap-1">
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-[#0056D2]"></i>
+                        Filtered by ({{ $activeFilterCount }}):
+                    </span>
+                    @if ($range !== '7days')
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100">
+                            Range: {{ $rangeLabel }}
+                            <a href="{{ route('bsm.dashboard', request()->except('range')) }}" class="hover:text-blue-800 ml-0.5">&times;</a>
+                        </span>
+                    @endif
+                    @if ($selectedCategory)
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100">
+                            Category: {{ $selectedCategory }}
+                            <a href="{{ route('bsm.dashboard', request()->except('category')) }}" class="hover:text-blue-800 ml-0.5">&times;</a>
+                        </span>
+                    @endif
+                    @if ($selectedProvider)
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100">
+                            Provider: {{ strtoupper($selectedProvider) }}
+                            <a href="{{ route('bsm.dashboard', request()->except('provider')) }}" class="hover:text-blue-800 ml-0.5">&times;</a>
+                        </span>
+                    @endif
+                    @if ($search !== '')
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100">
+                            Search: "{{ $search }}"
+                            <a href="{{ route('bsm.dashboard', request()->except('search')) }}" class="hover:text-blue-800 ml-0.5">&times;</a>
+                        </span>
+                    @endif
+                    <a href="{{ route('bsm.dashboard') }}" class="text-[11px] text-slate-500 hover:text-rose-600 font-semibold underline ml-1">
+                        Clear all
+                    </a>
+                </div>
+            @endif
         </form>
     </div>
 

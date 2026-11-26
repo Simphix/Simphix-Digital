@@ -51,6 +51,13 @@ class SimsOperationsDashboardController extends Controller
             ->orderBy('first_name')
             ->get();
 
+        $categories = \App\Models\ServiceField::whereHas('service', fn ($q) => $q->where('name', 'simcard'))
+            ->pluck('field_name');
+        if ($categories->isEmpty()) {
+            $categories = collect(['POS SIM', 'CAMERA SIM', 'CCTV']);
+        }
+        $providers = ['mtn', 'airtel', 'glo', '9mobile'];
+
         $bonusFilters = $this->resolveActivationBonusFilters($request);
         $bonusReports = $this->activationBonusQuery($bonusFilters)->paginate(20, ['*'], 'bonus_page')->withQueryString();
 
@@ -59,7 +66,7 @@ class SimsOperationsDashboardController extends Controller
         return view('admin.sims-operations.index', compact(
             'range', 'periodStart', 'periodEnd', 'filters',
             'totalActivations', 'byJurisdiction', 'trend', 'byCategory', 'byProvider', 'events',
-            'regions', 'states', 'districts', 'users',
+            'regions', 'states', 'districts', 'users', 'categories', 'providers',
             'bonusFilters', 'bonusReports', 'exportSettings'
         ));
     }
@@ -184,6 +191,7 @@ class SimsOperationsDashboardController extends Controller
             'date_end' => $end,
             'number' => $request->filled('bonus_number') ? trim($request->bonus_number) : null,
             'status' => $request->filled('bonus_status') ? $request->bonus_status : null,
+            'network' => $request->filled('bonus_network') ? strtolower($request->bonus_network) : null,
         ];
     }
 
@@ -198,16 +206,23 @@ class SimsOperationsDashboardController extends Controller
             ->when($filters['date_end'], fn ($q) => $q->where('created_at', '<=', $filters['date_end']))
             ->when($filters['number'], fn ($q) => $q->where('phone_number', 'like', '%' . $filters['number'] . '%'))
             ->when($filters['status'], fn ($q) => $q->where('status', $filters['status']))
+            ->when($filters['network'], fn ($q) => $q->whereRaw('LOWER(network) = ?', [$filters['network']]))
             ->with('user')
             ->latest();
     }
 
     private function resolveRange(Request $request): array
     {
-        $range = $request->input('range', '7days');
+        $range = $request->input('range');
+        if (! $range) {
+            $range = ($request->filled('period_start') || $request->filled('period_end')) ? 'custom' : '7days';
+        }
+
         [$rangeStart, $rangeEnd] = match ($range) {
             'today' => [now()->startOfDay(), now()->endOfDay()],
             '3days' => [now()->subDays(2)->startOfDay(), now()->endOfDay()],
+            '30days' => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+            'all'   => [Carbon::parse('2020-01-01')->startOfDay(), now()->endOfDay()],
             'custom' => (function () use ($request) {
                 $start = $request->filled('period_start') ? Carbon::parse($request->period_start)->startOfDay() : now()->subDays(6)->startOfDay();
                 $end = $request->filled('period_end') ? Carbon::parse($request->period_end)->endOfDay() : now()->endOfDay();
@@ -229,6 +244,9 @@ class SimsOperationsDashboardController extends Controller
             'state_id' => $request->filled('state_id') ? (int) $request->state_id : null,
             'district_id' => $request->filled('district_id') ? (int) $request->district_id : null,
             'user_id' => $request->filled('user_id') ? (int) $request->user_id : null,
+            'provider' => $request->filled('provider') ? strtolower($request->provider) : null,
+            'category' => $request->filled('category') ? $request->category : null,
+            'search' => $request->filled('search') ? trim($request->search) : null,
         ];
     }
 
@@ -236,6 +254,20 @@ class SimsOperationsDashboardController extends Controller
     {
         return fn () => Sim::query()
             ->when($filters['region_id'] || $filters['state_id'] || $filters['district_id'], fn ($q) => $q->inJurisdiction($filters['region_id'], $filters['state_id'], $filters['district_id']))
+            ->when($filters['provider'], fn ($q) => $q->where('provider', $filters['provider']))
+            ->when($filters['category'], fn ($q) => $q->where('category', $filters['category']))
+            ->when($filters['search'], function ($q) use ($filters) {
+                $search = $filters['search'];
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('number', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($uq) use ($search) {
+                            $uq->where('first_name', 'like', "%{$search}%")
+                               ->orWhere('last_name', 'like', "%{$search}%")
+                               ->orWhere('email', 'like', "%{$search}%")
+                               ->orWhere('phone', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->when($filters['user_id'], function ($q) use ($filters) {
                 $q->where(function ($q2) use ($filters) {
                     foreach (self::HOLDER_COLUMNS as $column) {

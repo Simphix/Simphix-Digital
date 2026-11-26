@@ -1,14 +1,15 @@
 <x-app-layout>
     <div class="space-y-6 max-w-7xl mx-auto" x-data="{
         showCustom: {{ $range === 'custom' ? 'true' : 'false' }},
-        activeSection: '{{ request('section') === 'activation-bonus' || request()->hasAny(['bonus_date_start', 'bonus_date_end', 'bonus_number', 'bonus_status', 'bonus_page']) ? 'activation-bonus' : 'activations' }}',
+        selectedRange: '{{ $range }}',
+        activeSection: '{{ request('section') === 'activation-bonus' || request()->hasAny(['bonus_date_start', 'bonus_date_end', 'bonus_number', 'bonus_status', 'bonus_network', 'bonus_page']) ? 'activation-bonus' : 'activations' }}',
         selectedRegion: '{{ $filters['region_id'] ?? '' }}',
         selectedState: '{{ $filters['state_id'] ?? '' }}'
     }">
 
         <div>
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight font-display">SIMs Operations</h1>
-            <p class="text-xs text-slate-400 mt-1">Activation metrics filterable by date, region, state, senatorial district, and user.</p>
+            <p class="text-xs text-slate-400 mt-1">Activation metrics filterable by date, network provider, category, region, state, senatorial district, and user.</p>
         </div>
 
         @if (session('success'))
@@ -33,45 +34,101 @@
         <div class="bg-white border border-slate-200 rounded-2xl p-4">
             <form method="GET" action="{{ route('admin.sims-operations.index') }}" class="space-y-4">
                 <input type="hidden" name="section" value="activations">
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
-                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                        Showing:
-                    </span>
-                    <button type="submit" name="range" value="today"
-                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'today' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-                            @click="showCustom = false">Today</button>
-                    <button type="submit" name="range" value="3days"
-                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '3days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-                            @click="showCustom = false">3 Days</button>
-                    <button type="submit" name="range" value="7days"
-                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '7days' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-                            @click="showCustom = false">7 Days</button>
-                    <button type="button" @click="showCustom = !showCustom"
-                            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'custom' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">Custom Range</button>
+                <input type="hidden" name="range" :value="selectedRange">
 
-                    <div x-show="showCustom" x-cloak class="flex flex-wrap items-center gap-2 ml-1">
-                        <input type="date" name="period_start" value="{{ $periodStart }}" max="{{ now()->format('Y-m-d') }}"
-                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
-                        <span class="text-xs text-slate-400 font-medium">to</span>
-                        <input type="date" name="period_end" value="{{ $periodEnd }}" max="{{ now()->format('Y-m-d') }}"
-                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
+                <!-- Time Range Controls -->
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                            Period:
+                        </span>
+                        <button type="submit" @click="selectedRange = 'today'; showCustom = false"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'today' ? 'bg-[#0056D2] text-white border-[#0056D2]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">Today</button>
+                        <button type="submit" @click="selectedRange = '3days'; showCustom = false"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '3days' ? 'bg-[#0056D2] text-white border-[#0056D2]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">3 Days</button>
+                        <button type="submit" @click="selectedRange = '7days'; showCustom = false"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '7days' ? 'bg-[#0056D2] text-white border-[#0056D2]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">7 Days</button>
+                        <button type="submit" @click="selectedRange = '30days'; showCustom = false"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === '30days' ? 'bg-[#0056D2] text-white border-[#0056D2]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">30 Days</button>
+                        <button type="submit" @click="selectedRange = 'all'; showCustom = false"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'all' ? 'bg-[#0056D2] text-white border-[#0056D2]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">All Time</button>
+                        <button type="button" @click="showCustom = !showCustom; selectedRange = 'custom'"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shadow-2xs {{ $range === 'custom' ? 'bg-[#0056D2] text-white border-[#0056D2]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">Custom Range</button>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('admin.sims-operations.export', request()->query()) }}" class="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-1.5 shadow-2xs">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                            Export Filtered CSV
+                        </a>
+                        <a href="{{ route('admin.sims-operations.activated-numbers.export') }}" class="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-1.5 shadow-2xs">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                            Export All Numbers
+                        </a>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-end gap-3 pt-3 border-t border-slate-100">
+                <!-- Custom Range Picker Inputs -->
+                <div x-show="showCustom" x-cloak class="p-3 bg-slate-50/70 border border-slate-100 rounded-xl flex flex-wrap items-center gap-2">
+                    <span class="text-xs text-slate-500 font-semibold">From:</span>
+                    <input type="date" name="period_start" value="{{ $periodStart }}" max="{{ now()->format('Y-m-d') }}"
+                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20 bg-white">
+                    <span class="text-xs text-slate-400 font-medium">to</span>
+                    <input type="date" name="period_end" value="{{ $periodEnd }}" max="{{ now()->format('Y-m-d') }}"
+                           class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20 bg-white">
+                    <button type="submit" @click="selectedRange = 'custom'" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#0056D2] text-white hover:bg-[#0049b8] transition-colors shadow-xs">Apply Date Range</button>
+                </div>
+
+                <!-- Detailed Filters Row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 pt-3 border-t border-slate-100">
+                    <!-- Search Input -->
+                    <div class="lg:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Search SIM / User</label>
+                        <div class="relative">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="SIM number, ICCID, holder…"
+                                   class="w-full text-xs rounded-lg border border-slate-200 pl-8 pr-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20 bg-white">
+                        </div>
+                    </div>
+
+                    <!-- Provider Filter -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Region</label>
-                        <select name="region_id" x-model="selectedRegion" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[160px] bg-white">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Provider</label>
+                        <select name="provider" class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20">
+                            <option value="">All providers</option>
+                            @foreach ($providers as $prov)
+                                <option value="{{ $prov }}" @selected(($filters['provider'] ?? '') === $prov)>{{ strtoupper($prov) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Category</label>
+                        <select name="category" class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20">
+                            <option value="">All categories</option>
+                            @foreach ($categories as $cat)
+                                <option value="{{ $cat }}" @selected(($filters['category'] ?? '') === $cat)>{{ $cat }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Region Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Region</label>
+                        <select name="region_id" x-model="selectedRegion" class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20">
                             <option value="">All regions</option>
                             @foreach ($regions as $region)
                                 <option value="{{ $region->id }}" @selected($filters['region_id'] == $region->id)>{{ $region->name }}</option>
                             @endforeach
                         </select>
                     </div>
+
+                    <!-- State Filter -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">State</label>
-                        <select name="state_id" x-model="selectedState" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[160px] bg-white">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">State</label>
+                        <select name="state_id" x-model="selectedState" class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20">
                             <option value="">All states</option>
                             @foreach ($states as $state)
                                 <option value="{{ $state->id }}" data-region="{{ $state->region_id }}"
@@ -80,49 +137,85 @@
                             @endforeach
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Senatorial District</label>
-                        <select name="district_id" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[160px] bg-white">
-                            <option value="">All districts</option>
-                            @foreach ($districts as $district)
-                                <option value="{{ $district->id }}" data-state="{{ $district->state_id }}"
-                                        x-show="!selectedState || selectedState == '{{ $district->state_id }}'"
-                                        @selected($filters['district_id'] == $district->id)>{{ $district->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">User</label>
-                        <select name="user_id" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[180px] bg-white">
-                            <option value="">All users</option>
-                            @foreach ($users as $user)
-                                <option value="{{ $user->id }}" @selected($filters['user_id'] == $user->id)>{{ trim($user->first_name . ' ' . $user->last_name) }} ({{ $user->role }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <button type="submit" class="text-xs font-bold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors shadow-xs">Apply Filters</button>
 
-                    @php
-                        $hasActiveFilters = $filters['region_id'] || $filters['state_id'] || $filters['district_id'] || $filters['user_id'] || $range !== '7days';
-                    @endphp
-                    @if ($hasActiveFilters)
-                        <a href="{{ route('admin.sims-operations.index', ['section' => 'activations']) }}"
-                           class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5"
-                           title="Reset all filters to default 7 days view">
-                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
-                            <span>Reset Filters</span>
-                        </a>
-                    @endif
-
-                    <a href="{{ route('admin.sims-operations.export', request()->query()) }}" class="text-xs font-bold px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5">
-                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                        Export Filtered Activations
-                    </a>
-                    <a href="{{ route('admin.sims-operations.activated-numbers.export') }}" class="text-xs font-bold px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5">
-                        <i data-lucide="download" class="w-3.5 h-3.5 shrink-0"></i>
-                        Export All Activated Numbers
-                    </a>
+                    <!-- User Filter & Apply -->
+                    <div class="flex items-end gap-1.5">
+                        <div class="flex-1">
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Holder</label>
+                            <select name="user_id" class="w-full text-xs rounded-lg border border-slate-200 px-2 py-1.5 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20">
+                                <option value="">All holders</option>
+                                @foreach ($users as $user)
+                                    <option value="{{ $user->id }}" @selected($filters['user_id'] == $user->id)>{{ trim($user->first_name . ' ' . $user->last_name) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="submit" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#0056D2] text-white hover:bg-[#0049b8] transition-colors shadow-xs h-[32px] flex items-center justify-center shrink-0">
+                            Filter
+                        </button>
+                    </div>
                 </div>
+
+                @php
+                    $hasActiveFilters = $filters['region_id'] || $filters['state_id'] || $filters['district_id'] || $filters['user_id'] || ($filters['provider'] ?? null) || ($filters['category'] ?? null) || ($filters['search'] ?? null) || $range !== '7days';
+                @endphp
+                @if ($hasActiveFilters)
+                    <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 text-xs">
+                        <span class="text-slate-400 font-semibold flex items-center gap-1 text-[11px]">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-[#0056D2]"></i>
+                            Filtered By:
+                        </span>
+                        @if ($range !== '7days')
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                Period: {{ $range === 'custom' ? ($periodStart . ' to ' . $periodEnd) : ucfirst($range) }}
+                                <a href="{{ route('admin.sims-operations.index', array_merge(request()->except(['range', 'period_start', 'period_end']), ['section' => 'activations'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        @if ($filters['provider'] ?? null)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                Provider: {{ strtoupper($filters['provider']) }}
+                                <a href="{{ route('admin.sims-operations.index', array_merge(request()->except('provider'), ['section' => 'activations'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        @if ($filters['category'] ?? null)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                Category: {{ $filters['category'] }}
+                                <a href="{{ route('admin.sims-operations.index', array_merge(request()->except('category'), ['section' => 'activations'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        @if ($filters['search'] ?? null)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                Search: "{{ $filters['search'] }}"
+                                <a href="{{ route('admin.sims-operations.index', array_merge(request()->except('search'), ['section' => 'activations'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        @if ($filters['region_id'])
+                            @php $reg = $regions->firstWhere('id', $filters['region_id']); @endphp
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                Region: {{ $reg?->name ?? $filters['region_id'] }}
+                                <a href="{{ route('admin.sims-operations.index', array_merge(request()->except('region_id'), ['section' => 'activations'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        @if ($filters['state_id'])
+                            @php $st = $states->firstWhere('id', $filters['state_id']); @endphp
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                State: {{ $st?->name ?? $filters['state_id'] }}
+                                <a href="{{ route('admin.sims-operations.index', array_merge(request()->except('state_id'), ['section' => 'activations'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        @if ($filters['user_id'])
+                            @php $u = $users->firstWhere('id', $filters['user_id']); @endphp
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                Holder: {{ $u ? trim($u->first_name . ' ' . $u->last_name) : $filters['user_id'] }}
+                                <a href="{{ route('admin.sims-operations.index', array_merge(request()->except('user_id'), ['section' => 'activations'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                            </span>
+                        @endif
+                        <a href="{{ route('admin.sims-operations.index', ['section' => 'activations']) }}"
+                           class="text-[11px] text-slate-500 hover:text-rose-600 font-semibold underline ml-1"
+                           title="Reset all filters">
+                            Clear all
+                        </a>
+                    </div>
+                @endif
             </form>
         </div>
 
@@ -340,50 +433,101 @@
         <!-- Section: Activation Bonus Operations -->
         <div x-show="activeSection === 'activation-bonus'" x-cloak class="space-y-6">
             <div class="bg-white border border-slate-200 rounded-2xl p-4">
-                <form method="GET" action="{{ route('admin.sims-operations.index') }}" class="flex flex-wrap items-end gap-3">
+                <form method="GET" action="{{ route('admin.sims-operations.index') }}" class="space-y-3">
                     <input type="hidden" name="section" value="activation-bonus">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">From</label>
-                        <input type="date" name="bonus_date_start" value="{{ $bonusFilters['date_start']?->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
-                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">To</label>
-                        <input type="date" name="bonus_date_end" value="{{ $bonusFilters['date_end']?->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
-                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Phone Number</label>
-                        <input type="text" name="bonus_number" value="{{ $bonusFilters['number'] }}" placeholder="Search phone number…"
-                               class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[180px] focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Status</label>
-                        <select name="bonus_status" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[140px] bg-white">
-                            <option value="">All statuses</option>
-                            <option value="completed" @selected($bonusFilters['status'] === 'completed')>Completed</option>
-                            <option value="failed" @selected($bonusFilters['status'] === 'failed')>Failed</option>
-                            <option value="retrying" @selected($bonusFilters['status'] === 'retrying')>Retrying</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="text-xs font-bold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-[#0049b8] transition-colors shadow-xs">Apply Filters</button>
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">From</label>
+                            <input type="date" name="bonus_date_start" value="{{ $bonusFilters['date_start']?->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
+                                   class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">To</label>
+                            <input type="date" name="bonus_date_end" value="{{ $bonusFilters['date_end']?->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
+                                   class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20 bg-white">
+                        </div>
+                        <div class="flex-grow max-w-xs">
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Phone Number</label>
+                            <div class="relative">
+                                <i data-lucide="phone" class="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+                                <input type="text" name="bonus_number" value="{{ $bonusFilters['number'] }}" placeholder="Search phone number…"
+                                       class="w-full text-xs rounded-lg border border-slate-200 pl-8 pr-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20 bg-white">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Network</label>
+                            <select name="bonus_network" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[130px] bg-white focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20">
+                                <option value="">All networks</option>
+                                @foreach ($providers as $prov)
+                                    <option value="{{ $prov }}" @selected(($bonusFilters['network'] ?? '') === $prov)>{{ strtoupper($prov) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>
+                            <select name="bonus_status" class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 min-w-[130px] bg-white focus:outline-none focus:ring-2 focus:ring-[#0056D2]/20">
+                                <option value="">All statuses</option>
+                                <option value="completed" @selected($bonusFilters['status'] === 'completed')>Completed</option>
+                                <option value="failed" @selected($bonusFilters['status'] === 'failed')>Failed</option>
+                                <option value="retrying" @selected($bonusFilters['status'] === 'retrying')>Retrying</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="text-xs font-bold px-4 py-1.5 rounded-lg bg-[#0056D2] text-white hover:bg-[#0049b8] transition-colors shadow-xs h-[32px]">Apply Filters</button>
 
-                    @php
-                        $hasBonusFilters = $bonusFilters['date_start'] || $bonusFilters['date_end'] || $bonusFilters['number'] || $bonusFilters['status'];
-                    @endphp
-                    @if ($hasBonusFilters)
-                        <a href="{{ route('admin.sims-operations.index', ['section' => 'activation-bonus']) }}"
-                           class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5"
-                           title="Clear activation bonus filters">
-                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
-                            <span>Clear Filters</span>
+                        @php
+                            $hasBonusFilters = $bonusFilters['date_start'] || $bonusFilters['date_end'] || $bonusFilters['number'] || $bonusFilters['status'] || ($bonusFilters['network'] ?? null);
+                        @endphp
+                        @if ($hasBonusFilters)
+                            <a href="{{ route('admin.sims-operations.index', ['section' => 'activation-bonus']) }}"
+                               class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5 h-[32px]"
+                               title="Clear activation bonus filters">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>Clear Filters</span>
+                            </a>
+                        @endif
+
+                        <a href="{{ route('admin.sims-operations.activation-bonus.export', request()->query()) }}" class="text-xs font-bold px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-1.5 ml-auto h-[32px] shadow-2xs">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                            Export CSV
                         </a>
-                    @endif
+                    </div>
 
-                    <a href="{{ route('admin.sims-operations.activation-bonus.export', request()->query()) }}" class="text-xs font-bold px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5">
-                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                        Export CSV
-                    </a>
+                    @if ($hasBonusFilters)
+                        <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 text-xs">
+                            <span class="text-slate-400 font-semibold flex items-center gap-1 text-[11px]">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-[#0056D2]"></i>
+                                Active Bonus Filters:
+                            </span>
+                            @if ($bonusFilters['date_start'] || $bonusFilters['date_end'])
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                    Dates: {{ $bonusFilters['date_start']?->format('M d') ?? 'Start' }} – {{ $bonusFilters['date_end']?->format('M d') ?? 'Now' }}
+                                    <a href="{{ route('admin.sims-operations.index', array_merge(request()->except(['bonus_date_start', 'bonus_date_end']), ['section' => 'activation-bonus'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                                </span>
+                            @endif
+                            @if ($bonusFilters['network'] ?? null)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                    Network: {{ strtoupper($bonusFilters['network']) }}
+                                    <a href="{{ route('admin.sims-operations.index', array_merge(request()->except('bonus_network'), ['section' => 'activation-bonus'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                                </span>
+                            @endif
+                            @if ($bonusFilters['number'])
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                    Number: {{ $bonusFilters['number'] }}
+                                    <a href="{{ route('admin.sims-operations.index', array_merge(request()->except('bonus_number'), ['section' => 'activation-bonus'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                                </span>
+                            @endif
+                            @if ($bonusFilters['status'])
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[#0056D2] font-semibold border border-blue-100 text-[11px]">
+                                    Status: {{ ucfirst($bonusFilters['status']) }}
+                                    <a href="{{ route('admin.sims-operations.index', array_merge(request()->except('bonus_status'), ['section' => 'activation-bonus'])) }}" class="hover:text-blue-800 ml-0.5 font-bold">&times;</a>
+                                </span>
+                            @endif
+                            <a href="{{ route('admin.sims-operations.index', ['section' => 'activation-bonus']) }}"
+                               class="text-[11px] text-slate-500 hover:text-rose-600 font-semibold underline ml-1">
+                                Clear all
+                            </a>
+                        </div>
+                    @endif
                 </form>
             </div>
 

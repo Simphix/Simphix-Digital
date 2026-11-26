@@ -59,13 +59,23 @@ class BsmDashboardController extends Controller
 
         $selectedCategory = $request->input('category');
         $selectedProvider = $request->input('provider');
+        $selectedStatus = $request->input('status');
+        $search = trim($request->input('search', ''));
 
         $priceMap = $this->resolvePriceMap();
 
-        // 1. Executive KPIs (Platform-wide or filtered by category/provider)
+        // 1. Executive KPIs (Platform-wide or filtered by category/provider/status/search)
         $simsQuery = Sim::query()
             ->when($selectedCategory, fn ($q) => $q->where('category', $selectedCategory))
-            ->when($selectedProvider, fn ($q) => $q->where('provider', $selectedProvider));
+            ->when($selectedProvider, fn ($q) => $q->where('provider', $selectedProvider))
+            ->when($selectedStatus, fn ($q) => $q->where('status', $selectedStatus))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('number', 'like', "%{$search}%")
+                        ->orWhereHas('partner', fn ($pq) => $pq->where('first_name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
+                        ->orWhereHas('customer', fn ($cq) => $cq->where('full_name', 'like', "%{$search}%")->orWhere('phone_number', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"));
+                });
+            });
 
         $totalSims = (clone $simsQuery)->count();
         $totalActivated = (clone $simsQuery)->where('status', SimStatus::ACTIVATED)->count();
@@ -86,7 +96,15 @@ class BsmDashboardController extends Controller
             ->count();
 
         $conversionRate = $totalSims > 0 ? round(($totalActivated / $totalSims) * 100, 1) : 0;
-        $totalCustomers = SimCustomer::count();
+        
+        $totalCustomers = SimCustomer::whereHas('sim', function ($sq) use ($selectedCategory, $selectedProvider, $selectedStatus, $search) {
+            $sq->when($selectedCategory, fn ($q) => $q->where('category', $selectedCategory))
+               ->when($selectedProvider, fn ($q) => $q->where('provider', $selectedProvider))
+               ->when($selectedStatus, fn ($q) => $q->where('status', $selectedStatus))
+               ->when($search !== '', function ($q) use ($search) {
+                   $q->where('number', 'like', "%{$search}%");
+               });
+        })->count();
 
         // Period Sales metrics
         $periodSalesQuery = (clone $simsQuery)->where('status', SimStatus::ACTIVATED);
@@ -101,13 +119,26 @@ class BsmDashboardController extends Controller
         $totalSalesVolume = $periodActivatedSims->sum(fn ($s) => (float) ($priceMap[$s->category] ?? 1000.00));
 
         // Quick Intervention Alerts Counts
-        $pendingRequestsCount = SimRequest::where('status', 'pending')->count();
+        $pendingRequestsCount = SimRequest::where('status', 'pending')
+            ->when($selectedProvider, fn ($q) => $q->where('provider', $selectedProvider))
+            ->when($selectedCategory, fn ($q) => $q->where('category', $selectedCategory))
+            ->when($rangeStart && $rangeEnd, fn ($q) => $q->whereBetween('created_at', [$rangeStart, $rangeEnd]))
+            ->count();
 
         // Failed Activation SIMs
         $failedActivationsQuery = Report::with('user')
             ->where('type', 'activation_bonus_data')
             ->whereIn('status', ['failed', 'retrying'])
-            ->when($selectedProvider, fn ($q) => $q->whereRaw('LOWER(network) = ?', [strtolower($selectedProvider)]));
+            ->when($selectedProvider, fn ($q) => $q->whereRaw('LOWER(network) = ?', [strtolower($selectedProvider)]))
+            ->when($rangeStart && $rangeEnd, fn ($q) => $q->whereBetween('created_at', [$rangeStart, $rangeEnd]))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('phone_number', 'like', "%{$search}%")
+                        ->orWhere('ref', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhereHas('user', fn ($uq) => $uq->where('first_name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%"));
+                });
+            });
 
         $failedBonusCount = (clone $failedActivationsQuery)->where('status', 'failed')->count();
         $retryingBonusCount = (clone $failedActivationsQuery)->where('status', 'retrying')->count();
@@ -127,6 +158,10 @@ class BsmDashboardController extends Controller
         $subscriptionBaseQuery = Sim::query()
             ->when($selectedCategory, fn ($q) => $q->where('category', $selectedCategory))
             ->when($selectedProvider, fn ($q) => $q->where('provider', $selectedProvider))
+            ->when($selectedStatus, fn ($q) => $q->where('status', $selectedStatus))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where('number', 'like', "%{$search}%");
+            })
             ->where(function ($q) {
                 $q->where('status', SimStatus::ACTIVATED)
                     ->orWhereNotNull('subscription_expires_at')
@@ -147,12 +182,24 @@ class BsmDashboardController extends Controller
         return view('bsm.dashboard', [
             'actor'                   => $actor,
             'range'                   => $rangeKey,
+            'rangeKey'                => $rangeKey,
             'rangeLabel'              => $rangeLabel,
             'selectedCategory'        => $selectedCategory,
             'selectedProvider'        => $selectedProvider,
+            'selectedStatus'          => $selectedStatus,
+            'search'                  => $search,
             'priceMap'                => $priceMap,
             'categories'              => array_keys($priceMap),
             'providers'               => ['mtn', 'airtel', 'glo', '9mobile'],
+            'statuses'                => [
+                SimStatus::UNASSIGNED             => 'Unassigned',
+                SimStatus::ASSIGNED_TO_RM         => 'With Regional Manager',
+                SimStatus::ASSIGNED_TO_COORDINATOR => 'With Coordinator',
+                SimStatus::ASSIGNED_TO_PARTNER    => 'With Partner',
+                SimStatus::ASSIGNED_TO_BUSINESS   => 'With Enterprise Business',
+                SimStatus::ASSIGNED_TO_BUSINESS_AGENT => 'With Agent',
+                SimStatus::ACTIVATED              => 'Activated',
+            ],
             // KPIs
             'totalSims'               => $totalSims,
             'totalActivated'          => $totalActivated,
@@ -338,7 +385,6 @@ class BsmDashboardController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('number', 'like', "%{$search}%")
-                    ->orWhere('iccid', 'like', "%{$search}%")
                     ->orWhereHas('partner', function ($pq) use ($search) {
                         $pq->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%")
